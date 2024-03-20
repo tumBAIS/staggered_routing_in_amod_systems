@@ -1,0 +1,49 @@
+# Compiled Python bytecode
+__pycache__/
+
+# pytest cache
+.pytest_cache/
+
+# IDE settings and workspace configurations
+.idea/
+*.ipynb_checkpoints/
+
+# Log files and error logs
+/logs/
+/error-logs/
+*.log
+
+# Data files and directories
+/data/
+!/data/change_names.py
+*.csv
+*.json
+*.xml
+*.parquet
+*.xlsx
+
+# Compiled data and binaries
+/build/
+*.pyc
+*.tar
+*.tar.gz
+*.zip
+*.rar
+
+# Image files
+*.png
+*.jpeg
+*.svg
+
+# Document files
+*.html
+*.tex
+*.pdf
+*.pdf_tex
+
+# Miscellaneous files
+*.mps
+*.sol
+*.p
+*.lp
+*.ilp
