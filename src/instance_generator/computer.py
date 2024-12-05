@@ -5,6 +5,7 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import cpp_module as cpp
+import inputData
 import utils.tools
 from instance_generator import synthetic_graphs as synthetic_graphs, real_world_graphs as real_world_graphs, \
     synthetic_trips as synthetic_trips, real_world_trips as real_world_trips
@@ -16,11 +17,11 @@ from problem.trip import Trips
 
 class InstanceComputer:
 
-    def __init__(self, instance_params: InstanceParams):
+    def __init__(self, input_data: inputData.InputData):
         """Initialize class to create instance files"""
         self.path_to_repo = Path(__file__).parent.parent.parent
         self.path_to_data = self.path_to_repo / "data"
-        self.instance_params = instance_params
+        self.instance_params = input_data
 
     def run(self, plot_flag: bool = False):
         """Create instance associated to self.instance_params"""
@@ -217,14 +218,13 @@ class InstanceComputer:
             }
 
             # Add path information for each trip
-            for new_id, path in enumerate(trip.routes.P):
-                path_info = {
-                    "latest_departure": round(path.latest_departure, 2),
-                    "travel_time_sec": round(path.path_travel_time, 2),
-                    "length_meters": round(path.path_length_meters, 2),
-                    "num_arcs": path.num_path_arcs
-                }
-                trip_info[f"path_{path.id}"] = path_info
+            path_info = {
+                "latest_departure": round(trip.routes.P[0].latest_departure, 2),
+                "travel_time_sec": round(trip.routes.P[0].path_travel_time, 2),
+                "length_meters": round(trip.routes.P[0].path_length_meters, 2),
+                "num_arcs": trip.routes.P[0].num_path_arcs
+            }
+            trip_info.update(path_info)
 
             info[f"trip_{trip.id}"] = trip_info
 

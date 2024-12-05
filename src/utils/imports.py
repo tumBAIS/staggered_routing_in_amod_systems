@@ -12,8 +12,8 @@ from congestionModel.core import getDeadlines
 def getNotSimplifiedInstance(inputData: InputData) -> Instance:
     graph = import_graph(inputData)
     taxiRides = import_rides_df(inputData, graph)
-    nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
-    releaseTimes, arrivalTimes = getReleaseTimesAndArrivalTimesDataset(taxiRides)
+    # nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
+    # releaseTimes, arrivalTimes = getReleaseTimesAndArrivalTimesDataset(taxiRides)
     reduceGraph(graph, nodeBasedShortestPaths, inputData)
     nodeBasedShortestPaths = addShortcuts(inputData, graph, taxiRides, nodeBasedShortestPaths)
     setArcsNominalTravelTimesAndCapacities(graph, inputData)

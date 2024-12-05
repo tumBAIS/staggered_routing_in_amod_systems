@@ -5,6 +5,8 @@ from pathlib import Path
 from datetime import datetime, timedelta
 import osmnx as osm
 from shapely.geometry import Point
+
+import inputData
 from problem.network import Network
 from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
@@ -59,7 +61,7 @@ def _plot_od_pairs(network: Network, dataset_gdf: gpd.GeoDataFrame, path_to_inst
     plt.close()
 
 
-def get_real_world_trips(instance_parameters: InstanceParams, network: Network) -> list[dict]:
+def get_real_world_trips(instance_parameters: inputData.InputData, network: Network) -> list[dict]:
     """Retrieve all trips within a network polygon and time range."""
     dataset = _load_dataset(instance_parameters)
     dataset = _filter_dataset_by_time(dataset, instance_parameters)
@@ -78,8 +80,20 @@ def get_real_world_trips(instance_parameters: InstanceParams, network: Network) 
     dataset_gdf = dataset_gdf[dataset_gdf['origin'] != dataset_gdf["destination"]]
 
     # Scale demand by adding new trips
-    new_trips = _scale_demand(dataset_gdf, instance_parameters, network)
-    dataset_gdf = pd.concat([dataset_gdf, new_trips], ignore_index=True)
+    # new_trips = _scale_demand(dataset_gdf, instance_parameters, network)
+    # dataset_gdf = pd.concat([dataset_gdf, new_trips], ignore_index=True)
+    len_before = dataset_gdf.shape[0]
+    dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, random_state=instance_parameters.seed)
+    len_after = dataset_gdf.shape[0]
+    # Print the number of rows before and after sampling
+    print(f"Length before sampling: {len_before}")
+    print(f"Length after sampling: {len_after}")
+
+    # Calculate the difference in length
+    change_in_length = len_before - len_after
+
+    # Print the change in length
+    print(f"Change in number of rows: {change_in_length}")
 
     # END SELECTION -- START COMPUTATION #
     dataset_gdf = _preprocess_real_world_times(dataset_gdf)
