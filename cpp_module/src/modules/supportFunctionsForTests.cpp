@@ -8,7 +8,7 @@
 #include <sstream>
 
 
-namespace cppModule {
+namespace cpp_module {
 
 
     auto readVectorOfDoubles(const std::filesystem::path &Path) {

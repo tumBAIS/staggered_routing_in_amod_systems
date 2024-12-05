@@ -5,7 +5,7 @@
 #include <sstream>
 #include "filesystem"
 
-namespace cppModule {
+namespace cpp_module {
 
 
     auto _printFirstNPaths(const ImportedInstanceForTest &importedInstance, const long n) -> void {

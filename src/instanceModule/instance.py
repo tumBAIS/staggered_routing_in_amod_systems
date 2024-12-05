@@ -166,7 +166,7 @@ def printTotalFreeFlowTime(instance: Instance):
 
 
 def getInstance(inputData: InputData,
-                arcBasedShortestPaths: list[Path],
+                arcBasedShortestPaths: list[NodesPath],
                 arcsFeatures,
                 releaseTimesDataset: list[Time],
                 arrivalTimesDataset: list[Time]):

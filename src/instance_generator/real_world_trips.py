@@ -9,7 +9,6 @@ from problem.network import Network
 from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
 import networkx as nx
-import kspwlo
 
 LAT_LON_CRS = "EPSG:4326"
 WEB_MERCATOR_CRS = "EPSG:3857"
@@ -81,12 +80,9 @@ def get_real_world_trips(instance_parameters: InstanceParams, network: Network) 
     dataset_gdf = _preprocess_real_world_times(dataset_gdf)
 
     # Vectorized computation of shortest paths
-    _, kspwlo_computer = _get_kspwlo_computer_cpp(network)
     # Compute n-shortest paths for each row
-    dataset_gdf['paths'] = dataset_gdf.apply(
-        lambda row: find_n_shortest_paths(row, network, kspwlo_computer),
-        axis=1
-    )
+    dataset_gdf['paths'] = dataset_gdf.apply(lambda row: find_shortest_path(row, network),
+                                             axis=1)
 
     # Calculate the length of each path in the paths list, store these lists of tuples (length, path)
     dataset_gdf['paths_with_lengths'] = dataset_gdf['paths'].apply(
@@ -208,59 +204,8 @@ def find_destination_node(row, network):
     return network.find_closest_node(row['destination_coords'])
 
 
-def find_n_shortest_paths(row, network: Network, kspwlo_computer):
-    return run_kspwlo_cpp(source=row['origin'], target=row['destination'], network=network,
-                          kspwlo_computer=kspwlo_computer)
-
-
-def _get_kspwlo_computer_cpp(network: Network) -> (kspwlo.RoadNetwork, kspwlo.PathComputer):
-    """Represent graph as a list of lists of floats.
-    The first list specifies numNodes and numEdges, the remaining lists are origin/destination/weights of the arcs."""
-    cpp_rn_constructor = [[network.G.number_of_nodes(), network.G.number_of_edges()]]
-
-    for edge in network.G.edges(data=True):
-        # Assuming edge data contains 'length' as weight
-        u, v = edge[0], edge[1]
-        length = edge[2].get('length', 0.0)  # Default to 0.0 if 'length' is not present
-        cpp_edge = [u, v, float(length)]
-        cpp_rn_constructor.append(cpp_edge)
-
-    road_network = kspwlo.RoadNetwork(cpp_rn_constructor)
-    return road_network, kspwlo.PathComputer(road_network)
-
-
-def _run_kspwlo_computer(source, target, instance_params: InstanceParams, kspwlo_computer: kspwlo.PathComputer):
-    k = instance_params.num_alternative_paths
-    theta = float(instance_params.path_similarity_theta)
-
-    if instance_params.kspwlo_algo == "onepass":
-        return kspwlo_computer.onepass(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "multipass":
-        return kspwlo_computer.multipass(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "svp_plus":
-        return kspwlo_computer.svp_plus(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "onepass_plus":
-        return kspwlo_computer.onepass_plus(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "esx":
-        return kspwlo_computer.esx(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "esx_complete":
-        return kspwlo_computer.esx_complete(source, target, k, theta)
-    elif instance_params.kspwlo_algo == "svp_plus_complete":
-        return kspwlo_computer.svp_plus_complete(source, target, k, theta)
-    else:
-        raise ValueError(f"Unknown algorithm: {instance_params.kspwlo_algo}")
-
-
-def run_kspwlo_cpp(network, source: int, target: int, kspwlo_computer) -> list[list[int]]:
-    if (source, target) in network.shortest_path_map:
-        return network.shortest_path_map[source, target]
-
-    kspwlo_result = _run_kspwlo_computer(source, target, network.instance_params, kspwlo_computer)
-    paths = [x.nodes for x in sorted(kspwlo_result, key=lambda x: x.length)]  # from shortest to longest
-
-    network.shortest_path_map[source, target] = paths
-
-    return paths
+def find_shortest_path(row, network: Network):
+    return nx.shortest_path(network.G, source=row['origin'], target=row['destination'], weight='length')
 
 
 def _filter_trips_not_in_network(gdf: gpd.GeoDataFrame, network: Network) -> gpd.GeoDataFrame:

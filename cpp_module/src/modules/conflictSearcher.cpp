@@ -6,7 +6,7 @@
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
 
-namespace cppModule {
+namespace cpp_module {
 
     auto compareConflicts(const Conflict &a, const Conflict &b) -> bool {
         if (a.delayConflict > b.delayConflict) {

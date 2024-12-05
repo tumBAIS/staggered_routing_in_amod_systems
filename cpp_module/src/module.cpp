@@ -8,7 +8,7 @@
 #include <pybind11/stl.h>
 
 
-namespace cppModule {
+namespace cpp_module {
 
     auto _printIfAssertionsAreActive() -> void {
 #ifdef assertionsOnEvaluationFunction
@@ -36,7 +36,7 @@ namespace cppModule {
                           arg_list_of_slopes,
                           arg_list_of_thresholds,
                           parameters);
-        CompleteSolution completeSolution(argReleaseTimes, instance);
+        Solution completeSolution(argReleaseTimes, instance);
         Scheduler schedulerForPython(instance);
         schedulerForPython.constructCongestedSchedule(completeSolution);
         initializeConflictingSetsForConstructSchedule(instance);
@@ -86,8 +86,8 @@ namespace cppModule {
                                           const Instance &instance,
                                           const std::vector<double> &argReleaseTimes,
                                           const std::vector<double> &argRemainingTimeSlack,
-                                          const std::vector<double> &argStaggeringApplied) -> CompleteSolution {
-        CompleteSolution currentSolution(argReleaseTimes, instance);
+                                          const std::vector<double> &argStaggeringApplied) -> Solution {
+        Solution currentSolution(argReleaseTimes, instance);
         scheduler.constructCongestedSchedule(currentSolution);
         if (!currentSolution.scheduleIsFeasibleAndImproving) {
             std::cout << "Initial solution is infeasible - local search stopped \n";
@@ -127,9 +127,9 @@ namespace cppModule {
             throw std::invalid_argument("due dates are invalid");
         }
         Scheduler scheduler(instance);
-        CompleteSolution currentSolution = getInitialSolutionForLocalSearch(scheduler, instance,
-                                                                            argReleaseTimes, argRemainingTimeSlack,
-                                                                            argStaggeringApplied);
+        Solution currentSolution = getInitialSolutionForLocalSearch(scheduler, instance,
+                                                                    argReleaseTimes, argRemainingTimeSlack,
+                                                                    argStaggeringApplied);
         std::cout << "Local search received a solution with " << std::round(currentSolution.totalDelay)
                   << " sec. of delay \n";
         if (!currentSolution.scheduleIsFeasibleAndImproving) {
@@ -145,9 +145,15 @@ namespace cppModule {
     } // end local_search function
 }
 
+namespace py = pybind11;
 
 PYBIND11_MODULE(cpp_module, m) {
     m.doc() = "CPP module";
-    m.def("cppComputeCongestedSchedule", &cppModule::cppComputeCongestedSchedule);
-    m.def("cppSchedulingLocalSearch", &cppModule::cppSchedulingLocalSearch);
+    py::class_<cpp_module::Solution>(m, "cpp_solution")
+            .def(py::init<const std::vector<double> &, const cpp_module::Instance &>(),
+                 py::arg("start_times"),
+                 py::arg("cpp_instance"));
+
+    m.def("cppComputeCongestedSchedule", &cpp_module::cppComputeCongestedSchedule);
+    m.def("cppSchedulingLocalSearch", &cpp_module::cppSchedulingLocalSearch);
 }

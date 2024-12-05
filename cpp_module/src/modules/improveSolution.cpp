@@ -7,9 +7,9 @@
 #include <cassert>
 #include <chrono>
 
-namespace cppModule {
+namespace cpp_module {
 
-    auto staggerVehicle(CompleteSolution &completeSolution, long vehicle, double staggering) -> void {
+    auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void {
         completeSolution.releaseTimes[vehicle] += staggering;
         completeSolution.staggeringApplied[vehicle] += staggering;
         completeSolution.remainingTimeSlack[vehicle] -= staggering;
@@ -26,7 +26,7 @@ namespace cppModule {
     }
 
 
-    auto _resetNewSolution(const CompleteSolution &currentSolution, CompleteSolution &newSolution,
+    auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
                            Conflict &conflict) -> void {
         staggerVehicle(newSolution,
                        conflict.currentVehicle,
@@ -48,7 +48,7 @@ namespace cppModule {
     }
 
     auto _applyStaggeringToSolveConflict(Scheduler &scheduler,
-                                         CompleteSolution &completeSolution,
+                                         Solution &completeSolution,
                                          Conflict &conflict) -> void {
         assert(conflict.distanceToCover > 0);
         bool moveVehicleOne =
@@ -74,8 +74,8 @@ namespace cppModule {
         }
     }
 
-    auto _updateCurrentSolution(CompleteSolution &currentSolution,
-                                const CompleteSolution &newSolution,
+    auto _updateCurrentSolution(Solution &currentSolution,
+                                const Solution &newSolution,
                                 Conflict &conflict) -> void {
         // update current vehicle
         staggerVehicle(currentSolution, conflict.currentVehicle, conflict.staggeringCurrentVehicle);
@@ -91,8 +91,8 @@ namespace cppModule {
         currentSolution.tableWithCapReached = newSolution.tableWithCapReached;
     }
 
-    auto _printMove(const CompleteSolution &oldSolution,
-                    const CompleteSolution &newSolution,
+    auto _printMove(const Solution &oldSolution,
+                    const Solution &newSolution,
                     const Conflict &conflict) -> void {
         if (std::abs(oldSolution.solutionValue - newSolution.solutionValue) > TOLERANCE) {
             if (conflict.staggeringCurrentVehicle > 0) {
@@ -112,7 +112,7 @@ namespace cppModule {
     }
 
 
-    auto _updateDistanceToCover(const CompleteSolution &completeSolution,
+    auto _updateDistanceToCover(const Solution &completeSolution,
                                 Conflict &conflict,
                                 const Instance &instance) -> void {
         auto indexArcInPathCurrentVehicle = getIndex(instance.arcBasedShortestPaths[conflict.currentVehicle],
@@ -137,7 +137,7 @@ namespace cppModule {
     }
 
     auto _checkIfSolutionIsAdmissible(const Instance &instance,
-                                      CompleteSolution &completeSolution,
+                                      Solution &completeSolution,
                                       Scheduler &scheduler) -> bool {
         if (!completeSolution.scheduleIsFeasibleAndImproving) {
             return false;
@@ -152,7 +152,7 @@ namespace cppModule {
         return true;
     }
 
-    auto _solveConflict(Conflict &conflict, CompleteSolution &newSolution,
+    auto _solveConflict(Conflict &conflict, Solution &newSolution,
                         const Instance &instance, Scheduler &scheduler) {
         scheduler.exploredSolutions++;
         bool conflictIsNotSolved = conflict.distanceToCover > CONSTR_TOLERANCE;
@@ -181,8 +181,8 @@ namespace cppModule {
     auto _improveSolution(const Instance &instance,
                           const std::vector<Conflict> &conflictsList,
                           Scheduler &scheduler,
-                          CompleteSolution &currentSolution) -> bool {
-        CompleteSolution newSolution(currentSolution);
+                          Solution &currentSolution) -> bool {
+        Solution newSolution(currentSolution);
         for (auto conflict: conflictsList) {
             if (std::abs(conflict.distanceToCover) < 1e-6) {
                 continue;
@@ -211,7 +211,7 @@ namespace cppModule {
 
 
     auto improveTowardsSolutionQuality(const Instance &instance,
-                                       CompleteSolution &currentSolution,
+                                       Solution &currentSolution,
                                        Scheduler &scheduler) -> void {
         // improve value of solution
         ConflictSearcherNew conflictSearcher(instance);

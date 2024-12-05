@@ -3,7 +3,7 @@
 #include "algorithm"
 #include "iostream"
 
-namespace cppModule {
+namespace cpp_module {
 
     auto initializeConflictingSetsForConstructSchedule(Instance &instance) -> void {
         long vehicle = 0;
@@ -31,7 +31,7 @@ namespace cppModule {
     }
 
 
-    auto _initializeCompleteSolution(CompleteSolution &completeSolution) -> void {
+    auto _initializeCompleteSolution(Solution &completeSolution) -> void {
         completeSolution.totalDelay = 0;
         completeSolution.totalTardiness = 0;
         completeSolution.solutionValue = 0;
@@ -90,13 +90,13 @@ namespace cppModule {
         return true;
     }
 
-    auto Scheduler::_getNextDeparture(CompleteSolution &completeSolution) -> void {
+    auto Scheduler::_getNextDeparture(Solution &completeSolution) -> void {
         departure = priorityQueueDepartures.top();
         priorityQueueDepartures.pop();
         completeSolution.congestedSchedule[departure.vehicle][departure.position] = departure.time;
     }
 
-    auto Scheduler::_computeSolutionTardiness(CompleteSolution &completeSolution) -> void {
+    auto Scheduler::_computeSolutionTardiness(Solution &completeSolution) -> void {
         for (auto vehicle = 0; vehicle < completeSolution.congestedSchedule.size(); vehicle++) {
             double vehicleTardiness = std::max(0.0, completeSolution.congestedSchedule[vehicle].back() -
                                                     instance.dueDates[vehicle]);
@@ -107,7 +107,7 @@ namespace cppModule {
     }
 
     auto
-    Scheduler::constructCongestedSchedule(CompleteSolution &completeSolution) -> void {
+    Scheduler::constructCongestedSchedule(Solution &completeSolution) -> void {
         // computes solution, value of solution, checks if solution is feasible and improving
         // breaks early if it is not.
         _initializeScheduler(completeSolution.releaseTimes);

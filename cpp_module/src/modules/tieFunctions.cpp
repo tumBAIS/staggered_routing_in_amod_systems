@@ -4,7 +4,7 @@
 #include <queue>
 
 
-namespace cppModule {
+namespace cpp_module {
 
     struct CorrectSolution {
         VehicleSchedule schedule;
@@ -16,7 +16,7 @@ namespace cppModule {
     };
 
 
-    auto _resetSolution(CompleteSolution &completeSolution,
+    auto _resetSolution(Solution &completeSolution,
                         const long &vehicleOne,
                         const CorrectSolution &correctSolution) -> void {
         staggerVehicle(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
@@ -37,7 +37,7 @@ namespace cppModule {
     };
 
 
-    auto _setCorrectSolution(const CompleteSolution &completeSolution) -> CorrectSolution {
+    auto _setCorrectSolution(const Solution &completeSolution) -> CorrectSolution {
         CorrectSolution correctSolution{};
 
         correctSolution.schedule = completeSolution.congestedSchedule;
@@ -69,7 +69,7 @@ namespace cppModule {
         return thereIsTie;
     }
 
-    auto _solveTie(CompleteSolution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
+    auto _solveTie(Solution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
         auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.congestedSchedule, tie);
         auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remainingTimeSlack[tie.vehicleOne]);
         while (thereIsTie && slackIsEnough) {
@@ -89,7 +89,7 @@ namespace cppModule {
 
     auto _checkArcTies(const Instance &instance,
                        const long &arc,
-                       CompleteSolution &completeSolution) -> bool {
+                       Solution &completeSolution) -> bool {
         Tie tie{};
         for (auto vehicleOne: instance.conflictingSet[arc]) {
             const long positionOne = getIndex(instance.arcBasedShortestPaths[vehicleOne], arc);
@@ -109,7 +109,7 @@ namespace cppModule {
 
     auto _solveArcTies(const Instance &instance,
                        const long &arc,
-                       CompleteSolution &completeSolution,
+                       Solution &completeSolution,
                        Scheduler &scheduler) {
         Tie tie{};
         for (auto vehicleOne: instance.conflictingSet[arc]) {
@@ -124,7 +124,7 @@ namespace cppModule {
         }
     }
 
-    auto _printIfSolutionHasTies(const CompleteSolution &currentSolution) -> void {
+    auto _printIfSolutionHasTies(const Solution &currentSolution) -> void {
 #ifdef assertionsOnEvaluationFunction
         if (currentSolution.solutionHasTies) {
             std::cout << "Solution has ties! \n";
@@ -132,7 +132,7 @@ namespace cppModule {
 #endif
     }
 
-    auto checkIfSolutionHasTies(const Instance &instance, CompleteSolution &completeSolution) -> void {
+    auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void {
         for (long arc = 1; arc < instance.numberOfArcs; arc++) {
             bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();
             if (noTiesCanHappenOnArc) {
@@ -149,7 +149,7 @@ namespace cppModule {
     }
 
 
-    auto solveSolutionTies(const Instance &instance, CompleteSolution &completeSolution, Scheduler &scheduler) -> void {
+    auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
         completeSolution.solutionHasTies = false; // will be set to true if a tie cannot be solved
         for (long arc = 1; arc < instance.numberOfArcs; arc++) {
             bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();

@@ -8,9 +8,9 @@
 #include "pybind11/stl.h"
 #include "iomanip"
 
-auto cppModule::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(const long otherVehicle,
-                                                                                  const long otherPosition,
-                                                                                  const double otherDeparture) -> void {
+auto cpp_module::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(const long otherVehicle,
+                                                                                   const long otherPosition,
+                                                                                   const double otherDeparture) -> void {
 #ifdef assertionsOnEvaluationFunction
     if (lastProcessedPosition[otherVehicle] == otherPosition - 1 & lastProcessedPosition[otherVehicle] != -1) {
         auto otherLastPositionProcessed = lastProcessedPosition[otherVehicle];
@@ -31,7 +31,7 @@ auto cppModule::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNex
 #endif
 }
 
-auto cppModule::Scheduler::assertTotalTardinessIsNotNegative(const double totalTardiness) -> void {
+auto cpp_module::Scheduler::assertTotalTardinessIsNotNegative(const double totalTardiness) -> void {
 #ifdef assertionsOnEvaluationFunction
     if (totalTardiness < -1e-6) {
         std::cout << "Total tardiness: " << totalTardiness << "is negative!";
@@ -40,7 +40,7 @@ auto cppModule::Scheduler::assertTotalTardinessIsNotNegative(const double totalT
 #endif
 }
 
-auto cppModule::Scheduler::printDelayComputed(const double delay) const -> void {
+auto cpp_module::Scheduler::printDelayComputed(const double delay) const -> void {
 #ifdef printsEvaluationFunction
     if (iteration == ITERATION_TO_PRINT) {
         std::cout << "delay computed is : " << delay << " \n";
@@ -48,7 +48,7 @@ auto cppModule::Scheduler::printDelayComputed(const double delay) const -> void 
 #endif
 }
 
-namespace cppModule {
+namespace cpp_module {
 
     auto Scheduler::_printDeparture() const -> void {
 #ifdef printsEvaluationFunction
@@ -192,7 +192,7 @@ namespace cppModule {
 #endif
     }
 
-    auto Scheduler::_assertNoVehiclesAreLate(CompleteSolution &completeSolution) -> void {
+    auto Scheduler::_assertNoVehiclesAreLate(Solution &completeSolution) -> void {
 #ifdef assertionsOnEvaluationFunction
         for (auto vehicle = 0; vehicle < instance.numberOfVehicles; ++vehicle) {
             if (completeSolution.congestedSchedule[vehicle].back() > instance.deadlines[vehicle] + TOLERANCE) {

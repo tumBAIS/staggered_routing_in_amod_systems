@@ -12,7 +12,7 @@
 //#define assertionsOnMoveOperator
 //#define printNotEnoughSlack
 
-namespace cppModule {
+namespace cpp_module {
     const long ITERATION_TO_PRINT = 3; //has effect only if printsEvaluationFunction is defined
     const double CONSTR_TOLERANCE = 1 * 1e-3;
     const double TOLERANCE = 1e-6;
@@ -163,7 +163,7 @@ namespace cppModule {
         }
     };
 
-    class CompleteSolution {
+    class Solution {
     public:
         VehicleSchedule congestedSchedule;
         std::vector<std::vector<bool>> tableWithCapReached;
@@ -178,7 +178,7 @@ namespace cppModule {
         bool capReached;
         long timesCapIsReached{};
 
-        explicit CompleteSolution(const std::vector<double> &argReleaseTimes, const Instance &instance)
+        explicit Solution(const std::vector<double> &argReleaseTimes, const Instance &instance)
                 : congestedSchedule(
                 argReleaseTimes.size()), staggeringApplied(argReleaseTimes.size()),
                   remainingTimeSlack(
@@ -258,21 +258,21 @@ namespace cppModule {
         checkIfSolutionIsAdmissible(double totalDelay, double timesCapIsReached) -> bool;
 
         auto
-        constructCongestedSchedule(CompleteSolution &completeSolution) -> void;
+        constructCongestedSchedule(Solution &completeSolution) -> void;
 
         auto
-        updateExistingCongestedSchedule(CompleteSolution &completeSolution,
+        updateExistingCongestedSchedule(Solution &completeSolution,
                                         const Conflict &conflict) -> void;
 
         auto _initializeScheduler(const std::vector<double> &releaseTimes) -> void;
 
         auto _setNextDepartureOfVehicleAndPushToQueue(double delay) -> void;
 
-        auto _updateTotalValueSolution(CompleteSolution &completeSolution) -> void;
+        auto _updateTotalValueSolution(Solution &completeSolution) -> void;
 
         void _initializeSchedulerForUpdatingCongestedSchedule(const VehicleSchedule &congestedSchedule);
 
-        void _initializePriorityQueue(const Conflict &conflict, CompleteSolution &completeSolution);
+        void _initializePriorityQueue(const Conflict &conflict, Solution &completeSolution);
 
         auto _checkIfOtherShouldBeMarked(long otherVehicle, long otherPosition,
                                          bool currentConflictsWithOther) -> vehicleShouldBeMarked;
@@ -308,7 +308,7 @@ namespace cppModule {
 
         void _assertEventPushedToQueueIsCorrect();
 
-        void _getNextDeparture(CompleteSolution &completeSolution);
+        void _getNextDeparture(Solution &completeSolution);
 
         void _addDepartureToPriorityQueue(double releaseTimeVehicle, long vehicle);
 
@@ -322,12 +322,12 @@ namespace cppModule {
 
         void _initializeStatusVehicles();
 
-        void _processConflictingSet(CompleteSolution &completeSolution,
+        void _processConflictingSet(Solution &completeSolution,
                                     double &delay,
                                     double &currentVehicleNewArrival,
                                     double &vehiclesOnArc);
 
-        void _processVehicle(CompleteSolution &completeSolution);
+        void _processVehicle(Solution &completeSolution);
 
 
         void _assertOtherIsNotActive(long otherVehicle);
@@ -365,7 +365,7 @@ namespace cppModule {
 
         void _assertLazyUpdateIsNecessary(double otherDeparture) const;
 
-        void _assertNoVehiclesAreLate(CompleteSolution &completeSolution);
+        void _assertNoVehiclesAreLate(Solution &completeSolution);
 
         void _assertVehiclesOnArcIsCorrect(double vehiclesOnArc, VehicleSchedule &congestedSchedule);
 
@@ -393,7 +393,7 @@ namespace cppModule {
 
         static void assertTotalTardinessIsNotNegative(double totalTardiness);
 
-        void _computeSolutionTardiness(CompleteSolution &completeSolution);
+        void _computeSolutionTardiness(Solution &completeSolution);
 
         InstructionConflictingSet
         _checkIfTripsWithinSameConflictingSetCanHaveAConflict(long otherVehicle, long otherPosition);
@@ -451,38 +451,38 @@ namespace cppModule {
 
 
     auto
-    _applyStaggeringToSolveConflict(Scheduler &scheduler, CompleteSolution &completeSolution,
+    _applyStaggeringToSolveConflict(Scheduler &scheduler, Solution &completeSolution,
                                     Conflict &conflict) -> void;
 
 
-    static auto _resetNewSolution(const CompleteSolution &currentSolution, CompleteSolution &newSolution,
+    static auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
                                   Conflict &conflict) -> void;
 
     static auto
-    _updateCurrentSolution(CompleteSolution &currentSolution,
-                           const CompleteSolution &newSolution,
+    _updateCurrentSolution(Solution &currentSolution,
+                           const Solution &newSolution,
                            Conflict &conflict) -> void;
 
 
-    auto _initializeCompleteSolution(CompleteSolution &completeSolution) -> void;
+    auto _initializeCompleteSolution(Solution &completeSolution) -> void;
 
 
     auto getIndex(const std::vector<long> &v, long K) -> long;
 
     auto importInstanceForLocalSearch() -> ImportedInstanceForTest;
 
-    auto staggerVehicle(CompleteSolution &completeSolution, long vehicle, double staggering) -> void;
+    auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void;
 
-    auto solveSolutionTies(const Instance &instance, CompleteSolution &completeSolution, Scheduler &scheduler) -> void;
+    auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void;
 
-    auto checkIfSolutionHasTies(const Instance &instance, CompleteSolution &completeSolution) -> void;
+    auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void;
 
     auto computeDelayOnArc(const double &vehiclesOnArc, const Instance &instance, long arc) -> double;
 
-    auto _assertSolutionIsCorrect(CompleteSolution &newSolution, Scheduler &scheduler) -> void;
+    auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void;
 
     auto
-    improveTowardsSolutionQuality(const Instance &instance, CompleteSolution &currentSolution,
+    improveTowardsSolutionQuality(const Instance &instance, Solution &currentSolution,
                                   Scheduler &scheduler) -> void;
 
     auto computeVehiclesOnArc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;

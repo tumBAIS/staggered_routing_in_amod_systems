@@ -6,7 +6,7 @@
 #include "module.h"
 
 
-namespace cppModule {
+namespace cpp_module {
 
 
     struct Entry {
@@ -32,7 +32,7 @@ namespace cppModule {
     }
 
 
-    auto _assertSolutionIsCorrect(CompleteSolution &newSolution, Scheduler &scheduler) -> void {
+    auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void {
 #ifdef assertionsOnMoveOperator
         // check with old function if outputs coincide
         cppModule::CompleteSolution testSolution(newSolution);

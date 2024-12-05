@@ -5,7 +5,7 @@
 #include "iostream"
 #include "stdexcept"
 
-namespace cppModule {
+namespace cpp_module {
 
     auto Scheduler::_initializeStatusVehicles() -> void {
         vehicleStatus = std::vector<vehicleStatusType>(instance.numberOfVehicles, vehicleStatusType::INACTIVE);
@@ -44,7 +44,7 @@ namespace cppModule {
     }
 
     auto
-    Scheduler::_initializePriorityQueue(const Conflict &conflict, CompleteSolution &completeSolution) -> void {
+    Scheduler::_initializePriorityQueue(const Conflict &conflict, Solution &completeSolution) -> void {
         // add vehicles which are staggered at this iteration of the algorithm.
         if (conflict.staggeringCurrentVehicle != 0) {
             _addDepartureToPriorityQueue(completeSolution.releaseTimes[conflict.currentVehicle],
@@ -224,7 +224,7 @@ namespace cppModule {
         }
     }
 
-    auto Scheduler::_updateTotalValueSolution(CompleteSolution &completeSolution) -> void {
+    auto Scheduler::_updateTotalValueSolution(Solution &completeSolution) -> void {
 
         for (auto vehicle = 0; vehicle < instance.numberOfVehicles; ++vehicle) {
             if (vehicleStatus[vehicle] != ACTIVE) { continue; }
@@ -281,7 +281,7 @@ namespace cppModule {
         return false;
     }
 
-    auto Scheduler::_processConflictingSet(CompleteSolution &completeSolution,
+    auto Scheduler::_processConflictingSet(Solution &completeSolution,
                                            double &delay,
                                            double &currentVehicleNewArrival,
                                            double &vehiclesOnArc) -> void {
@@ -306,7 +306,7 @@ namespace cppModule {
         return confSet.empty();
     }
 
-    auto Scheduler::_processVehicle(CompleteSolution &completeSolution) -> void {
+    auto Scheduler::_processVehicle(Solution &completeSolution) -> void {
         double currentVehicleNewArrival = departure.time + instance.nominalTravelTimesArcs[departure.arc];
         double vehiclesOnArc = 1;
         double delay = 0;
@@ -575,7 +575,7 @@ namespace cppModule {
     }
 
 
-    auto Scheduler::updateExistingCongestedSchedule(CompleteSolution &completeSolution,
+    auto Scheduler::updateExistingCongestedSchedule(Solution &completeSolution,
                                                     const Conflict &conflict) -> void {
 
         _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.congestedSchedule);

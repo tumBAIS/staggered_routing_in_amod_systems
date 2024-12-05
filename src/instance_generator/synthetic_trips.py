@@ -1,12 +1,12 @@
 import time
 
 import pandas as pd
-from problem.parameters import InstanceParams
+from inputData import InputData
 from problem.network import Network
 from shapely.geometry import Point
 
 
-def get_synthetic_trips(instance_params: InstanceParams, network: Network) -> list[dict]:
+def get_synthetic_trips(instance_params: InputData, network: Network) -> list[dict]:
     """Creates a set of trips on a synthetic network with all equal release times and all equal origin-destination."""
     origin, destination = _find_extreme_points(network.gdf_nodes)
     origin_coords = _point_to_dict(origin.geometry)
@@ -14,7 +14,7 @@ def get_synthetic_trips(instance_params: InstanceParams, network: Network) -> li
     origin = network.find_closest_node(origin.geometry)
     destination = network.find_closest_node(destination.geometry)
 
-    trips = _generate_trips_list(network, instance_params.number_trips, origin_coords, destination_coords,
+    trips = _generate_trips_list(network, instance_params.numberRides, origin_coords, destination_coords,
                                  origin, destination)
     return trips
 
