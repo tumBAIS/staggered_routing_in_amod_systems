@@ -133,12 +133,16 @@ class Network:
         nearest_index = nearest_indexes[1]
         nearest_node = self.gdf_nodes.iloc[nearest_index]
 
-        return int(nearest_node['node'].iloc[0])
+        return int(nearest_node.index[0])
 
     def _get_gdf_nodes(self) -> gpd.GeoDataFrame:
         """ Convert NetworkX graph nodes to a list of dictionaries for GeoDataFrame """
         nodes = [{'node': node, 'geometry': shp.Point(data['x'], data['y'])} for node, data in self.G.nodes(data=True)]
-        return gpd.GeoDataFrame(nodes, geometry='geometry')
+        # Set the 'node' column as the index of the DataFrame
+        nodes_gdf = gpd.GeoDataFrame(nodes, geometry='geometry')
+        nodes_gdf.set_index('node', inplace=True)
+        nodes_gdf.sort_index(inplace=True)
+        return nodes_gdf
 
     def add_arcs(self, trips, instance_params: InstanceParams):
         """

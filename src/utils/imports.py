@@ -14,7 +14,7 @@ def getNotSimplifiedInstance(inputData: InputData) -> Instance:
     taxiRides = import_rides_df(inputData, graph)
     # nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
     # releaseTimes, arrivalTimes = getReleaseTimesAndArrivalTimesDataset(taxiRides)
-    reduceGraph(graph, nodeBasedShortestPaths, inputData)
+    reduceGraph(graph, taxiRides["path"], inputData)
     nodeBasedShortestPaths = addShortcuts(inputData, graph, taxiRides, nodeBasedShortestPaths)
     setArcsNominalTravelTimesAndCapacities(graph, inputData)
 

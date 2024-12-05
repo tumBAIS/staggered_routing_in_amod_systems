@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # ===========================
     instance_params = InputData(
         day=1,
-        numberRides=50,
+        numberRides=2,
         t_min=0,
         epochSize=60,
         seed=0,

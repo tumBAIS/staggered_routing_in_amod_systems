@@ -96,7 +96,6 @@ def get_real_world_trips(instance_parameters: inputData.InputData, network: Netw
     print(f"Change in number of rows: {change_in_length}")
 
     # END SELECTION -- START COMPUTATION #
-    dataset_gdf = _preprocess_real_world_times(dataset_gdf)
 
     # Vectorized computation of shortest paths
     # Compute n-shortest paths for each row
@@ -111,8 +110,9 @@ def get_real_world_trips(instance_parameters: inputData.InputData, network: Netw
 
     dataset_gdf["origin_coords"] = dataset_gdf["origin_coords"].apply(_point_to_dict)
     dataset_gdf["destination_coords"] = dataset_gdf["destination_coords"].apply(_point_to_dict)
+    # Set minimum release time
+    dataset_gdf = _preprocess_real_world_times(dataset_gdf)
     _plot_od_pairs(network, dataset_gdf, instance_parameters.path_to_instance, plot_flag=False)
-
     # Replicate and sort DataFrame
     dataset_gdf = dataset_gdf.sort_values(by=["release_time"])
     dataset_gdf.reset_index(drop=True, inplace=True)
