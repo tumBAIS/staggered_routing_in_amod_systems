@@ -49,12 +49,12 @@ namespace cpp_module {
         if (conflict.staggeringCurrentVehicle != 0) {
             _addDepartureToPriorityQueue(completeSolution.releaseTimes[conflict.currentVehicle],
                                          conflict.currentVehicle);
-            completeSolution.congestedSchedule[conflict.currentVehicle][0] = completeSolution.releaseTimes[conflict.currentVehicle];
+            completeSolution.schedule[conflict.currentVehicle][0] = completeSolution.releaseTimes[conflict.currentVehicle];
         }
         if (conflict.destaggeringOtherVehicle != 0) {
             _addDepartureToPriorityQueue(completeSolution.releaseTimes[conflict.otherVehicle],
                                          conflict.otherVehicle);
-            completeSolution.congestedSchedule[conflict.otherVehicle][0] = completeSolution.releaseTimes[conflict.otherVehicle];
+            completeSolution.schedule[conflict.otherVehicle][0] = completeSolution.releaseTimes[conflict.otherVehicle];
         }
 
     }
@@ -232,20 +232,20 @@ namespace cpp_module {
             const double oldDelayVehicle = originalSchedule[vehicle].back() -
                                            originalSchedule[vehicle][0] -
                                            instance.freeFlowTravelTimesVehicles[vehicle];
-            const double newDelayVehicle = completeSolution.congestedSchedule[vehicle].back() -
+            const double newDelayVehicle = completeSolution.schedule[vehicle].back() -
                                            completeSolution.releaseTimes[vehicle] -
                                            instance.freeFlowTravelTimesVehicles[vehicle];
-            completeSolution.totalDelay += (newDelayVehicle - oldDelayVehicle);
+            completeSolution.total_delay += (newDelayVehicle - oldDelayVehicle);
             const double OldTardinessVehicle = std::max(0.0,
                                                         originalSchedule[vehicle].back() - instance.dueDates[vehicle]);
             const double newTardinessOnArc = std::max(0.0,
-                                                      completeSolution.congestedSchedule[vehicle].back() -
+                                                      completeSolution.schedule[vehicle].back() -
                                                       instance.dueDates[vehicle]);
             completeSolution.totalTardiness += (newTardinessOnArc - OldTardinessVehicle);
 
         }
         assertTotalTardinessIsNotNegative(completeSolution.totalTardiness);
-        completeSolution.solutionValue = completeSolution.totalDelay;
+        completeSolution.solutionValue = completeSolution.total_delay;
     }
 
 
@@ -285,9 +285,9 @@ namespace cpp_module {
                                            double &delay,
                                            double &currentVehicleNewArrival,
                                            double &vehiclesOnArc) -> void {
-        _updateVehiclesOnArcOfConflictingSet(completeSolution.congestedSchedule, vehiclesOnArc);
+        _updateVehiclesOnArcOfConflictingSet(completeSolution.schedule, vehiclesOnArc);
         if (lazyUpdatePriorityQueue) { return; }
-        tieFound = _checkIfTieInSet(completeSolution.congestedSchedule);
+        tieFound = _checkIfTieInSet(completeSolution.schedule);
         if (tieFound) {
             return;
         }
@@ -298,7 +298,7 @@ namespace cpp_module {
         if (vehicleIsLate) {
             return;
         }
-        _decideOnVehiclesMaybeToMark(completeSolution.congestedSchedule, currentVehicleNewArrival);
+        _decideOnVehiclesMaybeToMark(completeSolution.schedule, currentVehicleNewArrival);
 
     }
 
@@ -317,8 +317,8 @@ namespace cpp_module {
                 return;
             }
         }
-        _assertVehiclesOnArcIsCorrect(vehiclesOnArc, completeSolution.congestedSchedule);
-        _updateVehicleSchedule(completeSolution.congestedSchedule, currentVehicleNewArrival);
+        _assertVehiclesOnArcIsCorrect(vehiclesOnArc, completeSolution.schedule);
+        _updateVehicleSchedule(completeSolution.schedule, currentVehicleNewArrival);
         _assertEventPushedToQueueIsCorrect();
         moveVehicleForwardInTheQueue(currentVehicleNewArrival); // O(2 * log n) - pq.push
     }
@@ -578,7 +578,7 @@ namespace cpp_module {
     auto Scheduler::updateExistingCongestedSchedule(Solution &completeSolution,
                                                     const Conflict &conflict) -> void {
 
-        _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.congestedSchedule);
+        _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.schedule);
         _initializeStatusVehicles();
         _initializePriorityQueue(conflict, completeSolution);
         while (!priorityQueueDepartures.empty()) {
@@ -588,11 +588,11 @@ namespace cpp_module {
             if (skipDeparture) { continue; }
             _printDeparture();
             _activateStagingVehicle();
-            completeSolution.congestedSchedule[departure.vehicle][departure.position] = departure.time;
-            _assertDepartureIsFeasible(completeSolution.congestedSchedule);
+            completeSolution.schedule[departure.vehicle][departure.position] = departure.time;
+            _assertDepartureIsFeasible(completeSolution.schedule);
             vehiclesToMaybeMark.clear();
             lazyUpdatePriorityQueue = false;
-            _assertAnalyzingSmallestDeparture(completeSolution.congestedSchedule);
+            _assertAnalyzingSmallestDeparture(completeSolution.schedule);
             _processVehicle(completeSolution);
             if (tieFound || vehicleIsLate) {
                 completeSolution.scheduleIsFeasibleAndImproving = false;

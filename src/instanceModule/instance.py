@@ -53,7 +53,7 @@ class Instance:
         """
         if self.deadlines is None:
             self.deadlines = deadlines
-            print(f"Deadline delta is {self.inputData.deadlineFactor} % of congested travel time")
+            print(f"Deadline delta is {self.inputData.deadline_factor} % of congested travel time")
         else:
             raise ValueError("trying to override deadlines with class method!")
 
@@ -81,9 +81,9 @@ class Instance:
 
             # Calculate staggering time based on staggering cap percentage
             if self.inputData.staggeringApplicableMethod == "fixed":
-                staggering_cap_time = self.inputData.staggeringCapPercentage * 60
+                staggering_cap_time = self.inputData.staggering_cap * 60
             elif self.inputData.staggeringApplicableMethod == "proportional":
-                staggering_cap_time = self.inputData.staggeringCapPercentage / 100 * total_travel_time
+                staggering_cap_time = self.inputData.staggering_cap / 100 * total_travel_time
             else:
                 raise RuntimeError("wrong staggering applicable method specified!")
 

@@ -6,6 +6,7 @@ import shapely as shp
 from networkx.readwrite import json_graph
 from shapely import Polygon
 
+from inputData import InputData
 from problem.arc import Arc
 from problem.parameters import InstanceParams
 from utils.aliases import *
@@ -13,8 +14,8 @@ from utils.aliases import *
 
 class Network:
 
-    def __init__(self, instance_params: InstanceParams, G: Optional[nx.DiGraph] = None):
-        self.instance_params = instance_params
+    def __init__(self, input_data: InputData, G: Optional[nx.DiGraph] = None):
+        self.instance_params = input_data
         if G is None:
             # From run_procedure
             self.G = self._deserialize(self.instance_params.path_to_G)
@@ -147,14 +148,13 @@ class Network:
         osm_arcs_utilized = trips.get_osm_arcs_utilized()
 
         # Add dummy arcs (one for each alternative path)
-        for dummy_id in range(instance_params.num_alternative_paths):
-            dummy_arc = Arc.create_dummy_arc(id=dummy_id)
-            self.arcs.append(dummy_arc)
-            self.travel_time_arcs.append(dummy_arc.nominal_travel_time)  # This will always be 0 for dummy arcs
-            self.nominal_capacities_arcs.append(dummy_arc.nominal_capacity)  # This will always be 0 or 1 for dummy arcs
+        dummy_arc = Arc.create_dummy_arc(id=0)
+        self.arcs.append(dummy_arc)
+        self.travel_time_arcs.append(dummy_arc.nominal_travel_time)  # This will always be 0 for dummy arcs
+        self.nominal_capacities_arcs.append(dummy_arc.nominal_capacity)  # This will always be 0 or 1 for dummy arcs
 
         # Add real arcs from OSM data, starting with an ID after the dummy arcs
-        for id_offset, osm_arc_id in enumerate(osm_arcs_utilized, start=instance_params.num_alternative_paths):
+        for id_offset, osm_arc_id in enumerate(osm_arcs_utilized, start=1):
             osm_arc_info = self.G.edges[osm_arc_id]  # Get OSM info from the graph
             arc = Arc(id=id_offset, osm_info=osm_arc_info)
             self.arcs.append(arc)
@@ -189,7 +189,6 @@ class Network:
         for i in range(len(path) - 1):
             length += self.G[path[i]][path[i + 1]].get(weight, 1)  # Default weight is 1 if not specified
         return length
-
 
     def print_info_arcs(self):
         travel_times_arcs = [arc.nominal_travel_time for arc in self.arcs if not arc.is_dummy]

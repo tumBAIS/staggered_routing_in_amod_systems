@@ -32,14 +32,14 @@ namespace cpp_module {
 
 
     auto _initializeCompleteSolution(Solution &completeSolution) -> void {
-        completeSolution.totalDelay = 0;
+        completeSolution.total_delay = 0;
         completeSolution.totalTardiness = 0;
         completeSolution.solutionValue = 0;
         completeSolution.timesCapIsReached = 0;
         completeSolution.scheduleIsFeasibleAndImproving = true;
         completeSolution.solutionHasTies = false;
         completeSolution.capReached = false;
-        for (auto vehicle = 0; vehicle < completeSolution.congestedSchedule.size(); vehicle++) {
+        for (auto vehicle = 0; vehicle < completeSolution.schedule.size(); vehicle++) {
             std::size_t sz = completeSolution.tableWithCapReached[vehicle].size();
             completeSolution.tableWithCapReached[vehicle].assign(sz, false);
         }
@@ -93,12 +93,12 @@ namespace cpp_module {
     auto Scheduler::_getNextDeparture(Solution &completeSolution) -> void {
         departure = priorityQueueDepartures.top();
         priorityQueueDepartures.pop();
-        completeSolution.congestedSchedule[departure.vehicle][departure.position] = departure.time;
+        completeSolution.schedule[departure.vehicle][departure.position] = departure.time;
     }
 
     auto Scheduler::_computeSolutionTardiness(Solution &completeSolution) -> void {
-        for (auto vehicle = 0; vehicle < completeSolution.congestedSchedule.size(); vehicle++) {
-            double vehicleTardiness = std::max(0.0, completeSolution.congestedSchedule[vehicle].back() -
+        for (auto vehicle = 0; vehicle < completeSolution.schedule.size(); vehicle++) {
+            double vehicleTardiness = std::max(0.0, completeSolution.schedule[vehicle].back() -
                                                     instance.dueDates[vehicle]);
             completeSolution.totalTardiness += vehicleTardiness;
             assertTotalTardinessIsNotNegative(completeSolution.totalTardiness);
@@ -107,7 +107,7 @@ namespace cpp_module {
     }
 
     auto
-    Scheduler::constructCongestedSchedule(Solution &completeSolution) -> void {
+    Scheduler::construct_schedule(Solution &completeSolution) -> void {
         // computes solution, value of solution, checks if solution is feasible and improving
         // breaks early if it is not.
         _initializeScheduler(completeSolution.releaseTimes);
@@ -118,7 +118,7 @@ namespace cpp_module {
                 const auto vehiclesOnArc = computeVehiclesOnArc(arrivalsOnArcs[departure.arc],
                                                                 departure.time);
                 const auto delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc);
-                completeSolution.totalDelay += delay;
+                completeSolution.total_delay += delay;
                 _setNextDepartureOfVehicleAndPushToQueue(delay);
                 bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(
                         completeSolution.solutionValue, completeSolution.timesCapIsReached);
@@ -128,7 +128,7 @@ namespace cpp_module {
             }
         }
         _computeSolutionTardiness(completeSolution);
-        completeSolution.solutionValue = completeSolution.totalDelay;
+        completeSolution.solutionValue = completeSolution.total_delay;
     }
 
 

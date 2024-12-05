@@ -5,6 +5,7 @@
 #include <queue>
 #include <limits>
 #include <ctime>
+#include <stdexcept>  // Include for std::out_of_range
 
 //#define printsEvaluationFunction
 //#define printInfoNeighborhood
@@ -45,13 +46,7 @@ namespace cpp_module {
             if (e1.time > e2.time) {
                 return e1.time > e2.time;
             } else if (e1.time == e2.time) {
-                if (e1.arc > e2.arc) {
-                    return e1.arc > e2.arc;
-                } else if (e1.arc == e2.arc) {
-                    return e1.vehicle > e2.vehicle;
-                } else {
-                    return false;
-                }
+                return e1.arc > e2.arc;
             }
             return false;
 
@@ -89,16 +84,16 @@ namespace cpp_module {
 
     };
 
-    auto cppComputeCongestedSchedule(const std::vector<std::vector<long>> &arcBasedShortestPaths,
-                                     const std::vector<double> &argReleaseTimes,
-                                     const std::vector<double> &nominalTravelTimesArcs,
-                                     const std::vector<long> &nominalCapacitiesArcsUtilized,
-                                     const std::vector<double> &arg_list_of_slopes,
-                                     const std::vector<double> &arg_list_of_thresholds,
-                                     const std::vector<double> &parameters
+    auto construct_solution(const std::vector<std::vector<long>> &arcBasedShortestPaths,
+                            const std::vector<double> &argReleaseTimes,
+                            const std::vector<double> &nominalTravelTimesArcs,
+                            const std::vector<long> &nominalCapacitiesArcsUtilized,
+                            const std::vector<double> &arg_list_of_slopes,
+                            const std::vector<double> &arg_list_of_thresholds,
+                            const std::vector<double> &parameters
     ) -> VehicleSchedule;
 
-    auto cppSchedulingLocalSearch(const std::vector<double> &argReleaseTimes,
+    auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
                                   const std::vector<double> &argRemainingTimeSlack,
                                   const std::vector<double> &argStaggeringApplied,
                                   const PotentiallyConflictingVehiclesSets &argConflictingSets,
@@ -111,18 +106,19 @@ namespace cpp_module {
                                   const std::vector<double> &argDueDates,
                                   const std::vector<double> &arg_list_of_slopes,
                                   const std::vector<double> &arg_list_of_thresholds,
-                                  const std::vector<double> &argParameters) -> VehicleSchedule;
+                                  const std::vector<double> &argParameters,
+                                  const double &lb_travel_time) -> VehicleSchedule;
 
     auto _sortConflicts(std::vector<Conflict> &conflictsInSchedule) -> void;
 
     class Instance {
     public:
-        const std::vector<std::vector<long>> &arcBasedShortestPaths;
-        const std::vector<double> &nominalTravelTimesArcs;
-        const std::vector<long> &nominalCapacitiesArcs;
+        const std::vector<std::vector<long>> arcBasedShortestPaths;
+        const std::vector<double> nominalTravelTimesArcs;
+        const std::vector<long> nominalCapacitiesArcs;
         std::vector<double> deadlines;
         std::vector<double> dueDates;
-        std::vector<double> statusQuoReleaseTimes;
+        std::vector<double> release_times;
         PotentiallyConflictingVehiclesSets conflictingSet;
         std::vector<std::vector<double>> earliestDepartureTimes;
         std::vector<std::vector<double>> latestDepartureTimes;
@@ -133,6 +129,7 @@ namespace cpp_module {
         std::vector<double> list_of_thresholds;
 
         double maxTimeOptimization;
+        double lb_travel_time;
 
 
         Instance(const std::vector<std::vector<long>> &argArcBasedShortestPaths,
@@ -140,12 +137,14 @@ namespace cpp_module {
                  const std::vector<long> &argNominalCapacitiesArcs,
                  const std::vector<double> &arg_list_of_slopes,
                  const std::vector<double> &arg_list_of_thresholds,
-                 const std::vector<double> &argParameters
+                 const std::vector<double> &argParameters,
+                 const std::vector<double> &arg_release_times,
+                 const double arg_lb_travel_time
         ) :
                 deadlines(argArcBasedShortestPaths.size()),
                 dueDates(argArcBasedShortestPaths.size()),
                 freeFlowTravelTimesVehicles(argArcBasedShortestPaths.size(), 0),
-                statusQuoReleaseTimes(argArcBasedShortestPaths.size()),
+                release_times(arg_release_times),
                 arcBasedShortestPaths(argArcBasedShortestPaths),
                 nominalTravelTimesArcs(argNominalTravelTimesArcs),
                 nominalCapacitiesArcs(argNominalCapacitiesArcs),
@@ -155,22 +154,33 @@ namespace cpp_module {
             maxTimeOptimization = argParameters[0];
             list_of_slopes = arg_list_of_slopes;
             list_of_thresholds = arg_list_of_thresholds;
+            lb_travel_time = arg_lb_travel_time;
 
             for (auto i = 0; i < numberOfVehicles; i++) {
                 deadlines[i] = std::numeric_limits<double>::max();
                 dueDates[i] = std::numeric_limits<double>::max();
             }
         }
+
+        [[nodiscard]] const std::vector<std::vector<long>>& get_set_of_vehicle_paths() const { return arcBasedShortestPaths; }
+        [[nodiscard]]const std::vector<double>& get_travel_times_arcs() const { return nominalTravelTimesArcs; }
+        [[nodiscard]]const std::vector<long>& get_capacities_arcs() const { return nominalCapacitiesArcs; }
+        [[nodiscard]]const std::vector<double>& get_list_of_slopes() const { return list_of_slopes; }
+        [[nodiscard]]const std::vector<double>& get_list_of_thresholds() const { return list_of_thresholds; }
+        [[nodiscard]] std::vector<double> get_parameters() const { return {maxTimeOptimization}; }
+        [[nodiscard]]const std::vector<double>& get_release_times() const { return release_times; }
+
     };
 
     class Solution {
     public:
-        VehicleSchedule congestedSchedule;
+        VehicleSchedule schedule;
         std::vector<std::vector<bool>> tableWithCapReached;
         std::vector<double> releaseTimes;
         std::vector<double> remainingTimeSlack;
         std::vector<double> staggeringApplied;
-        double totalDelay;
+        double total_delay;
+        double lb_travel_time;
         double totalTardiness;
         double solutionValue;
         bool scheduleIsFeasibleAndImproving;
@@ -178,27 +188,47 @@ namespace cpp_module {
         bool capReached;
         long timesCapIsReached{};
 
-        explicit Solution(const std::vector<double> &argReleaseTimes, const Instance &instance)
-                : congestedSchedule(
+        explicit Solution(const std::vector<double> &argReleaseTimes, Instance &instance)
+                : schedule(
                 argReleaseTimes.size()), staggeringApplied(argReleaseTimes.size()),
                   remainingTimeSlack(
                           argReleaseTimes.size()),
                   tableWithCapReached(
                           argReleaseTimes.size()) {
             releaseTimes = argReleaseTimes;
-            totalDelay = 0;
+            total_delay = 0;
             totalTardiness = 0;
             solutionValue = 0;
+            lb_travel_time = instance.lb_travel_time;
             scheduleIsFeasibleAndImproving = true;
             solutionHasTies = false;
             capReached = false;
             for (auto vehicle = 0; vehicle < size(argReleaseTimes); vehicle++) {
-                congestedSchedule[vehicle].resize(instance.arcBasedShortestPaths[vehicle].size());
+                schedule[vehicle].resize(instance.arcBasedShortestPaths[vehicle].size());
                 staggeringApplied[vehicle] = 0.0;
                 remainingTimeSlack[vehicle] = std::numeric_limits<double>::max();
                 tableWithCapReached[vehicle].resize(instance.arcBasedShortestPaths[vehicle].size());
             }
         };
+
+        // Method to get the trip schedule for a given trip_id
+        [[nodiscard]] const std::vector<double>& get_trip_schedule(int trip_id) const {
+            if (trip_id < 0 || trip_id >= schedule.size()) {
+                throw std::out_of_range("Trip ID is out of range.");
+            }
+            return schedule[trip_id];
+        }
+
+        [[nodiscard]] const double& get_total_delay() const {
+            return total_delay;
+        }
+
+        [[nodiscard]] double get_total_travel_time() const {
+            double total_travel_time = total_delay + lb_travel_time; // Assuming total_delay and lb_travel_time are accessible
+            return total_travel_time;
+        }
+
+
 
     };
 
@@ -213,13 +243,12 @@ namespace cpp_module {
         std::vector<long> vehiclesToMaybeMark;
         Departure departure{};
         Departure otherVehicleDeparture{};
-        const Instance &instance;
+        Instance &instance;
         double bestSolutionValue;
         long maxTimesCapReached;
         VehicleSchedule originalSchedule;
         VehicleSchedule scheduleToRestore;
         MinQueueDepartures priorityQueueToRestore;
-//        std::vector<double> greatestTimeAnalyzedOnArcs;
         bool lazyUpdatePriorityQueue{};
         bool tieFound{};
         bool vehicleIsLate{};
@@ -245,7 +274,7 @@ namespace cpp_module {
         bool slackIsEnough = true;
 
 
-        explicit Scheduler(const Instance &argInstance) :
+        explicit Scheduler(Instance &argInstance) :
                 instance(argInstance) {
             startSearchClock = clock() / (double) CLOCKS_PER_SEC;
             bestSolutionValue = std::numeric_limits<double>::max();
@@ -258,7 +287,7 @@ namespace cpp_module {
         checkIfSolutionIsAdmissible(double totalDelay, double timesCapIsReached) -> bool;
 
         auto
-        constructCongestedSchedule(Solution &completeSolution) -> void;
+        construct_schedule(Solution &completeSolution) -> void;
 
         auto
         updateExistingCongestedSchedule(Solution &completeSolution,
@@ -399,6 +428,9 @@ namespace cpp_module {
         _checkIfTripsWithinSameConflictingSetCanHaveAConflict(long otherVehicle, long otherPosition);
 
         void printDelayComputed(double delay) const;
+
+
+        Solution construct_solution(const std::vector<double> &start_times);
     };
 
     class ConflictSearcherNew {

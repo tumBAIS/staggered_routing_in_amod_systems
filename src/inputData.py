@@ -3,6 +3,8 @@ import datetime
 import os
 import pickle
 import sys
+from pathlib import Path
+
 "set paths"
 pathToRepository = os.path.join(os.path.dirname(__file__), "..")
 pathToSrc = os.path.join(os.path.dirname(__file__), "../src")
@@ -24,8 +26,9 @@ GUROBI_OPTIMALITY_GAP = 0.01
 dateExperiment = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
 # https://gis.stackexchange.com/questions/397482/what-does-this-warning-mean-for-shapely-python
 os.environ['USE_PYGEOS'] = '0'  # to suppress shapely warning
-# Suppress specific FutureWarning from geopandas
 
+
+# Suppress specific FutureWarning from geopandas
 
 
 @dataclasses.dataclass
@@ -43,8 +46,8 @@ class InputData:
     addShortcuts: bool  # Whether to add shortcuts in the network
     list_of_slopes: list[float]  # Ordered list of slopes of the pwl latency
     list_of_thresholds: list[float]  # Ordered list of thresholds of the pwl latency
-    staggeringCapPercentage: float  # Cap minutes of maximum staggering
-    deadlineFactor: float  # Comprised between 0 and 100, delta to extend deadline
+    staggering_cap: float  # Cap minutes of maximum staggering
+    deadline_factor: float  # Comprised between 0 and 100, delta to extend deadline
     optimize: bool  # If True, construct and run model
     epochSize: int  # size of each epoch in minutes
     warmStart: bool  # feed warm start solution to model
@@ -59,8 +62,25 @@ class InputData:
             raise RuntimeError("day must be between 1 and 31")
         if self.staggeringApplicableMethod not in ["fixed", "proportional"]:
             raise RuntimeError("specif correct deadline method (fixed or proportional)")
-        if self.deadlineFactor < 0 or self.deadlineFactor > 100:
+        if self.deadline_factor < 0 or self.deadline_factor > 100:
             raise RuntimeError("deadline factor must be comprised between 0 and 100")
+
+        self.demand_factor = 1  # TODO: create proper parameter
+
+        self.path_to_G = Path(__file__).parent.parent / f"data/{self.network_name}/network.json"
+        self.path_to_routes = self.path_to_G.parent / f"{self.get_day_string()}{self.get_number_trips_string()}/routes.json"
+        self.path_to_instance = self.path_to_routes.parent / f"S{self.staggering_cap}_D{self.deadline_factor}" \
+                                                             f"VDF{self.list_of_slopes}{self.list_of_thresholds}_/instance.json"
+        os.makedirs(self.path_to_instance.parent, exist_ok=True)
+
+    def get_number_trips_string(self) -> str:
+        return f"T{self.numberRides}"
+
+    def get_day_string(self) -> str:
+        if "manhattan" in self.network_name:
+            return f"DAY{self.day}_"
+        else:
+            return ""
 
     def add_paths(self):
         # Construct the path to the instance
@@ -76,8 +96,8 @@ class InputData:
                 "slopes_" + "-".join(map(lambda x: str(x).replace(".", "_"), self.list_of_slopes)) + "_th_" +
                 "-".join(map(lambda x: str(x).replace(".", "_"), self.list_of_thresholds)))
 
-        second_part_path_to_results = f"{shortcuts_string}shortcuts/{self.deadlineFactor}_dead/" + \
-                                      f"{self.staggeringCapPercentage}_stag/{self.maxFlowAllowed}_max_flow/" + \
+        second_part_path_to_results = f"{shortcuts_string}shortcuts/{self.deadline_factor}_dead/" + \
+                                      f"{self.staggering_cap}_stag/{self.maxFlowAllowed}_max_flow/" + \
                                       f"{latency_string}"
 
         self.path_to_results = os.path.join(self.path_to_instance, second_part_path_to_results)
@@ -122,7 +142,7 @@ def getInputData(input: str) -> InputData:
             # vdf parameters
             list_of_slopes=[0.5], list_of_thresholds=[1],
             # other parameters
-            staggeringApplicableMethod="proportional", deadlineFactor=100, staggeringCapPercentage=10,
+            staggeringApplicableMethod="proportional", deadline_factor=100, staggering_cap=10,
             # algorithm parameters
             optimize=True, algorithmTimeLimit=10000, epochTimeLimit=1000, warmStart=True,
             improveWarmStart=True, callLocalSearch=True)

@@ -36,8 +36,8 @@ namespace cpp_module {
                        conflict.otherVehicle,
                        conflict.destaggeringOtherVehicle);
         conflict.destaggeringOtherVehicle = 0;
-        newSolution.congestedSchedule = currentSolution.congestedSchedule;
-        newSolution.totalDelay = currentSolution.totalDelay;
+        newSolution.schedule = currentSolution.schedule;
+        newSolution.total_delay = currentSolution.total_delay;
         newSolution.totalTardiness = currentSolution.totalTardiness;
         newSolution.solutionValue = currentSolution.solutionValue;
         newSolution.solutionHasTies = currentSolution.solutionHasTies;
@@ -80,8 +80,8 @@ namespace cpp_module {
         // update current vehicle
         staggerVehicle(currentSolution, conflict.currentVehicle, conflict.staggeringCurrentVehicle);
         staggerVehicle(currentSolution, conflict.otherVehicle, -conflict.destaggeringOtherVehicle);
-        currentSolution.congestedSchedule = newSolution.congestedSchedule;
-        currentSolution.totalDelay = newSolution.totalDelay;
+        currentSolution.schedule = newSolution.schedule;
+        currentSolution.total_delay = newSolution.total_delay;
         currentSolution.totalTardiness = newSolution.totalTardiness;
         currentSolution.solutionValue = newSolution.solutionValue;
         currentSolution.solutionHasTies = newSolution.solutionHasTies;
@@ -104,8 +104,8 @@ namespace cpp_module {
                           << conflict.destaggeringOtherVehicle;
             }
             std::cout << std::fixed << std::setprecision(2) << " - DELnew: "
-                      << newSolution.totalDelay << " -> DELold - DELnew = "
-                      << oldSolution.totalDelay - newSolution.totalDelay;
+                      << newSolution.total_delay << " -> DELold - DELnew = "
+                      << oldSolution.total_delay - newSolution.total_delay;
             std::cout << std::endl;
         }
 
@@ -121,8 +121,8 @@ namespace cpp_module {
                                                    conflict.arc);
 
         conflict.distanceToCover =
-                completeSolution.congestedSchedule[conflict.otherVehicle][indexArcInPathOtherVehicle + 1] -
-                completeSolution.congestedSchedule[conflict.currentVehicle][indexArcInPathCurrentVehicle] -
+                completeSolution.schedule[conflict.otherVehicle][indexArcInPathOtherVehicle + 1] -
+                completeSolution.schedule[conflict.currentVehicle][indexArcInPathCurrentVehicle] -
                 CONSTR_TOLERANCE;
     }
 
@@ -195,7 +195,7 @@ namespace cpp_module {
             bool isAdmissible = _checkIfSolutionIsAdmissible(instance, newSolution, scheduler);
             if (isAdmissible && scheduler.slackIsEnough) {
                 if (scheduler.iteration % 20 == 0) {
-                    scheduler.constructCongestedSchedule(newSolution);
+                    scheduler.construct_schedule(newSolution);
                 }
                 _printMove(currentSolution, newSolution, conflict);
                 _updateCurrentSolution(currentSolution, newSolution, conflict);
@@ -220,12 +220,12 @@ namespace cpp_module {
             bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock, instance.maxTimeOptimization);
             if (timeLimitReached) { break; }
             scheduler.bestSolutionValue = currentSolution.solutionValue;
-            auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.congestedSchedule);
+            auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.schedule);
             _sortConflicts(conflictsList);
             if (conflictsList.empty()) { break; }
             isImproved = _improveSolution(instance, conflictsList, scheduler, currentSolution);
         }
-        scheduler.constructCongestedSchedule(currentSolution);
+        scheduler.construct_schedule(currentSolution);
     }
 
 

@@ -70,8 +70,8 @@ def addMaxStaggeringApplicableToInstance(instance: Instance, freeFlowSchedule: l
     # Calculate the maximum staggering for each vehicle based on the free flow schedule if maxStaggering in input data
     # is positive, otherwise set maximum staggering to inf
     staggeringCaps = [
-        instance.inputData.staggeringCapPercentage / 100 * (freeFlow[-1] - freeFlow[0])
-        if instance.inputData.staggeringCapPercentage >= 0 else float("inf") for freeFlow in freeFlowSchedule
+        instance.inputData.staggering_cap / 100 * (freeFlow[-1] - freeFlow[0])
+        if instance.inputData.staggering_cap >= 0 else float("inf") for freeFlow in freeFlowSchedule
     ]
 
     # Calculate the maximum applicable staggering for each vehicle as the minimum between the maxStaggering computed
@@ -106,9 +106,9 @@ def getDeadlines(instance: Instance) -> list[Time]:
     for vehicle, schedule in enumerate(congestedSchedule):
         congestedArrival = schedule[-1]
         totTimeFreeFlow = freeFlowSchedule[vehicle][-1] - freeFlowSchedule[vehicle][0]
-        delta = totTimeFreeFlow * instance.inputData.deadlineFactor / 100
+        delta = totTimeFreeFlow * instance.inputData.deadline_factor / 100
         deadline = congestedArrival + delta + 30
         deadlines.append(deadline)
 
-    print(f"Deadline delta is {instance.inputData.deadlineFactor} % of nominal travel time")
+    print(f"Deadline delta is {instance.inputData.deadline_factor} % of nominal travel time")
     return deadlines

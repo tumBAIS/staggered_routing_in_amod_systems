@@ -9,6 +9,11 @@ from problem.network import Network
 from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
 import networkx as nx
+import warnings
+
+# Suppress specific FutureWarning from GeoPandas
+warnings.filterwarnings("ignore",
+                        message="the convert_dtype parameter is deprecated and will be removed in a future version")
 
 LAT_LON_CRS = "EPSG:4326"
 WEB_MERCATOR_CRS = "EPSG:3857"
@@ -81,34 +86,14 @@ def get_real_world_trips(instance_parameters: InstanceParams, network: Network) 
 
     # Vectorized computation of shortest paths
     # Compute n-shortest paths for each row
-    dataset_gdf['paths'] = dataset_gdf.apply(lambda row: find_shortest_path(row, network),
-                                             axis=1)
+    dataset_gdf['path'] = dataset_gdf.apply(lambda row: find_shortest_path(row, network),
+                                            axis=1)
 
-    # Calculate the length of each path in the paths list, store these lists of tuples (length, path)
-    dataset_gdf['paths_with_lengths'] = dataset_gdf['paths'].apply(
-        lambda paths: [(network.compute_path_length(path), path) for path in paths]
-    )
-
-    # Sort the paths for each row by path length
-    dataset_gdf['paths_with_lengths'] = dataset_gdf['paths_with_lengths'].apply(
-        lambda path_list: sorted(path_list, key=lambda x: x[0])
-    )
-
-    # Optionally, if you want to store the shortest path length in a separate column
-    dataset_gdf["length_shortest_path"] = dataset_gdf['paths_with_lengths'].apply(
-        lambda paths: paths[0][0] if paths else None
-    )
+    # Calculate the length of each path in the paths list, store these as tuples (length, path)
+    dataset_gdf['path_length'] = dataset_gdf['path'].apply(lambda path: network.compute_path_length(path))
 
     # Filter out rows where the shortest path is 350 or less
-    dataset_gdf = dataset_gdf[dataset_gdf["length_shortest_path"] > 350]  # FILTER OUT SHORT PATHS
-
-    # Update the 'paths' column to only include sorted paths (without lengths)
-    dataset_gdf['paths'] = dataset_gdf['paths_with_lengths'].apply(
-        lambda paths: [path for _, path in paths]
-    )
-
-    # Remove the 'paths_with_lengths' column if it's no longer needed
-    dataset_gdf.drop(columns=['paths_with_lengths'], inplace=True)
+    dataset_gdf = dataset_gdf[dataset_gdf["path_length"] > 350]  # FILTER OUT SHORT PATHS
 
     dataset_gdf["origin_coords"] = dataset_gdf["origin_coords"].apply(_point_to_dict)
     dataset_gdf["destination_coords"] = dataset_gdf["destination_coords"].apply(_point_to_dict)
@@ -121,12 +106,12 @@ def get_real_world_trips(instance_parameters: InstanceParams, network: Network) 
 
     print(f"Number of trips in network: {len(dataset_gdf)}")
     columns_to_drop = ["Start_Lon", "Start_Lat", "End_Lat", "End_Lon", "Trip_Pickup_DateTime", "Trip_Dropoff_DateTime",
-                       "geometry", "length_shortest_path"]
+                       "geometry"]
     dataset_gdf.drop(columns=columns_to_drop, axis=1, inplace=True)
 
     # Summarize the generated trips
     num_trips = len(dataset_gdf)
-    avg_trip_length = dataset_gdf['paths'].apply(lambda paths: network.compute_path_length(paths[0])).mean()
+    avg_trip_length = dataset_gdf['path_length'].mean()
     num_unique_origins = dataset_gdf['origin'].nunique()
     num_unique_destinations = dataset_gdf['destination'].nunique()
     print(f"Trip generation complete! Returning data.")

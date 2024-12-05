@@ -33,8 +33,7 @@ class InstanceComputer:
         trips.set_trips_network_paths(network)
         self.plot_paths(network, trips, plot_flag)
         # Construct status quo
-        status_quo = sq.Scheduler(trips, network).construct_solution(trips.get_current_routes_ids(),
-                                                                     trips.get_current_start_times())
+        status_quo = sq.Scheduler(trips, network).py_construct_solution(trips.get_current_start_times())
         self._set_deadlines(trips, status_quo)
         self._postprocess_routes(trips)
         self._save_instance_file(trips, status_quo)
@@ -82,10 +81,7 @@ class InstanceComputer:
         for trip in trips.R:
             trip.set_deadline(self._get_trip_deadline(trip, status_quo))
             for route in trip.routes.P:
-                if trip.controlled:
-                    route.latest_departure = route.get_latest_departure(trip, self.instance_params.staggering_cap)
-                else:
-                    route.latest_departure = trip.release_time  # not possible to stagger.
+                route.latest_departure = route.get_latest_departure(trip, self.instance_params.staggering_cap)
 
     def _get_G(self, replace: bool = False) -> nx.DiGraph:
         """Import OSM graph. If replace is False, loads pre-serialized network, if it exists."""
@@ -159,7 +155,7 @@ class InstanceComputer:
 
             # Summarize the generated trips
             num_trips = len(routes_data)
-            trip_lengths = [network.compute_path_length(route['paths'][0]) for route in routes_data]
+            trip_lengths = [route['path_length'] for route in routes_data]
             avg_trip_length = sum(trip_lengths) / num_trips if num_trips > 0 else 0
             unique_origins = set(route['origin'] for route in routes_data)
             unique_destinations = set(route['destination'] for route in routes_data)
@@ -196,7 +192,6 @@ class InstanceComputer:
         # Copy the instance parameters and remove unnecessary keys
         params_dict = self.instance_params.__dict__.copy()
         keys_to_remove = ["path_to_G", "path_to_instance", "path_to_routes"]
-        cnt_controlled_trips = 0
 
         for key_to_remove in keys_to_remove:
             if key_to_remove in params_dict:
@@ -204,9 +199,9 @@ class InstanceComputer:
 
         # Prepare the information dictionary
         info = {
-            "congestion_delay_sec": round(solution.get_congestion_delay(), 2),
+            "congestion_delay_sec": round(solution.get_total_delay(), 2),
             "travel_time_sec": round(solution.get_total_travel_time(), 2),
-            "congestion_delay_min": round(solution.get_congestion_delay() / 60, 2),
+            "congestion_delay_min": round(solution.get_total_delay() / 60, 2),
             "travel_time_min": round(solution.get_total_travel_time() / 60, 2),
         }
 
@@ -219,11 +214,7 @@ class InstanceComputer:
                 "id": trip.id,
                 "release_time": trip.release_time,
                 "deadline": trip.deadline,
-                "controlled": trip.controlled
             }
-
-            if trip.controlled:
-                cnt_controlled_trips += 1
 
             # Add path information for each trip
             for new_id, path in enumerate(trip.routes.P):

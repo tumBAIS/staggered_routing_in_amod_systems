@@ -11,8 +11,6 @@ from problem.parameters import InstanceParams
 from problem.network import Network
 from problem.route import TripRoutes, TripRoute
 from utils.aliases import *
-from utils.logger import logger
-import portalocker
 import time
 
 
@@ -37,10 +35,7 @@ class Trip:
         self._release_time = routes_info["release_time"]
         self._deadline: float = routes_info["deadline"]
 
-        # Check if trip is controlled
-        self._controlled = self.get_controlled_flag(instance_params)
-
-        self._routes = TripRoutes(self, network, routes_info["paths"], instance_params)
+        self._routes = TripRoutes(self, network, routes_info["path"], instance_params)
 
         # Variables
         self._current_route: Optional[TripRoute] = None
@@ -98,10 +93,6 @@ class Trip:
     @property
     def current_departure(self):
         return self._current_departure
-
-    @property
-    def controlled(self):
-        return self._controlled
 
     def initialize_current_path_and_departure(self):
         """Use as initial path simply the shortest path"""
@@ -161,22 +152,6 @@ class Trip:
     def set_deadline(self, deadline):
         self._deadline = deadline
 
-    def get_controlled_flag(self, instance_params) -> bool:
-        """Check based on trip ID if we control it or not"""
-        fraction_controlled = instance_params.fraction_controlled  # number between 0 and 1
-
-        # Ensure that the fraction is within a valid range
-        if fraction_controlled <= 0:
-            return False
-        elif fraction_controlled >= 1:
-            return True
-
-        # Create a local random generator and seed it based on the trip ID
-        rng = random.Random(self.id)
-
-        # Use the local RNG to decide if this trip should be controlled
-        return rng.random() < fraction_controlled
-
     def get_arc_position_current_route(self, arc_id: int):
         return self.current_route.arc_indices[arc_id]
 
@@ -188,7 +163,6 @@ class Trips:
 
     def __init__(self, instance_params: InstanceParams, network: Network, instance_available: bool = True):
         self.R = []
-        self.controlled_flags = []
         routes_info_list = self._get_routes_from_file(instance_params)
 
         if instance_available:
@@ -200,9 +174,8 @@ class Trips:
         for routes_info in routes_info_list:
             trip = Trip(network, routes_info, instance_params)
             self.R.append(trip)
-            self.controlled_flags.append(trip.controlled)  # update controlled_flags
 
-        self.lb_travel_time, self.lb_travel_time_controlled, = self._get_lb_travel_times()
+        self.lb_travel_time = self._get_lb_travel_time()
         self.deadlines = [trip.deadline for trip in self.R]
         self.release_times = [trip.release_time for trip in self.R]
         self.routes_latest_departures = [[route.latest_departure for route in trip.routes.P] for trip in self.R]
@@ -216,11 +189,7 @@ class Trips:
         if not os.path.exists(instance_params.path_to_routes):
             raise FileNotFoundError(f"no routes in {instance_params.path_to_routes}")
         with open(instance_params.path_to_routes, 'r') as file:
-            portalocker.lock(file, portalocker.LOCK_SH)  # Lock file for shared read access
-            try:
-                return json.load(file)
-            finally:
-                portalocker.unlock(file)
+            return json.load(file)
 
     def get_osm_arcs_utilized(self) -> list[RelabeledNodesArcID]:
         """Return a list of osm arc ids utilized at least by one trip in one of its paths"""
@@ -248,15 +217,12 @@ class Trips:
             selected_route = trip.routes.P[ids_selected_routes[trip.id]]
             trip.set_current_route_and_time(selected_route, start_times[trip.id])
 
-    def _get_lb_travel_times(self) -> (float, float):
+    def _get_lb_travel_time(self) -> float:
         """Compute ideal travel time, obtained assuming no congestion and shortest paths"""
         lb_travel_time = 0
-        lb_travel_time_controlled = 0
         for trip in self.R:
             lb_travel_time += trip.routes.shortest_path_travel_time
-            if trip.controlled:
-                lb_travel_time_controlled += trip.routes.shortest_path_travel_time
-        return lb_travel_time, lb_travel_time_controlled
+        return lb_travel_time
 
     def get_current_routes(self) -> dict[Trip, TripRoute]:
         """Return list of currently used paths"""
@@ -270,9 +236,9 @@ class Trips:
         """Return list of currently used paths"""
         return [trip.current_departure for trip in self.R]
 
-    def get_set_of_vehicles_paths(self) -> list[list[list[int]]]:
-        """Returns complete collection of vehicle paths as list of list of list of ints."""
-        return [[path.network_path_ids for path in trip.routes.P] for trip in self.R]
+    def get_vehicle_routes(self) -> list[list[int]]:
+        """Returns complete collection of vehicle paths as list of list of ints."""
+        return [trip.routes.P[0].network_path_ids for trip in self.R]
 
     def _load_instance(self, instance_params, max_retries=5, delay=20) -> dict:
         """
@@ -290,9 +256,6 @@ class Trips:
         while retries < max_retries:
             try:
                 with open(instance_params.path_to_instance, "r") as f:
-                    # Lock the file for safe reading
-                    portalocker.lock(f, portalocker.LOCK_SH)
-
                     # Read the file content
                     content = f.read()
 
@@ -343,6 +306,3 @@ class Trips:
     def _set_deadlines_to_inf(self, routes_info_list):
         for route_info in routes_info_list:
             route_info["deadline"] = float("inf")
-
-    def get_number_of_trips_controlled(self) -> int:
-        return sum(self.controlled_flags)

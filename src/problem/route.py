@@ -66,7 +66,7 @@ class TripRoute:
 class TripRoutes:
     """Class regarding paths of a **single** trip"""
 
-    def __init__(self, trip, network: Network, routes_nodes_list: list[list[NodeID]], instance_params: InstanceParams):
+    def __init__(self, trip, network: Network, route_nodes: list[NodeID], instance_params: InstanceParams):
         """Initialize trip routes
         :param routes_nodes_list: list of list of node ids.
         """
@@ -75,13 +75,9 @@ class TripRoutes:
         self.P = []
         self.union_set_of_tuples_of_nodes_utilized = set()
 
-        for path_id, route_nodes in enumerate(routes_nodes_list):
-            if not trip.controlled and path_id > 0:
-                # if trip is not controlled, it will have only the shortest route
-                break
-            route = TripRoute(route_nodes, network, path_id, trip, instance_params)
-            self.P.append(route)
-            self.union_set_of_tuples_of_nodes_utilized.update(route.path_tuples_of_nodes)
+        route = TripRoute(route_nodes, network, 0, trip, instance_params)
+        self.P.append(route)
+        self.union_set_of_tuples_of_nodes_utilized.update(route.path_tuples_of_nodes)
 
         self._shortest_path_travel_time = min(self.P, key=lambda x: x.path_travel_time).path_travel_time
         self._longest_path_travel_time = max(self.P, key=lambda x: x.path_travel_time).path_travel_time

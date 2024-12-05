@@ -21,8 +21,8 @@ namespace cpp_module {
                         const CorrectSolution &correctSolution) -> void {
         staggerVehicle(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
         completeSolution.solutionHasTies = true;
-        completeSolution.congestedSchedule = correctSolution.schedule;
-        completeSolution.totalDelay = correctSolution.totalDelay;
+        completeSolution.schedule = correctSolution.schedule;
+        completeSolution.total_delay = correctSolution.totalDelay;
         completeSolution.scheduleIsFeasibleAndImproving = correctSolution.scheduleIsFeasibleAndImproving;
         completeSolution.capReached = correctSolution.capIsReached;
         completeSolution.timesCapIsReached = correctSolution.timesCapIsReached;
@@ -40,9 +40,9 @@ namespace cpp_module {
     auto _setCorrectSolution(const Solution &completeSolution) -> CorrectSolution {
         CorrectSolution correctSolution{};
 
-        correctSolution.schedule = completeSolution.congestedSchedule;
+        correctSolution.schedule = completeSolution.schedule;
         correctSolution.tableWithCapReached = completeSolution.tableWithCapReached;
-        correctSolution.totalDelay = completeSolution.totalDelay;
+        correctSolution.totalDelay = completeSolution.total_delay;
         correctSolution.capIsReached = completeSolution.capReached;
         correctSolution.timesCapIsReached = completeSolution.timesCapIsReached;
         return correctSolution;
@@ -70,19 +70,19 @@ namespace cpp_module {
     }
 
     auto _solveTie(Solution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
-        auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.congestedSchedule, tie);
+        auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
         auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remainingTimeSlack[tie.vehicleOne]);
         while (thereIsTie && slackIsEnough) {
             const CorrectSolution correctSolution = _setCorrectSolution(completeSolution);
             staggerVehicle(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
-            scheduler.constructCongestedSchedule(completeSolution);
+            scheduler.construct_schedule(completeSolution);
             if (!completeSolution.scheduleIsFeasibleAndImproving) {
                 _resetSolution(completeSolution, tie.vehicleOne, correctSolution);
 
                 return;
             }
             _printTieSolved(tie);
-            thereIsTie = checkIfVehiclesHaveTie(completeSolution.congestedSchedule, tie);
+            thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
             slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remainingTimeSlack[tie.vehicleOne]);
         }
     }
@@ -97,7 +97,7 @@ namespace cpp_module {
                 if (vehicleOne < vehicleTwo) {
                     const long positionTwo = getIndex(instance.arcBasedShortestPaths[vehicleTwo], arc);
                     tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
-                    bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.congestedSchedule, tie);
+                    bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
                     if (tieOnArc) {
                         return true;
                     }
