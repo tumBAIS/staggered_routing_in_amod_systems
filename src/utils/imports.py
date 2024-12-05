@@ -15,15 +15,15 @@ def getNotSimplifiedInstance(inputData: InputData) -> Instance:
     # nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
     # releaseTimes, arrivalTimes = getReleaseTimesAndArrivalTimesDataset(taxiRides)
     reduceGraph(graph, taxiRides["path"], inputData)
-    nodeBasedShortestPaths = addShortcuts(inputData, graph, taxiRides, nodeBasedShortestPaths)
+    nodeBasedShortestPaths = addShortcuts(inputData, graph, taxiRides, taxiRides["path"])
     setArcsNominalTravelTimesAndCapacities(graph, inputData)
 
     arcBasedShortestPaths, arcsFeatures = getArcBasedPathsWithFeatures(nodeBasedShortestPaths, graph)
-    instance = getInstance(inputData, arcBasedShortestPaths, arcsFeatures, releaseTimes, arrivalTimes)
+    instance = getInstance(inputData, arcBasedShortestPaths, arcsFeatures, taxiRides["release_time"],
+                           taxiRides["deadline"])
 
     printTotalFreeFlowTime(instance)
-    deadlines = getDeadlines(instance)
-    instance.set_deadlines(deadlines)
+    instance.set_deadlines(taxiRides["deadline"])
     instance.set_max_staggering_applicable()
     instance.check_optional_fields()
     return instance
