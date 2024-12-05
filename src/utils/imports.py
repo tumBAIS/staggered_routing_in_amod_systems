@@ -10,8 +10,8 @@ from congestionModel.core import getDeadlines
 
 
 def getNotSimplifiedInstance(inputData: InputData) -> Instance:
+    taxiRides = import_rides_df(inputData)
     graph = import_graph(inputData)
-    taxiRides = import_rides_df(inputData, graph)
     # nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
     # releaseTimes, arrivalTimes = getReleaseTimesAndArrivalTimesDataset(taxiRides)
     reduceGraph(graph, taxiRides["path"], inputData)
