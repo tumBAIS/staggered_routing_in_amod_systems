@@ -28,9 +28,9 @@ def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> Vehicle
         instance.conflictingSets,
         instance.earliestDepartureTimes,
         instance.latestDepartureTimes,
-        instance.travelTimesArcsUtilized,
-        instance.nominalCapacitiesArcs,
-        instance.arcBasedShortestPaths,
+        instance.travel_times_arcs,
+        instance.capacities_arcs,
+        instance.trip_routes,
         instance.deadlines,
         instance.dueDates,
         instance.inputData.list_of_slopes,
@@ -70,7 +70,7 @@ def getEpochWarmStart(epochInstance: EpochInstance, epochStatusQuo: EpochSolutio
     staggeringApplicable = getStaggeringApplicable(epochInstance, staggeringApplied)
     delaysOnArcs = getDelaysOnArcs(epochInstance, congestedSchedule)
     totalDelay = sum(sum(delays) for delays in delaysOnArcs)
-    binaries = getConflictBinaries(epochInstance.conflictingSets, epochInstance.arcBasedShortestPaths,
+    binaries = getConflictBinaries(epochInstance.conflictingSets, epochInstance.trip_routes,
                                    congestedSchedule)
     totalTravelTime = getTotalTravelTime(congestedSchedule)
 

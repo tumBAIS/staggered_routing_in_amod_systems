@@ -8,13 +8,13 @@ def _assertEveryVehicleIsInAConflictingSet(instance: Instance, removedVehicles=N
     allVehiclesAppearingInConfSets = sorted(
         list(set([vehicle for confSet in instance.conflictingSets for vehicle in confSet])))
     assert all(vehicle not in allVehiclesAppearingInConfSets for vehicle in removedVehicles)
-    assert all(vehicle in allVehiclesAppearingInConfSets for vehicle in range(len(instance.arcBasedShortestPaths)) if
+    assert all(vehicle in allVehiclesAppearingInConfSets for vehicle in range(len(instance.trip_routes)) if
                vehicle not in removedVehicles)
 
 
 def removeVehicleFromSystem(vehicleToRemove: int, instance: Instance, statusQuo: CompleteSolution) -> None:
     instance.maxStaggeringApplicable.pop(vehicleToRemove)
-    instance.arcBasedShortestPaths.pop(vehicleToRemove)
+    instance.trip_routes.pop(vehicleToRemove)
     instance.latestDepartureTimes.pop(vehicleToRemove)
     instance.earliestDepartureTimes.pop(vehicleToRemove)
     instance.maxDelayOnArc.pop(vehicleToRemove)
@@ -44,13 +44,13 @@ def updateConflictingSetsAfterRemovingVehicles(conflictingSets: list[list[int]],
 
 def _removeInitialPartOfVehiclePath(instance: Instance, statusQuo: CompleteSolution, vehicle: int) -> None:
     newIndexWhereToStartPath = 0
-    for arc in instance.arcBasedShortestPaths[vehicle]:
+    for arc in instance.trip_routes[vehicle]:
         if vehicle not in instance.conflictingSets[arc]:
             newIndexWhereToStartPath += 1
             _deleteFirstEntrySchedulesVehicle(instance, statusQuo, vehicle)
         else:
             break
-    instance.arcBasedShortestPaths[vehicle] = instance.arcBasedShortestPaths[vehicle][newIndexWhereToStartPath:]
+    instance.trip_routes[vehicle] = instance.trip_routes[vehicle][newIndexWhereToStartPath:]
 
 
 def _assertMaxDelayIsZero(instance, vehicle):
@@ -95,14 +95,14 @@ def _deleteFirstEntrySchedulesVehicle(instance, statusQuo, vehicle):
 
 
 def _deleteLastVehicleEntry(instance, statusQuo, vehicle) -> None:
-    arcDeleted = instance.arcBasedShortestPaths[vehicle][-2]
-    instance.arcBasedShortestPaths[vehicle].pop(-2)
+    arcDeleted = instance.trip_routes[vehicle][-2]
+    instance.trip_routes[vehicle].pop(-2)
     instance.latestDepartureTimes[vehicle].pop(-1)
     instance.earliestDepartureTimes[vehicle].pop(-1)
     instance.maxDelayOnArc[vehicle].pop(-1)
     instance.minDelayOnArc[vehicle].pop(-1)
-    instance.deadlines[vehicle] -= instance.travelTimesArcsUtilized[arcDeleted]
-    instance.dueDates[vehicle] -= instance.travelTimesArcsUtilized[arcDeleted]
+    instance.deadlines[vehicle] -= instance.travel_times_arcs[arcDeleted]
+    instance.dueDates[vehicle] -= instance.travel_times_arcs[arcDeleted]
     statusQuo.congestedSchedule[vehicle].pop(-1)
     statusQuo.freeFlowSchedule[vehicle].pop(-1)
     assert statusQuo.delaysOnArcs[vehicle][-1] < 1e-6
@@ -111,11 +111,11 @@ def _deleteLastVehicleEntry(instance, statusQuo, vehicle) -> None:
 
 
 def removeInitialPartOfPathsWithoutConflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
-    initialNumberOfVehicles = len(instance.arcBasedShortestPaths)
+    initialNumberOfVehicles = len(instance.trip_routes)
     removedVehicles = []
     for vehicle in sorted(range(initialNumberOfVehicles), reverse=True):
         _removeInitialPartOfVehiclePath(instance, statusQuo, vehicle)
-        if not instance.arcBasedShortestPaths[vehicle]:
+        if not instance.trip_routes[vehicle]:
             removedVehicles.append(vehicle)
             removeVehicleFromSystem(vehicle, instance, statusQuo)
 
@@ -133,7 +133,7 @@ def removeInitialPartOfPathsWithoutConflicts(instance: Instance, statusQuo: Comp
 
 
 def removeFinalPartOfPathsWithoutConflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
-    for vehicle, path in enumerate(instance.arcBasedShortestPaths):
+    for vehicle, path in enumerate(instance.trip_routes):
         for arc in reversed(path):
             if vehicle not in instance.conflictingSets[arc] and arc > 0:
                 _deleteLastVehicleEntry(instance, statusQuo, vehicle)

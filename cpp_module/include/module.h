@@ -219,6 +219,10 @@ namespace cpp_module {
             return schedule[trip_id];
         }
 
+        [[nodiscard]] const VehicleSchedule & get_schedule() const {
+            return schedule;
+        }
+
         [[nodiscard]] const double& get_total_delay() const {
             return total_delay;
         }

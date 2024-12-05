@@ -39,7 +39,7 @@ def _mergeSchedules(scheduleConstructedSoFar: list[float], scheduleToAdd: list[f
 
 def _reconstructSchedule(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
                          globalInstance: Instance) -> VehicleSchedules:
-    reconstructedSchedule = [[] for _ in range(len(globalInstance.arcBasedShortestPaths))]  # type: ignore
+    reconstructedSchedule = [[] for _ in range(len(globalInstance.trip_routes))]  # type: ignore
     for epochID, epochInstance in enumerate(epochInstances):
         for vehicleEpochID, vehicleGlobalID in enumerate(epochInstance.vehiclesOriginalIDS):
             lastPosition = epochInstance.lastPositionForReconstruction[vehicleEpochID]
@@ -58,12 +58,12 @@ def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedul
     notMatchingEntries = [position for position, departure in enumerate(reconstructedSchedule[vehicle]) if
                           abs(departure - cppSchedule[vehicle][position]) > 1e-4]
     print(f"Position entries not matching: {notMatchingEntries}")
-    for arc in globalInstance.arcBasedShortestPaths[vehicle]:
+    for arc in globalInstance.trip_routes[vehicle]:
         confSet = globalInstance.conflictingSets[arc]
         cppDepAndArrOnArc = []
         rekDepAndArrOnArc = []
         for otherVehicle in confSet:
-            position = globalInstance.arcBasedShortestPaths[otherVehicle].index(arc)
+            position = globalInstance.trip_routes[otherVehicle].index(arc)
             cppDeparture = cppSchedule[otherVehicle][position]
             cppArrival = cppSchedule[otherVehicle][position + 1]
             cppDepAndArrOnArc.append((cppDeparture, cppArrival, otherVehicle))
@@ -72,7 +72,7 @@ def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedul
             rekArrival = reconstructedSchedule[otherVehicle][position + 1]
             rekDepAndArrOnArc.append((rekDeparture, rekArrival, otherVehicle))
         print(
-            f"arc : {arc}, capacity: {globalInstance.nominalCapacitiesArcs[arc]}. travel time : {globalInstance.travelTimesArcsUtilized[arc]}")
+            f"arc : {arc}, capacity: {globalInstance.capacities_arcs[arc]}. travel time : {globalInstance.travel_times_arcs[arc]}")
         print("cpp dep and arrivals")
         print(sorted(cppDepAndArrOnArc, key=lambda x: x[0])) if cppDepAndArrOnArc else None
         print("rek dep and arrivals")
@@ -104,7 +104,7 @@ def reconstructSolution(epochInstances: list[EpochInstance], epochStatusQuoList:
     totalDelay = getTotalDelay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = getTotalTravelTime(congestedSchedule)
     addConflictingSetsToInstance(globalInstance, freeFlowSchedule)
-    binaries = getConflictBinaries(globalInstance.conflictingSets, globalInstance.arcBasedShortestPaths,
+    binaries = getConflictBinaries(globalInstance.conflictingSets, globalInstance.trip_routes,
                                    congestedSchedule)
 
     return CompleteSolution(

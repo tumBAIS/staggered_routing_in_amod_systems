@@ -19,7 +19,7 @@ def _addLoadConstraint(model, vehicle, arc):
 
 
 def _check_third_piece_can_be_active(instance: Instance, arc: ArcID) -> bool:
-    nominalCapacityArc = instance.nominalCapacitiesArcs[arc]
+    nominalCapacityArc = instance.capacities_arcs[arc]
     return len(
         instance.conflictingSets[arc]) > nominalCapacityArc * instance.inputData.list_of_thresholds[0]
 
@@ -45,8 +45,8 @@ def _addPWLDelayConstraint(model: Model, instance: Instance, vehicle: int, arc: 
 
     # Iterate through slopes to build the PWL points
     for i, slope in enumerate(instance.inputData.list_of_slopes):
-        th_capacity = instance.nominalCapacitiesArcs[arc] * instance.inputData.list_of_thresholds[i]
-        piece_slope = instance.travelTimesArcsUtilized[arc] * slope / instance.nominalCapacitiesArcs[arc]
+        th_capacity = instance.capacities_arcs[arc] * instance.inputData.list_of_thresholds[i]
+        piece_slope = instance.travel_times_arcs[arc] * slope / instance.capacities_arcs[arc]
 
         # Special handling for the first piece
         if i == 0:
@@ -64,7 +64,7 @@ def _addPWLDelayConstraint(model: Model, instance: Instance, vehicle: int, arc: 
 
     # Add one more point beyond the last threshold to extend the PWL function
     th_capacity += 1  # Increment to go beyond the last threshold
-    piece_slope = instance.travelTimesArcsUtilized[arc] * slope / instance.nominalCapacitiesArcs[arc]
+    piece_slope = instance.travel_times_arcs[arc] * slope / instance.capacities_arcs[arc]
     pwl_at_th_cap = height_prev_piece + piece_slope * (th_capacity - prev_th)
     x_axis_values.append(th_capacity)
     y_axis_values.append(pwl_at_th_cap)
@@ -183,7 +183,7 @@ def addConflictConstraints(model: Model, instance: Instance) -> None:
     for arc in model._alpha:
         # Add constraint on the maximum sum of alpha variables for the current arc
         # _addConstraintOnMaxSumAlphas(model, arc, instance.conflictingSets[arc])
-        arc_travel_time = instance.travelTimesArcsUtilized[arc]
+        arc_travel_time = instance.travel_times_arcs[arc]
         for firstVehicle in model._alpha[arc]:
             if isinstance(model._load[firstVehicle][arc], grb.Var):
                 # Add load constraint and piecewise linear delay constraint for the first vehicle on the current arc
@@ -194,10 +194,10 @@ def addConflictConstraints(model: Model, instance: Instance) -> None:
                     if firstVehicle < secondVehicle:
                         # Add conflict constraints between the first and second vehicles on the current arc
                         _addConflictConstraintsBetweenVehiclePair(model, firstVehicle, secondVehicle, arc,
-                                                                  instance.arcBasedShortestPaths[secondVehicle],
+                                                                  instance.trip_routes[secondVehicle],
                                                                   arc_travel_time)
                         _addConflictConstraintsBetweenVehiclePair(model, secondVehicle, firstVehicle, arc,
-                                                                  instance.arcBasedShortestPaths[firstVehicle],
+                                                                  instance.trip_routes[firstVehicle],
                                                                   arc_travel_time)
                         # Add constraint on the sum of alpha variables for the first and second vehicles on the current arc
                         # _addSumAlphasConstraint(model, firstVehicle, secondVehicle, arc)
@@ -212,13 +212,13 @@ def addTravelContinuityConstraints(model: Model, instance: Instance) -> None:
     for vehicle in model._departure:
         for position in range(1, len(model._departure[vehicle])):
             # Get the current and previous arcs for the vehicle at the given position
-            currentArc = instance.arcBasedShortestPaths[vehicle][position]
-            previousArc = instance.arcBasedShortestPaths[vehicle][position - 1]
+            currentArc = instance.trip_routes[vehicle][position]
+            previousArc = instance.trip_routes[vehicle][position - 1]
 
             # Add the continuity constraint for the vehicle and arcs
             model.addConstr(
                 model._departure[vehicle][currentArc] - model._departure[vehicle][previousArc] -
-                model._delay[vehicle][previousArc] == instance.travelTimesArcsUtilized[previousArc],
+                model._delay[vehicle][previousArc] == instance.travel_times_arcs[previousArc],
                 name=f"continuity_vehicle_{vehicle}_arc_{currentArc}"
             )
 

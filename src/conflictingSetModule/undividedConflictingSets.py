@@ -23,7 +23,7 @@ TimeBound = namedtuple("TimeBound",
 def _splitTimeBoundsOnArcs(instance: Instance,
                            timeBoundsOnArcs: list[list[TimeBound]]) -> list[
     list[list[TimeBound]]]:
-    boundsOnArcsSplit = [[] for _ in instance.travelTimesArcsUtilized]
+    boundsOnArcsSplit = [[] for _ in instance.travel_times_arcs]
     for arc, timeBounds in enumerate(timeBoundsOnArcs[1:], start=1):  # start enumeration from 1
         maximumLatestArrival = float('-inf')
         boundsSplit = []
@@ -41,7 +41,7 @@ def _splitTimeBoundsOnArcs(instance: Instance,
 def _getUndividedConflictingSets(instance: Instance,
                                  boundsOnArcsSplit: list[list[list[TimeBound]]]) -> UndividedConflictingSets:
     undividedConflictingSets = [[[timeBound.vehicle for timeBound in boundsSet] if
-                                 len(boundsSet) > max(MIN_SET_CAPACITY, instance.nominalCapacitiesArcs[
+                                 len(boundsSet) > max(MIN_SET_CAPACITY, instance.capacities_arcs[
                                      arc] * instance.inputData.list_of_thresholds[0]) else [] for
                                  boundsSet in boundsOnArc
                                  ] if arc > 0 else [] for arc, boundsOnArc in enumerate(boundsOnArcsSplit)
@@ -98,14 +98,14 @@ def _computeDelayOnArc(arc: int, instance: Instance, vehiclesOnArc: int) -> floa
     delay_at_pieces = [0]
     height_prev_piece = 0
     for i in range(len(instance.inputData.list_of_slopes)):
-        th_capacity = instance.inputData.list_of_thresholds[i] * instance.nominalCapacitiesArcs[arc]
-        slope = instance.travelTimesArcsUtilized[arc] * instance.inputData.list_of_slopes[i] / \
-                instance.nominalCapacitiesArcs[arc]
+        th_capacity = instance.inputData.list_of_thresholds[i] * instance.capacities_arcs[arc]
+        slope = instance.travel_times_arcs[arc] * instance.inputData.list_of_slopes[i] / \
+                instance.capacities_arcs[arc]
         if vehiclesOnArc > th_capacity:
             delay_current_piece = height_prev_piece + slope * (vehiclesOnArc - th_capacity)
             delay_at_pieces.append(delay_current_piece)
         if i < len(instance.inputData.list_of_slopes) - 1:
-            next_th_cap = instance.inputData.list_of_thresholds[i + 1] * instance.nominalCapacitiesArcs[arc]
+            next_th_cap = instance.inputData.list_of_thresholds[i + 1] * instance.capacities_arcs[arc]
             height_prev_piece += slope * (next_th_cap - th_capacity)
     return max(delay_at_pieces)
 
@@ -116,13 +116,13 @@ EarliestDeparture = namedtuple("EarliestDeparture", ["time", "arc", "vehicle", "
 def getEarliestDeparturesListAndPQ(freeFlowSchedule: VehicleSchedules, instance: Instance) -> \
         (list[list[EarliestDeparture]], PriorityQueue):
     earliestDeparturesPriorityQueue = PriorityQueue()
-    arcBasedEarliestDepartures = [[] for _ in instance.travelTimesArcsUtilized]
+    arcBasedEarliestDepartures = [[] for _ in instance.travel_times_arcs]
     for vehicle, schedule in enumerate(freeFlowSchedule):
-        firstArc = instance.arcBasedShortestPaths[vehicle][0]
+        firstArc = instance.trip_routes[vehicle][0]
         firstDeparture = EarliestDeparture(time=schedule[0], arc=firstArc, vehicle=vehicle, position=0)
         earliestDeparturesPriorityQueue.put(firstDeparture)
         for position, time in enumerate(schedule):
-            arc = instance.arcBasedShortestPaths[vehicle][position]
+            arc = instance.trip_routes[vehicle][position]
             departure = EarliestDeparture(time=time, arc=arc, vehicle=vehicle, position=position)
             arcBasedEarliestDepartures[arc].append(departure)
     arcBasedEarliestDepartures = [sorted(x, key=lambda x: x.time) for x in arcBasedEarliestDepartures]
@@ -153,9 +153,9 @@ def _getConflictingDepartures(allEarliestDepartures: list[list[EarliestDeparture
             continue
         isPotentialConflict = currentEarliestDeparture.time <= otherEarliestDeparture.time <= currentLatestDeparture
         if isPotentialConflict:
-            otherPosition = instance.arcBasedShortestPaths[otherEarliestDeparture.vehicle].index(
+            otherPosition = instance.trip_routes[otherEarliestDeparture.vehicle].index(
                 otherEarliestDeparture.arc)
-            otherPreviousArc = instance.arcBasedShortestPaths[otherEarliestDeparture.vehicle][otherPosition - 1]
+            otherPreviousArc = instance.trip_routes[otherEarliestDeparture.vehicle][otherPosition - 1]
             otherPreviousTimeBound = next(
                 (timeBound for timeBound in arcBasedTimeBounds[otherPreviousArc] if
                  timeBound.vehicle == otherEarliestDeparture.vehicle),
@@ -205,7 +205,7 @@ def _propagateMinDelay(earliestDepartures: list[list[EarliestDeparture]], minDel
     if departure.arc == 0:
         # No need to propagate delay for the last arc
         return
-    path = instance.arcBasedShortestPaths[departure.vehicle]
+    path = instance.trip_routes[departure.vehicle]
     currentPosition = path.index(departure.arc)
 
     # Collect the indices of departures for the subsequent arcs
@@ -232,7 +232,7 @@ def _assertTimeBound(timeBound: TimeBound, instance: Instance, earliestDeparture
                 timeBound.latestArrival - timeBound.earliestArrival > -1e-6), \
             f"TimeBoundError#1: -> Latest arrival {timeBound.latestArrival} > " \
             f"earliest arrival {timeBound.earliestArrival} \n" \
-            f"time bound: {timeBound}, travel time arc: {instance.travelTimesArcsUtilized[earliestDeparture.arc]} " \
+            f"time bound: {timeBound}, travel time arc: {instance.travel_times_arcs[earliestDeparture.arc]} " \
             f"departure: {earliestDeparture} "
         assert (
                 timeBound.latestDeparture - timeBound.earliestDeparture > -1e-6), \
@@ -244,7 +244,7 @@ def _getLatestDeparture(earliestDeparture: EarliestDeparture, instance: Instance
         # First arc
         latestDeparture = earliestDeparture.time + instance.maxStaggeringApplicable[earliestDeparture.vehicle]
     else:
-        previousArc = instance.arcBasedShortestPaths[earliestDeparture.vehicle][earliestDeparture.position - 1]
+        previousArc = instance.trip_routes[earliestDeparture.vehicle][earliestDeparture.position - 1]
         isPreviousDeparture: Callable[[TimeBound], bool] = lambda x: x.vehicle == earliestDeparture.vehicle
         latestDeparture = next(
             (bound.latestArrival for bound in arcBasedTimeBounds[previousArc] if isPreviousDeparture(bound)), None)
@@ -254,14 +254,14 @@ def _getLatestDeparture(earliestDeparture: EarliestDeparture, instance: Instance
 
 def _getEarliestArrivalTime(conflictingArrivals: list[Arrival], currentLatestDeparture: float,
                             instance: Instance, earliestDeparture: EarliestDeparture) -> tuple[float, float]:
-    arc_threshold_capacity = max(MIN_SET_CAPACITY, instance.nominalCapacitiesArcs[
+    arc_threshold_capacity = max(MIN_SET_CAPACITY, instance.capacities_arcs[
         earliestDeparture.arc] * instance.inputData.list_of_thresholds[0])
     min_vehicles_on_arc = sum(1 for arrival in conflictingArrivals if
                               arrival.latestDeparture < earliestDeparture.time and
                               currentLatestDeparture < arrival.earliest) + 1
     min_delay = _computeDelayOnArc(earliestDeparture.arc, instance,
                                    min_vehicles_on_arc) if min_vehicles_on_arc > arc_threshold_capacity else 0
-    earliest_arrival_time = earliestDeparture.time + min_delay + instance.travelTimesArcsUtilized[earliestDeparture.arc]
+    earliest_arrival_time = earliestDeparture.time + min_delay + instance.travel_times_arcs[earliestDeparture.arc]
     return earliest_arrival_time, min_delay
 
 
@@ -271,11 +271,11 @@ def _getLatestArrivalTime(conflictingArrivals: list[Arrival],
                           instance: Instance,
                           knownLatestArrivalTimes: list[list[float]]) -> tuple[float, float]:
     knownLatestArrival = knownLatestArrivalTimes[earliestDeparture.vehicle][earliestDeparture.position]
-    nominalTT = instance.travelTimesArcsUtilized[earliestDeparture.arc]
+    nominalTT = instance.travel_times_arcs[earliestDeparture.arc]
     maxDelay = 0.0
     sortedPotentialConflictTimes = _combineConflicts(conflictingArrivals, conflictingEarliestDepartures)
 
-    currentLatestArrival = latestDepartureTime + instance.travelTimesArcsUtilized[earliestDeparture.arc]
+    currentLatestArrival = latestDepartureTime + instance.travel_times_arcs[earliestDeparture.arc]
     if not sortedPotentialConflictTimes:
         latestArrival = min(knownLatestArrival, currentLatestArrival)
         return latestArrival, 0
@@ -299,8 +299,8 @@ def _getArcBasedTimeBounds(instance: Instance,
                            knownLatestArrivalTimes: list[list[float]],
                            freeFlowSchedule: VehicleSchedules) -> list[list[TimeBound]]:
     # Initialize data structures
-    arcBasedArrivals: list[list[Arrival]] = [[] for _ in instance.travelTimesArcsUtilized]
-    arcBasedTimeBounds: list[list[TimeBound]] = [[] for _ in instance.travelTimesArcsUtilized]
+    arcBasedArrivals: list[list[Arrival]] = [[] for _ in instance.travel_times_arcs]
+    arcBasedTimeBounds: list[list[TimeBound]] = [[] for _ in instance.travel_times_arcs]
     arcBasedEarliestDepartures, EDPQ = getEarliestDeparturesListAndPQ(freeFlowSchedule, instance)
     while not EDPQ.empty():
         # Get info departure
@@ -344,9 +344,9 @@ def _getArcBasedTimeBounds(instance: Instance,
 
         # Append the time bound to the corresponding arc
         arcBasedTimeBounds[earliestDeparture.arc].append(timeBound)
-        vehicleIsTraveling = instance.arcBasedShortestPaths[earliestDeparture.vehicle][earliestDeparture.position] != 0
+        vehicleIsTraveling = instance.trip_routes[earliestDeparture.vehicle][earliestDeparture.position] != 0
         if vehicleIsTraveling:
-            nextArc = instance.arcBasedShortestPaths[earliestDeparture.vehicle][earliestDeparture.position + 1]
+            nextArc = instance.trip_routes[earliestDeparture.vehicle][earliestDeparture.position + 1]
             nextEarliestDeparture = EarliestDeparture(time=earliestArrival,
                                                       arc=nextArc,
                                                       vehicle=earliestDeparture.vehicle,
@@ -370,9 +370,9 @@ def _getInitialLatestArrivalTimes(instance, ffSchedule):
 
 
 def get_bounds_vehicle(instance, vehicle, arc):
-    path = instance.arcBasedShortestPaths[vehicle]
+    path = instance.trip_routes[vehicle]
     index_arc = path.index(arc)
-    next_arx = instance.arcBasedShortestPaths[vehicle][index_arc + 1]
+    next_arx = instance.trip_routes[vehicle][index_arc + 1]
     earliest_entry = instance.earliestDepartureTimes[vehicle][index_arc]
     latest_entry = instance.latestDepartureTimes[vehicle][index_arc]
     earliest_leave = instance.earliestDepartureTimes[vehicle][index_arc + 1]
@@ -418,7 +418,7 @@ def addConflictingSetsToInstance(
     while True:
         arcBasedTimeBounds = _getArcBasedTimeBounds(instance, knownLatestArrivalTimes, ffSchedule)
         boundsOnArcsSplit = _splitTimeBoundsOnArcs(instance, arcBasedTimeBounds)
-        vehicleBasedTimeBounds = _arrangeBoundsByVehicle(arcBasedTimeBounds, instance.arcBasedShortestPaths)
+        vehicleBasedTimeBounds = _arrangeBoundsByVehicle(arcBasedTimeBounds, instance.trip_routes)
         newLatestArrivalTimes = [[bound.latestArrival for bound in bounds] for bounds in vehicleBasedTimeBounds]
         if knownLatestArrivalTimes == newLatestArrivalTimes:
             break

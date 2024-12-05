@@ -25,15 +25,15 @@ def printInfoConflictingSetsSizes(instance):
     print(confSetSeries.describe())
 
     arcWithLargestConflictingSet = max(
-        [arc for arc, time in enumerate(instance.travelTimesArcsUtilized)],
+        [arc for arc, time in enumerate(instance.travel_times_arcs)],
         key=lambda x: len(instance.conflictingSets[x])
     )
 
     print("Info arc with largest conflicting set:")
     print(f"Arc {arcWithLargestConflictingSet} info:")
     print(f"Conflicting set size: {len(instance.conflictingSets[arcWithLargestConflictingSet])}")
-    print(f"Free flow travel time: {instance.travelTimesArcsUtilized[arcWithLargestConflictingSet]}")
-    print(f"Nominal capacity: {instance.nominalCapacitiesArcs[arcWithLargestConflictingSet]}")
+    print(f"Free flow travel time: {instance.travel_times_arcs[arcWithLargestConflictingSet]}")
+    print(f"Nominal capacity: {instance.capacities_arcs[arcWithLargestConflictingSet]}")
 
     print("\nInfo outliers (points greater than 75th percentile + 1.5 * IQR):")
     Q1 = confSetSeries.quantile(0.25)
@@ -83,8 +83,8 @@ def _get_delays_on_arcs_in_minutes_series(instance, delaysOnArcs):
     for vehicle, delays in enumerate(delaysOnArcs):
         for position, delay in enumerate(delays):
             if delay > 1e-5:
-                arc = instance.arcBasedShortestPaths[vehicle][position]
-                travel_time = instance.travelTimesArcsUtilized[arc]
+                arc = instance.trip_routes[vehicle][position]
+                travel_time = instance.travel_times_arcs[arc]
                 delay_in_sec = delay
                 delay_percentage = (delay / travel_time) * 100
 
@@ -126,14 +126,14 @@ def _print_delays_on_arcs_info(instance, delaysOnArcs: list[list[int]]) -> None:
 
 
 def _calculateLengthArcsUtilized(instance):
-    return [travelTime * instance.inputData.speed / 3.6 for travelTime in instance.travelTimesArcsUtilized]
+    return [travelTime * instance.inputData.speed / 3.6 for travelTime in instance.travel_times_arcs]
 
 
 def _createInfoDataFrame(instance, lengthArcs):
     data = {
         "length [m]": lengthArcs,
-        "travel times [min]": [x / 60 for x in instance.travelTimesArcsUtilized],
-        "nominal capacities": instance.nominalCapacitiesArcs
+        "travel times [min]": [x / 60 for x in instance.travel_times_arcs],
+        "nominal capacities": instance.capacities_arcs
     }
     return pd.DataFrame(data)
 

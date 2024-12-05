@@ -1,6 +1,7 @@
 # Compiled Python bytecode
 __pycache__/
 .PowerFolder/
+desktop.ini
 
 # pytest cache
 .pytest_cache/

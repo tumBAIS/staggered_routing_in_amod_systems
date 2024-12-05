@@ -14,12 +14,12 @@ class EpochInstance:
     inputData: inputData.InputData
     vehiclesOriginalIDS: list[int]
     releaseTimes: list[float]
-    arcBasedShortestPaths: list[list[int]]
+    trip_routes: list[list[int]]
     deadlines: list[float]
     dueDates: list[float]
     maxStaggeringApplicable: list[float]
-    travelTimesArcsUtilized: list[float]
-    nominalCapacitiesArcs: list[float]
+    travel_times_arcs: list[float]
+    capacities_arcs: list[float]
     lastPositionForReconstruction: list[int | None]
     osmInfoArcsUtilized: list[dict[str:typing.Any]]  # type: ignore
     startSolutionTime: float
@@ -32,6 +32,10 @@ class EpochInstance:
     minDelayOnArc: list[list[float]] = field(default_factory=list[list[float]])
     maxDelayOnArc: list[list[float]] = field(default_factory=list[list[float]])
     removedVehicles: list[int] = field(default_factory=list[int])
+
+    def get_lb_travel_times(self) -> float:
+        """Return sum of the free flow times of the routes of trips contained in instance"""
+        return sum([self.travel_times_arcs[arc] for path in self.trip_routes for arc in path])
 
 
 EpochInstances = list[EpochInstance]
@@ -54,22 +58,22 @@ def _getLastVehicleForEachEpoch(epochSize: int, releaseTimesDataset) -> list[int
 
 
 def _getEpochInstance(instance, epochID, firstVehicleInEpoch, lastVehicleInEpoch) -> EpochInstance:
-    arcBasedShortestPaths = copy.deepcopy(instance.arcBasedShortestPaths[firstVehicleInEpoch:lastVehicleInEpoch + 1])
+    arcBasedShortestPaths = copy.deepcopy(instance.trip_routes[firstVehicleInEpoch:lastVehicleInEpoch + 1])
 
     return EpochInstance(
         inputData=instance.inputData,
         vehiclesOriginalIDS=list(range(firstVehicleInEpoch, lastVehicleInEpoch + 1)),
         releaseTimes=instance.releaseTimesDataset[
                      firstVehicleInEpoch:lastVehicleInEpoch + 1],
-        arcBasedShortestPaths=arcBasedShortestPaths,
+        trip_routes=arcBasedShortestPaths,
         deadlines=instance.deadlines[firstVehicleInEpoch:lastVehicleInEpoch + 1],
         maxStaggeringApplicable=instance.maxStaggeringApplicable[
                                 firstVehicleInEpoch:lastVehicleInEpoch + 1],
-        nominalCapacitiesArcs=instance.nominalCapacitiesArcs[:],
-        travelTimesArcsUtilized=instance.travelTimesArcsUtilized[:],
+        capacities_arcs=instance.capacities_arcs[:],
+        travel_times_arcs=instance.travel_times_arcs[:],
         osmInfoArcsUtilized=instance.osmInfoArcsUtilized[:],
         lastPositionForReconstruction=[None for _ in
-                                       instance.arcBasedShortestPaths[firstVehicleInEpoch:lastVehicleInEpoch + 1]],
+                                       instance.trip_routes[firstVehicleInEpoch:lastVehicleInEpoch + 1]],
         epochID=epochID,
         dueDates=instance.deadlines[firstVehicleInEpoch:lastVehicleInEpoch + 1],
         startSolutionTime=datetime.datetime.now().timestamp(),

@@ -8,7 +8,7 @@ from inputData import FIX_MODEL
 
 def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instance, statusQuo: EpochSolution,
                           epochWarmStart) -> None:
-    arcIndex = instance.arcBasedShortestPaths[vehicle].index(arc)
+    arcIndex = instance.trip_routes[vehicle].index(arc)
     earliestDepartureTime = instance.earliestDepartureTimes[vehicle][arcIndex]
     latestDepartureTime = instance.latestDepartureTimes[vehicle][arcIndex]
     departure = statusQuo.congestedSchedule[vehicle][arcIndex]
@@ -30,7 +30,7 @@ def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instan
 
 def _addDelayVariable(model: Model, vehicle: int, arc: int, instance: Instance) -> None:
     if vehicle in instance.conflictingSets[arc]:
-        position = instance.arcBasedShortestPaths[vehicle].index(arc)
+        position = instance.trip_routes[vehicle].index(arc)
         lb = instance.minDelayOnArc[vehicle][position]
         ub = instance.maxDelayOnArc[vehicle][position]
 
@@ -80,7 +80,7 @@ def addContinuousVariables(model: Model, instance: Instance, statusQuo: EpochSol
     model._delay = {}
     model._load = {}
 
-    for vehicle, path in enumerate(instance.arcBasedShortestPaths):
+    for vehicle, path in enumerate(instance.trip_routes):
         model._departure[vehicle] = {}
         model._delay[vehicle] = {}
         model._load[vehicle] = {}

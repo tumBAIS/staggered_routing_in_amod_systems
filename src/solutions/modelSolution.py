@@ -31,9 +31,9 @@ def getEpochModelSolution(model: Model, epochInstance: EpochInstance, epochStatu
         return epochWarmStart
 
     totalDelay = model._totalDelay.X
-    releaseTimes = _getModelReleaseTimes(model, epochInstance.arcBasedShortestPaths)
-    congestedSchedule = _getModelSchedule(model, epochInstance.arcBasedShortestPaths)
-    delaysOnArcs = _getModelDelayOnArcs(model, epochInstance.arcBasedShortestPaths)
+    releaseTimes = _getModelReleaseTimes(model, epochInstance.trip_routes)
+    congestedSchedule = _getModelSchedule(model, epochInstance.trip_routes)
+    delaysOnArcs = _getModelDelayOnArcs(model, epochInstance.trip_routes)
     freeFlowSchedule = getFreeFlowSchedule(epochInstance, congestedSchedule)
     staggeringApplied = _getStaggeringApplied(releaseTimes, epochStatusQuo.releaseTimes)
     slack = getStaggeringApplicable(epochInstance, staggeringApplied)

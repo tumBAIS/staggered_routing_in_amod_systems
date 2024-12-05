@@ -71,6 +71,7 @@ class InputData:
         self.path_to_routes = self.path_to_G.parent / f"{self.get_day_string()}{self.get_number_trips_string()}/routes.json"
         self.path_to_instance = self.path_to_routes.parent / f"S{self.staggering_cap}_D{self.deadline_factor}_" \
                                                              f"VDF{self.list_of_slopes}{self.list_of_thresholds}/instance.json"
+        self.path_to_results = self.path_to_instance.parent / f"RESULTS"
         os.makedirs(self.path_to_instance.parent, exist_ok=True)
 
     def get_number_trips_string(self) -> str:

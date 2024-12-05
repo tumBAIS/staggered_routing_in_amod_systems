@@ -3,8 +3,8 @@ from instanceModule.instance import Instance
 
 
 def _getVehiclesUtilizingArcs(instance: Instance) -> list[list[int]]:
-    vehiclesUtilizingArcs = [[] for _ in instance.travelTimesArcsUtilized]
-    for vehicle, path in enumerate(instance.arcBasedShortestPaths):
+    vehiclesUtilizingArcs = [[] for _ in instance.travel_times_arcs]
+    for vehicle, path in enumerate(instance.trip_routes):
         for arc in path:
             vehiclesUtilizingArcs[arc].append(vehicle)
 
@@ -14,8 +14,8 @@ def _getVehiclesUtilizingArcs(instance: Instance) -> list[list[int]]:
 def _updateUsedArcsIDs(instance: Instance, arcsToRemove: list[int]) -> None:
     if not arcsToRemove:
         return
-    instance.arcBasedShortestPaths = [[arc - len([arcRemoved for arcRemoved in arcsToRemove if arcRemoved < arc]) for
-                                       arc in path] for path in instance.arcBasedShortestPaths]
+    instance.trip_routes = [[arc - len([arcRemoved for arcRemoved in arcsToRemove if arcRemoved < arc]) for
+                             arc in path] for path in instance.trip_routes]
     return
 
 
@@ -32,10 +32,10 @@ def _removeArcs(instance: Instance, arcsToRemove: list[int]) -> None:
         return
     assert arcsToRemove == sorted(arcsToRemove), "arcs to remove are not sored!"
     for arc in reversed(arcsToRemove):
-        instance.travelTimesArcsUtilized.pop(arc)
+        instance.travel_times_arcs.pop(arc)
         instance.osmInfoArcsUtilized.pop(arc)
-        instance.nominalCapacitiesArcs.pop(arc)
-        _assertArcIsNotUtilized(instance.conflictingSets[arc], instance.arcBasedShortestPaths)
+        instance.capacities_arcs.pop(arc)
+        _assertArcIsNotUtilized(instance.conflictingSets[arc], instance.trip_routes)
         instance.conflictingSets.pop(arc)
     return
 

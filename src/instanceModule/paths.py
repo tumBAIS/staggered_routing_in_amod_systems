@@ -106,9 +106,9 @@ def _getOsmInfoArcs(manhattanGraph: DiGraph, arcsUtilizedIDs: list[tuple[int, in
     return osmInfoArcs
 
 
-ArcsFeatures = collections.namedtuple("ArcsFeatures", ["travelTimesArcsUtilized",
-                                                       "nominalCapacitiesArcs",
-                                                       "osmInfoArcsUtilized"])
+ArcsFeatures = collections.namedtuple("ArcsFeatures", ["travel_times_arcs",
+                                                       "capacities_arcs",
+                                                       "osm_info_arcs"])
 
 
 def getArcBasedPathsWithFeatures(nodeBasedShortestPaths: list[list[int]],
@@ -120,7 +120,7 @@ def getArcBasedPathsWithFeatures(nodeBasedShortestPaths: list[list[int]],
     osmInfoArcs = _getOsmInfoArcs(manhattanGraph, arcsUtilizedIDs)
     travelTimesArcsUtilized = _getTravelTimesArcsUtilized(manhattanGraph, arcsUtilizedIDs)
     nominalCapacitiesArcs = _getNominalCapacityArcsUtilized(manhattanGraph, arcsUtilizedIDs)
-    arcsFeatures = ArcsFeatures(travelTimesArcsUtilized=travelTimesArcsUtilized,
-                                nominalCapacitiesArcs=nominalCapacitiesArcs,
-                                osmInfoArcsUtilized=osmInfoArcs)
+    arcsFeatures = ArcsFeatures(travel_times_arcs=travelTimesArcsUtilized,
+                                capacities_arcs=nominalCapacitiesArcs,
+                                osm_info_arcs=osmInfoArcs)
     return arcBasedShortestPaths, arcsFeatures

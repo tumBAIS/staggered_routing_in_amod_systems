@@ -65,14 +65,17 @@ def saveExperiment(inputSource: str, instance: Instance, statusQuo: CompleteSolu
             solution.delaysOnArcs[i][j] = round(solution.delaysOnArcs[i][j], 2)
 
     instance_data_to_save = instance.__dict__
-    cols_to_delete = ["inputData", "nominalCapacitiesArcs", "releaseTimesDataset", "arrivalTimesDataset",
+    instance_data_to_save["deadlines"] = instance_data_to_save["deadlines"].to_list()
+    instance_data_to_save["releaseTimesDataset"] = instance_data_to_save["releaseTimesDataset"].to_list()
+    instance_data_to_save["arrivalTimesDataset"] = instance_data_to_save["arrivalTimesDataset"].to_list()
+    cols_to_delete = ["inputData", "capacities_arcs", "releaseTimesDataset", "arrivalTimesDataset",
                       "undividedConflictingSets", "latestDepartureTimes", "earliestDepartureTimes", "minDelayOnArc",
-                      "maxDelayOnArc", ]
+                      "maxDelayOnArc"]
     for col in cols_to_delete:
         del instance_data_to_save[col]
-    for i in range(len(instance_data_to_save["travelTimesArcsUtilized"])):
-        instance_data_to_save["travelTimesArcsUtilized"][i] = \
-            round(instance_data_to_save["travelTimesArcsUtilized"][i], 2)
+    for i in range(len(instance_data_to_save["travel_times_arcs"])):
+        instance_data_to_save["travel_times_arcs"][i] = \
+            round(instance_data_to_save["travel_times_arcs"][i], 2)
 
     output_data = {
         "input_data": inputData_to_save,
@@ -81,7 +84,15 @@ def saveExperiment(inputSource: str, instance: Instance, statusQuo: CompleteSolu
         'solution': solution.__dict__,
     }
 
-    with open(fr"{path_to_results}/results.json", 'w', encoding='utf-8') as f:
+    cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance", "path_to_results"]
+    for col in cols_input_data_to_delete:
+        del output_data["input_data"][col]
+
+    # Create directory to save results
+    os.makedirs(path_to_results, exist_ok=True)
+
+    output_data["statusQuo"]["releaseTimes"] = output_data["statusQuo"]["releaseTimes"].to_list()
+    with open(path_to_results / "results.json", 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=3)
 
     # save twice on cluster

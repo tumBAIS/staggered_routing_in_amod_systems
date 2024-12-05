@@ -48,10 +48,10 @@ class StatusQuoMetrics:
 
 
 def compute_vehicles_on_arc_from_delay(delay, instance, arc, first_capacity, second_capacity):
-    second_slope = instance.travelTimesArcsUtilized[arc] * instance.inputData.slopeSecondLine / \
-                   max(instance.nominalCapacitiesArcs[arc], MIN_SET_CAPACITY)
-    third_slope = instance.travelTimesArcsUtilized[arc] * instance.inputData.slopeThirdLine / \
-                  max(instance.nominalCapacitiesArcs[arc], MIN_SET_CAPACITY)
+    second_slope = instance.travel_times_arcs[arc] * instance.inputData.slopeSecondLine / \
+                   max(instance.capacities_arcs[arc], MIN_SET_CAPACITY)
+    third_slope = instance.travel_times_arcs[arc] * instance.inputData.slopeThirdLine / \
+                  max(instance.capacities_arcs[arc], MIN_SET_CAPACITY)
 
     height_third_piece = second_slope * (second_capacity - first_capacity)
     if delay <= second_slope * (second_capacity - first_capacity):
@@ -89,14 +89,14 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
     list_delays = []
     for vehicle, delays in enumerate(status_quo_metrics.delaysOnArcs):
         for position, delay in enumerate(delays):
-            arc = instance.arcBasedShortestPaths[vehicle][position]
+            arc = instance.trip_routes[vehicle][position]
             if arc == 0:
                 continue
-            travel_time = instance.travelTimesArcsUtilized[arc]
+            travel_time = instance.travel_times_arcs[arc]
             vehicles_on_arc = flows[vehicle][position]
-            slopes = [round(travel_time * x / (60 * instance.nominalCapacitiesArcs[arc]), 2) for x in
+            slopes = [round(travel_time * x / (60 * instance.capacities_arcs[arc]), 2) for x in
                       instance.inputData.list_of_slopes]
-            threshold_capacities = [instance.nominalCapacitiesArcs[arc] * x for x in
+            threshold_capacities = [instance.capacities_arcs[arc] * x for x in
                                     instance.inputData.list_of_thresholds]
             if round(vehicles_on_arc) > 1:
                 list_vehicles_on_arcs.append(round(vehicles_on_arc))
@@ -162,15 +162,15 @@ def getCurrentEpochStatusQuo(epochInstance: EpochInstance) -> EpochSolution:
     statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.releaseTimes)
     addConflictingSetsToInstance(epochInstance, statusQuoMetrics.freeFlowSchedule)
     binaries = getConflictBinaries(epochInstance.conflictingSets,
-                                   epochInstance.arcBasedShortestPaths,
+                                   epochInstance.trip_routes,
                                    statusQuoMetrics.congestedSchedule)
     flows = get_flow_from_binaries(epochInstance, binaries.gamma)
-    save_congestion_info(epochInstance, statusQuoMetrics, flows)
+    # save_congestion_info(epochInstance, statusQuoMetrics, flows)
     printInfoStatusQuoMetrics(statusQuoMetrics)
     printInfoArcsUtilized(epochInstance)
     printInfoLengthTrips(epochInstance, statusQuoMetrics.congestedSchedule, statusQuoMetrics.freeFlowSchedule,
                          statusQuoMetrics.delaysOnArcs)
-    vehiclesUtilizingArcs = _getVehiclesUtilizingArcs(epochInstance.arcBasedShortestPaths)
+    vehiclesUtilizingArcs = _getVehiclesUtilizingArcs(epochInstance.trip_routes)
     _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs)
     printInfoConflictingSetsSizes(epochInstance)
     return EpochSolution(

@@ -82,7 +82,7 @@ def simplifySystem(notSimplifiedInstance: Instance | EpochInstance,
     mergeArcsOnPathsWhereNoConflictsCanHappen(instance, statusQuo)
     removeNotUtilizedArcs(instance)
     statusQuo.binaries = getConflictBinaries(instance.conflictingSets,
-                                             instance.arcBasedShortestPaths,
+                                             instance.trip_routes,
                                              statusQuo.congestedSchedule)  # necessary if no warm start is given
     _setMinReleaseTimeTo0AndAdjustDeadlines(instance, statusQuo)
     _printCongestionInfoSimplifiedSystem(statusQuo)

@@ -11,29 +11,32 @@ def getFreeFlowSchedule(instance: Instance | EpochInstance,
                         congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
     freeFlowSchedule = [[schedule[0]] for schedule in congestedSchedule]
 
-    for vehicle, path in enumerate(instance.arcBasedShortestPaths):
+    for vehicle, path in enumerate(instance.trip_routes):
         for arcIndex, arc in enumerate(path[:-1]):
-            departureTime = freeFlowSchedule[vehicle][-1] + instance.travelTimesArcsUtilized[arc]
+            departureTime = freeFlowSchedule[vehicle][-1] + instance.travel_times_arcs[arc]
             freeFlowSchedule[vehicle].append(departureTime)
 
     return freeFlowSchedule
 
 
 def getCongestedSchedule(instance: Instance | EpochInstance,
-                         releaseTimes: list[float]) -> list[VehicleSchedule]:
-    cppParameters = [instance.inputData.algorithmTimeLimit]
-
-    congestedScheduleStatusQuo = cpp.cppComputeCongestedSchedule(
-        instance.arcBasedShortestPaths,
-        releaseTimes,
-        instance.travelTimesArcsUtilized,
-        instance.nominalCapacitiesArcs,
-        instance.inputData.list_of_slopes,
-        instance.inputData.list_of_thresholds,
-        cppParameters
+                         release_times: list[float]) -> list[VehicleSchedule]:
+    cpp_parameters = [instance.inputData.algorithmTimeLimit]
+    cpp_instance = cpp.cpp_instance(
+        set_of_vehicle_paths=instance.trip_routes,
+        travel_times_arcs=instance.travel_times_arcs,
+        capacities_arcs=instance.capacities_arcs,
+        list_of_slopes=instance.inputData.list_of_slopes,
+        list_of_thresholds=instance.inputData.list_of_thresholds,
+        parameters=cpp_parameters,
+        release_times=release_times,
+        lb_travel_time=instance.get_lb_travel_times()
     )
-    releaseTimes[:] = [schedule[0] for schedule in congestedScheduleStatusQuo]
-    return congestedScheduleStatusQuo
+    cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
+    cpp_solution = cpp_scheduler.construct_solution(release_times)
+    schedule = cpp_solution.get_schedule()
+    release_times[:] = [schedule[0] for schedule in schedule]
+    return schedule
 
 
 def getTotalDelay(freeFlowSchedule: list[VehicleSchedule], congestedSchedule: list[VehicleSchedule]) -> float:
@@ -48,10 +51,10 @@ def getDelaysOnArcs(instance: Instance | EpochInstance,
     delaysOnArcs = [
         [
             congestedSchedule[vehicle][position + 1] - congestedSchedule[vehicle][position] -
-            instance.travelTimesArcsUtilized[arc]
+            instance.travel_times_arcs[arc]
             for position, arc in enumerate(path[:-1])
         ]
-        for vehicle, path in enumerate(instance.arcBasedShortestPaths)
+        for vehicle, path in enumerate(instance.trip_routes)
     ]
     delaysOnArcs = [[0 if abs(element) < 1e-6 else element for element in delays] + [0] for delays in delaysOnArcs]
     return delaysOnArcs

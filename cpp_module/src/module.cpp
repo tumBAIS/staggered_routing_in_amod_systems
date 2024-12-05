@@ -147,6 +147,7 @@ PYBIND11_MODULE(cpp_module, m) {
                  py::arg("cpp_instance"))
             .def("get_trip_schedule", &cpp_module::Solution::get_trip_schedule,
                  py::arg("trip_id"))
+            .def("get_schedule", &cpp_module::Solution::get_schedule)
             .def("get_total_delay", &cpp_module::Solution::get_total_delay)
             .def("get_total_travel_time", &cpp_module::Solution::get_total_travel_time);
 

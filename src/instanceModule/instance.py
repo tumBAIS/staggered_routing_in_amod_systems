@@ -26,11 +26,11 @@ def saveListOfStringsFile(listOfValues: list[typing.Any], fileName: str, path: s
 class Instance:
     inputData: InputData
     osmInfoArcsUtilized: list[dict[str:typing.Any]]
-    nominalCapacitiesArcs: list[int]
+    capacities_arcs: list[int]
     releaseTimesDataset: list[float]
     arrivalTimesDataset: list[float]
-    arcBasedShortestPaths: list[list[int]]
-    travelTimesArcsUtilized: list[float]
+    trip_routes: list[list[int]]
+    travel_times_arcs: list[float]
     clockStartEpoch: int = 0
     dueDates: list[float] = field(default_factory=list[float])
     undividedConflictingSets: list[list[list[int]]] = field(default_factory=list[list[list[int]]])
@@ -43,6 +43,10 @@ class Instance:
     removedVehicles: list[int] = field(default_factory=list[int])
     deadlines: Optional[list[Time]] = None
     maxStaggeringApplicable: Optional[list[Staggering]] = None
+
+    def get_lb_travel_times(self) -> float:
+        """Return sum of the free flow times of the routes of trips contained in instance"""
+        return sum([self.travel_times_arcs[arc] for path in self.trip_routes for arc in path])
 
     def set_deadlines(self, deadlines: list[Time]):
         """Create list of the latest arrival time at destination for trips.
@@ -75,9 +79,9 @@ class Instance:
         max_staggering_times = []
 
         # Iterate over each vehicle and its corresponding path
-        for vehicle, path in enumerate(self.arcBasedShortestPaths):
+        for vehicle, path in enumerate(self.trip_routes):
             # Calculate the total nominal travel time for the current path
-            total_travel_time = sum(self.travelTimesArcsUtilized[arc] for arc in path)
+            total_travel_time = sum(self.travel_times_arcs[arc] for arc in path)
 
             # Calculate staggering time based on staggering cap percentage
             if self.inputData.staggeringApplicableMethod == "fixed":
@@ -107,7 +111,7 @@ class Instance:
 
 def _writeArcBasedShortestPathsForCppCode(instance: Instance):
     with open(f"{pathToCppInstance}/arcBasedShortestPaths.txt", "w") as outfile:
-        for vehiclePath in instance.arcBasedShortestPaths:
+        for vehiclePath in instance.trip_routes:
             outfile.writelines([str(arc) + "," for arc in vehiclePath if arc != 0])
             outfile.write("0")
             outfile.writelines("\n")
@@ -152,8 +156,8 @@ def saveInstanceForTestingCppCode(instance: Instance, statusQuo: CompleteSolutio
         saveListOfStringsFile(instance.inputData.list_of_slopes, "list_of_slopes", pathToCppInstance)
         saveListOfStringsFile(instance.inputData.list_of_thresholds, "list_of_thresholds", pathToCppInstance)
         saveListOfStringsFile(instance.deadlines, "dueDates", pathToCppInstance)
-        saveListOfStringsFile(instance.travelTimesArcsUtilized, "travelTimesArcsUtilized", pathToCppInstance)
-        saveListOfStringsFile(instance.nominalCapacitiesArcs, "nominalCapacitiesArcsUtilized",
+        saveListOfStringsFile(instance.travel_times_arcs, "travelTimesArcsUtilized", pathToCppInstance)
+        saveListOfStringsFile(instance.capacities_arcs, "nominalCapacitiesArcsUtilized",
                               pathToCppInstance)
         saveListOfStringsFile(statusQuo.releaseTimes, "releaseTimes", pathToCppInstance)
         saveListOfStringsFile(statusQuo.staggeringApplicable, "remainingSlack", pathToCppInstance)
@@ -161,7 +165,7 @@ def saveInstanceForTestingCppCode(instance: Instance, statusQuo: CompleteSolutio
 
 def printTotalFreeFlowTime(instance: Instance):
     totalFreeFlowTime = sum(
-        [instance.travelTimesArcsUtilized[arc] for path in instance.arcBasedShortestPaths for arc in path])
+        [instance.travel_times_arcs[arc] for path in instance.trip_routes for arc in path])
     print(f"Total free flow time instance: {round(totalFreeFlowTime / 3600, 2)} [h]")
 
 
@@ -171,10 +175,10 @@ def getInstance(inputData: InputData,
                 releaseTimesDataset: list[Time],
                 arrivalTimesDataset: list[Time]):
     return Instance(
-        osmInfoArcsUtilized=arcsFeatures.osmInfoArcsUtilized,
-        arcBasedShortestPaths=arcBasedShortestPaths,
-        travelTimesArcsUtilized=arcsFeatures.travelTimesArcsUtilized,
-        nominalCapacitiesArcs=arcsFeatures.nominalCapacitiesArcs,
+        osmInfoArcsUtilized=arcsFeatures.osm_info_arcs,
+        trip_routes=arcBasedShortestPaths,
+        travel_times_arcs=arcsFeatures.travel_times_arcs,
+        capacities_arcs=arcsFeatures.capacities_arcs,
         inputData=inputData,
         releaseTimesDataset=releaseTimesDataset,
         arrivalTimesDataset=arrivalTimesDataset

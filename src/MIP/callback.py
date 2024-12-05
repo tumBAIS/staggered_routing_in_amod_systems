@@ -56,7 +56,7 @@ def _updateRemainingTimeForOptimization(model: Model, instance: Instance) -> Non
 
 def _getCallbackSolution(model: Model, instance: Instance, statusQuo: CompleteSolution) -> None:
     model._cbReleaseTimes = [model.cbGetSolution(model._departure[vehicle][path[0]])
-                             for vehicle, path in enumerate(instance.arcBasedShortestPaths)]
+                             for vehicle, path in enumerate(instance.trip_routes)]
     model._cbTotalDelay = sum(
         [sum(model.cbGetSolution(model._delay[vehicle][arc]) if isinstance(model._delay[vehicle][arc], grb.Var)
              else 0 for arc in model._delay[vehicle])
@@ -72,14 +72,14 @@ def _assertSchedule(model: Model, congestedSchedule: VehicleSchedules, delaysOnA
                     instance: Instance) -> None:
     if ACTIVATE_ASSERTIONS:
         for vehicle, (schedule, delays) in enumerate(zip(congestedSchedule, delaysOnArcs)):
-            firstArc = instance.arcBasedShortestPaths[vehicle][0]
+            firstArc = instance.trip_routes[vehicle][0]
 
             # Assert the departure time of the first arc is within the maximum staggering limit
             assert schedule[0] - model._departure[vehicle][firstArc]._lb <= instance.maxStaggeringApplicable[
                 vehicle] + 1e-6, \
                 f"Invalid departure time for the first arc of vehicle {vehicle}"
 
-            for position, arc in enumerate(instance.arcBasedShortestPaths[vehicle]):
+            for position, arc in enumerate(instance.trip_routes[vehicle]):
                 # Assert the departure time is within the lower and upper bounds
                 assert model._departure[vehicle][arc]._lb - 1e-6 <= schedule[position] <= model._departure[vehicle][
                     arc]._ub + 1e-6, \
@@ -102,9 +102,9 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
                                                      instance.conflictingSets,
                                                      instance.earliestDepartureTimes,
                                                      instance.latestDepartureTimes,
-                                                     instance.travelTimesArcsUtilized,
-                                                     instance.nominalCapacitiesArcs,
-                                                     instance.arcBasedShortestPaths,
+                                                     instance.travel_times_arcs,
+                                                     instance.capacities_arcs,
+                                                     instance.trip_routes,
                                                      instance.deadlines,
                                                      instance.dueDates,
                                                      instance.inputData.list_of_slopes,
@@ -113,7 +113,7 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
     delaysOnArcs = getDelaysOnArcs(instance, congestedSchedule)
     _assertSchedule(model, congestedSchedule, delaysOnArcs, instance)
     binaries = getConflictBinaries(instance.conflictingSets,
-                                   instance.arcBasedShortestPaths,
+                                   instance.trip_routes,
                                    congestedSchedule)
     totalDelay = sum([sum(delaysOnArcVehicle) for delaysOnArcVehicle in delaysOnArcs])
     heuristicSolution = HeuristicSolution(congestedSchedule=congestedSchedule,

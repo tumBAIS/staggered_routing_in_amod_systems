@@ -145,7 +145,7 @@ OtherVehicleInfo = namedtuple("OtherVehicleInfo", ["departureTime", "arrivalTime
 def _getOtherVehicleInfo(currentEpochInstance: EpochInstance, currentEpochStatusQuo: EpochSolution,
                          otherVehicle: int,
                          arc: int) -> OtherVehicleInfo:
-    otherPosition = currentEpochInstance.arcBasedShortestPaths[otherVehicle].index(arc)
+    otherPosition = currentEpochInstance.trip_routes[otherVehicle].index(arc)
     otherDepartureTime = currentEpochStatusQuo.congestedSchedule[otherVehicle][otherPosition]
     otherArrivalTime = currentEpochStatusQuo.congestedSchedule[otherVehicle][otherPosition + 1]
     return OtherVehicleInfo(departureTime=otherDepartureTime, arrivalTime=otherArrivalTime, position=otherPosition,
@@ -162,14 +162,14 @@ def _isTimeInCurrentEpoch(nextEpochDeparture, currentEpochInstance):
 
 def _isCurrentVehicleInSystem(nextEpochDeparture, currentEpochInstance) -> bool:
     return nextEpochDeparture.position < len(
-        currentEpochInstance.arcBasedShortestPaths[nextEpochDeparture.vehicle]) - 1
+        currentEpochInstance.trip_routes[nextEpochDeparture.vehicle]) - 1
 
 
 def _getFollowingNextEpochDeparture(currentEpochStatusQuo, currentEpochInstance,
                                     nextEpochDeparture) -> NextEpochDeparture:
     nextTime = currentEpochStatusQuo.congestedSchedule[nextEpochDeparture.vehicle][
         nextEpochDeparture.position + 1]
-    nextArc = currentEpochInstance.arcBasedShortestPaths[nextEpochDeparture.vehicle][
+    nextArc = currentEpochInstance.trip_routes[nextEpochDeparture.vehicle][
         nextEpochDeparture.position + 1]
     return NextEpochDeparture(vehicle=nextEpochDeparture.vehicle,
                               position=nextEpochDeparture.position + 1,

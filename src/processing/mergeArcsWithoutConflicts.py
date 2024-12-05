@@ -5,7 +5,7 @@ from instanceModule.instance import Instance
 
 
 def mergeArcsOnPathsWhereNoConflictsCanHappen(instance: Instance, statusQuo: CompleteSolution) -> None:
-    for vehicle, vehiclePath in enumerate(instance.arcBasedShortestPaths):
+    for vehicle, vehiclePath in enumerate(instance.trip_routes):
         listOfListOfArcsToMerge = _getArcsWhichCanBeMerged(vehicle, instance)
         if len(listOfListOfArcsToMerge) > 1:
             for listOfArcsToMerge in listOfListOfArcsToMerge:
@@ -38,7 +38,7 @@ def _mergeArcsInPath(vehiclePath: list[int], listOfArcsToMerge: list[int], idMer
 
 
 def _appendMergedArcToInstance(instance, listOfArcsToMerge: list[int]) -> int:
-    travelTimeNewArc = sum([instance.travelTimesArcsUtilized[arc] for arc in listOfArcsToMerge])
+    travelTimeNewArc = sum([instance.travel_times_arcs[arc] for arc in listOfArcsToMerge])
     mergedArcInfo = {"typeOfArc": "merged",
                      "origin": instance.osmInfoArcsUtilized[listOfArcsToMerge[0]]["origin"],
                      "coordinates_origin": instance.osmInfoArcsUtilized[listOfArcsToMerge[0]]["coordinates_origin"],
@@ -51,17 +51,17 @@ def _appendMergedArcToInstance(instance, listOfArcsToMerge: list[int]) -> int:
                      "length": sum([instance.osmInfoArcsUtilized[arc]["length"] for arc in listOfArcsToMerge])
                      }
     instance.osmInfoArcsUtilized.append(mergedArcInfo)
-    instance.travelTimesArcsUtilized.append(travelTimeNewArc)
-    instance.nominalCapacitiesArcs.append(1)
+    instance.travel_times_arcs.append(travelTimeNewArc)
+    instance.capacities_arcs.append(1)
     instance.conflictingSets.append([])
-    return len(instance.travelTimesArcsUtilized) - 1
+    return len(instance.travel_times_arcs) - 1
 
 
 def _getArcsWhichCanBeMerged(vehicle: int, instance: Instance) -> list[list[int]]:
     listOfListOfArcsToMerge: list[list[int]] = []
     listOfArcsToMerge: list[int] = []
 
-    for position, arc in enumerate(instance.arcBasedShortestPaths[vehicle]):
+    for position, arc in enumerate(instance.trip_routes[vehicle]):
         if vehicle not in instance.conflictingSets[arc] and arc != 0:
             # vehicle is not in conflicting set
             listOfArcsToMerge.append(arc)

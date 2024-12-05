@@ -150,7 +150,7 @@ def getConflictBinaries(conflictingSets: list[list[int]], shortestPaths: list[li
 
 def get_flow_from_binaries(instance, gammas) -> list[list[int]]:
     flows = []
-    for vehicle, path in enumerate(instance.arcBasedShortestPaths):
+    for vehicle, path in enumerate(instance.trip_routes):
         vehicle_flows = []
         for pos, arc in enumerate(path):
             if arc in gammas and vehicle in gammas[arc]:
