@@ -1,0 +1,69 @@
+import os
+import sys
+from pathlib import Path
+import matplotlib
+import warnings
+
+# ===========================
+# Set Paths
+# ===========================
+path_to_repo = Path(__file__).parent.parent.parent
+path_to_src = path_to_repo / "src"
+os.chdir(path_to_repo.as_posix())
+
+# ===========================
+# C++ Build Configuration
+# ===========================
+build = "release"  # Options: release, debug, relwithdebinfo
+path_to_build = path_to_repo / f"cpp_module/cmake-build-{build}"
+path_to_kspwlo = path_to_repo / f"kspwlo/cmake-build-release"
+sys.path.append(path_to_build.as_posix())
+sys.path.append(path_to_kspwlo.as_posix())
+sys.path.append(path_to_src.as_posix())
+
+# ===========================
+# Import Custom Modules
+# ===========================
+from instance_generator.computer import InstanceComputer
+from inputData import InputData
+
+# ===========================
+# Matplotlib Configuration
+# ===========================
+# Suppress specific matplotlib warning
+warnings.filterwarnings("ignore", message="FigureCanvasAgg is non-interactive, and thus cannot be shown")
+# Use Agg backend for non-GUI environments
+matplotlib.use('Agg')
+
+if __name__ == "__main__":
+    # ===========================
+    # Instance Parameters
+    # ===========================
+    instance_params = InputData(
+        day=1,
+        numberRides=50,
+        t_min=0,
+        epochSize=60,
+        seed=0,
+        network_name="little_italy",
+        type_of_instance="synthetic",
+        speed=20,
+        maxFlowAllowed=100,
+        addShortcuts=False,
+        list_of_slopes=[0.05],
+        list_of_thresholds=[1],
+        staggeringApplicableMethod="proportional",
+        deadlineFactor=100,
+        staggeringCapPercentage=10,
+        optimize=True,
+        algorithmTimeLimit=10000,
+        epochTimeLimit=1000,
+        warmStart=True,
+        improveWarmStart=True,
+        callLocalSearch=True,
+    )
+
+    # ===========================
+    # Run Instance Computation
+    # ===========================
+    InstanceComputer(instance_params).run()

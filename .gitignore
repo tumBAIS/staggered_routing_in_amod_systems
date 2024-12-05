@@ -1,5 +1,6 @@
 # Compiled Python bytecode
 __pycache__/
+.PowerFolder/
 
 # pytest cache
 .pytest_cache/
@@ -12,6 +13,7 @@ __pycache__/
 /logs/
 /error-logs/
 *.log
+venv/
 
 # Data files and directories
 /data/

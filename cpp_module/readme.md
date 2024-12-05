@@ -13,17 +13,17 @@ The module relies on external libraries for its operation:
 
 #### pybind11
 
-To ensure compatibility and ease of setup, `pybind11` version 2.9.2 is included directly via git. To install this 
+To ensure compatibility and ease of setup, `pybind11` version 2.13.6 is included directly via git. To install this 
 specific version, from the cpp_module directory run the following command:
    ```bash
-    Invoke-WebRequest -Uri "https://github.com/pybind/pybind11/archive/refs/tags/v2.9.2.zip" -OutFile "pybind11-v2.9.2.zip"
-    Expand-Archive -Path "pybind11-v2.9.2.zip" -DestinationPath "lib"
-    Remove-Item -Path "lib/pybind11-v2.9.2.zip"
+    Invoke-WebRequest -Uri "https://github.com/pybind/pybind11/archive/refs/tags/v2.13.6.zip" -OutFile "pybind11-v2.13.6.zip"
+    Expand-Archive -Path "pybind11-v2.13.6.zip" -DestinationPath "lib"
+    Remove-Item -Path "lib/pybind11-v2.13.6.zip"
 
    ```
 Rename the extracted directory to 'pybind11'
 ```bash
-    Rename-Item -Path "lib\pybind11-2.9.2" -NewName "pybind11"
+    Rename-Item -Path "lib\pybind11-2.13.6" -NewName "pybind11"
 ```
 
 ## Building the Module
