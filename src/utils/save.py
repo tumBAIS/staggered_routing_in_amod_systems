@@ -65,9 +65,6 @@ def saveExperiment(inputSource: str, instance: Instance, statusQuo: CompleteSolu
             solution.delaysOnArcs[i][j] = round(solution.delaysOnArcs[i][j], 2)
 
     instance_data_to_save = instance.__dict__
-    instance_data_to_save["deadlines"] = instance_data_to_save["deadlines"].to_list()
-    instance_data_to_save["releaseTimesDataset"] = instance_data_to_save["releaseTimesDataset"].to_list()
-    instance_data_to_save["arrivalTimesDataset"] = instance_data_to_save["arrivalTimesDataset"].to_list()
     cols_to_delete = ["inputData", "capacities_arcs", "releaseTimesDataset", "arrivalTimesDataset",
                       "undividedConflictingSets", "latestDepartureTimes", "earliestDepartureTimes", "minDelayOnArc",
                       "maxDelayOnArc"]
@@ -91,7 +88,6 @@ def saveExperiment(inputSource: str, instance: Instance, statusQuo: CompleteSolu
     # Create directory to save results
     os.makedirs(path_to_results, exist_ok=True)
 
-    output_data["statusQuo"]["releaseTimes"] = output_data["statusQuo"]["releaseTimes"].to_list()
     with open(path_to_results / "results.json", 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=3)
 

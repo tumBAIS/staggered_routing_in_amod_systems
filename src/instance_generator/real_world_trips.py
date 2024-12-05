@@ -79,21 +79,8 @@ def get_real_world_trips(instance_parameters: inputData.InputData, network: Netw
     dataset_gdf["destination"] = dataset_gdf["destination_coords"].apply(network.find_closest_node)
     dataset_gdf = dataset_gdf[dataset_gdf['origin'] != dataset_gdf["destination"]]
 
-    # Scale demand by adding new trips
-    # new_trips = _scale_demand(dataset_gdf, instance_parameters, network)
-    # dataset_gdf = pd.concat([dataset_gdf, new_trips], ignore_index=True)
-    len_before = dataset_gdf.shape[0]
-    dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, random_state=instance_parameters.seed)
-    len_after = dataset_gdf.shape[0]
-    # Print the number of rows before and after sampling
-    print(f"Length before sampling: {len_before}")
-    print(f"Length after sampling: {len_after}")
-
-    # Calculate the difference in length
-    change_in_length = len_before - len_after
-
-    # Print the change in length
-    print(f"Change in number of rows: {change_in_length}")
+    # Sample
+    dataset_gdf = sample_dataset(dataset_gdf, instance_parameters)
 
     # END SELECTION -- START COMPUTATION #
 
@@ -138,6 +125,29 @@ def get_real_world_trips(instance_parameters: inputData.InputData, network: Netw
     print("=" * 60 + "\n")
 
     return dataset_gdf.to_dict("records")
+
+
+def sample_dataset(dataset_gdf, instance_parameters) -> gpd.GeoDataFrame:
+    len_before = dataset_gdf.shape[0]
+    # Check if the sample size is greater than the size of the DataFrame
+    if instance_parameters.numberRides > len_before:
+        # Enable resampling by setting replace=True
+        dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, replace=True,
+                                         random_state=instance_parameters.seed)
+    else:
+        dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, random_state=instance_parameters.seed)
+    len_after = dataset_gdf.shape[0]
+
+    # Print the number of rows before and after sampling
+    print(f"Length before sampling: {len_before}")
+    print(f"Length after sampling: {len_after}")
+
+    # Calculate the difference in length
+    change_in_length = len_before - len_after
+
+    # Print the change in length
+    print(f"Change in number of rows: {change_in_length}")
+    return dataset_gdf
 
 
 def _scale_demand(dataset_gdf: pd.DataFrame, instance_parameters: InstanceParams, network: Network,

@@ -19,11 +19,11 @@ def getNotSimplifiedInstance(inputData: InputData) -> Instance:
     setArcsNominalTravelTimesAndCapacities(graph, inputData)
 
     arcBasedShortestPaths, arcsFeatures = getArcBasedPathsWithFeatures(nodeBasedShortestPaths, graph)
-    instance = getInstance(inputData, arcBasedShortestPaths, arcsFeatures, taxiRides["release_time"],
-                           taxiRides["deadline"])
+    instance = getInstance(inputData, arcBasedShortestPaths, arcsFeatures, taxiRides["release_time"].to_list(),
+                           taxiRides["deadline"].to_list())
 
     printTotalFreeFlowTime(instance)
-    instance.set_deadlines(taxiRides["deadline"])
+    instance.set_deadlines(taxiRides["deadline"].to_list())
     instance.set_max_staggering_applicable()
     instance.check_optional_fields()
     return instance

@@ -192,7 +192,7 @@ class InstanceComputer:
     def _save_instance_file(self, trips: Trips, solution: cpp.cpp_solution):
         # Copy the instance parameters and remove unnecessary keys
         params_dict = self.instance_params.__dict__.copy()
-        keys_to_remove = ["path_to_G", "path_to_instance", "path_to_routes"]
+        keys_to_remove = ["path_to_G", "path_to_instance", "path_to_routes", "path_to_results"]
 
         for key_to_remove in keys_to_remove:
             if key_to_remove in params_dict:
