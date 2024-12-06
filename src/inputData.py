@@ -1,9 +1,10 @@
 import dataclasses
-import datetime
 import os
 import pickle
 import sys
 from pathlib import Path
+from tabulate import tabulate  # Import the tabulate library
+import datetime
 
 # Global configuration parameters
 ACTIVATE_ASSERTIONS = False
@@ -65,30 +66,42 @@ class InputData:
 
 
 def print_input_data(input_data: InputData):
-    print("#" * 20)
-    print("# INFO EXPERIMENT #")
-    print("#" * 20)
+    # Get current date and time
+    current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    info_to_print = vars(input_data)
-    quarter_of_params = round(0.25 * len(info_to_print))
+    print("-" * 50)
+    print("INFO EXPERIMENT".center(50))
+    print("=" * 50)
 
-    for i in range(4):
-        start_idx = i * quarter_of_params
-        end_idx = (i + 1) * quarter_of_params
-        print(dict(list(info_to_print.items())[start_idx:end_idx]))
+    # Print the date and time the experiment is being run
+    print(f"Experiment Date and Time: {current_time}")
+    print("-" * 50)
 
-    print("#" * 20)
-    print("# START PROCEDURE #")
-    print("#" * 20)
+    # Filter and prepare data for printing, exclude path attributes
+    data_to_print = {k: v for k, v in vars(input_data).items() if not 'path' in k}
+
+    # Convert dictionary to a list of tuples for tabulate
+    data_items = list(data_to_print.items())
+    # Create a tabular format, specifying the headers
+    table = tabulate(data_items, headers=['Parameter', 'Value'], tablefmt='simple')
+
+    # Print the formatted table
+    print(table)
+
+    print("-" * 50)
+    print("START PROCEDURE".center(50))
+    print("=" * 50)
 
 
 def get_input_data(input_source: str) -> InputData:
     if input_source == "script":
-        return generate_input_data_from_script()
+        input_data = generate_input_data_from_script()
     elif input_source == "console":
-        return load_input_data_from_file()
+        input_data = load_input_data_from_file()
     else:
         raise ValueError("Invalid input source specified.")
+    print_input_data(input_data)
+    return input_data
 
 
 def generate_input_data_from_script() -> InputData:
