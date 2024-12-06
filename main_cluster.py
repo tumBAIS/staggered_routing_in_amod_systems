@@ -2,22 +2,35 @@
 import sys
 from pathlib import Path
 
-path_to_repo = Path(__file__).parent
-path_to_src = path_to_repo / "src"
 
-sys.path.append(path_to_repo.as_posix())
-sys.path.append(path_to_src.as_posix())
+def setup_paths():
+    # Define paths relative to the script location
+    path_to_repo = Path(__file__).resolve().parent
+    path_to_src = path_to_repo / "src"
+    path_to_build = path_to_repo / "cpp_module/cmake-build-{}".format(build)
 
-# C++
-build = "relwithdebinfo"  # release, debug, relwithdebinfo
-print("\n" + "=" * 60)
-print(f"{'C++ BUILD:':^20} {build.upper():^40}")
-print("=" * 60 + "\n")
+    # Append paths to the system path for module discovery
+    sys.path.extend([path_to_repo.as_posix(), path_to_src.as_posix(), path_to_build.as_posix()])
 
-path_to_build = path_to_repo / f"cpp_module/cmake-build-{build}"
-sys.path.append(path_to_build.as_posix())
 
-from utils.run_procedure import run_procedure
+def display_build_configuration(build_type):
+    # Display the current C++ build configuration
+    print("\n" + "=" * 60)
+    print(f"{'C++ BUILD:':^20} {build_type.upper():^40}")
+    print("=" * 60 + "\n")
+
 
 if __name__ == "__main__":
+    # Configuration for C++ build (options: release, debug, relwithdebinfo)
+    build = "release"
+
+    # Setup paths for module imports
+    setup_paths()
+
+    # Display build configuration
+    display_build_configuration(build)
+
+    # Import and run the procedure from the utils package
+    from utils.run_procedure import run_procedure
+
     run_procedure(source="console")
