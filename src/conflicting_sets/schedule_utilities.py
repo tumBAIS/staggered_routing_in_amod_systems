@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 import datetime
-
 import conflicting_sets.split
 from conflicting_sets.time_bounds import TimeBound, get_initial_latest_arrival_times, get_arc_based_time_bounds, \
     split_time_bounds_on_arcs, arrange_bounds_by_vehicle, get_undivided_conflicting_sets

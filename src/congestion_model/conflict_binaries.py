@@ -9,142 +9,145 @@ from input_data import CONSTR_TOLERANCE, TOLERANCE
 @dataclass
 class VehiclePair:
     arc: int
-    vehicleOne: int
-    departureOne: float
-    arrivalOne: float
-    vehicleTwo: int
-    departureTwo: float
-    arrivalTwo: float
+    vehicle_one: int
+    departure_one: float
+    arrival_one: float
+    vehicle_two: int
+    departure_two: float
+    arrival_two: float
 
 
-def _set_alpha_pair(binaries: Binaries, vehiclePair: VehiclePair) -> None:
-    alphaTie = abs(vehiclePair.departureOne - vehiclePair.departureTwo) < CONSTR_TOLERANCE - TOLERANCE
-    departureOneAfterTwo = vehiclePair.departureOne >= vehiclePair.departureTwo + (CONSTR_TOLERANCE - TOLERANCE)
+def set_alpha_pair(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
+    alpha_tie = abs(vehicle_pair.departure_one - vehicle_pair.departure_two) < CONSTR_TOLERANCE - TOLERANCE
+    departure_one_after_two = vehicle_pair.departure_one >= vehicle_pair.departure_two + (CONSTR_TOLERANCE - TOLERANCE)
 
-    if alphaTie:
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = -1
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = -1
-    elif departureOneAfterTwo:
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = 1
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = 0
+    if alpha_tie:
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = -1
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = -1
+    elif departure_one_after_two:
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = 1
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = 0
     else:
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = 0
-        binaries.alpha[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = 1
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = 0
+        binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = 1
 
 
-def _set_beta_vehicle_one(binaries: Binaries, vehiclePair: VehiclePair) -> None:
-    betaTieOne = abs(vehiclePair.departureOne - vehiclePair.arrivalTwo) < CONSTR_TOLERANCE - TOLERANCE
-    departureOneAfterArrivalTwo = vehiclePair.departureOne >= vehiclePair.arrivalTwo + (CONSTR_TOLERANCE - TOLERANCE)
+def set_beta_vehicle_one(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
+    beta_tie_one = abs(vehicle_pair.departure_one - vehicle_pair.arrival_two) < CONSTR_TOLERANCE - TOLERANCE
+    departure_one_after_arrival_two = vehicle_pair.departure_one >= vehicle_pair.arrival_two + (
+                CONSTR_TOLERANCE - TOLERANCE)
 
-    if betaTieOne:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = -1
-    elif departureOneAfterArrivalTwo:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = 0
+    if beta_tie_one:
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = -1
+    elif departure_one_after_arrival_two:
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = 0
     else:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = 1
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = 1
 
 
-def _set_beta_vehicle_two(binaries: Binaries, vehiclePair: VehiclePair) -> None:
-    betaTieTwo: bool = abs(vehiclePair.departureTwo - vehiclePair.arrivalOne) < CONSTR_TOLERANCE - TOLERANCE
-    departureTwoAfterArrivalOne: bool = vehiclePair.departureTwo >= vehiclePair.arrivalOne + (
-            CONSTR_TOLERANCE - TOLERANCE)
-    if betaTieTwo:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = -1
-    elif departureTwoAfterArrivalOne:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = 0
+def set_beta_vehicle_two(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
+    beta_tie_two = abs(vehicle_pair.departure_two - vehicle_pair.arrival_one) < CONSTR_TOLERANCE - TOLERANCE
+    departure_two_after_arrival_one = vehicle_pair.departure_two >= vehicle_pair.arrival_one + (
+                CONSTR_TOLERANCE - TOLERANCE)
+
+    if beta_tie_two:
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = -1
+    elif departure_two_after_arrival_one:
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = 0
     else:
-        binaries.beta[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = 1
+        binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = 1
 
 
-def _set_gamma_vehicle_one(binaries: Binaries, vehiclePair: VehiclePair) -> None:
-    binariesOneAreUndefined = (
-            binaries.alpha[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] == -1
-            or binaries.beta[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] == -1
+def set_gamma_vehicle_one(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
+    binaries_one_are_undefined = (
+            binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] == -1
+            or binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] == -1
     )
 
-    if binariesOneAreUndefined:
-        binaries.gamma[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = -1
+    if binaries_one_are_undefined:
+        binaries.gamma[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = -1
     else:
-        oneOverlapsWithTwo = (
-                binaries.alpha[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] == 1
-                and binaries.beta[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] == 1
+        one_overlaps_with_two = (
+                binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] == 1
+                and binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] == 1
         )
 
-        binaries.gamma[vehiclePair.arc][vehiclePair.vehicleOne][vehiclePair.vehicleTwo] = (
-            1 if oneOverlapsWithTwo else 0
+        binaries.gamma[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = (
+            1 if one_overlaps_with_two else 0
         )
 
 
-def _set_gamma_vehicle_two(binaries, vehiclePair: VehiclePair):
-    binariesTwoAreUndefined = (
-            binaries.alpha[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] == -1
-            or binaries.beta[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] == -1
+def set_gamma_vehicle_two(binaries, vehicle_pair: VehiclePair):
+    binaries_two_are_undefined = (
+            binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] == -1
+            or binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] == -1
     )
 
-    if binariesTwoAreUndefined:
-        binaries.gamma[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = -1
+    if binaries_two_are_undefined:
+        binaries.gamma[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = -1
     else:
-        twoOverlapsWithOne = (
-                binaries.alpha[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] == 1
-                and binaries.beta[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] == 1
+        two_overlaps_with_one = (
+                binaries.alpha[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] == 1
+                and binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] == 1
         )
 
-        binaries.gamma[vehiclePair.arc][vehiclePair.vehicleTwo][vehiclePair.vehicleOne] = (
-            1 if twoOverlapsWithOne else 0
+        binaries.gamma[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = (
+            1 if two_overlaps_with_one else 0
         )
 
 
-def _create_binaries_vehicle_entry(binaries: Binaries, arc: int, vehiclePair: VehiclePair) -> None:
-    if vehiclePair.vehicleOne not in binaries.alpha[arc]:
-        binaries.alpha[arc][vehiclePair.vehicleOne] = {}
-        binaries.beta[arc][vehiclePair.vehicleOne] = {}
-        binaries.gamma[arc][vehiclePair.vehicleOne] = {}
+def create_binaries_vehicle_entry(binaries: Binaries, arc: int, vehicle_pair: VehiclePair) -> None:
+    if vehicle_pair.vehicle_one not in binaries.alpha[arc]:
+        binaries.alpha[arc][vehicle_pair.vehicle_one] = {}
+        binaries.beta[arc][vehicle_pair.vehicle_one] = {}
+        binaries.gamma[arc][vehicle_pair.vehicle_one] = {}
 
-    if vehiclePair.vehicleTwo not in binaries.alpha[arc]:
-        binaries.alpha[arc][vehiclePair.vehicleTwo] = {}
-        binaries.beta[arc][vehiclePair.vehicleTwo] = {}
-        binaries.gamma[arc][vehiclePair.vehicleTwo] = {}
+    if vehicle_pair.vehicle_two not in binaries.alpha[arc]:
+        binaries.alpha[arc][vehicle_pair.vehicle_two] = {}
+        binaries.beta[arc][vehicle_pair.vehicle_two] = {}
+        binaries.gamma[arc][vehicle_pair.vehicle_two] = {}
 
 
-def _create_binaries_arc_entry(binaries: Binaries, arc: int) -> None:
+def create_binaries_arc_entry(binaries: Binaries, arc: int) -> None:
     binaries.alpha[arc] = {}
     binaries.beta[arc] = {}
     binaries.gamma[arc] = {}
 
 
-def _set_binaries_between_pair(binaries: Binaries, vehiclePair: VehiclePair):
-    _set_alpha_pair(binaries, vehiclePair)
-    _set_beta_vehicle_one(binaries, vehiclePair)
-    _set_beta_vehicle_two(binaries, vehiclePair)
-    _set_gamma_vehicle_one(binaries, vehiclePair)
-    _set_gamma_vehicle_two(binaries, vehiclePair)
+def set_binaries_between_pair(binaries: Binaries, vehicle_pair: VehiclePair):
+    set_alpha_pair(binaries, vehicle_pair)
+    set_beta_vehicle_one(binaries, vehicle_pair)
+    set_beta_vehicle_two(binaries, vehicle_pair)
+    set_gamma_vehicle_one(binaries, vehicle_pair)
+    set_gamma_vehicle_two(binaries, vehicle_pair)
 
 
-def get_conflict_binaries(conflictingSets: list[list[int]], shortestPaths: list[list[int]],
-                          congestedSchedule: VehicleSchedules, printVariables=False) -> Binaries:
-    if printVariables:
+def get_conflict_binaries(conflicting_sets: list[list[int]], shortest_paths: list[list[int]],
+                          congested_schedule: VehicleSchedules, print_variables=False) -> Binaries:
+    if print_variables:
         print("Computing conflicting binaries ... ", end="")
     binaries = Binaries({}, {}, {})
-    for arc, conflictingSet in enumerate(conflictingSets):
-        if arc == 0 or not conflictingSet:
+    for arc, conflicting_set in enumerate(conflicting_sets):
+        if arc == 0 or not conflicting_set:
             continue
-        _create_binaries_arc_entry(binaries, arc)
-        for vehicleOne, vehicleTwo in itertools.combinations(conflictingSet, 2):
-            positionOne = shortestPaths[vehicleOne].index(arc)
-            positionTwo = shortestPaths[vehicleTwo].index(arc)
-            vehiclePair = VehiclePair(arc=arc,
-                                      vehicleOne=vehicleOne,
-                                      vehicleTwo=vehicleTwo,
-                                      departureOne=congestedSchedule[vehicleOne][positionOne],
-                                      arrivalOne=congestedSchedule[vehicleOne][positionOne + 1],
-                                      departureTwo=congestedSchedule[vehicleTwo][positionTwo],
-                                      arrivalTwo=congestedSchedule[vehicleTwo][positionTwo + 1])
-            _create_binaries_vehicle_entry(binaries, arc, vehiclePair)
-            _set_binaries_between_pair(binaries, vehiclePair)
-    numberOfBinaries = 3 * sum(
-        1 for arc in binaries.alpha for firstVehicle in binaries.alpha[arc] for _ in binaries.alpha[arc][firstVehicle])
-    if printVariables:
-        print(f"done! The number of binary variables is {numberOfBinaries}")
+        create_binaries_arc_entry(binaries, arc)
+        for vehicle_one, vehicle_two in itertools.combinations(conflicting_set, 2):
+            position_one = shortest_paths[vehicle_one].index(arc)
+            position_two = shortest_paths[vehicle_two].index(arc)
+            vehicle_pair = VehiclePair(arc=arc,
+                                       vehicle_one=vehicle_one,
+                                       vehicle_two=vehicle_two,
+                                       departure_one=congested_schedule[vehicle_one][position_one],
+                                       arrival_one=congested_schedule[vehicle_one][position_one + 1],
+                                       departure_two=congested_schedule[vehicle_two][position_two],
+                                       arrival_two=congested_schedule[vehicle_two][position_two + 1])
+            create_binaries_vehicle_entry(binaries, arc, vehicle_pair)
+            set_binaries_between_pair(binaries, vehicle_pair)
+    number_of_binaries = 3 * sum(
+        1 for arc in binaries.alpha for first_vehicle in binaries.alpha[arc] for _ in
+        binaries.alpha[arc][first_vehicle])
+    if print_variables:
+        print(f"done! The number of binary variables is {number_of_binaries}")
     return binaries
 
 
