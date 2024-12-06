@@ -5,9 +5,9 @@ import numpy as np
 from gurobipy import Model
 import math
 
-from inputData import CONSTR_TOLERANCE, USE_GUROBI_INDICATORS, TOLERANCE
+from input_data import CONSTR_TOLERANCE, USE_GUROBI_INDICATORS, TOLERANCE
 from instanceModule.instance import Instance
-from inputData import MIN_SET_CAPACITY
+from input_data import MIN_SET_CAPACITY
 from utils.aliases import *
 
 

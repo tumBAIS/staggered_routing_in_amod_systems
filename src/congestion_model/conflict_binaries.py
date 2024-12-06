@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from utils.classes import Binaries
 from utils.aliases import VehicleSchedules
-from inputData import CONSTR_TOLERANCE, TOLERANCE
+from input_data import CONSTR_TOLERANCE, TOLERANCE
 
 
 @dataclass

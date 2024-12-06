@@ -25,7 +25,7 @@ sys.path.append(path_to_src.as_posix())
 # Import Custom Modules
 # ===========================
 from instance_generator.computer import InstanceComputer
-from inputData import InputData
+from input_data import InputData
 
 # ===========================
 # Matplotlib Configuration

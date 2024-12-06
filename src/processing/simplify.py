@@ -3,13 +3,13 @@ from __future__ import annotations
 import copy
 
 from congestion_model.conflict_binaries import get_conflict_binaries
-from instanceModule.epochInstance import EpochInstance
-from processing.mergeArcsWithoutConflicts import mergeArcsOnPathsWhereNoConflictsCanHappen
-from processing.removePathsSequences import removeInitialPartOfPathsWithoutConflicts, \
+from instanceModule.epoch_instance import EpochInstance
+from processing.merge_arcs_without_conflicts import mergeArcsOnPathsWhereNoConflictsCanHappen
+from processing.remove_paths_sequences import removeInitialPartOfPathsWithoutConflicts, \
     removeFinalPartOfPathsWithoutConflicts
-from processing.removeNotUtilizedArcs import removeNotUtilizedArcs
+from processing.remove_not_utilized_arcs import removeNotUtilizedArcs
 from instanceModule.instance import Instance
-from inputData import ACTIVATE_ASSERTIONS
+from input_data import ACTIVATE_ASSERTIONS
 
 from utils.classes import EpochSolution, CompleteSolution
 

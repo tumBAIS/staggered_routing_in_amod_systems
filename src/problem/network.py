@@ -6,7 +6,7 @@ import shapely as shp
 from networkx.readwrite import json_graph
 from shapely import Polygon
 
-from inputData import InputData
+from input_data import InputData
 from problem.arc import Arc
 from problem.parameters import InstanceParams
 from utils.aliases import *

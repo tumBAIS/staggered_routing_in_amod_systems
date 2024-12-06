@@ -1,12 +1,12 @@
 from MIP.model import constructModel, runModel
-from solutions.statusQuo import computeSolutionMetrics, printInfoStatusQuoMetrics
+from solutions.status_quo import computeSolutionMetrics, printInfoStatusQuoMetrics
 from conflicting_sets.get import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
 from instanceModule.instance import Instance
 from congestion_model.conflict_binaries import get_conflict_binaries
-from solutions.mapSimplifiedEpochSolution import mapSimplifiedEpochSolution
-from solutions.epochWarmStart import getEpochWarmStart
-from solutions.modelSolution import getEpochModelSolution
+from solutions.map_simplified_epoch_solution import mapSimplifiedEpochSolution
+from solutions.epoch_warm_start import getEpochWarmStart
+from solutions.model_solution import getEpochModelSolution
 from utils.classes import EpochSolution, CompleteSolution
 
 

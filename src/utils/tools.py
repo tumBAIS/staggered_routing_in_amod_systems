@@ -7,7 +7,7 @@ from networkx.readwrite import json_graph
 
 import cpp_module as cpp
 
-from inputData import CONSTR_TOLERANCE, TOLERANCE
+from input_data import CONSTR_TOLERANCE, TOLERANCE
 import random
 from typing import TypeVar
 

@@ -6,18 +6,18 @@ import os
 from MIP.support import addOptimizationMeasuresToModel, setGurobiParameters, \
     initializeOptimizationMeasuresModel, computeIISIfNotSolved, loadInitialSolution, \
     getFinalOptimizationMeasures, saveSolutionInExternalFile
-from MIP.integerVariables import addConflictVariables
-from MIP.continuousVariables import addContinuousVariables
+from MIP.integer_variables import addConflictVariables
+from MIP.continuous_variables import addContinuousVariables
 from MIP.constraints import addConflictConstraints, addTravelContinuityConstraints, \
     addObjectiveFunction
 from MIP.callback import callback
-from MIP.warmStart import setWarmStartModel
+from MIP.warm_start import setWarmStartModel
 from instanceModule.instance import Instance
 from gurobipy import Model
 import gurobipy as grb
-from inputData import GUROBI_OPTIMALITY_GAP, TOLERANCE
+from input_data import GUROBI_OPTIMALITY_GAP, TOLERANCE
 from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
-from instanceModule.epochInstance import EpochInstance
+from instanceModule.epoch_instance import EpochInstance
 
 pathToResults = os.path.join(os.path.dirname(__file__), "../../results")
 

@@ -1,7 +1,7 @@
 import time
 
 import pandas as pd
-from inputData import InputData
+from input_data import InputData
 from problem.network import Network
 from shapely.geometry import Point
 

@@ -2,7 +2,7 @@ import datetime
 
 import pandas as pd
 
-from instanceModule.epochInstance import EpochInstances
+from instanceModule.epoch_instance import EpochInstances
 from utils.classes import CompleteSolution
 
 

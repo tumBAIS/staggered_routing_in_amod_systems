@@ -5,19 +5,18 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import cpp_module as cpp
-import inputData
 import utils.tools
 from instance_generator import synthetic_graphs as synthetic_graphs, real_world_graphs as real_world_graphs, \
     synthetic_trips as synthetic_trips, real_world_trips as real_world_trips
 from methods import scheduler as sq
 from problem.network import Network
-from problem.parameters import InstanceParams
 from problem.trip import Trips
+from input_data import InputData
 
 
 class InstanceComputer:
 
-    def __init__(self, input_data: inputData.InputData):
+    def __init__(self, input_data: InputData):
         """Initialize class to create instance files"""
         self.path_to_repo = Path(__file__).parent.parent.parent
         self.path_to_data = self.path_to_repo / "data"

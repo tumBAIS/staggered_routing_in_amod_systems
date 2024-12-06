@@ -8,11 +8,11 @@ from collections import namedtuple
 import conflicting_sets.split
 from utils.aliases import VehicleSchedules, UndividedConflictingSets
 from instanceModule.instance import Instance
-from instanceModule.epochInstance import EpochInstance
+from instanceModule.epoch_instance import EpochInstance
 from queue import PriorityQueue
-from inputData import ACTIVATE_ASSERTIONS
+from input_data import ACTIVATE_ASSERTIONS
 from typing import Callable
-from inputData import MIN_SET_CAPACITY
+from input_data import MIN_SET_CAPACITY
 
 TimeBound = namedtuple("TimeBound",
                        ["arc", "earliestDeparture", "latestDeparture", "earliestArrival", "latestArrival",

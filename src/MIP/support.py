@@ -7,8 +7,8 @@ import pickle
 
 from gurobipy import Model
 
-from instanceModule.epochInstance import EpochInstance
-from inputData import GUROBI_OPTIMALITY_GAP
+from instanceModule.epoch_instance import EpochInstance
+from input_data import GUROBI_OPTIMALITY_GAP
 from utils.classes import CompleteSolution, HeuristicSolution
 from instanceModule.instance import Instance
 

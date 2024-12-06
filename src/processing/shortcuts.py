@@ -9,7 +9,7 @@ from networkx import DiGraph
 from shapely.geometry import Point, LineString
 from instanceModule.graph import reduce_graph
 from instanceModule.paths import get_node_based_shortest_paths
-from inputData import InputData
+from input_data import InputData
 
 import warnings
 

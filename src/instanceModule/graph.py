@@ -6,7 +6,7 @@ from shapely.geometry import Point
 import jsonpickle
 from networkx.readwrite import json_graph
 
-import inputData
+from input_data import InputData
 from instanceModule.paths import pairwise
 
 
@@ -73,7 +73,7 @@ def deserialize_graph(file_path: str) -> DiGraph:
         return json_graph.adjacency_graph(graph_data, directed=True)
 
 
-def import_graph(input_data: inputData.InputData) -> DiGraph:
+def import_graph(input_data: InputData) -> DiGraph:
     """
     Imports a graph structure from a JSON file located based on the network name provided in input_data.
     """

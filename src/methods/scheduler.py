@@ -3,7 +3,7 @@ import typing
 
 import scipy.special
 
-import inputData
+import input_data
 from problem.parameters import SolverParams
 import utils.timer
 from problem.trip import Trips

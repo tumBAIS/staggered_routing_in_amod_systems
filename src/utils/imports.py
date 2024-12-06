@@ -9,7 +9,7 @@ from processing.shortcuts import add_shortcuts
 from instanceModule.graph import import_graph, reduce_graph, set_arcs_nominal_travel_times_and_capacities
 from instanceModule.instance import Instance, get_instance, print_total_free_flow_time
 from instanceModule.paths import get_arc_based_paths_with_features
-from inputData import InputData
+from input_data import InputData
 from instance_generator.computer import InstanceComputer
 
 import warnings

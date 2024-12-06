@@ -5,7 +5,7 @@ import typing
 from dataclasses import dataclass, field
 
 from utils.classes import CompleteSolution
-from inputData import InputData, SAVE_CPP_INSTANCE
+from input_data import InputData, SAVE_CPP_INSTANCE
 from utils.aliases import *
 from utils.aliases import Time, Staggering
 

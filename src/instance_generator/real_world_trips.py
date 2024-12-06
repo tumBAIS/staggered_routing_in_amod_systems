@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import osmnx as osm
 from shapely.geometry import Point
 
-import inputData
+from input_data import InputData
 from problem.network import Network
 from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
@@ -61,7 +61,7 @@ def _plot_od_pairs(network: Network, dataset_gdf: gpd.GeoDataFrame, path_to_inst
     plt.close()
 
 
-def get_real_world_trips(instance_parameters: inputData.InputData, network: Network) -> list[dict]:
+def get_real_world_trips(instance_parameters: InputData, network: Network) -> list[dict]:
     """Retrieve all trips within a network polygon and time range."""
     dataset = _load_dataset(instance_parameters)
     dataset = _filter_dataset_by_time(dataset, instance_parameters)

@@ -6,7 +6,7 @@ import itertools
 from MIP.support import saveSolutionInExternalFile
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from gurobipy import Model
-from inputData import TOLERANCE, ACTIVATE_ASSERTIONS
+from input_data import TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
 from utils.aliases import VehicleSchedules
 from instanceModule.instance import Instance

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import cpp_module as cpp
 from instanceModule.instance import Instance
-from instanceModule.epochInstance import EpochInstance
+from instanceModule.epoch_instance import EpochInstance
 from utils.aliases import *
 from utils.aliases import Time
 
