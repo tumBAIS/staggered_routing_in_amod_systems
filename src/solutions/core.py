@@ -1,9 +1,9 @@
 from MIP.model import constructModel, runModel
 from solutions.statusQuo import computeSolutionMetrics, printInfoStatusQuoMetrics
 from conflicting_sets.get import add_conflicting_sets_to_instance
-from congestion_model.core import getTotalTravelTime
+from congestion_model.core import get_total_travel_time
 from instanceModule.instance import Instance
-from congestion_model.conflict_binaries import getConflictBinaries
+from congestion_model.conflict_binaries import get_conflict_binaries
 from solutions.mapSimplifiedEpochSolution import mapSimplifiedEpochSolution
 from solutions.epochWarmStart import getEpochWarmStart
 from solutions.modelSolution import getEpochModelSolution
@@ -33,7 +33,7 @@ def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> Compl
         totalDelay=solutionMetrics.totalDelay,
         congestedSchedule=solutionMetrics.congestedSchedule,
         staggeringApplied=staggeringAppliedInEpoch,
-        totalTravelTime=getTotalTravelTime(solutionMetrics.congestedSchedule),
+        totalTravelTime=get_total_travel_time(solutionMetrics.congestedSchedule),
         binaries=None
     )
 

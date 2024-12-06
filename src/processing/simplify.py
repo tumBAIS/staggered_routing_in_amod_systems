@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from congestion_model.conflict_binaries import getConflictBinaries
+from congestion_model.conflict_binaries import get_conflict_binaries
 from instanceModule.epochInstance import EpochInstance
 from processing.mergeArcsWithoutConflicts import mergeArcsOnPathsWhereNoConflictsCanHappen
 from processing.removePathsSequences import removeInitialPartOfPathsWithoutConflicts, \
@@ -81,9 +81,9 @@ def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
     removeFinalPartOfPathsWithoutConflicts(instance, statusQuo)
     mergeArcsOnPathsWhereNoConflictsCanHappen(instance, statusQuo)
     removeNotUtilizedArcs(instance)
-    statusQuo.binaries = getConflictBinaries(instance.conflictingSets,
-                                             instance.trip_routes,
-                                             statusQuo.congestedSchedule)  # necessary if no warm start is given
+    statusQuo.binaries = get_conflict_binaries(instance.conflictingSets,
+                                               instance.trip_routes,
+                                               statusQuo.congestedSchedule)  # necessary if no warm start is given
     _setMinReleaseTimeTo0AndAdjustDeadlines(instance, statusQuo)
     _printCongestionInfoSimplifiedSystem(statusQuo)
     print(f"Number of unique arc ODs after simplification: {getODArcs(instance.osmInfoArcsUtilized)}")

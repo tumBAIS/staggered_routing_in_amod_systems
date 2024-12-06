@@ -7,8 +7,8 @@ from utils.aliases import *
 from utils.aliases import Time
 
 
-def getFreeFlowSchedule(instance: Instance | EpochInstance,
-                        congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+def get_free_flow_schedule(instance: Instance | EpochInstance,
+                           congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
     freeFlowSchedule = [[schedule[0]] for schedule in congestedSchedule]
 
     for vehicle, path in enumerate(instance.trip_routes):
@@ -19,8 +19,8 @@ def getFreeFlowSchedule(instance: Instance | EpochInstance,
     return freeFlowSchedule
 
 
-def getCongestedSchedule(instance: Instance | EpochInstance,
-                         release_times: list[float]) -> list[VehicleSchedule]:
+def get_congested_schedule(instance: Instance | EpochInstance,
+                           release_times: list[float]) -> list[VehicleSchedule]:
     cpp_parameters = [instance.inputData.algorithm_time_limit]
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
@@ -39,15 +39,15 @@ def getCongestedSchedule(instance: Instance | EpochInstance,
     return schedule
 
 
-def getTotalDelay(freeFlowSchedule: list[VehicleSchedule], congestedSchedule: list[VehicleSchedule]) -> float:
+def get_total_delay(freeFlowSchedule: list[VehicleSchedule], congestedSchedule: list[VehicleSchedule]) -> float:
     totalDelay = sum(congestedSchedule[vehicle][-1] - congestedSchedule[vehicle][0] -
                      (freeFlowSchedule[vehicle][-1] - freeFlowSchedule[vehicle][0])
                      for vehicle in range(len(congestedSchedule)))
     return totalDelay
 
 
-def getDelaysOnArcs(instance: Instance | EpochInstance,
-                    congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+def get_delays_on_arcs(instance: Instance | EpochInstance,
+                       congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
     delaysOnArcs = [
         [
             congestedSchedule[vehicle][position + 1] - congestedSchedule[vehicle][position] -
@@ -60,16 +60,16 @@ def getDelaysOnArcs(instance: Instance | EpochInstance,
     return delaysOnArcs
 
 
-def getTotalTravelTime(vehicleSchedule: list[VehicleSchedule]) -> float:
+def get_total_travel_time(vehicleSchedule: list[VehicleSchedule]) -> float:
     return sum([schedule[-1] - schedule[0] for schedule in vehicleSchedule])
 
 
-def getStaggeringApplicable(instance: Instance | EpochInstance, staggeringApplied: list[float]):
+def get_staggering_applicable(instance: Instance | EpochInstance, staggeringApplied: list[float]):
     return [vMaxStaggeringApplicable - vStaggeringApplied for vMaxStaggeringApplicable, vStaggeringApplied in
             zip(instance.maxStaggeringApplicable, staggeringApplied)]
 
 
-def addMaxStaggeringApplicableToInstance(instance: Instance, freeFlowSchedule: list[VehicleSchedule]):
+def add_max_staggering_applicable_to_instance(instance: Instance, freeFlowSchedule: list[VehicleSchedule]):
     # Calculate the maximum staggering for each vehicle based on the free flow schedule if maxStaggering in input data
     # is positive, otherwise set maximum staggering to inf
     staggeringCaps = [
@@ -96,15 +96,15 @@ def addMaxStaggeringApplicableToInstance(instance: Instance, freeFlowSchedule: l
     return
 
 
-def getDeadlines(instance: Instance) -> list[Time]:
+def get_deadlines(instance: Instance) -> list[Time]:
     """Create list of the latest arrival time at destination for trips.
     It is assumed to be the arrival time at the destination plus a delta
     inputData.deadlineFactor: value comprised between 0 and 100, denotes percentage of status quo
     travel time to use to extend the deadline
     :return list of deadlines
     """
-    congestedSchedule = getCongestedSchedule(instance, instance.releaseTimesDataset)
-    freeFlowSchedule = getFreeFlowSchedule(instance, congestedSchedule)
+    congestedSchedule = get_congested_schedule(instance, instance.releaseTimesDataset)
+    freeFlowSchedule = get_free_flow_schedule(instance, congestedSchedule)
     deadlines = []
     for vehicle, schedule in enumerate(congestedSchedule):
         congestedArrival = schedule[-1]

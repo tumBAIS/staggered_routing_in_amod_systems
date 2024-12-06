@@ -1,5 +1,5 @@
-from congestion_model.core import getFreeFlowSchedule, \
-    getTotalTravelTime, getStaggeringApplicable
+from congestion_model.core import get_free_flow_schedule, \
+    get_total_travel_time, get_staggering_applicable
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution
 from gurobipy import Model
@@ -34,10 +34,10 @@ def getEpochModelSolution(model: Model, epochInstance: EpochInstance, epochStatu
     releaseTimes = _getModelReleaseTimes(model, epochInstance.trip_routes)
     congestedSchedule = _getModelSchedule(model, epochInstance.trip_routes)
     delaysOnArcs = _getModelDelayOnArcs(model, epochInstance.trip_routes)
-    freeFlowSchedule = getFreeFlowSchedule(epochInstance, congestedSchedule)
+    freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
     staggeringApplied = _getStaggeringApplied(releaseTimes, epochStatusQuo.releaseTimes)
-    slack = getStaggeringApplicable(epochInstance, staggeringApplied)
-    totalTravelTime = getTotalTravelTime(congestedSchedule)
+    slack = get_staggering_applicable(epochInstance, staggeringApplied)
+    totalTravelTime = get_total_travel_time(congestedSchedule)
 
     modelSolution = EpochSolution(delaysOnArcs=delaysOnArcs,
                                   freeFlowSchedule=freeFlowSchedule,

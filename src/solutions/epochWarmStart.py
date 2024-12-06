@@ -3,9 +3,9 @@ import datetime
 from utils.aliases import VehicleSchedules
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution
-from congestion_model.core import getFreeFlowSchedule, \
-    getTotalTravelTime, getDelaysOnArcs, getStaggeringApplicable
-from congestion_model.conflict_binaries import getConflictBinaries
+from congestion_model.core import get_free_flow_schedule, \
+    get_total_travel_time, get_delays_on_arcs, get_staggering_applicable
+from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
 
@@ -65,15 +65,15 @@ def getEpochWarmStart(epochInstance: EpochInstance, epochStatusQuo: EpochSolutio
         return epochStatusQuo
 
     releaseTimes = [schedule[0] for schedule in congestedSchedule]
-    freeFlowSchedule = getFreeFlowSchedule(epochInstance, congestedSchedule)
+    freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
     staggeringApplied = [congestedSchedule[vehicle][0] - releaseTime for vehicle, releaseTime in
                          enumerate(epochStatusQuo.releaseTimes)]
-    staggeringApplicable = getStaggeringApplicable(epochInstance, staggeringApplied)
-    delaysOnArcs = getDelaysOnArcs(epochInstance, congestedSchedule)
+    staggeringApplicable = get_staggering_applicable(epochInstance, staggeringApplied)
+    delaysOnArcs = get_delays_on_arcs(epochInstance, congestedSchedule)
     totalDelay = sum(sum(delays) for delays in delaysOnArcs)
-    binaries = getConflictBinaries(epochInstance.conflictingSets, epochInstance.trip_routes,
-                                   congestedSchedule)
-    totalTravelTime = getTotalTravelTime(congestedSchedule)
+    binaries = get_conflict_binaries(epochInstance.conflictingSets, epochInstance.trip_routes,
+                                     congestedSchedule)
+    totalTravelTime = get_total_travel_time(congestedSchedule)
 
     warmStart: EpochSolution = EpochSolution(totalDelay=totalDelay,
                                              congestedSchedule=congestedSchedule,

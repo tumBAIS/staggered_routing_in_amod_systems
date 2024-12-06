@@ -430,7 +430,7 @@ def add_conflicting_sets_to_instance(
     instance.minDelayOnArc = _get_min_delay_on_arcs(vehicleBasedTimeBounds)
     instance.maxDelayOnArc = _get_max_delay_on_arcs(vehicleBasedTimeBounds)
 
-    conflicting_sets.split.splitConflictingSets(instance)
+    conflicting_sets.split.split_conflicting_sets(instance)
     clock_end = datetime.datetime.now().timestamp()
     print(f"done! - time necessary: {clock_end - clock_start:.2f} [s]")
 

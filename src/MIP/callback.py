@@ -4,7 +4,7 @@ import datetime
 import itertools
 
 from MIP.support import saveSolutionInExternalFile
-from congestion_model.core import getDelaysOnArcs, getStaggeringApplicable
+from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from gurobipy import Model
 from inputData import TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
@@ -13,7 +13,7 @@ from instanceModule.instance import Instance
 import gurobipy as grb
 import cpp_module as cpp
 from typing import Callable
-from congestion_model.conflict_binaries import getConflictBinaries
+from congestion_model.conflict_binaries import get_conflict_binaries
 
 
 def _getCurrentBounds(model: Model, startSolutionTime) -> None:
@@ -63,7 +63,7 @@ def _getCallbackSolution(model: Model, instance: Instance, statusQuo: CompleteSo
          for vehicle in (range(len(model._cbReleaseTimes)))])
     model._cbStaggeringApplied = [model._cbReleaseTimes[vehicle] - (statusQuo.congestedSchedule[vehicle][0]) for
                                   vehicle in range(len(model._cbReleaseTimes))]
-    model._cbRemainingTimeSlack = getStaggeringApplicable(instance, model._cbStaggeringApplied)
+    model._cbRemainingTimeSlack = get_staggering_applicable(instance, model._cbStaggeringApplied)
     model._flagUpdate = True
     return
 
@@ -114,11 +114,11 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
         lb_travel_time=instance.get_lb_travel_time()
     )
 
-    delaysOnArcs = getDelaysOnArcs(instance, congestedSchedule)
+    delaysOnArcs = get_delays_on_arcs(instance, congestedSchedule)
     _assertSchedule(model, congestedSchedule, delaysOnArcs, instance)
-    binaries = getConflictBinaries(instance.conflictingSets,
-                                   instance.trip_routes,
-                                   congestedSchedule)
+    binaries = get_conflict_binaries(instance.conflictingSets,
+                                     instance.trip_routes,
+                                     congestedSchedule)
     totalDelay = sum([sum(delaysOnArcVehicle) for delaysOnArcVehicle in delaysOnArcs])
     heuristicSolution = HeuristicSolution(congestedSchedule=congestedSchedule,
                                           delaysOnArcs=delaysOnArcs,

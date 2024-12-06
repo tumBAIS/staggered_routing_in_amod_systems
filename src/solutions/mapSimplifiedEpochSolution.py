@@ -1,7 +1,7 @@
 import datetime
 
-from congestion_model.core import getCongestedSchedule, getFreeFlowSchedule, \
-    getTotalTravelTime, getTotalDelay, getDelaysOnArcs
+from congestion_model.core import get_congested_schedule, get_free_flow_schedule, \
+    get_total_travel_time, get_total_delay, get_delays_on_arcs
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution
 
@@ -20,11 +20,11 @@ def mapSimplifiedEpochSolution(epochInstance: EpochInstance,
     staggeredReleaseTimes = [releaseTime + staggering for releaseTime, staggering in
                              zip(releaseTimesEpoch, staggeringAppliedInEpoch)]
 
-    congestedSchedule = getCongestedSchedule(epochInstance, staggeredReleaseTimes)
-    freeFlowSchedule = getFreeFlowSchedule(epochInstance, congestedSchedule)
-    totalDelay = getTotalDelay(freeFlowSchedule, congestedSchedule)
-    totalTravelTime = getTotalTravelTime(congestedSchedule)
-    delaysOnArcs = getDelaysOnArcs(epochInstance, congestedSchedule)
+    congestedSchedule = get_congested_schedule(epochInstance, staggeredReleaseTimes)
+    freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
+    totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
+    totalTravelTime = get_total_travel_time(congestedSchedule)
+    delaysOnArcs = get_delays_on_arcs(epochInstance, congestedSchedule)
     epochInstance.clockEndEpoch = datetime.datetime.now().timestamp()
     print(
         f"Time to complete the epoch: {epochInstance.clockEndEpoch - epochInstance.clockStartEpoch:.2f} [s]")

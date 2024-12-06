@@ -2,10 +2,10 @@ from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution
 from instanceModule.instance import Instance
 from utils.aliases import VehicleSchedules
-from congestion_model.core import getDelaysOnArcs, getFreeFlowSchedule, \
-    getStaggeringApplicable, getTotalDelay, getTotalTravelTime, getCongestedSchedule
+from congestion_model.core import get_delays_on_arcs, get_free_flow_schedule, \
+    get_staggering_applicable, get_total_delay, get_total_travel_time, get_congested_schedule
 
-from congestion_model.conflict_binaries import getConflictBinaries
+from congestion_model.conflict_binaries import get_conflict_binaries
 from conflicting_sets.get import add_conflicting_sets_to_instance
 
 from inputData import ACTIVATE_ASSERTIONS
@@ -82,7 +82,7 @@ def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedul
 def _assertCongestedScheduleIsCorrect(globalInstance, reconstructedSchedule):
     if ACTIVATE_ASSERTIONS:
         releaseTimes = [vehicleSchedule[0] for vehicleSchedule in reconstructedSchedule]
-        cppSchedule = getCongestedSchedule(globalInstance, releaseTimes)
+        cppSchedule = get_congested_schedule(globalInstance, releaseTimes)
         for vehicle, schedule in enumerate(reconstructedSchedule):
             assert all(
                 abs(rDeparture - cppDeparture) < 1e-4 for rDeparture, cppDeparture in
@@ -95,17 +95,17 @@ def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList
                          globalInstance: Instance) -> CompleteSolution:
     congestedSchedule = _reconstructSchedule(epochInstances, epochStatusQuoList, globalInstance)
     _assertCongestedScheduleIsCorrect(globalInstance, congestedSchedule)
-    delaysOnArcs = getDelaysOnArcs(globalInstance, congestedSchedule)
-    freeFlowSchedule = getFreeFlowSchedule(globalInstance, congestedSchedule)
+    delaysOnArcs = get_delays_on_arcs(globalInstance, congestedSchedule)
+    freeFlowSchedule = get_free_flow_schedule(globalInstance, congestedSchedule)
     releaseTimes = [schedule[0] for schedule in congestedSchedule]
     staggeringApplied = [schedule[0] - datasetTime for schedule, datasetTime in
                          zip(congestedSchedule, globalInstance.releaseTimesDataset)]
-    staggeringApplicable = getStaggeringApplicable(globalInstance, staggeringApplied)
-    totalDelay = getTotalDelay(freeFlowSchedule, congestedSchedule)
-    totalTravelTime = getTotalTravelTime(congestedSchedule)
+    staggeringApplicable = get_staggering_applicable(globalInstance, staggeringApplied)
+    totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
+    totalTravelTime = get_total_travel_time(congestedSchedule)
     add_conflicting_sets_to_instance(globalInstance, freeFlowSchedule)
-    binaries = getConflictBinaries(globalInstance.conflictingSets, globalInstance.trip_routes,
-                                   congestedSchedule)
+    binaries = get_conflict_binaries(globalInstance.conflictingSets, globalInstance.trip_routes,
+                                     congestedSchedule)
 
     return CompleteSolution(
         delaysOnArcs=delaysOnArcs,

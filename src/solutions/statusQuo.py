@@ -5,14 +5,14 @@ import os.path
 
 import numpy as np
 
-from congestion_model.conflict_binaries import getConflictBinaries, get_flow_from_binaries
+from congestion_model.conflict_binaries import get_conflict_binaries, get_flow_from_binaries
 from utils.prints import print_info_conflicting_sets_sizes, \
     print_info_arcs_utilized, print_info_length_trips
 from utils.classes import EpochSolution
 from instanceModule.epochInstance import EpochInstance
 from conflicting_sets.get import add_conflicting_sets_to_instance, estimate_big_m_necessary
-from congestion_model.core import getTotalTravelTime, getCongestedSchedule, getFreeFlowSchedule, \
-    getDelaysOnArcs, getTotalDelay
+from congestion_model.core import get_total_travel_time, get_congested_schedule, get_free_flow_schedule, \
+    get_delays_on_arcs, get_total_delay
 from inputData import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
 
 
@@ -125,10 +125,10 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
 
 
 def computeSolutionMetrics(instance, releaseTimes):
-    congestedSchedule = getCongestedSchedule(instance, releaseTimes)
-    freeFlowSchedule = getFreeFlowSchedule(instance, congestedSchedule)
-    delaysOnArcs = getDelaysOnArcs(instance, congestedSchedule)
-    totalDelay = getTotalDelay(freeFlowSchedule, congestedSchedule)
+    congestedSchedule = get_congested_schedule(instance, releaseTimes)
+    freeFlowSchedule = get_free_flow_schedule(instance, congestedSchedule)
+    delaysOnArcs = get_delays_on_arcs(instance, congestedSchedule)
+    totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
 
     return StatusQuoMetrics(congestedSchedule, freeFlowSchedule, delaysOnArcs, releaseTimes, totalDelay)
 
@@ -160,9 +160,9 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     printHeaderCurrentEpochStatusQuo(epochInstance)
     statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.releaseTimes)
     add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.freeFlowSchedule)
-    binaries = getConflictBinaries(epochInstance.conflictingSets,
-                                   epochInstance.trip_routes,
-                                   statusQuoMetrics.congestedSchedule)
+    binaries = get_conflict_binaries(epochInstance.conflictingSets,
+                                     epochInstance.trip_routes,
+                                     statusQuoMetrics.congestedSchedule)
     flows = get_flow_from_binaries(epochInstance, binaries.gamma)
     # save_congestion_info(epochInstance, statusQuoMetrics, flows)
     printInfoStatusQuoMetrics(statusQuoMetrics)
@@ -180,7 +180,7 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
         totalDelay=statusQuoMetrics.totalDelay,
         congestedSchedule=statusQuoMetrics.congestedSchedule,
         staggeringApplied=[0.0] * len(statusQuoMetrics.congestedSchedule),
-        totalTravelTime=getTotalTravelTime(statusQuoMetrics.congestedSchedule),
+        totalTravelTime=get_total_travel_time(statusQuoMetrics.congestedSchedule),
         vehiclesUtilizingArcs=vehiclesUtilizingArcs,
         binaries=binaries
     )
