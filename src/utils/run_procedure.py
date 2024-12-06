@@ -1,5 +1,4 @@
 # Import necessary modules and functions
-from instance_module.instance import save_instance_for_testing_cpp_code
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from utils.imports import get_not_simplified_instance
@@ -49,4 +48,3 @@ def run_procedure(source: str) -> None:
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
     save_experiment(source, global_instance, complete_status_quo, reconstructed_solution)
-    save_instance_for_testing_cpp_code(global_instance, complete_status_quo)

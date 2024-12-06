@@ -1,7 +1,7 @@
 import collections
 import typing
 from itertools import tee
-from typing import Any
+from typing import Any, List, Dict
 
 import networkx as nx
 from networkx import DiGraph
@@ -79,7 +79,8 @@ def get_travel_times_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_ids: 
     return travel_times
 
 
-def get_nominal_capacity_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> list[int]:
+def get_nominal_capacity_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> list[
+    dict[str, Any]]:
     """Retrieves the nominal capacities for utilized arcs, adding a zero at the start for the dummy node."""
     capacities = [manhattan_graph[origin][destination]["nominal_capacity"] for origin, destination in arcs_utilized_ids]
     capacities.insert(0, 0)
