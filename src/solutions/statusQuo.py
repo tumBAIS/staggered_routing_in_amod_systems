@@ -6,11 +6,11 @@ import os.path
 import numpy as np
 
 from congestion_model.conflict_binaries import getConflictBinaries, get_flow_from_binaries
-from utils.prints import printInfoConflictingSetsSizes, \
-    printInfoArcsUtilized, printInfoLengthTrips
+from utils.prints import print_info_conflicting_sets_sizes, \
+    print_info_arcs_utilized, print_info_length_trips
 from utils.classes import EpochSolution
 from instanceModule.epochInstance import EpochInstance
-from conflicting_sets.get import addConflictingSetsToInstance, estimate_big_m_necessary
+from conflicting_sets.get import add_conflicting_sets_to_instance, estimate_big_m_necessary
 from congestion_model.core import getTotalTravelTime, getCongestedSchedule, getFreeFlowSchedule, \
     getDelaysOnArcs, getTotalDelay
 from inputData import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
@@ -159,19 +159,19 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     epochInstance.clockStartEpoch = datetime.datetime.now().timestamp()
     printHeaderCurrentEpochStatusQuo(epochInstance)
     statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.releaseTimes)
-    addConflictingSetsToInstance(epochInstance, statusQuoMetrics.freeFlowSchedule)
+    add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.freeFlowSchedule)
     binaries = getConflictBinaries(epochInstance.conflictingSets,
                                    epochInstance.trip_routes,
                                    statusQuoMetrics.congestedSchedule)
     flows = get_flow_from_binaries(epochInstance, binaries.gamma)
     # save_congestion_info(epochInstance, statusQuoMetrics, flows)
     printInfoStatusQuoMetrics(statusQuoMetrics)
-    printInfoArcsUtilized(epochInstance)
-    printInfoLengthTrips(epochInstance, statusQuoMetrics.congestedSchedule, statusQuoMetrics.freeFlowSchedule,
-                         statusQuoMetrics.delaysOnArcs)
+    print_info_arcs_utilized(epochInstance)
+    print_info_length_trips(epochInstance, statusQuoMetrics.congestedSchedule, statusQuoMetrics.freeFlowSchedule,
+                            statusQuoMetrics.delaysOnArcs)
     vehiclesUtilizingArcs = _getVehiclesUtilizingArcs(epochInstance.trip_routes)
     _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs)
-    printInfoConflictingSetsSizes(epochInstance)
+    print_info_conflicting_sets_sizes(epochInstance)
     return EpochSolution(
         delaysOnArcs=statusQuoMetrics.delaysOnArcs,
         freeFlowSchedule=statusQuoMetrics.freeFlowSchedule,

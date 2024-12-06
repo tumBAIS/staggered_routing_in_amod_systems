@@ -6,13 +6,13 @@ from instanceModule.epochInstance import EpochInstances
 from utils.classes import CompleteSolution
 
 
-def printInfoArcsUtilized(instance):
+def print_info_arcs_utilized(instance):
     lengthArcs = _calculateLengthArcsUtilized(instance)
     dataframeInfo = _createInfoDataFrame(instance, lengthArcs)
     _printArcsUtilizedInfo(dataframeInfo)
 
 
-def printInfoConflictingSetsSizes(instance):
+def print_info_conflicting_sets_sizes(instance):
     """ Prints information about sizes of conflicting sets and related statistics. """
 
     conflictingSetsSizes = [len(x) for x in instance.conflictingSets if x != []]
@@ -45,7 +45,7 @@ def printInfoConflictingSetsSizes(instance):
     print("#" * 44, "\n")
 
 
-def printInfoLengthTrips(instance, congestedSchedule, freeFlowSchedule, delaysOnArcs):
+def print_info_length_trips(instance, congestedSchedule, freeFlowSchedule, delaysOnArcs):
     """
     Prints information about trip lengths, delays on arcs, and deadlines.
     """

@@ -1,6 +1,6 @@
 from MIP.model import constructModel, runModel
 from solutions.statusQuo import computeSolutionMetrics, printInfoStatusQuoMetrics
-from conflicting_sets.get import addConflictingSetsToInstance
+from conflicting_sets.get import add_conflicting_sets_to_instance
 from congestion_model.core import getTotalTravelTime
 from instanceModule.instance import Instance
 from congestion_model.conflict_binaries import getConflictBinaries
@@ -21,7 +21,7 @@ def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> Compl
     _printHeaderOfflineSolution()
     solutionMetrics = computeSolutionMetrics(instance, releaseTimes)
     printInfoStatusQuoMetrics(solutionMetrics)
-    addConflictingSetsToInstance(instance, solutionMetrics.freeFlowSchedule)
+    add_conflicting_sets_to_instance(instance, solutionMetrics.freeFlowSchedule)
     staggeringAppliedInEpoch = [0.0] * len(solutionMetrics.congestedSchedule)
     # binaries = getConflictBinaries(instance.conflictingSets, instance.arcBasedShortestPaths,
     #                                solutionMetrics.congestedSchedule)  # for testing

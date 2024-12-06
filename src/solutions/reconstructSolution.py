@@ -6,7 +6,7 @@ from congestion_model.core import getDelaysOnArcs, getFreeFlowSchedule, \
     getStaggeringApplicable, getTotalDelay, getTotalTravelTime, getCongestedSchedule
 
 from congestion_model.conflict_binaries import getConflictBinaries
-from conflicting_sets.get import addConflictingSetsToInstance
+from conflicting_sets.get import add_conflicting_sets_to_instance
 
 from inputData import ACTIVATE_ASSERTIONS
 
@@ -103,7 +103,7 @@ def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList
     staggeringApplicable = getStaggeringApplicable(globalInstance, staggeringApplied)
     totalDelay = getTotalDelay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = getTotalTravelTime(congestedSchedule)
-    addConflictingSetsToInstance(globalInstance, freeFlowSchedule)
+    add_conflicting_sets_to_instance(globalInstance, freeFlowSchedule)
     binaries = getConflictBinaries(globalInstance.conflictingSets, globalInstance.trip_routes,
                                    congestedSchedule)
 
