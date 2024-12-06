@@ -76,7 +76,7 @@ def _updateNextEpochDepartures(currentEpochInstance: EpochInstance,
                                activeNextEpochDepartures: list[NextEpochDeparture]) -> list[NextEpochDeparture]:
     nextEpochDeparturesComputer = NextEpochDeparturesComputer()
     while nextEpochDeparturesComputer.change_made:
-        nextEpochDeparturesComputer._initializeVehiclesToCheck(activeNextEpochDepartures)
+        nextEpochDeparturesComputer._initialize_vehicles_to_check(activeNextEpochDepartures)
         activeNextEpochDepartures = \
             nextEpochDeparturesComputer.run(activeNextEpochDepartures,
                                             currentEpochInstance,
