@@ -183,5 +183,20 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("construct_solution", &cpp_module::Scheduler::construct_solution,
                  py::arg("start_times"));
 
-    m.def("cppSchedulingLocalSearch", &cpp_module::cppSchedulingLocalSearch);
+    m.def("cppSchedulingLocalSearch", &cpp_module::cppSchedulingLocalSearch,
+          py::arg("release_times"),
+          py::arg("remaining_time_slack"),
+          py::arg("staggering_applied"),
+          py::arg("conflicting_sets"),
+          py::arg("earliest_departure_times"),
+          py::arg("latest_departure_times"),
+          py::arg("travel_times_arcs"),
+          py::arg("capacities_arcs"),
+          py::arg("trip_routes"),
+          py::arg("deadlines"),
+          py::arg("due_dates"),
+          py::arg("list_of_slopes"),
+          py::arg("list_of_thresholds"),
+          py::arg("parameters"),
+          py::arg("lb_travel_time"));
 }

@@ -44,7 +44,7 @@ class Instance:
     deadlines: Optional[list[Time]] = None
     maxStaggeringApplicable: Optional[list[Staggering]] = None
 
-    def get_lb_travel_times(self) -> float:
+    def get_lb_travel_time(self) -> float:
         """Return sum of the free flow times of the routes of trips contained in instance"""
         return sum([self.travel_times_arcs[arc] for path in self.trip_routes for arc in path])
 

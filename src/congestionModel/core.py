@@ -30,7 +30,7 @@ def getCongestedSchedule(instance: Instance | EpochInstance,
         list_of_thresholds=instance.inputData.list_of_thresholds,
         parameters=cpp_parameters,
         release_times=release_times,
-        lb_travel_time=instance.get_lb_travel_times()
+        lb_travel_time=instance.get_lb_travel_time()
     )
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_solution = cpp_scheduler.construct_solution(release_times)

@@ -96,20 +96,24 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
     model._flagUpdate = False
     cppParameters = [instance.inputData.algorithmTimeLimit]
     instance.dueDates = instance.deadlines
-    congestedSchedule = cpp.cppSchedulingLocalSearch(model._cbReleaseTimes,
-                                                     model._cbRemainingTimeSlack,
-                                                     model._cbStaggeringApplied,
-                                                     instance.conflictingSets,
-                                                     instance.earliestDepartureTimes,
-                                                     instance.latestDepartureTimes,
-                                                     instance.travel_times_arcs,
-                                                     instance.capacities_arcs,
-                                                     instance.trip_routes,
-                                                     instance.deadlines,
-                                                     instance.dueDates,
-                                                     instance.inputData.list_of_slopes,
-                                                     instance.inputData.list_of_thresholds,
-                                                     cppParameters)
+    congestedSchedule = cpp.cppSchedulingLocalSearch(
+        release_times=model._cbReleaseTimes,
+        remaining_time_slack=model._cbRemainingTimeSlack,
+        staggering_applied=model._cbStaggeringApplied,
+        conflicting_sets=instance.conflictingSets,
+        earliest_departure_times=instance.earliestDepartureTimes,
+        latest_departure_times=instance.latestDepartureTimes,
+        travel_times_arcs=instance.travel_times_arcs,
+        capacities_arcs=instance.capacities_arcs,
+        trip_routes=instance.trip_routes,
+        deadlines=instance.deadlines,
+        due_dates=instance.dueDates,
+        list_of_slopes=instance.inputData.list_of_slopes,
+        list_of_thresholds=instance.inputData.list_of_thresholds,
+        parameters=cppParameters,
+        lb_travel_time=instance.get_lb_travel_time()
+    )
+
     delaysOnArcs = getDelaysOnArcs(instance, congestedSchedule)
     _assertSchedule(model, congestedSchedule, delaysOnArcs, instance)
     binaries = getConflictBinaries(instance.conflictingSets,

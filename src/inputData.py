@@ -136,16 +136,16 @@ def getInputData(input: str) -> InputData:
     if input == "script":
         inputData = InputData(
             # instanceModule selection
-            day=1, numberRides=100, t_min=0, epochSize=60, seed=0, network_name="manhattan_10",
+            day=1, numberRides=50, t_min=0, epochSize=60, seed=0, network_name="manhattan_5",
             type_of_instance="synthetic",
             # network parameters
             speed=20, maxFlowAllowed=100, addShortcuts=False,
             # vdf parameters
-            list_of_slopes=[0.5], list_of_thresholds=[1],
+            list_of_slopes=[0.05], list_of_thresholds=[1],
             # other parameters
             staggeringApplicableMethod="proportional", deadline_factor=100, staggering_cap=10,
             # algorithm parameters
-            optimize=True, algorithmTimeLimit=10000, epochTimeLimit=1000, warmStart=True,
+            optimize=True, algorithmTimeLimit=10, epochTimeLimit=10, warmStart=True,
             improveWarmStart=True, callLocalSearch=True)
     elif input == "console":
         print(f"Experiment title: {str(sys.argv[1])}")

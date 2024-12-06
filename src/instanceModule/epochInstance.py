@@ -33,7 +33,7 @@ class EpochInstance:
     maxDelayOnArc: list[list[float]] = field(default_factory=list[list[float]])
     removedVehicles: list[int] = field(default_factory=list[int])
 
-    def get_lb_travel_times(self) -> float:
+    def get_lb_travel_time(self) -> float:
         """Return sum of the free flow times of the routes of trips contained in instance"""
         return sum([self.travel_times_arcs[arc] for path in self.trip_routes for arc in path])
 

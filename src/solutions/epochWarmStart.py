@@ -22,20 +22,21 @@ def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> Vehicle
         timeRemaining,
     ]
     congestedSchedule = cpp.cppSchedulingLocalSearch(
-        solution.releaseTimes,
-        solution.staggeringApplicable,
-        solution.staggeringApplied,
-        instance.conflictingSets,
-        instance.earliestDepartureTimes,
-        instance.latestDepartureTimes,
-        instance.travel_times_arcs,
-        instance.capacities_arcs,
-        instance.trip_routes,
-        instance.deadlines,
-        instance.dueDates,
-        instance.inputData.list_of_slopes,
-        instance.inputData.list_of_thresholds,
-        cppParameters
+        release_times=solution.releaseTimes,
+        remaining_time_slack=solution.staggeringApplicable,
+        staggering_applied=solution.staggeringApplied,
+        conflicting_sets=instance.conflictingSets,
+        earliest_departure_times=instance.earliestDepartureTimes,
+        latest_departure_times=instance.latestDepartureTimes,
+        travel_times_arcs=instance.travel_times_arcs,
+        capacities_arcs=instance.capacities_arcs,
+        trip_routes=instance.trip_routes,
+        deadlines=instance.deadlines,
+        due_dates=instance.dueDates,
+        list_of_slopes=instance.inputData.list_of_slopes,
+        list_of_thresholds=instance.inputData.list_of_thresholds,
+        parameters=cppParameters,
+        lb_travel_time=instance.get_lb_travel_time()
     )
     endSearchClock = datetime.datetime.now().timestamp()
     print("Time necessary to compute warm start solution: ", endSearchClock - startSearchClock)
