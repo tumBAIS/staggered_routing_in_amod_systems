@@ -157,7 +157,7 @@ def _isOtherConflicting(otherVehicleInfo, nextEpochDeparture):
 
 
 def _isTimeInCurrentEpoch(nextEpochDeparture, currentEpochInstance):
-    return nextEpochDeparture.time / 60 < (currentEpochInstance.epochID + 1) * currentEpochInstance.inputData.epochSize
+    return nextEpochDeparture.time / 60 < (currentEpochInstance.epochID + 1) * currentEpochInstance.inputData.epoch_size
 
 
 def _isCurrentVehicleInSystem(nextEpochDeparture, currentEpochInstance) -> bool:

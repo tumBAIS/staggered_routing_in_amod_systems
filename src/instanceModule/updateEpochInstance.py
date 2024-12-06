@@ -13,7 +13,7 @@ from inputData import ACTIVATE_ASSERTIONS
 def _getDepartureInNextEpoch(currentEpochInstance: EpochInstance, schedule: list[float]) -> \
         tuple[int, float] | tuple[None, None]:
     """Checks if there is an arrival occurring in the subsequent epoch, and returns the respective departure"""
-    isInNextEpoch = lambda x: x / 60 > currentEpochInstance.inputData.epochSize * (currentEpochInstance.epochID + 1)
+    isInNextEpoch = lambda x: x / 60 > currentEpochInstance.inputData.epoch_size * (currentEpochInstance.epochID + 1)
     return next(
         ((position, departure) for position, departure in enumerate(schedule[:-1]) if
          isInNextEpoch(schedule[position + 1])), (None, None))
@@ -22,7 +22,7 @@ def _getDepartureInNextEpoch(currentEpochInstance: EpochInstance, schedule: list
 def _getMaxStaggeringApplicableNextEpoch(departure, globalInstance, nextEpochInstance, originalVehicleID) -> float:
     firstOriginalArc = globalInstance.trip_routes[originalVehicleID][0]
     arcIsOrigin = departure.arc == firstOriginalArc
-    departureIsInNextEpoch = departure.time / 60 > nextEpochInstance.epochID * nextEpochInstance.inputData.epochSize
+    departureIsInNextEpoch = departure.time / 60 > nextEpochInstance.epochID * nextEpochInstance.inputData.epoch_size
     if arcIsOrigin and departureIsInNextEpoch:
         staggeringApplied = max(1e-2, departure.time - globalInstance.releaseTimesDataset[originalVehicleID])
         maxStaggeringApplicableNextEpoch = globalInstance.maxStaggeringApplicable[originalVehicleID] - staggeringApplied

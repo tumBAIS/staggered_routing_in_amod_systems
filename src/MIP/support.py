@@ -30,9 +30,9 @@ def addOptimizationMeasuresToModel(model: Model):
 
 
 def setGurobiParameters(model, instance):
-    totalTimeRemaining = instance.inputData.algorithmTimeLimit - (
+    totalTimeRemaining = instance.inputData.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.startSolutionTime)
-    epochTimeRemaining = instance.inputData.epochTimeLimit - (
+    epochTimeRemaining = instance.inputData.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clockStartEpoch)
     timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
     model.setParam("timeLimit", max(0.0, round(timeRemaining, 2)))
@@ -64,7 +64,7 @@ def computeIISIfNotSolved(model: Model):
 
 
 def getRemainingTime(instance: Instance) -> float:
-    return instance.inputData.algorithmTimeLimit - (
+    return instance.inputData.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.startSolutionTime)
 
 
@@ -96,7 +96,7 @@ def saveSolutionInExternalFile(heuristicSolution: HeuristicSolution | CompleteSo
                                instance: Instance | EpochInstance):
     pathToResults = os.path.join(os.path.dirname(__file__), "../../results")
     if not os.path.exists(pathToResults):
-        os.makedirs(pathToResults,exist_ok=True)
+        os.makedirs(pathToResults, exist_ok=True)
     with open(f"{pathToResults}/initialSolution_{instance.clockStartEpoch}.p", "wb") as outfile:
         pickle.dump(heuristicSolution, outfile)
         print("saved heuristic solution in external file")

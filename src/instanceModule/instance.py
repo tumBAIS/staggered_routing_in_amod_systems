@@ -84,9 +84,9 @@ class Instance:
             total_travel_time = sum(self.travel_times_arcs[arc] for arc in path)
 
             # Calculate staggering time based on staggering cap percentage
-            if self.inputData.staggeringApplicableMethod == "fixed":
+            if self.inputData.staggering_applicable_method == "fixed":
                 staggering_cap_time = self.inputData.staggering_cap * 60
-            elif self.inputData.staggeringApplicableMethod == "proportional":
+            elif self.inputData.staggering_applicable_method == "proportional":
                 staggering_cap_time = self.inputData.staggering_cap / 100 * total_travel_time
             else:
                 raise RuntimeError("wrong staggering applicable method specified!")
@@ -146,7 +146,7 @@ def save_instance_for_testing_cpp_code(instance: Instance, statusQuo: CompleteSo
     if SAVE_CPP_INSTANCE:
         if not os.path.exists(pathToCppInstance):
             os.mkdir(pathToCppInstance)
-        parameters = [instance.inputData.algorithmTimeLimit]
+        parameters = [instance.inputData.algorithm_time_limit]
         _writeArcBasedShortestPathsForCppCode(instance)
         _writeEarliestDepartureTimesForCppCode(instance)
         _writeLatestDepartureTimesForCppCode(instance)

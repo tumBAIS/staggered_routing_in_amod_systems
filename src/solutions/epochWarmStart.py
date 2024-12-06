@@ -12,9 +12,9 @@ import cpp_module as cpp
 def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> VehicleSchedules:
     print("Computing warm start solution")
     instance.dueDates = instance.deadlines[:]
-    totalTimeRemaining = instance.inputData.algorithmTimeLimit - (
+    totalTimeRemaining = instance.inputData.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.startSolutionTime)
-    epochTimeRemaining = instance.inputData.epochTimeLimit - (
+    epochTimeRemaining = instance.inputData.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clockStartEpoch)
     timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
     startSearchClock = datetime.datetime.now().timestamp()
@@ -44,10 +44,10 @@ def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> Vehicle
 
 
 def _checkIfThereTimeLeftForOptimization(epochInstance: EpochInstance):
-    algorithmRuntime = epochInstance.inputData.algorithmTimeLimit - (
+    algorithmRuntime = epochInstance.inputData.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - epochInstance.startSolutionTime)
 
-    epochRuntime = epochInstance.inputData.epochTimeLimit - (
+    epochRuntime = epochInstance.inputData.epoch_time_limit - (
             datetime.datetime.now().timestamp() - epochInstance.clockStartEpoch)
 
     timeLeft = min(algorithmRuntime, epochRuntime)
@@ -56,7 +56,7 @@ def _checkIfThereTimeLeftForOptimization(epochInstance: EpochInstance):
 
 def getEpochWarmStart(epochInstance: EpochInstance, epochStatusQuo: EpochSolution) -> EpochSolution:
     isThereTimeLeftForOptimization = _checkIfThereTimeLeftForOptimization(epochInstance)
-    if epochInstance.inputData.improveWarmStart and isThereTimeLeftForOptimization:
+    if epochInstance.inputData.improve_warm_start and isThereTimeLeftForOptimization:
         congestedSchedule = _runLocalSearch(epochStatusQuo, epochInstance)
     else:
         if not isThereTimeLeftForOptimization:

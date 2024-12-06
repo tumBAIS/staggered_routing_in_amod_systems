@@ -81,7 +81,7 @@ def _getEpochInstance(instance, epochID, firstVehicleInEpoch, lastVehicleInEpoch
 
 
 def get_epoch_instances(globalInstance) -> EpochInstances:
-    epochSize = globalInstance.inputData.epochSize
+    epochSize = globalInstance.inputData.epoch_size
     lastVehicleEpochs = _getLastVehicleForEachEpoch(epochSize, globalInstance.releaseTimesDataset)
     numberOfEpochs = len(lastVehicleEpochs)
     firstVehicleInEpoch = 0

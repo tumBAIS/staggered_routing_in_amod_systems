@@ -156,7 +156,7 @@ def _addShortcutsToGraph(graph: DiGraph) -> None:
 
 def addShortcuts(inputData: InputData, manhattanGraph: DiGraph, taxiRides: pd.Dataframe,
                  nodeBasedShortestPaths):
-    if inputData.addShortcuts:
+    if inputData.add_shortcuts:
         _addShortcutsToGraph(manhattanGraph)
         nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, manhattanGraph)
         reduceGraph(manhattanGraph, nodeBasedShortestPaths, inputData)

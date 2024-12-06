@@ -49,9 +49,9 @@ def _continueSolving(model, instance) -> bool:
 
 
 def isThereRemainingTime(instance):
-    totalTimeRemaining = instance.inputData.algorithmTimeLimit - (
+    totalTimeRemaining = instance.inputData.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.startSolutionTime)
-    epochTimeRemaining = instance.inputData.epochTimeLimit - (
+    epochTimeRemaining = instance.inputData.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clockStartEpoch)
     timeRemaining = min(epochTimeRemaining, totalTimeRemaining)
     return timeRemaining > 0
@@ -70,10 +70,10 @@ def runModel(model: Model,
         except:
             print("no solution to start the model - terminating procedure")
             return
-        if instance.inputData.warmStart:
+        if instance.inputData.warm_start:
             setWarmStartModel(model, initialSolution)
         setGurobiParameters(model, instance)
-        if instance.inputData.callLocalSearch:
+        if instance.inputData.call_local_search:
             model.optimize(callback(instance, statusQuo))
         else:
             model.optimize()

@@ -20,4 +20,4 @@ sys.path.append(path_to_build.as_posix())
 from utils.run_procedure import run_procedure
 
 if __name__ == "__main__":
-    run_procedure(input_source="console")
+    run_procedure(source="console")

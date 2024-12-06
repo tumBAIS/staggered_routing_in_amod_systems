@@ -26,7 +26,7 @@ def _getStaggeringApplied(releaseTimesSolution, releaseTimesStatusQuo):
 def getEpochModelSolution(model: Model, epochInstance: EpochInstance, epochStatusQuo: EpochSolution,
                           epochWarmStart: EpochSolution) -> EpochSolution:
     if not epochInstance.inputData.optimize or not model._optimize:
-        if not epochInstance.inputData.warmStart:
+        if not epochInstance.inputData.warm_start:
             return epochStatusQuo
         return epochWarmStart
 

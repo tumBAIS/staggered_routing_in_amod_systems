@@ -21,7 +21,7 @@ def getFreeFlowSchedule(instance: Instance | EpochInstance,
 
 def getCongestedSchedule(instance: Instance | EpochInstance,
                          release_times: list[float]) -> list[VehicleSchedule]:
-    cpp_parameters = [instance.inputData.algorithmTimeLimit]
+    cpp_parameters = [instance.inputData.algorithm_time_limit]
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,

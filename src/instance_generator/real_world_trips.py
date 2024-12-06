@@ -130,12 +130,12 @@ def get_real_world_trips(instance_parameters: inputData.InputData, network: Netw
 def sample_dataset(dataset_gdf, instance_parameters) -> gpd.GeoDataFrame:
     len_before = dataset_gdf.shape[0]
     # Check if the sample size is greater than the size of the DataFrame
-    if instance_parameters.numberRides > len_before:
+    if instance_parameters.number_of_trips > len_before:
         # Enable resampling by setting replace=True
-        dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, replace=True,
+        dataset_gdf = dataset_gdf.sample(n=instance_parameters.number_of_trips, replace=True,
                                          random_state=instance_parameters.seed)
     else:
-        dataset_gdf = dataset_gdf.sample(n=instance_parameters.numberRides, random_state=instance_parameters.seed)
+        dataset_gdf = dataset_gdf.sample(n=instance_parameters.number_of_trips, random_state=instance_parameters.seed)
     len_after = dataset_gdf.shape[0]
 
     # Print the number of rows before and after sampling

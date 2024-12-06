@@ -30,7 +30,7 @@ def setArcsNominalTravelTimesAndCapacities(manhattanGraph, inputData):
 
         # Calculate nominal capacity based on max flow allowed
         nominalCapacityArc = int(
-            np.ceil(manhattanGraph[origin][destination]["nominal_travel_time"] / inputData.maxFlowAllowed))
+            np.ceil(manhattanGraph[origin][destination]["nominal_travel_time"] / inputData.max_flow_allowed))
         manhattanGraph[origin][destination]["nominal_capacity"] = nominalCapacityArc
 
     return

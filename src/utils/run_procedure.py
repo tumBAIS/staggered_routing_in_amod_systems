@@ -11,8 +11,8 @@ from utils.prints import print_insights_algorithm
 from utils.save import save_experiment
 
 
-def run_procedure(input_source: str) -> None:
-    input_data = get_input_data(input_source)
+def run_procedure(source: str) -> None:
+    input_data = get_input_data(source)
     global_instance = get_not_simplified_instance(input_data)
     epoch_instances = get_epoch_instances(global_instance)
     epoch_solutions = []
@@ -31,5 +31,5 @@ def run_procedure(input_source: str) -> None:
     complete_status_quo = get_offline_solution(global_instance, global_instance.releaseTimesDataset)
     reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, global_instance)
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
-    save_experiment(input_source, global_instance, complete_status_quo, reconstructed_solution)
+    save_experiment(source, global_instance, complete_status_quo, reconstructed_solution)
     save_instance_for_testing_cpp_code(global_instance, complete_status_quo)

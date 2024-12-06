@@ -42,7 +42,7 @@ def _getCurrentBounds(model: Model, startSolutionTime) -> None:
 
 
 def _updateRemainingTimeForOptimization(model: Model, instance: Instance) -> None:
-    totalOptimizationTime = instance.inputData.algorithmTimeLimit
+    totalOptimizationTime = instance.inputData.algorithm_time_limit
     elapsedTime = datetime.datetime.now().timestamp() - instance.startSolutionTime
 
     model._remainingTimeForOptimization = totalOptimizationTime - elapsedTime
@@ -94,7 +94,7 @@ def _assertSchedule(model: Model, congestedSchedule: VehicleSchedules, delaysOnA
 
 def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution:
     model._flagUpdate = False
-    cppParameters = [instance.inputData.algorithmTimeLimit]
+    cppParameters = [instance.inputData.algorithm_time_limit]
     instance.dueDates = instance.deadlines
     congestedSchedule = cpp.cppSchedulingLocalSearch(
         release_times=model._cbReleaseTimes,

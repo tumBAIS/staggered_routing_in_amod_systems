@@ -14,7 +14,7 @@ def get_synthetic_trips(instance_params: InputData, network: Network) -> list[di
     origin = network.find_closest_node(origin.geometry)
     destination = network.find_closest_node(destination.geometry)
 
-    trips = _generate_trips_list(network, instance_params.numberRides, origin_coords, destination_coords,
+    trips = _generate_trips_list(network, instance_params.number_of_trips, origin_coords, destination_coords,
                                  origin, destination)
     return trips
 

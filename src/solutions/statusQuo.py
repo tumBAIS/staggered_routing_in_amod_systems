@@ -149,7 +149,7 @@ def printInfoStatusQuoMetrics(statusQuoMetrics):
 def printHeaderCurrentEpochStatusQuo(epochInstance):
     print("#" * 20)
     print(f"COMPUTING STATUS QUO FOR EPOCH {epochInstance.epochID} - "
-          f"START TIME {epochInstance.epochID * epochInstance.inputData.epochSize * 60}")
+          f"START TIME {epochInstance.epochID * epochInstance.inputData.epoch_size * 60}")
     print("#" * 20)
 
 
