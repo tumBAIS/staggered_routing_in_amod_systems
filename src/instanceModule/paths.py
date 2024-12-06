@@ -23,8 +23,8 @@ def getNodeBasedShortestPaths(taxiRidesWithPuDo: DataFrame, manhattanGraph: DiGr
     indicesPathsToRemove = []
     for idxRecord in range(len(taxiRidesWithPuDo)):
         try:
-            path = nx.shortest_path(manhattanGraph, taxiRidesWithPuDo.iloc[idxRecord]["Pickup locations"],
-                                    taxiRidesWithPuDo.iloc[idxRecord]["Dropoff locations"], weight='length')
+            path = nx.shortest_path(manhattanGraph, taxiRidesWithPuDo.iloc[idxRecord]["origin"],
+                                    taxiRidesWithPuDo.iloc[idxRecord]["destination"], weight='length')
             total_length = sum(manhattanGraph[path[i]][path[i + 1]]['length'] for i in range(len(path) - 1))
             # if total_length < 10000:
             #     indicesPathsToRemove.append(idxRecord)

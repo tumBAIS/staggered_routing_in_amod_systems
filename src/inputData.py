@@ -107,7 +107,7 @@ def get_input_data(input_source: str) -> InputData:
 def generate_input_data_from_script() -> InputData:
     return InputData(
         day=1, number_of_trips=100, epoch_size=60, seed=0, network_name="manhattan_10",
-        speed=20, max_flow_allowed=100, add_shortcuts=False,
+        speed=20, max_flow_allowed=100, add_shortcuts=True,
         list_of_slopes=[0.05], list_of_thresholds=[1],
         staggering_applicable_method="proportional", deadline_factor=100, staggering_cap=10,
         optimize=True, algorithm_time_limit=10, epoch_time_limit=10, warm_start=True,
