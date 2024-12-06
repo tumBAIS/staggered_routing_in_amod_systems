@@ -6,7 +6,7 @@ from congestion_model.core import get_delays_on_arcs, get_free_flow_schedule, \
     get_staggering_applicable, get_total_delay, get_total_travel_time, get_congested_schedule
 
 from congestion_model.conflict_binaries import get_conflict_binaries
-from conflicting_sets.get import add_conflicting_sets_to_instance
+from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 
 from input_data import ACTIVATE_ASSERTIONS
 

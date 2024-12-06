@@ -1,18 +1,13 @@
 from __future__ import annotations
 
 import copy
-import datetime
-import itertools
 from collections import namedtuple
-
-import conflicting_sets.split
-from utils.aliases import VehicleSchedules, UndividedConflictingSets
-from instanceModule.instance import Instance
-from instanceModule.epoch_instance import EpochInstance
 from queue import PriorityQueue
-from input_data import ACTIVATE_ASSERTIONS
 from typing import Callable
-from input_data import MIN_SET_CAPACITY
+
+from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
+from instanceModule.instance import Instance
+from utils.aliases import VehicleSchedules, UndividedConflictingSets
 
 TimeBound = namedtuple("TimeBound",
                        ["arc", "earliestDeparture", "latestDeparture", "earliestArrival", "latestArrival",
@@ -37,18 +32,6 @@ def split_time_bounds_on_arcs(instance: Instance,
     return boundsOnArcsSplit
 
 
-def get_undivided_conflicting_sets(instance: Instance,
-                                   boundsOnArcsSplit: list[list[list[TimeBound]]]) -> UndividedConflictingSets:
-    undividedConflictingSets = [[[timeBound.vehicle for timeBound in boundsSet] if
-                                 len(boundsSet) > max(MIN_SET_CAPACITY, instance.capacities_arcs[
-                                     arc] * instance.input_data.list_of_thresholds[0]) else [] for
-                                 boundsSet in boundsOnArc
-                                 ] if arc > 0 else [] for arc, boundsOnArc in enumerate(boundsOnArcsSplit)
-                                ]
-
-    return undividedConflictingSets
-
-
 def arrange_bounds_by_vehicle(arcBasedTimeBounds: list[list[TimeBound]], paths: list[list[int]]):
     vehicleBasedTimeBounds: list[list[TimeBound]] = [[] for _ in paths]
 
@@ -59,34 +42,6 @@ def arrange_bounds_by_vehicle(arcBasedTimeBounds: list[list[TimeBound]], paths: 
                               vehicleBasedTimeBounds]
 
     return vehicleBasedTimeBounds
-
-
-def get_max_delay_on_arcs(vehicleBasedTimeBounds: list[list[TimeBound]]) -> list[list[float]]:
-    return [
-        [bound.maxDelayOnArc for bound in sorted(boundsOfOneVehicle, key=lambda x: x.earliestDeparture)]
-        for boundsOfOneVehicle in vehicleBasedTimeBounds
-    ]
-
-
-def get_min_delay_on_arcs(vehicleBasedTimeBounds: list[list[TimeBound]]) -> list[list[float]]:
-    return [
-        [bound.minDelayOnArc for bound in sorted(boundsOfOneVehicle, key=lambda x: x.earliestDeparture)]
-        for boundsOfOneVehicle in vehicleBasedTimeBounds
-    ]
-
-
-def get_earliest_departure_times(vehicleBasedTimeBounds: list[list[TimeBound]]) -> list[list[float]]:
-    return [
-        [bound.earliestDeparture for bound in sorted(boundsOfOneVehicle, key=lambda x: x.earliestDeparture)]
-        for boundsOfOneVehicle in vehicleBasedTimeBounds
-    ]
-
-
-def get_latest_departure_times(vehicleBasedTimeBounds: list[list[TimeBound]]) -> list[list[float]]:
-    return [
-        [bound.latestDeparture for bound in sorted(boundsOfOneVehicle, key=lambda x: x.earliestDeparture)]
-        for boundsOfOneVehicle in vehicleBasedTimeBounds
-    ]
 
 
 def compute_delay_on_arc(arc: int, instance: Instance, vehiclesOnArc: int) -> float:
@@ -368,68 +323,13 @@ def get_initial_latest_arrival_times(instance, ffSchedule):
             ]
 
 
-def get_bounds_vehicle(instance, vehicle, arc):
-    path = instance.trip_routes[vehicle]
-    index_arc = path.index(arc)
-    earliest_entry = instance.earliest_departure_times[vehicle][index_arc]
-    latest_entry = instance.latest_departure_times[vehicle][index_arc]
-    earliest_leave = instance.earliest_departure_times[vehicle][index_arc + 1]
-    latest_leave = instance.latest_departure_times[vehicle][index_arc + 1]
-    return earliest_entry, latest_entry, earliest_leave, latest_leave
+def get_undivided_conflicting_sets(instance: Instance,
+                                   boundsOnArcsSplit: list[list[list[TimeBound]]]) -> UndividedConflictingSets:
+    undividedConflictingSets = [[[timeBound.vehicle for timeBound in boundsSet] if
+                                 len(boundsSet) > max(MIN_SET_CAPACITY, instance.capacities_arcs[
+                                     arc] * instance.input_data.list_of_thresholds[0]) else [] for
+                                 boundsSet in boundsOnArc
+                                 ] if arc > 0 else [] for arc, boundsOnArc in enumerate(boundsOnArcsSplit)
+                                ]
 
-
-def estimate_big_m_necessary(instance) -> int:
-    print("estimating big-m...", end=" ")
-    necessary_big_m = 0
-
-    for arc, conf_set in enumerate(instance.conflicting_sets):
-        for vehicle_1, vehicle_2 in itertools.permutations(conf_set, 2):
-            constraints_to_add = 6
-            e_e_1, e_l_1, l_e_1, l_l_1 = get_bounds_vehicle(instance, vehicle_1, arc)
-            e_e_2, e_l_2, l_e_2, l_l_2 = get_bounds_vehicle(instance, vehicle_2, arc)
-            alpha_must_be_one = e_l_2 < e_e_1
-            beta_must_be_one = e_l_1 < l_e_2
-            gamma_must_be_one = alpha_must_be_one and beta_must_be_one
-            alpha_must_be_zero = e_l_1 < e_e_2
-            beta_must_be_zero = l_l_2 < e_e_1
-            if alpha_must_be_one:
-                constraints_to_add -= 2
-            if beta_must_be_one:
-                constraints_to_add -= 2
-            if gamma_must_be_one:
-                constraints_to_add -= 2
-            if alpha_must_be_zero or beta_must_be_zero:
-                constraints_to_add = 0
-
-            necessary_big_m += constraints_to_add
-
-    print(f"necessary {necessary_big_m} big-m constraints")
-    return necessary_big_m
-
-
-def add_conflicting_sets_to_instance(
-        instance: Instance | EpochInstance,
-        ffSchedule: VehicleSchedules) -> None:
-    print("Adding undivided conflicting sets to instanceModule...", end=" ")
-    clock_start = datetime.datetime.now().timestamp()
-    knownLatestArrivalTimes = get_initial_latest_arrival_times(instance, ffSchedule)
-    while True:
-        arcBasedTimeBounds = get_arc_based_time_bounds(instance, knownLatestArrivalTimes, ffSchedule)
-        boundsOnArcsSplit = split_time_bounds_on_arcs(instance, arcBasedTimeBounds)
-        vehicleBasedTimeBounds = arrange_bounds_by_vehicle(arcBasedTimeBounds, instance.trip_routes)
-        newLatestArrivalTimes = [[bound.latestArrival for bound in bounds] for bounds in vehicleBasedTimeBounds]
-        if knownLatestArrivalTimes == newLatestArrivalTimes:
-            break
-        knownLatestArrivalTimes = newLatestArrivalTimes[:]
-
-    instance.undivided_conflicting_sets = get_undivided_conflicting_sets(instance, boundsOnArcsSplit)
-    instance.earliest_departure_times = get_earliest_departure_times(vehicleBasedTimeBounds)
-    instance.latest_departure_times = get_latest_departure_times(vehicleBasedTimeBounds)
-    instance.min_delay_on_arc = get_min_delay_on_arcs(vehicleBasedTimeBounds)
-    instance.max_delay_on_arc = get_max_delay_on_arcs(vehicleBasedTimeBounds)
-
-    conflicting_sets.split.split_conflicting_sets(instance)
-    clock_end = datetime.datetime.now().timestamp()
-    print(f"done! - time necessary: {clock_end - clock_start:.2f} [s]")
-
-    return
+    return undividedConflictingSets

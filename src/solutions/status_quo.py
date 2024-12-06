@@ -5,7 +5,7 @@ from utils.prints import print_info_conflicting_sets_sizes, \
     print_info_arcs_utilized, print_info_length_trips
 from utils.classes import EpochSolution
 from instanceModule.epoch_instance import EpochInstance
-from conflicting_sets.get import add_conflicting_sets_to_instance
+from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time, get_congested_schedule, get_free_flow_schedule, \
     get_delays_on_arcs, get_total_delay
 from input_data import ACTIVATE_ASSERTIONS

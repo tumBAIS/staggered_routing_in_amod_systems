@@ -1,6 +1,6 @@
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics, print_info_status_quo_metrics
-from conflicting_sets.get import add_conflicting_sets_to_instance
+from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
 from instanceModule.instance import Instance
 from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
