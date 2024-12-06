@@ -50,36 +50,6 @@ class Scheduler:
                                                         departure_times_on_arcs=departure_times_on_arcs,
                                                         arrival_times_on_arcs=arrival_times_on_arcs)
 
-    # @staticmethod
-    # def get_cpp_solver_params(solver_params: SolverParams) -> cpp.LNSSolverParams:
-    #     # Validate mode
-    #     mode = solver_params.mode
-    #     if mode not in {"STAG", "BAL", "INTEG"}:
-    #         raise RuntimeError("Mode is still undefined, todo")
-    #
-    #     # Extract relevant parameters
-    #     max_no_improving_its = solver_params.LS_iterations
-    #     goal = solver_params.goal
-    #     max_cascade_level = solver_params.LS_max_cascade_level
-    #     verbose = solver_params.verbose
-    #     destroy_percentage = solver_params.LS_destroy_percentage
-    #     ls_frequency = solver_params.LS_ls_frequency
-    #     min_improvement = solver_params.LS_min_improvement
-    #     improve_with_ls = solver_params.LS_improve_with_ls
-    #
-    #     # Return a well-structured cpp.LNSSolverParams object
-    #     return cpp.LNSSolverParams(
-    #         mode=mode,
-    #         max_no_improving_its=max_no_improving_its,
-    #         goal=goal,
-    #         max_cascade_level=max_cascade_level,
-    #         verbose=verbose,
-    #         destroy_percentage=destroy_percentage,
-    #         ls_frequency=ls_frequency,
-    #         min_improvement=min_improvement,
-    #         improve_with_ls=improve_with_ls
-    #     )
-
     def get_cpp_instance(self) -> cpp.cpp_instance:
         """
         Constructs and returns a C++ instance by aggregating required data from trip and network models.

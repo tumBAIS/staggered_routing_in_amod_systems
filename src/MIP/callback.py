@@ -16,7 +16,7 @@ from typing import Callable
 from congestion_model.conflict_binaries import get_conflict_binaries
 
 
-def _getCurrentBounds(model: Model, startSolutionTime) -> None:
+def _get_current_bounds(model: Model, startSolutionTime) -> None:
     lowerBoundImproved = model.cbGet(grb.GRB.Callback.MIP_OBJBND) >= model._lowerBound[-1]
     upperBoundImproved = model.cbGet(grb.GRB.Callback.MIP_OBJBST) <= model._upperBound[-1]
 
@@ -41,7 +41,7 @@ def _getCurrentBounds(model: Model, startSolutionTime) -> None:
     return
 
 
-def _updateRemainingTimeForOptimization(model: Model, instance: Instance) -> None:
+def _update_remaining_time_for_optimization(model: Model, instance: Instance) -> None:
     totalOptimizationTime = instance.input_data.algorithm_time_limit
     elapsedTime = datetime.datetime.now().timestamp() - instance.start_solution_time
 
@@ -54,7 +54,7 @@ def _updateRemainingTimeForOptimization(model: Model, instance: Instance) -> Non
     return
 
 
-def _getCallbackSolution(model: Model, instance: Instance, statusQuo: CompleteSolution) -> None:
+def _get_callback_solution(model: Model, instance: Instance, statusQuo: CompleteSolution) -> None:
     model._cbReleaseTimes = [model.cbGetSolution(model._departure[vehicle][path[0]])
                              for vehicle, path in enumerate(instance.trip_routes)]
     model._cbTotalDelay = sum(
@@ -68,8 +68,8 @@ def _getCallbackSolution(model: Model, instance: Instance, statusQuo: CompleteSo
     return
 
 
-def _assertSchedule(model: Model, congestedSchedule: VehicleSchedules, delaysOnArcs: VehicleSchedules,
-                    instance: Instance) -> None:
+def _assert_schedule(model: Model, congestedSchedule: VehicleSchedules, delaysOnArcs: VehicleSchedules,
+                     instance: Instance) -> None:
     if ACTIVATE_ASSERTIONS:
         for vehicle, (schedule, delays) in enumerate(zip(congestedSchedule, delaysOnArcs)):
             firstArc = instance.trip_routes[vehicle][0]
@@ -92,7 +92,7 @@ def _assertSchedule(model: Model, congestedSchedule: VehicleSchedules, delaysOnA
                     f"Invalid delay for arc {arc} of vehicle {vehicle}"
 
 
-def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution:
+def _get_heuristic_solution(model: Model, instance: Instance) -> HeuristicSolution:
     model._flagUpdate = False
     cppParameters = [instance.input_data.algorithm_time_limit]
     instance.due_dates = instance.deadlines
@@ -115,7 +115,7 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
     )
 
     delaysOnArcs = get_delays_on_arcs(instance, congestedSchedule)
-    _assertSchedule(model, congestedSchedule, delaysOnArcs, instance)
+    _assert_schedule(model, congestedSchedule, delaysOnArcs, instance)
     binaries = get_conflict_binaries(instance.conflicting_sets,
                                      instance.trip_routes,
                                      congestedSchedule)
@@ -128,7 +128,7 @@ def _getHeuristicSolution(model: Model, instance: Instance) -> HeuristicSolution
     return heuristicSolution
 
 
-def _setHeuristicContinuousVariables(model, heuristicSolution):
+def _set_heuristic_continuous_variables(model, heuristicSolution):
     for vehicle in model._departure:
         for position, arc in enumerate(model._departure[vehicle]):
             model.cbSetSolution(model._departure[vehicle][arc],
@@ -137,7 +137,7 @@ def _setHeuristicContinuousVariables(model, heuristicSolution):
                 model.cbSetSolution(model._delay[vehicle][arc], heuristicSolution.delays_on_arcs[vehicle][position])
 
 
-def _setHeuristicBinaryVariables(model, heuristicSolution):
+def _set_heuristic_binary_variables(model, heuristicSolution):
     for arc in model._gamma:
         for firstVehicle, secondVehicle in itertools.combinations(model._gamma[arc], 2):
             if heuristicSolution.binaries.gamma[arc][firstVehicle][secondVehicle] != -1:
@@ -162,7 +162,7 @@ def _setHeuristicBinaryVariables(model, heuristicSolution):
                                         heuristicSolution.binaries.gamma[arc][secondVehicle][firstVehicle])
 
 
-def _suspendProcedure(heuristicSolution, model, instance) -> None:
+def _suspend_procedure(heuristicSolution, model, instance) -> None:
     saveSolutionInExternalFile(heuristicSolution, instance)
     if model.cbGet(grb.GRB.Callback.MIP_OBJBND) > model._bestLowerBound:
         model._bestLowerBound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
@@ -170,31 +170,31 @@ def _suspendProcedure(heuristicSolution, model, instance) -> None:
     return
 
 
-def _setHeuristicSolution(model: Model, heuristicSolution: HeuristicSolution, instance: Instance) -> None:
+def _set_heuristic_solution(model: Model, heuristicSolution: HeuristicSolution, instance: Instance) -> None:
     solutionIsImproving: bool = model._cbTotalDelay - heuristicSolution.total_delay > TOLERANCE
     if solutionIsImproving:
         print("setting heuristic solution in callback...", end=" ")
-        _setHeuristicBinaryVariables(model, heuristicSolution)
-        _setHeuristicContinuousVariables(model, heuristicSolution)
+        _set_heuristic_binary_variables(model, heuristicSolution)
+        _set_heuristic_continuous_variables(model, heuristicSolution)
         returnValUseSolution = model.cbUseSolution()
         print(f"model.cbUseSolution() produced a solution with value {returnValUseSolution}")
         model.update()
         if returnValUseSolution == 1e+100:
             print("Heuristic solution has not been accepted - terminating MIP model")
-            _suspendProcedure(heuristicSolution, model, instance)
+            _suspend_procedure(heuristicSolution, model, instance)
     return
 
 
 def callback(instance: Instance, statusQuo: CompleteSolution) -> Callable:
-    def callLocalSearch(model, where) -> None:
+    def call_local_search(model, where) -> None:
         if where == grb.GRB.Callback.MIP:
-            _getCurrentBounds(model, instance.start_solution_time)
-            _updateRemainingTimeForOptimization(model, instance)
+            _get_current_bounds(model, instance.start_solution_time)
+            _update_remaining_time_for_optimization(model, instance)
 
         # Callback when MIP solutions are found
         if where == grb.GRB.Callback.MIPSOL:
             # Get the solution from the callback and update relevant variables
-            _getCallbackSolution(model, instance, statusQuo)
+            _get_callback_solution(model, instance, statusQuo)
             model._improvementClock = datetime.datetime.now().timestamp()
             model._bestUpperBound = model._cbTotalDelay
 
@@ -202,7 +202,7 @@ def callback(instance: Instance, statusQuo: CompleteSolution) -> Callable:
         if where == grb.GRB.Callback.MIPNODE:
             # Apply heuristic solution at the root node
             if model._flagUpdate:
-                heuristicSolution = _getHeuristicSolution(model, instance)
-                _setHeuristicSolution(model, heuristicSolution, instance)
+                heuristicSolution = _get_heuristic_solution(model, instance)
+                _set_heuristic_solution(model, heuristicSolution, instance)
 
-    return callLocalSearch
+    return call_local_search
