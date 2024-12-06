@@ -153,7 +153,7 @@ def printHeaderCurrentEpochStatusQuo(epochInstance):
     print("#" * 20)
 
 
-def getCurrentEpochStatusQuo(epochInstance: EpochInstance) -> EpochSolution:
+def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     """ Compute the schedule given the fixed decisions of the previous epochs and
     that all the trips in the current epoch start at the earliest departure time """
 

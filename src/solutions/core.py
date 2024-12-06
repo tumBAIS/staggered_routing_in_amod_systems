@@ -16,7 +16,7 @@ def _printHeaderOfflineSolution():
     print("#" * 20)
 
 
-def getOfflineSolution(instance: Instance, releaseTimes: list[float]) -> CompleteSolution:
+def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> CompleteSolution:
     """ Compute the global status quo to compare solution against """
     _printHeaderOfflineSolution()
     solutionMetrics = computeSolutionMetrics(instance, releaseTimes)
@@ -50,7 +50,7 @@ def _printInfoEpochSolution(epochStatusQuo, epochSolution):
     print(f"Total delay epoch reduction: {delayReduction:.2%}")
 
 
-def getEpochSolution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo) -> EpochSolution:
+def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo) -> EpochSolution:
     if len(simplifiedStatusQuo.congestedSchedule):
         epochWarmStart = getEpochWarmStart(simplifiedInstance, simplifiedStatusQuo)
         model = constructModel(simplifiedInstance, simplifiedStatusQuo, epochWarmStart)

@@ -94,10 +94,10 @@ def _assertMaximumOneDepartureForVehicle(nextEpochDepartures: list[NextEpochDepa
                                         f"repeated elements: {repeated_elements}"
 
 
-def updateNextEpochInstance(currentEpochInstance: EpochInstance,
-                            currentEpochStatusQuo: EpochSolution,
-                            nextEpochInstance: EpochInstance,
-                            globalInstance: instanceModule.instance.Instance):
+def update_next_epoch_instance(currentEpochInstance: EpochInstance,
+                               currentEpochStatusQuo: EpochSolution,
+                               nextEpochInstance: EpochInstance,
+                               globalInstance: instanceModule.instance.Instance):
     print("Updating next epoch departures...", end=" ")
     clock_start = datetime.datetime.now().timestamp()
     vehicleStatusList = [VehicleStatus.INACTIVE for _ in range(len(currentEpochStatusQuo.congestedSchedule))]

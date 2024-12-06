@@ -68,8 +68,8 @@ def getODArcs(osmInfoArcsUtilized):
     return len(unique_combinations)
 
 
-def simplifySystem(notSimplifiedInstance: Instance | EpochInstance,
-                   notSimplifiedStatusQuo: CompleteSolution | EpochSolution) -> \
+def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
+                    notSimplifiedStatusQuo: CompleteSolution | EpochSolution) -> \
         tuple[Instance | EpochInstance, CompleteSolution | EpochSolution]:
     statusQuo, instance = copy.deepcopy((notSimplifiedStatusQuo, notSimplifiedInstance))
     print(f"Number of unique arc ODs before simplification: {getODArcs(instance.osmInfoArcsUtilized)}")

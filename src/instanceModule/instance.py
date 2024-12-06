@@ -142,7 +142,7 @@ def _writeConflictingSetsAfterPreprocessingForCppCode(instance: Instance):
                 outfile.write("-1,\n")
 
 
-def saveInstanceForTestingCppCode(instance: Instance, statusQuo: CompleteSolution) -> None:
+def save_instance_for_testing_cpp_code(instance: Instance, statusQuo: CompleteSolution) -> None:
     if SAVE_CPP_INSTANCE:
         if not os.path.exists(pathToCppInstance):
             os.mkdir(pathToCppInstance)

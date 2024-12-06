@@ -91,8 +91,8 @@ def _assertCongestedScheduleIsCorrect(globalInstance, reconstructedSchedule):
                                 f"\n {_printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedule, vehicle)}"
 
 
-def reconstructSolution(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
-                        globalInstance: Instance) -> CompleteSolution:
+def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
+                         globalInstance: Instance) -> CompleteSolution:
     congestedSchedule = _reconstructSchedule(epochInstances, epochStatusQuoList, globalInstance)
     _assertCongestedScheduleIsCorrect(globalInstance, congestedSchedule)
     delaysOnArcs = getDelaysOnArcs(globalInstance, congestedSchedule)

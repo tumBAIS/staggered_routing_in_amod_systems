@@ -35,7 +35,7 @@ def linestring_to_dict(linestring):
     return geom_dict
 
 
-def saveExperiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution):
+def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution):
     path_to_results = instance.inputData.path_to_results
     # Create a Pandas DataFrame with data from different classes
     inputData_to_save = instance.inputData.__dict__

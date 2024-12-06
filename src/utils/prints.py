@@ -146,7 +146,7 @@ def _printArcsUtilizedInfo(dataframeInfo):
     print("#" * 45)
 
 
-def printInsightsAlgorithm(
+def print_insights_algorithm(
         completeStatusQuo: CompleteSolution,
         reconstructedSolution: CompleteSolution,
         epochInstances: EpochInstances):

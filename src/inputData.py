@@ -110,7 +110,7 @@ def printInputData(inputData):
     print("#" * 20)
 
 
-def getInputData(input: str) -> InputData:
+def get_input_data(input: str) -> InputData:
     if input == "script":
         inputData = InputData(
             # instanceModule selection

@@ -9,7 +9,7 @@ from inputData import InputData
 from congestionModel.core import getDeadlines
 
 
-def getNotSimplifiedInstance(inputData: InputData) -> Instance:
+def get_not_simplified_instance(inputData: InputData) -> Instance:
     taxiRides = import_rides_df(inputData)
     graph = import_graph(inputData)
     # nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, graph)
