@@ -9,7 +9,7 @@ from networkx import DiGraph
 from shapely.geometry import Point, LineString
 from instance_module.graph import reduce_graph
 from instance_module.paths import get_node_based_shortest_paths
-from input_data import InputData
+from input_data import InstanceParameters
 
 import warnings
 
@@ -122,7 +122,8 @@ def add_shortcuts_to_graph(graph: DiGraph) -> None:
     print(f"Shortcuts added: {edges_after - edges_before}")
 
 
-def add_shortcuts(input_data: InputData, manhattan_graph: DiGraph, taxi_rides: pd.DataFrame, node_based_shortest_paths):
+def add_shortcuts(input_data: InstanceParameters, manhattan_graph: DiGraph, taxi_rides: pd.DataFrame,
+                  node_based_shortest_paths):
     """Entry point for adding shortcuts based on input conditions."""
     if input_data.add_shortcuts:
         add_shortcuts_to_graph(manhattan_graph)

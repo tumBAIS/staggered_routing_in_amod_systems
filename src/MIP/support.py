@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import collections
 import datetime
 import os
 import pickle
 
 from gurobipy import Model
 
+from input_data import SolverParameters
 from instance_module.epoch_instance import EpochInstance
 from input_data import GUROBI_OPTIMALITY_GAP
 from utils.classes import CompleteSolution, HeuristicSolution
@@ -29,10 +29,10 @@ def add_optimization_measures_to_model(model: Model):
     return
 
 
-def set_gurobi_parameters(model, instance):
-    totalTimeRemaining = instance.input_data.algorithm_time_limit - (
+def set_gurobi_parameters(model, instance, solver_params: SolverParameters):
+    totalTimeRemaining = solver_params.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.start_solution_time)
-    epochTimeRemaining = instance.input_data.epoch_time_limit - (
+    epochTimeRemaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch)
     timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
     model.setParam("timeLimit", max(0.0, round(timeRemaining, 2)))

@@ -1,5 +1,5 @@
 import datetime
-
+from input_data import SolverParameters
 from congestion_model.core import get_congested_schedule, get_free_flow_schedule, \
     get_total_travel_time, get_total_delay, get_delays_on_arcs
 from instance_module.epoch_instance import EpochInstance
@@ -7,7 +7,8 @@ from utils.classes import EpochSolution
 
 
 def map_simplified_epoch_solution(epochInstance: EpochInstance,
-                                  simplifiedEpochSolution: EpochSolution) -> EpochSolution:
+                                  simplifiedEpochSolution: EpochSolution,
+                                  solver_params: SolverParameters) -> EpochSolution:
     releaseTimesEpoch = epochInstance.release_times
     removedVehicles = epochInstance.removed_vehicles  # to map back
     staggeringAppliedInEpoch = simplifiedEpochSolution.staggering_applied[:]
@@ -20,7 +21,7 @@ def map_simplified_epoch_solution(epochInstance: EpochInstance,
     staggeredReleaseTimes = [releaseTime + staggering for releaseTime, staggering in
                              zip(releaseTimesEpoch, staggeringAppliedInEpoch)]
 
-    congestedSchedule = get_congested_schedule(epochInstance, staggeredReleaseTimes)
+    congestedSchedule = get_congested_schedule(epochInstance, staggeredReleaseTimes, solver_params)
     freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
     totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = get_total_travel_time(congestedSchedule)

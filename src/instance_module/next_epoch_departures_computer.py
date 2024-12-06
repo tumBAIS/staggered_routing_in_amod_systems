@@ -4,6 +4,7 @@ import copy
 from collections import namedtuple
 from enum import Enum
 
+from input_data import SolverParameters
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 
@@ -18,7 +19,8 @@ class NextEpochDeparturesComputer:
     def run(self, nextEpochDepartures: list[NextEpochDeparture],
             currentEpochInstance: EpochInstance,
             currentEpochStatusQuo: EpochSolution,
-            vehicleStatusList: list[VehicleStatus]) -> list[NextEpochDeparture]:
+            vehicleStatusList: list[VehicleStatus],
+            solver_params: SolverParameters) -> list[NextEpochDeparture]:
         self._reset_attributes()
         for firstNextEpochDepartureVehicle in nextEpochDepartures:
             if firstNextEpochDepartureVehicle.vehicle not in self.vehicles_to_check:
@@ -26,7 +28,7 @@ class NextEpochDeparturesComputer:
             else:
                 self.vehicles_to_check.remove(firstNextEpochDepartureVehicle.vehicle)
             followingNextEpochDeparture = copy.deepcopy(firstNextEpochDepartureVehicle)
-            while _is_time_in_current_epoch(followingNextEpochDeparture, currentEpochInstance):
+            while _is_time_in_current_epoch(followingNextEpochDeparture, currentEpochInstance, solver_params):
                 self._activate_other_conflicting_vehicles(currentEpochStatusQuo, followingNextEpochDeparture,
                                                           currentEpochInstance, vehicleStatusList, nextEpochDepartures)
                 if _is_current_vehicle_in_system(followingNextEpochDeparture, currentEpochInstance):
@@ -156,9 +158,9 @@ def _is_other_conflicting(otherVehicleInfo, nextEpochDeparture):
     return otherVehicleInfo.departureTime <= nextEpochDeparture.time < otherVehicleInfo.arrivalTime
 
 
-def _is_time_in_current_epoch(nextEpochDeparture, currentEpochInstance):
+def _is_time_in_current_epoch(nextEpochDeparture, currentEpochInstance, solver_params: SolverParameters):
     return nextEpochDeparture.time / 60 < (
-            currentEpochInstance.epoch_id + 1) * currentEpochInstance.input_data.epoch_size
+            currentEpochInstance.epoch_id + 1) * solver_params.epoch_size
 
 
 def _is_current_vehicle_in_system(nextEpochDeparture, currentEpochInstance) -> bool:

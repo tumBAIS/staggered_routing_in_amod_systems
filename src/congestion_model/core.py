@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import cpp_module as cpp
+from input_data import SolverParameters
 from instance_module.instance import Instance
 from instance_module.epoch_instance import EpochInstance
 from utils.aliases import *
@@ -19,8 +20,8 @@ def get_free_flow_schedule(instance: Instance | EpochInstance,
 
 
 def get_congested_schedule(instance: Instance | EpochInstance,
-                           release_times: list[float]) -> list[VehicleSchedule]:
-    cpp_parameters = [instance.input_data.algorithm_time_limit]
+                           release_times: list[float], solver_params: SolverParameters) -> list[VehicleSchedule]:
+    cpp_parameters = [solver_params.algorithm_time_limit]
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,

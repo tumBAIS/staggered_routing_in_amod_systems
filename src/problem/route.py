@@ -1,4 +1,4 @@
-from input_data import InputData
+from input_data import InstanceParameters
 from utils.aliases import *
 from utils.tools import pairwise
 from problem.network import Network
@@ -13,7 +13,7 @@ Trip = TypeVar("Trip")  # Alias for trip
 class TripRoute:
 
     def __init__(self, node_based_path: list[NodeID], network: Network, arg_route_id: int, trip: Trip,
-                 instance_params: InputData):
+                 instance_params: InstanceParameters):
         self.path_nodes = node_based_path  # nodes are integers starting from 0
         self.path_tuples_of_nodes = self._get_path_tuples_of_nodes()
         self.path_travel_time = self._get_path_travel_time(network)
@@ -66,7 +66,7 @@ class TripRoute:
 class TripRoutes:
     """Class regarding paths of a **single** trip"""
 
-    def __init__(self, trip, network: Network, route_nodes: list[NodeID], instance_params: InputData):
+    def __init__(self, trip, network: Network, route_nodes: list[NodeID], instance_params: InstanceParameters):
         """
         Initialize trip routes
         """

@@ -1,5 +1,7 @@
 import dataclasses
 import datetime
+
+from input_data import SolverParameters
 from congestion_model.conflict_binaries import get_conflict_binaries
 from utils.prints import print_info_conflicting_sets_sizes, \
     print_info_arcs_utilized, print_info_length_trips
@@ -41,8 +43,8 @@ class StatusQuoMetrics:
     total_delay: float
 
 
-def compute_solution_metrics(instance, releaseTimes):
-    congestedSchedule = get_congested_schedule(instance, releaseTimes)
+def compute_solution_metrics(instance, releaseTimes, solver_params):
+    congestedSchedule = get_congested_schedule(instance, releaseTimes, solver_params)
     freeFlowSchedule = get_free_flow_schedule(instance, congestedSchedule)
     delaysOnArcs = get_delays_on_arcs(instance, congestedSchedule)
     totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
@@ -62,20 +64,20 @@ def print_info_status_quo_metrics(statusQuoMetrics):
             f"({round(statusQuoMetrics.total_delay / numTripsWithDelays / 60, 2)} [min] per 'congested' trip)")
 
 
-def print_header_current_epoch_status_quo(epochInstance):
+def print_header_current_epoch_status_quo(epochInstance, epoch_size):
     print("#" * 20)
     print(f"COMPUTING STATUS QUO FOR EPOCH {epochInstance.epoch_id} - "
-          f"START TIME {epochInstance.epoch_id * epochInstance.input_data.epoch_size * 60}")
+          f"START TIME {epochInstance.epoch_id * epoch_size * 60}")
     print("#" * 20)
 
 
-def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
+def get_current_epoch_status_quo(epochInstance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
     """ Compute the schedule given the fixed decisions of the previous epochs and
     that all the trips in the current epoch start at the earliest departure time """
 
     epochInstance.clock_start_epoch = datetime.datetime.now().timestamp()
-    print_header_current_epoch_status_quo(epochInstance)
-    statusQuoMetrics = compute_solution_metrics(epochInstance, epochInstance.release_times)
+    print_header_current_epoch_status_quo(epochInstance, epoch_size=solver_params.epoch_size)
+    statusQuoMetrics = compute_solution_metrics(epochInstance, epochInstance.release_times, solver_params)
     add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.free_flow_schedule)
     binaries = get_conflict_binaries(epochInstance.conflicting_sets,
                                      epochInstance.trip_routes,

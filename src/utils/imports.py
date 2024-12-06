@@ -9,7 +9,7 @@ from processing.shortcuts import add_shortcuts
 from instance_module.graph import import_graph, reduce_graph, set_arcs_nominal_travel_times_and_capacities
 from instance_module.instance import Instance, get_instance, print_total_free_flow_time
 from instance_module.paths import get_arc_based_paths_with_features
-from input_data import InputData
+from input_data import InstanceParameters
 from instance_generator.computer import InstanceComputer
 
 import warnings
@@ -18,17 +18,17 @@ warnings.filterwarnings("ignore",
                         message="the convert_dtype parameter is deprecated and will be removed in a future version")
 
 
-def get_not_simplified_instance(input_data: InputData) -> Instance:
+def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance:
     """Constructs an instance from input data without simplification."""
-    trips_df = import_trips_df(input_data)
-    graph = import_graph(input_data)
+    trips_df = import_trips_df(instance_params)
+    graph = import_graph(instance_params)
     reduce_graph(graph, trips_df['path'])
 
-    node_based_shortest_paths = add_shortcuts(input_data, graph, trips_df, trips_df['path'])
-    set_arcs_nominal_travel_times_and_capacities(graph, input_data)
+    node_based_shortest_paths = add_shortcuts(instance_params, graph, trips_df, trips_df['path'])
+    set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
 
     arc_based_shortest_paths, arcs_features = get_arc_based_paths_with_features(node_based_shortest_paths, graph)
-    instance = get_instance(input_data, arc_based_shortest_paths, arcs_features, trips_df['release_time'].tolist(),
+    instance = get_instance(instance_params, arc_based_shortest_paths, arcs_features, trips_df['release_time'].tolist(),
                             trips_df['deadline'].tolist())
 
     print_total_free_flow_time(instance)
@@ -38,7 +38,7 @@ def get_not_simplified_instance(input_data: InputData) -> Instance:
     return instance
 
 
-def import_trips_df(input_data: InputData) -> DataFrame:
+def import_trips_df(input_data: InstanceParameters) -> DataFrame:
     """Imports trip data from JSON and integrates route data, raising an error if mismatched."""
     path_to_instance = input_data.path_to_instance
     if not os.path.exists(path_to_instance):

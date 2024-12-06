@@ -3,7 +3,7 @@ import os.path
 import random
 import numpy as np
 import shapely as shp
-from input_data import InputData
+from input_data import InstanceParameters
 from problem.network import Network
 from problem.route import TripRoutes, TripRoute
 from utils.aliases import *
@@ -16,7 +16,7 @@ def _get_point_from_dict(point_dict: dict) -> shp.Point:
 
 class Trip:
 
-    def __init__(self, network: Network, routes_info: dict, instance_params: InputData):
+    def __init__(self, network: Network, routes_info: dict, instance_params: InstanceParameters):
         """
         Initialize Trip object
         If given, contains for each trip a list of paths, represented as list of nodes.
@@ -156,7 +156,7 @@ class Trip:
 
 class Trips:
 
-    def __init__(self, instance_params: InputData, network: Network, instance_available: bool = True):
+    def __init__(self, instance_params: InstanceParameters, network: Network, instance_available: bool = True):
         self.R = []
         routes_info_list = self._get_routes_from_file(instance_params)
 
@@ -177,7 +177,7 @@ class Trips:
         self.free_flow_travel_time_matrix = self._get_free_flow_travel_time_matrix()
 
     @staticmethod
-    def _get_routes_from_file(instance_params: InputData) -> RoutesFile:
+    def _get_routes_from_file(instance_params: InstanceParameters) -> RoutesFile:
         """
         Import precomputed routes from routes.json
         """

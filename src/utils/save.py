@@ -9,6 +9,7 @@ from dataclasses import dataclass
 
 import shapely
 
+from input_data import SolverParameters
 from instance_module.instance import Instance
 from utils.classes import CompleteSolution, OptimizationMeasures
 
@@ -35,10 +36,11 @@ def linestring_to_dict(linestring):
     return geom_dict
 
 
-def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution):
-    path_to_results = instance.input_data.path_to_results
+def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
+                    solver_params: SolverParameters):
+    path_to_results = solver_params.path_to_results
     # Create a Pandas DataFrame with data from different classes
-    inputData_to_save = instance.input_data.__dict__
+    instance_parameters_to_save = instance.input_data.__dict__
     for arc, _ in enumerate(instance.osm_info_arcs_utilized):
         if arc > 0:
             instance.osm_info_arcs_utilized[arc] = linestring_to_dict(
@@ -74,16 +76,21 @@ def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSol
         instance_data_to_save["travel_times_arcs"][i] = \
             round(instance_data_to_save["travel_times_arcs"][i], 2)
 
+    solver_parameters_to_save = solver_params.__dict__
+    del solver_parameters_to_save["instance_parameters"]
+    del solver_parameters_to_save["path_to_results"]
+
     output_data = {
-        "input_data": inputData_to_save,
+        "instance_parameters": instance_parameters_to_save,
+        "solver_parameters": solver_parameters_to_save,
         'instance': instance_data_to_save,
         'statusQuo': statusQuo.__dict__,
         'solution': solution.__dict__,
     }
 
-    cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance", "path_to_results"]
+    cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance"]
     for col in cols_input_data_to_delete:
-        del output_data["input_data"][col]
+        del output_data["instance_parameters"][col]
 
     # Create directory to save results
     os.makedirs(path_to_results, exist_ok=True)

@@ -20,41 +20,30 @@ os.environ['USE_PYGEOS'] = '0'  # Suppress warning from Shapely library
 
 
 @dataclasses.dataclass
-class InputData:
+class InstanceParameters:
     network_name: str
     day: int
     number_of_trips: float
     seed: int
     speed: int
     max_flow_allowed: float
-    algorithm_time_limit: int
-    epoch_time_limit: int
     add_shortcuts: bool
     list_of_slopes: list[float]
     list_of_thresholds: list[float]
     staggering_cap: float
     deadline_factor: float
-    optimize: bool
-    epoch_size: int
-    warm_start: bool
-    improve_warm_start: bool
-    call_local_search: bool
-    staggering_applicable_method: str
 
     def __post_init__(self):
         self.validate_inputs()
         self.path_to_G = Path(__file__).parent.parent / f"data/{self.network_name}/network.json"
         self.path_to_routes = self.path_to_G.parent / f"{self.get_day_string()}{self.get_number_trips_string()}/routes.json"
         self.path_to_instance = self.path_to_routes.parent / f"S{self.staggering_cap}_D{self.deadline_factor}_VDF{self.list_of_slopes}{self.list_of_thresholds}/instance.json"
-        self.path_to_results = self.path_to_instance.parent / "RESULTS"
         os.makedirs(self.path_to_instance.parent, exist_ok=True)
         self.demand_factor = 1  # Placeholder for actual implementation
 
     def validate_inputs(self):
         if self.day not in range(1, 32):
             raise ValueError("Day must be between 1 and 31.")
-        if self.staggering_applicable_method not in ["fixed", "proportional"]:
-            raise ValueError("Specify correct staggering method (fixed or proportional).")
         if self.deadline_factor < 0 or self.deadline_factor > 100:
             raise ValueError("Deadline factor must be between 0 and 100.")
 
@@ -65,56 +54,77 @@ class InputData:
         return f"DAY{self.day}_" if "manhattan" in self.network_name else ""
 
 
-def print_input_data(input_data: InputData):
+@dataclasses.dataclass
+class SolverParameters:
+    algorithm_time_limit: int
+    epoch_time_limit: int
+    epoch_size: int
+    optimize: bool
+    warm_start: bool
+    improve_warm_start: bool
+    local_search_callback: bool
+    instance_parameters: InstanceParameters
+
+    def __post_init__(self):
+        self.path_to_results = self.instance_parameters.path_to_instance.parent / "RESULTS"
+
+
+def print_parameters(instance_parameters, solver_parameters):
     # Get current date and time
     current_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     print("-" * 50)
     print("INFO EXPERIMENT".center(50))
     print("=" * 50)
-
-    # Print the date and time the experiment is being run
     print(f"Experiment Date and Time: {current_time}")
     print("-" * 50)
 
-    # Filter and prepare data for printing, exclude path attributes
-    data_to_print = {k: v for k, v in vars(input_data).items() if not 'path' in k}
+    # Function to prepare data for printing by removing paths and converting to tabulate format
+    def prepare_data_for_printing(parameters, exclude_keys=None):
+        if exclude_keys is None:
+            exclude_keys = []
+        data_to_print = {k: v for k, v in vars(parameters).items() if 'path' not in k and k not in exclude_keys}
+        return tabulate(list(data_to_print.items()), headers=['Parameter', 'Value'], tablefmt='simple')
 
-    # Convert dictionary to a list of tuples for tabulate
-    data_items = list(data_to_print.items())
-    # Create a tabular format, specifying the headers
-    table = tabulate(data_items, headers=['Parameter', 'Value'], tablefmt='simple')
-
-    # Print the formatted table
-    print(table)
-
+    # Print instance parameters
+    print("Instance Parameters:")
+    print(prepare_data_for_printing(instance_parameters))
     print("-" * 50)
+
+    # Print solver parameters, ensuring no overlap with instance parameter keys
+    print("Solver Parameters:")
+    print(prepare_data_for_printing(solver_parameters, exclude_keys=["instance_parameters"]))
+    print("-" * 50)
+
     print("START PROCEDURE".center(50))
     print("=" * 50)
 
 
-def get_input_data(input_source: str) -> InputData:
-    if input_source == "script":
-        input_data = generate_input_data_from_script()
-    elif input_source == "console":
-        input_data = load_input_data_from_file()
-    else:
-        raise ValueError("Invalid input source specified.")
-    print_input_data(input_data)
-    return input_data
-
-
-def generate_input_data_from_script() -> InputData:
-    return InputData(
-        day=1, number_of_trips=100, epoch_size=6, seed=0, network_name="manhattan_10",
+def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParameters]:
+    instance_params = InstanceParameters(
+        day=1, number_of_trips=100, seed=0, network_name="manhattan_10",
         speed=20, max_flow_allowed=100, add_shortcuts=True,
-        list_of_slopes=[0.05], list_of_thresholds=[1],
-        staggering_applicable_method="proportional", deadline_factor=100, staggering_cap=10,
-        optimize=True, algorithm_time_limit=10, epoch_time_limit=10, warm_start=True,
-        improve_warm_start=True, call_local_search=True)
+        list_of_slopes=[0.05], list_of_thresholds=[1], deadline_factor=100, staggering_cap=10)
+
+    solver_params = SolverParameters(epoch_size=6, optimize=True, algorithm_time_limit=10, epoch_time_limit=10,
+                                     warm_start=True, improve_warm_start=True, local_search_callback=True,
+                                     instance_parameters=instance_params)
+    return instance_params, solver_params
 
 
-def load_input_data_from_file() -> InputData:
+def load_input_data_from_file() -> tuple[InstanceParameters, SolverParameters]:
+    # TODO: correctly implement
     print(f"Experiment title: {str(sys.argv[1])}")
     with open(f"setups/{sys.argv[1]}", "rb") as infile:
         return pickle.load(infile)
+
+
+def get_input_data(input_source: str) -> tuple[InstanceParameters, SolverParameters]:
+    if input_source == "script":
+        instance_params, solver_params = generate_input_data_from_script()
+    elif input_source == "console":
+        instance_params, solver_params = load_input_data_from_file()
+    else:
+        raise ValueError("Invalid input source specified.")
+    print_parameters(instance_params, solver_params)
+    return instance_params, solver_params

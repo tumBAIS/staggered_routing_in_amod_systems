@@ -5,7 +5,7 @@ import typing
 from dataclasses import dataclass, field
 
 from utils.classes import CompleteSolution
-from input_data import InputData, SAVE_CPP_INSTANCE
+from input_data import InstanceParameters, SAVE_CPP_INSTANCE
 from utils.aliases import Time, Staggering
 from typing import Optional
 
@@ -21,7 +21,7 @@ def save_list_of_strings_file(list_of_values: list[typing.Any], file_name: str, 
 
 @dataclass
 class Instance:
-    input_data: InputData
+    input_data: InstanceParameters
     osm_info_arcs_utilized: list[dict[str, typing.Any]]
     capacities_arcs: list[int]
     release_times_dataset: list[float]
@@ -59,12 +59,10 @@ class Instance:
             raise ValueError("Attempting to override max_staggering_applicable with class method")
 
         self.max_staggering_applicable = [
-            min(
-                self.input_data.staggering_cap * 60 if self.input_data.staggering_applicable_method == "fixed" else
-                self.input_data.staggering_cap / 100 * sum(self.travel_times_arcs[arc] for arc in path),
+            min(self.input_data.staggering_cap / 100 * sum(self.travel_times_arcs[arc] for arc in path),
                 self.deadlines[vehicle] - (
                         sum(self.travel_times_arcs[arc] for arc in path) + self.release_times_dataset[vehicle])
-            )
+                )
             for vehicle, path in enumerate(self.trip_routes)
         ]
 
@@ -78,7 +76,7 @@ def print_total_free_flow_time(instance: Instance):
     print(f"Total free flow time for the instance: {total_free_flow_time / 3600:.2f} hours")
 
 
-def get_instance(input_data: InputData, arc_based_shortest_paths: list[list[int]], arcs_features,
+def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[list[int]], arcs_features,
                  release_times_dataset: list[Time], arrival_times_dataset: list[Time]):
     return Instance(
         osm_info_arcs_utilized=arcs_features.osm_info_arcs,

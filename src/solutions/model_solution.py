@@ -1,3 +1,4 @@
+from input_data import SolverParameters
 from congestion_model.core import get_free_flow_schedule, \
     get_total_travel_time, get_staggering_applicable
 from instance_module.epoch_instance import EpochInstance
@@ -24,9 +25,9 @@ def _get_staggering_applied(releaseTimesSolution, releaseTimesStatusQuo):
 
 
 def get_epoch_model_solution(model: Model, epochInstance: EpochInstance, epochStatusQuo: EpochSolution,
-                             epochWarmStart: EpochSolution) -> EpochSolution:
-    if not epochInstance.input_data.optimize or not model._optimize:
-        if not epochInstance.input_data.warm_start:
+                             epochWarmStart: EpochSolution, solver_params: SolverParameters) -> EpochSolution:
+    if not solver_params.optimize or not model._optimize:
+        if not solver_params.warm_start:
             return epochStatusQuo
         return epochWarmStart
 

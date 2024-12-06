@@ -1,3 +1,4 @@
+from input_data import SolverParameters
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics, print_info_status_quo_metrics
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
@@ -15,15 +16,15 @@ def _print_header_offline_solution():
     print("#" * 20)
 
 
-def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> CompleteSolution:
+def get_offline_solution(instance: Instance, releaseTimes: list[float],
+                         solver_params: SolverParameters) -> CompleteSolution:
     """ Compute the global status quo to compare solution against """
     _print_header_offline_solution()
-    solutionMetrics = compute_solution_metrics(instance, releaseTimes)
+    solutionMetrics = compute_solution_metrics(instance, releaseTimes, solver_params)
     print_info_status_quo_metrics(solutionMetrics)
     add_conflicting_sets_to_instance(instance, solutionMetrics.free_flow_schedule)
     staggeringAppliedInEpoch = [0.0] * len(solutionMetrics.congested_schedule)
-    # binaries = getConflictBinaries(instance.conflictingSets, instance.arcBasedShortestPaths,
-    #                                solutionMetrics.congestedSchedule)  # for testing
+ 
     return CompleteSolution(
         delays_on_arcs=solutionMetrics.delays_on_arcs,
         free_flow_schedule=solutionMetrics.free_flow_schedule,
@@ -49,14 +50,16 @@ def _print_info_epoch_solution(epochStatusQuo, epochSolution):
     print(f"Total delay epoch reduction: {delayReduction:.2%}")
 
 
-def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo) -> EpochSolution:
+def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo,
+                       solver_params: SolverParameters) -> EpochSolution:
     if len(simplifiedStatusQuo.congested_schedule):
-        epochWarmStart = get_epoch_warm_start(simplifiedInstance, simplifiedStatusQuo)
-        model = construct_model(simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
-        run_model(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo)
-        modelSolution = get_epoch_model_solution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
+        epochWarmStart = get_epoch_warm_start(simplifiedInstance, simplifiedStatusQuo, solver_params)
+        model = construct_model(simplifiedInstance, simplifiedStatusQuo, epochWarmStart, solver_params)
+        run_model(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo, solver_params)
+        modelSolution = get_epoch_model_solution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart,
+                                                 solver_params)
         # map back to the full system
-        epochSolution = map_simplified_epoch_solution(epochInstance, modelSolution)
+        epochSolution = map_simplified_epoch_solution(epochInstance, modelSolution, solver_params)
         _print_info_epoch_solution(epochStatusQuo, epochSolution)
         return epochSolution
     else:

@@ -6,14 +6,14 @@ import shapely as shp
 from networkx.readwrite import json_graph
 from shapely import Polygon
 
-from input_data import InputData
+from input_data import InstanceParameters
 from problem.arc import Arc
 from typing import Optional
 
 
 class Network:
 
-    def __init__(self, input_data: InputData, G: Optional[nx.DiGraph] = None):
+    def __init__(self, input_data: InstanceParameters, G: Optional[nx.DiGraph] = None):
         self.instance_params = input_data
         if G is None:
             # From run_procedure

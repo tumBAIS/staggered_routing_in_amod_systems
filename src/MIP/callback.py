@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 import itertools
 
+from input_data import SolverParameters
 from MIP.support import save_solution_in_external_file
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from gurobipy import Model
@@ -33,8 +34,8 @@ def get_current_bounds(model: Model, start_solution_time) -> None:
         model._optimalityGap.append(optimality_gap)
 
 
-def update_remaining_time_for_optimization(model: Model, instance: Instance) -> None:
-    total_optimization_time = instance.input_data.algorithm_time_limit
+def update_remaining_time_for_optimization(model: Model, instance: Instance, solver_params: SolverParameters) -> None:
+    total_optimization_time = solver_params.algorithm_time_limit
     elapsed_time = datetime.datetime.now().timestamp() - instance.start_solution_time
 
     model._remainingTimeForOptimization = total_optimization_time - elapsed_time
@@ -76,9 +77,9 @@ def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_o
                     f"Invalid delay for arc {arc} of vehicle {vehicle}"
 
 
-def get_heuristic_solution(model: Model, instance: Instance) -> HeuristicSolution:
+def get_heuristic_solution(model: Model, instance: Instance, solver_params: SolverParameters) -> HeuristicSolution:
     model._flagUpdate = False
-    cpp_parameters = [instance.input_data.algorithm_time_limit]
+    cpp_parameters = [solver_params.algorithm_time_limit]
     instance.due_dates = instance.deadlines
     congested_schedule = cpp.cppSchedulingLocalSearch(
         release_times=model._cbReleaseTimes,
@@ -165,11 +166,11 @@ def set_heuristic_solution(model: Model, heuristic_solution: HeuristicSolution, 
             suspend_procedure(heuristic_solution, model, instance)
 
 
-def callback(instance: Instance, status_quo: CompleteSolution) -> Callable:
+def callback(instance: Instance, status_quo: CompleteSolution, solver_params: SolverParameters) -> Callable:
     def call_local_search(model, where) -> None:
         if where == grb.GRB.Callback.MIP:
             get_current_bounds(model, instance.start_solution_time)
-            update_remaining_time_for_optimization(model, instance)
+            update_remaining_time_for_optimization(model, instance, solver_params)
 
         if where == grb.GRB.Callback.MIPSOL:
             get_callback_solution(model, instance, status_quo)
@@ -178,7 +179,7 @@ def callback(instance: Instance, status_quo: CompleteSolution) -> Callable:
 
         if where == grb.GRB.Callback.MIPNODE:
             if model._flagUpdate:
-                heuristic_solution = get_heuristic_solution(model, instance)
+                heuristic_solution = get_heuristic_solution(model, instance, solver_params)
                 set_heuristic_solution(model, heuristic_solution, instance)
 
     return call_local_search

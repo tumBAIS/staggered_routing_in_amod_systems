@@ -5,13 +5,13 @@ import datetime
 from dataclasses import dataclass, field
 from typing import Any
 
-from input_data import InputData
+from input_data import InstanceParameters
 
 
 @dataclass
 class EpochInstance:
     epoch_id: int
-    input_data: InputData
+    input_data: InstanceParameters
     vehicles_original_ids: list[int]
     release_times: list[float]
     trip_routes: list[list[int]]
@@ -75,8 +75,8 @@ def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle
     )
 
 
-def get_epoch_instances(global_instance) -> EpochInstances:
-    epoch_size = global_instance.input_data.epoch_size
+def get_epoch_instances(global_instance, solver_params) -> EpochInstances:
+    epoch_size = solver_params.epoch_size
     last_vehicle_epochs = _get_last_vehicle_for_each_epoch(epoch_size, global_instance.release_times_dataset)
     number_of_epochs = len(last_vehicle_epochs)
     first_vehicle_in_epoch = 0

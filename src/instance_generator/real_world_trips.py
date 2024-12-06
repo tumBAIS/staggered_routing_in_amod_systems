@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import osmnx as osm
 from shapely.geometry import Point
 
-from input_data import InputData
+from input_data import InstanceParameters
 from problem.network import Network
 from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
@@ -61,7 +61,7 @@ def _plot_od_pairs(network: Network, dataset_gdf: gpd.GeoDataFrame, path_to_inst
     plt.close()
 
 
-def get_real_world_trips(instance_parameters: InputData, network: Network) -> list[dict]:
+def get_real_world_trips(instance_parameters: InstanceParameters, network: Network) -> list[dict]:
     """Retrieve all trips within a network polygon and time range."""
     dataset = _load_dataset(instance_parameters)
     dataset = _filter_dataset_by_time(dataset, instance_parameters)
@@ -243,7 +243,7 @@ def _convert_dataset_to_gdf(dataset: pd.DataFrame, lon_col: str, lat_col: str) -
     return osm.project_gdf(gdf, to_crs=WEB_MERCATOR_CRS)
 
 
-def _load_dataset(instance_params: InputData) -> pd.DataFrame:
+def _load_dataset(instance_params: InstanceParameters) -> pd.DataFrame:
     """Load TLC data relative to Manhattan."""
     tlc_folder_name = "YellowTripDataManhattan2015-01"
     path_to_repo = Path(__file__).resolve().parents[2]
@@ -269,7 +269,7 @@ def _preprocess_real_world_times(trips_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFram
     return trips_gdf
 
 
-def _filter_dataset_by_time(loaded_dataset: pd.DataFrame, instance_params: InputData) -> pd.DataFrame:
+def _filter_dataset_by_time(loaded_dataset: pd.DataFrame, instance_params: InstanceParameters) -> pd.DataFrame:
     """Filter trips by start and end times."""
     start_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=0, second=0)
     end_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=59, second=59)

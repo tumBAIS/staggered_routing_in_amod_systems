@@ -12,12 +12,12 @@ from instance_generator import real_world_graphs as real_world_graphs, real_worl
 from methods import scheduler as sq
 from problem.network import Network
 from problem.trip import Trips
-from input_data import InputData
+from input_data import InstanceParameters
 
 
 class InstanceComputer:
 
-    def __init__(self, input_data: InputData):
+    def __init__(self, input_data: InstanceParameters):
         """Initialize class to create instance files"""
         self.path_to_repo = Path(__file__).parent.parent.parent
         self.path_to_data = self.path_to_repo / "data"

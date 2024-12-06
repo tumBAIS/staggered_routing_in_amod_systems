@@ -25,7 +25,7 @@ sys.path.append(path_to_src.as_posix())
 # Import Custom Modules
 # ===========================
 from instance_generator.computer import InstanceComputer
-from input_data import InputData
+from input_data import InstanceParameters
 
 # ===========================
 # Matplotlib Configuration
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # ===========================
     # Instance Parameters
     # ===========================
-    instance_params = InputData(
+    instance_params = InstanceParameters(
         day=1,
         number_of_trips=2,
         epoch_size=60,
@@ -58,7 +58,7 @@ if __name__ == "__main__":
         epoch_time_limit=1000,
         warm_start=True,
         improve_warm_start=True,
-        call_local_search=True,
+        local_search_callback=True,
     )
 
     # ===========================
