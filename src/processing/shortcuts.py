@@ -17,10 +17,13 @@ warnings.filterwarnings("ignore",
                         message="the convert_dtype parameter is deprecated and will be removed in a future version")
 
 
-def get_incident_arcs(v: int, G: DiGraph) -> Tuple[List[Tuple[int, int, dict]], List[Tuple[int, int, dict]]]:
-    """Return incoming and outgoing arcs of node v."""
-    in_edges = list(G.in_edges(v, data=True))
-    out_edges = list(G.out_edges(v, data=True))
+def get_incident_arcs(v: int, G: nx.DiGraph) -> Tuple[List[Tuple[int, int, dict]], List[Tuple[int, int, dict]]]:
+    """Return incoming and outgoing arcs of node v, excluding self-loops."""
+
+    # Get incoming and outgoing edges with data
+    in_edges = [(u, w, data) for u, w, data in G.in_edges(v, data=True) if u != v]
+    out_edges = [(u, w, data) for u, w, data in G.out_edges(v, data=True) if w != v]
+
     return in_edges, out_edges
 
 

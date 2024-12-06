@@ -7,6 +7,8 @@ import numpy as np
 
 import conflicting_sets.time_bounds
 import cpp_module as cpp
+import instance_generator.real_world_graphs
+import instance_module.shortcuts_instance
 import utils.tools
 from instance_generator import real_world_graphs as real_world_graphs, real_world_trips as real_world_trips
 from methods import scheduler as sq
@@ -134,8 +136,14 @@ class InstanceComputer:
 
         # Step 2: Get the southern percentage of the network
         G_percentage = real_world_graphs.get_southern_percentage_of_network(G_manhattan, percentage, path_to_G)
+        if self.instance_params.add_shortcuts:
+            instance_module.shortcuts_instance.add_shortcuts_to_graph(G_percentage)
+        G_percentage = nx.MultiDiGraph(G_percentage)
+        instance_generator.real_world_graphs.plot_real_world_G(G_percentage,
+                                                               path_to_G)  # Make sure this function can handle the relabeled graph
+        utils.tools.serialize(G_percentage, path_to_G)  # Serialize the relabeled graph
 
-        return G_percentage
+        return nx.DiGraph(G_percentage)
 
     def _compute_routes_file(self, network: Network, replace: bool = False) -> None:
         """Compute a list of dictionaries (routes info) from which we build the instance trips."""

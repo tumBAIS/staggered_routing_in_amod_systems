@@ -24,10 +24,10 @@ def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance
     graph = import_graph(instance_params)
     reduce_graph(graph, trips_df['path'])
 
-    node_based_shortest_paths = add_shortcuts(instance_params, graph, trips_df, trips_df['path'])
+    # node_based_shortest_paths = add_shortcuts(instance_params, graph, trips_df, trips_df['path'])
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
 
-    arc_based_shortest_paths, arcs_features = get_arc_based_paths_with_features(node_based_shortest_paths, graph)
+    arc_based_shortest_paths, arcs_features = get_arc_based_paths_with_features(trips_df['path'], graph)
     instance = get_instance(instance_params, arc_based_shortest_paths, arcs_features, trips_df['release_time'].tolist(),
                             trips_df['deadline'].tolist())
 
