@@ -9,7 +9,7 @@ from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
 
-def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> VehicleSchedules:
+def _run_local_search(solution: EpochSolution, instance: EpochInstance) -> VehicleSchedules:
     print("Computing warm start solution")
     instance.due_dates = instance.deadlines[:]
     totalTimeRemaining = instance.input_data.algorithm_time_limit - (
@@ -43,7 +43,7 @@ def _runLocalSearch(solution: EpochSolution, instance: EpochInstance) -> Vehicle
     return congestedSchedule
 
 
-def _checkIfThereTimeLeftForOptimization(epochInstance: EpochInstance):
+def _check_if_there_time_left_for_optimization(epochInstance: EpochInstance):
     algorithmRuntime = epochInstance.input_data.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - epochInstance.start_solution_time)
 
@@ -54,10 +54,10 @@ def _checkIfThereTimeLeftForOptimization(epochInstance: EpochInstance):
     return timeLeft > 1e-6
 
 
-def getEpochWarmStart(epochInstance: EpochInstance, epochStatusQuo: EpochSolution) -> EpochSolution:
-    isThereTimeLeftForOptimization = _checkIfThereTimeLeftForOptimization(epochInstance)
+def get_epoch_warm_start(epochInstance: EpochInstance, epochStatusQuo: EpochSolution) -> EpochSolution:
+    isThereTimeLeftForOptimization = _check_if_there_time_left_for_optimization(epochInstance)
     if epochInstance.input_data.improve_warm_start and isThereTimeLeftForOptimization:
-        congestedSchedule = _runLocalSearch(epochStatusQuo, epochInstance)
+        congestedSchedule = _run_local_search(epochStatusQuo, epochInstance)
     else:
         if not isThereTimeLeftForOptimization:
             print("no remaining time for optimization - ", end="")

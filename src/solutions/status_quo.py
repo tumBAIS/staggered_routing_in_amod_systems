@@ -16,7 +16,7 @@ from congestion_model.core import get_total_travel_time, get_congested_schedule,
 from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
 
 
-def _getVehiclesUtilizingArcs(arcBasedShortestPaths: list[list[int]]) -> list[list[int]]:
+def _get_vehicles_utilizing_arcs(arcBasedShortestPaths: list[list[int]]) -> list[list[int]]:
     vehiclesUtilizingArcs = [[] for _ in range(max([max(path) for path in arcBasedShortestPaths]) + 1)]  # type: ignore
     for vehicle, path in enumerate(arcBasedShortestPaths):
         for arc in path[:-1]:
@@ -25,7 +25,7 @@ def _getVehiclesUtilizingArcs(arcBasedShortestPaths: list[list[int]]) -> list[li
     return vehiclesUtilizingArcs
 
 
-def _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs):
+def _assert_trips_are_not_duplicated(epochInstance, vehiclesUtilizingArcs):
     if ACTIVATE_ASSERTIONS:
         assert sorted(list(set(epochInstance.vehicles_original_ids))) == sorted(epochInstance.vehicles_original_ids), \
             f"vehicles IDs repeat themselves"
@@ -124,7 +124,7 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
         json.dump(congestion_info, f, ensure_ascii=False, indent=4)
 
 
-def computeSolutionMetrics(instance, releaseTimes):
+def compute_solution_metrics(instance, releaseTimes):
     congestedSchedule = get_congested_schedule(instance, releaseTimes)
     freeFlowSchedule = get_free_flow_schedule(instance, congestedSchedule)
     delaysOnArcs = get_delays_on_arcs(instance, congestedSchedule)
@@ -133,7 +133,7 @@ def computeSolutionMetrics(instance, releaseTimes):
     return StatusQuoMetrics(congestedSchedule, freeFlowSchedule, delaysOnArcs, releaseTimes, totalDelay)
 
 
-def printInfoStatusQuoMetrics(statusQuoMetrics):
+def print_info_status_quo_metrics(statusQuoMetrics):
     print(f"Number of trips in epoch: {len(statusQuoMetrics.congested_schedule)}")
     print(f"Initial delay epoch: {round(statusQuoMetrics.total_delay / 60, 2)} [min] "
           f"({round(statusQuoMetrics.total_delay / len(statusQuoMetrics.congested_schedule) / 60, 2)} [min] per trip)"
@@ -145,7 +145,7 @@ def printInfoStatusQuoMetrics(statusQuoMetrics):
             f"({round(statusQuoMetrics.total_delay / numTripsWithDelays / 60, 2)} [min] per 'congested' trip)")
 
 
-def printHeaderCurrentEpochStatusQuo(epochInstance):
+def print_header_current_epoch_status_quo(epochInstance):
     print("#" * 20)
     print(f"COMPUTING STATUS QUO FOR EPOCH {epochInstance.epoch_id} - "
           f"START TIME {epochInstance.epoch_id * epochInstance.input_data.epoch_size * 60}")
@@ -157,20 +157,20 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     that all the trips in the current epoch start at the earliest departure time """
 
     epochInstance.clock_start_epoch = datetime.datetime.now().timestamp()
-    printHeaderCurrentEpochStatusQuo(epochInstance)
-    statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.release_times)
+    print_header_current_epoch_status_quo(epochInstance)
+    statusQuoMetrics = compute_solution_metrics(epochInstance, epochInstance.release_times)
     add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.free_flow_schedule)
     binaries = get_conflict_binaries(epochInstance.conflicting_sets,
                                      epochInstance.trip_routes,
                                      statusQuoMetrics.congested_schedule)
     flows = get_flow_from_binaries(epochInstance, binaries.gamma)
     # save_congestion_info(epochInstance, statusQuoMetrics, flows)
-    printInfoStatusQuoMetrics(statusQuoMetrics)
+    print_info_status_quo_metrics(statusQuoMetrics)
     print_info_arcs_utilized(epochInstance)
     print_info_length_trips(epochInstance, statusQuoMetrics.congested_schedule, statusQuoMetrics.free_flow_schedule,
                             statusQuoMetrics.delays_on_arcs)
-    vehiclesUtilizingArcs = _getVehiclesUtilizingArcs(epochInstance.trip_routes)
-    _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs)
+    vehiclesUtilizingArcs = _get_vehicles_utilizing_arcs(epochInstance.trip_routes)
+    _assert_trips_are_not_duplicated(epochInstance, vehiclesUtilizingArcs)
     print_info_conflicting_sets_sizes(epochInstance)
     return EpochSolution(
         delays_on_arcs=statusQuoMetrics.delays_on_arcs,

@@ -6,8 +6,8 @@ from instanceModule.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 
 
-def mapSimplifiedEpochSolution(epochInstance: EpochInstance,
-                               simplifiedEpochSolution: EpochSolution) -> EpochSolution:
+def map_simplified_epoch_solution(epochInstance: EpochInstance,
+                                  simplifiedEpochSolution: EpochSolution) -> EpochSolution:
     releaseTimesEpoch = epochInstance.release_times
     removedVehicles = epochInstance.removed_vehicles  # to map back
     staggeringAppliedInEpoch = simplifiedEpochSolution.staggering_applied[:]

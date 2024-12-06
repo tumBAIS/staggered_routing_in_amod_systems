@@ -11,7 +11,7 @@ from conflicting_sets.get import add_conflicting_sets_to_instance
 from input_data import ACTIVATE_ASSERTIONS
 
 
-def _mergeSchedules(scheduleConstructedSoFar: list[float], scheduleToAdd: list[float]):
+def _merge_schedules(scheduleConstructedSoFar: list[float], scheduleToAdd: list[float]):
     if not scheduleToAdd:
         return scheduleConstructedSoFar
     # Find the index of the first common element between list1 and list2
@@ -37,19 +37,19 @@ def _mergeSchedules(scheduleConstructedSoFar: list[float], scheduleToAdd: list[f
     return scheduleConstructedSoFar
 
 
-def _reconstructSchedule(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
-                         globalInstance: Instance) -> VehicleSchedules:
+def _reconstruct_schedule(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
+                          globalInstance: Instance) -> VehicleSchedules:
     reconstructedSchedule = [[] for _ in range(len(globalInstance.trip_routes))]  # type: ignore
     for epochID, epochInstance in enumerate(epochInstances):
         for vehicleEpochID, vehicleGlobalID in enumerate(epochInstance.vehicles_original_ids):
             lastPosition = epochInstance.last_position_for_reconstruction[vehicleEpochID]
-            reconstructedSchedule[vehicleGlobalID] = _mergeSchedules(reconstructedSchedule[vehicleGlobalID],
-                                                                     epochStatusQuoList[epochID].congested_schedule[
-                                                                         vehicleEpochID][:lastPosition])
+            reconstructedSchedule[vehicleGlobalID] = _merge_schedules(reconstructedSchedule[vehicleGlobalID],
+                                                                      epochStatusQuoList[epochID].congested_schedule[
+                                                                          vehicleEpochID][:lastPosition])
     return reconstructedSchedule
 
 
-def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedule, vehicle):
+def _print_not_matching_schedules(globalInstance, reconstructedSchedule, cppSchedule, vehicle):
     print(f"schedules of vehicle {vehicle} do not match")
     print("Reconstructed schedule:")
     print(reconstructedSchedule[vehicle])
@@ -79,7 +79,7 @@ def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedul
         print(sorted(rekDepAndArrOnArc, key=lambda x: x[0])) if rekDepAndArrOnArc else None
 
 
-def _assertCongestedScheduleIsCorrect(globalInstance, reconstructedSchedule):
+def _assert_congested_schedule_is_correct(globalInstance, reconstructedSchedule):
     if ACTIVATE_ASSERTIONS:
         releaseTimes = [vehicleSchedule[0] for vehicleSchedule in reconstructedSchedule]
         cppSchedule = get_congested_schedule(globalInstance, releaseTimes)
@@ -88,13 +88,13 @@ def _assertCongestedScheduleIsCorrect(globalInstance, reconstructedSchedule):
                 abs(rDeparture - cppDeparture) < 1e-4 for rDeparture, cppDeparture in
                 zip(schedule, cppSchedule[
                     vehicle])), f"schedules do not coincide: " \
-                                f"\n {_printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedule, vehicle)}"
+                                f"\n {_print_not_matching_schedules(globalInstance, reconstructedSchedule, cppSchedule, vehicle)}"
 
 
 def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList: list[EpochSolution],
                          globalInstance: Instance) -> CompleteSolution:
-    congestedSchedule = _reconstructSchedule(epochInstances, epochStatusQuoList, globalInstance)
-    _assertCongestedScheduleIsCorrect(globalInstance, congestedSchedule)
+    congestedSchedule = _reconstruct_schedule(epochInstances, epochStatusQuoList, globalInstance)
+    _assert_congested_schedule_is_correct(globalInstance, congestedSchedule)
     delaysOnArcs = get_delays_on_arcs(globalInstance, congestedSchedule)
     freeFlowSchedule = get_free_flow_schedule(globalInstance, congestedSchedule)
     releaseTimes = [schedule[0] for schedule in congestedSchedule]

@@ -103,8 +103,8 @@ def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSol
 @dataclass
 class InitialOutputData:
     instance: Instance
-    statusQuo: CompleteSolution
-    warmStart: CompleteSolution
+    status_quo: CompleteSolution
+    warm_start: CompleteSolution
 
     def save_output(self, machine: str) -> None:
         if machine == "local":
@@ -119,12 +119,12 @@ class InitialOutputData:
 @dataclass
 class FinalOutputData:
     instance: Instance
-    statusQuo: CompleteSolution
-    warmStart: CompleteSolution
-    modelSolution: CompleteSolution
-    optimizationMeasures: OptimizationMeasures
-    randomSolution: CompleteSolution
-    mappedSystem: typing.Any
+    status_quo: CompleteSolution
+    warm_start: CompleteSolution
+    model_solution: CompleteSolution
+    optimization_measures: OptimizationMeasures
+    random_solution: CompleteSolution
+    mapped_system: typing.Any
 
     def save_output(self, machine: str) -> None:
         if machine == "local":

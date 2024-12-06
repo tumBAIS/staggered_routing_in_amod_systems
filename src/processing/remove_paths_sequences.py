@@ -2,7 +2,7 @@ from utils.classes import CompleteSolution
 from instanceModule.instance import Instance
 
 
-def _assertEveryVehicleIsInAConflictingSet(instance: Instance, removedVehicles=None):
+def _assert_every_vehicle_is_in_a_conflicting_set(instance: Instance, removedVehicles=None):
     if removedVehicles is None:
         removedVehicles = []
     allVehiclesAppearingInConfSets = sorted(
@@ -12,7 +12,7 @@ def _assertEveryVehicleIsInAConflictingSet(instance: Instance, removedVehicles=N
                vehicle not in removedVehicles)
 
 
-def removeVehicleFromSystem(vehicleToRemove: int, instance: Instance, statusQuo: CompleteSolution) -> None:
+def remove_vehicle_from_system(vehicleToRemove: int, instance: Instance, statusQuo: CompleteSolution) -> None:
     instance.max_staggering_applicable.pop(vehicleToRemove)
     instance.trip_routes.pop(vehicleToRemove)
     instance.latest_departure_times.pop(vehicleToRemove)
@@ -35,25 +35,25 @@ def removeVehicleFromSystem(vehicleToRemove: int, instance: Instance, statusQuo:
     return
 
 
-def updateConflictingSetsAfterRemovingVehicles(conflictingSets: list[list[int]],
-                                               removedVehicles: list[int]) -> None:
+def update_conflicting_sets_after_removing_vehicles(conflictingSets: list[list[int]],
+                                                    removedVehicles: list[int]) -> None:
     conflictingSets[:] = [[vehicle - sum(removed < vehicle for removed in removedVehicles) for vehicle in confSet] for
                           confSet in conflictingSets]
     return
 
 
-def _removeInitialPartOfVehiclePath(instance: Instance, statusQuo: CompleteSolution, vehicle: int) -> None:
+def _remove_initial_part_of_vehicle_path(instance: Instance, statusQuo: CompleteSolution, vehicle: int) -> None:
     newIndexWhereToStartPath = 0
     for arc in instance.trip_routes[vehicle]:
         if vehicle not in instance.conflicting_sets[arc]:
             newIndexWhereToStartPath += 1
-            _deleteFirstEntrySchedulesVehicle(instance, statusQuo, vehicle)
+            _delete_first_entry_schedules_vehicle(instance, statusQuo, vehicle)
         else:
             break
     instance.trip_routes[vehicle] = instance.trip_routes[vehicle][newIndexWhereToStartPath:]
 
 
-def _assertMaxDelayIsZero(instance, vehicle):
+def _assert_max_delay_is_zero(instance, vehicle):
     try:
         instance.max_delay_on_arc[vehicle] != []
     except:
@@ -66,7 +66,7 @@ def _assertMaxDelayIsZero(instance, vehicle):
             f"vehicle: {vehicle} len instanceModule.maxDelayOnArc: {len(instance.max_delay_on_arc[vehicle])}")
 
 
-def _assertShiftApplicableIsCorrectAfterDeletion(instance, vehicle):
+def _assert_shift_applicable_is_correct_after_deletion(instance, vehicle):
     if instance.latest_departure_times[vehicle] != []:
         assert abs(instance.latest_departure_times[vehicle][0] - (instance.earliest_departure_times[vehicle][0] + \
                                                                   instance.max_staggering_applicable[
@@ -78,11 +78,11 @@ def _assertShiftApplicableIsCorrectAfterDeletion(instance, vehicle):
             f"max staggering applicable: {instance.max_staggering_applicable[vehicle]}"
 
 
-def _deleteFirstEntrySchedulesVehicle(instance, statusQuo, vehicle):
-    _assertMaxDelayIsZero(instance, vehicle)
+def _delete_first_entry_schedules_vehicle(instance, statusQuo, vehicle):
+    _assert_max_delay_is_zero(instance, vehicle)
     instance.latest_departure_times[vehicle].pop(0)
     instance.earliest_departure_times[vehicle].pop(0)
-    _assertShiftApplicableIsCorrectAfterDeletion(instance, vehicle)
+    _assert_shift_applicable_is_correct_after_deletion(instance, vehicle)
     instance.max_delay_on_arc[vehicle].pop(0)
     instance.min_delay_on_arc[vehicle].pop(0)
     statusQuo.congested_schedule[vehicle].pop(0)
@@ -95,7 +95,7 @@ def _deleteFirstEntrySchedulesVehicle(instance, statusQuo, vehicle):
     return
 
 
-def _deleteLastVehicleEntry(instance, statusQuo, vehicle) -> None:
+def _delete_last_vehicle_entry(instance, statusQuo, vehicle) -> None:
     arcDeleted = instance.trip_routes[vehicle][-2]
     instance.trip_routes[vehicle].pop(-2)
     instance.latest_departure_times[vehicle].pop(-1)
@@ -111,33 +111,33 @@ def _deleteLastVehicleEntry(instance, statusQuo, vehicle) -> None:
     return
 
 
-def removeInitialPartOfPathsWithoutConflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
+def remove_initial_part_of_paths_without_conflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
     initialNumberOfVehicles = len(instance.trip_routes)
     removedVehicles = []
     for vehicle in sorted(range(initialNumberOfVehicles), reverse=True):
-        _removeInitialPartOfVehiclePath(instance, statusQuo, vehicle)
+        _remove_initial_part_of_vehicle_path(instance, statusQuo, vehicle)
         if not instance.trip_routes[vehicle]:
             removedVehicles.append(vehicle)
-            removeVehicleFromSystem(vehicle, instance, statusQuo)
+            remove_vehicle_from_system(vehicle, instance, statusQuo)
 
     instance.removed_vehicles = removedVehicles[:]  # to map back to original id
     if initialNumberOfVehicles == len(removedVehicles):
         print("All vehicles removed from instanceModule: nothing to optimize.")
         return
 
-    _assertEveryVehicleIsInAConflictingSet(instance, removedVehicles)
-    updateConflictingSetsAfterRemovingVehicles(instance.conflicting_sets, removedVehicles)
-    _assertEveryVehicleIsInAConflictingSet(instance)
+    _assert_every_vehicle_is_in_a_conflicting_set(instance, removedVehicles)
+    update_conflicting_sets_after_removing_vehicles(instance.conflicting_sets, removedVehicles)
+    _assert_every_vehicle_is_in_a_conflicting_set(instance)
 
     print("Vehicles removed during preprocessing: ", len(removedVehicles))
     print(f"Final number of vehicles in instanceModule: {initialNumberOfVehicles - len(removedVehicles)}")
 
 
-def removeFinalPartOfPathsWithoutConflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
+def remove_final_part_of_paths_without_conflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
     for vehicle, path in enumerate(instance.trip_routes):
         for arc in reversed(path):
             if vehicle not in instance.conflicting_sets[arc] and arc > 0:
-                _deleteLastVehicleEntry(instance, statusQuo, vehicle)
+                _delete_last_vehicle_entry(instance, statusQuo, vehicle)
             else:
                 break
     return

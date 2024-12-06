@@ -1,16 +1,15 @@
 from MIP.model import construct_model, run_model
-from solutions.status_quo import computeSolutionMetrics, printInfoStatusQuoMetrics
+from solutions.status_quo import compute_solution_metrics, print_info_status_quo_metrics
 from conflicting_sets.get import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
 from instanceModule.instance import Instance
-from congestion_model.conflict_binaries import get_conflict_binaries
-from solutions.map_simplified_epoch_solution import mapSimplifiedEpochSolution
-from solutions.epoch_warm_start import getEpochWarmStart
-from solutions.model_solution import getEpochModelSolution
+from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
+from solutions.epoch_warm_start import get_epoch_warm_start
+from solutions.model_solution import get_epoch_model_solution
 from utils.classes import EpochSolution, CompleteSolution
 
 
-def _printHeaderOfflineSolution():
+def _print_header_offline_solution():
     print("#" * 20)
     print(f"COMPUTING OFFLINE SOLUTION")
     print("#" * 20)
@@ -18,9 +17,9 @@ def _printHeaderOfflineSolution():
 
 def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> CompleteSolution:
     """ Compute the global status quo to compare solution against """
-    _printHeaderOfflineSolution()
-    solutionMetrics = computeSolutionMetrics(instance, releaseTimes)
-    printInfoStatusQuoMetrics(solutionMetrics)
+    _print_header_offline_solution()
+    solutionMetrics = compute_solution_metrics(instance, releaseTimes)
+    print_info_status_quo_metrics(solutionMetrics)
     add_conflicting_sets_to_instance(instance, solutionMetrics.free_flow_schedule)
     staggeringAppliedInEpoch = [0.0] * len(solutionMetrics.congested_schedule)
     # binaries = getConflictBinaries(instance.conflictingSets, instance.arcBasedShortestPaths,
@@ -38,7 +37,7 @@ def get_offline_solution(instance: Instance, releaseTimes: list[float]) -> Compl
     )
 
 
-def _printInfoEpochSolution(epochStatusQuo, epochSolution):
+def _print_info_epoch_solution(epochStatusQuo, epochSolution):
     print("#" * 20)
     print(f"INFO EPOCH SOLUTION")
     print("#" * 20)
@@ -52,13 +51,13 @@ def _printInfoEpochSolution(epochStatusQuo, epochSolution):
 
 def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo) -> EpochSolution:
     if len(simplifiedStatusQuo.congested_schedule):
-        epochWarmStart = getEpochWarmStart(simplifiedInstance, simplifiedStatusQuo)
+        epochWarmStart = get_epoch_warm_start(simplifiedInstance, simplifiedStatusQuo)
         model = construct_model(simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
         run_model(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo)
-        modelSolution = getEpochModelSolution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
+        modelSolution = get_epoch_model_solution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
         # map back to the full system
-        epochSolution = mapSimplifiedEpochSolution(epochInstance, modelSolution)
-        _printInfoEpochSolution(epochStatusQuo, epochSolution)
+        epochSolution = map_simplified_epoch_solution(epochInstance, modelSolution)
+        _print_info_epoch_solution(epochStatusQuo, epochSolution)
         return epochSolution
     else:
         return epochStatusQuo

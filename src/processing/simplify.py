@@ -5,17 +5,17 @@ import copy
 from congestion_model.conflict_binaries import get_conflict_binaries
 from instanceModule.epoch_instance import EpochInstance
 from processing.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_conflicts_can_happen
-from processing.remove_paths_sequences import removeInitialPartOfPathsWithoutConflicts, \
-    removeFinalPartOfPathsWithoutConflicts
-from processing.remove_not_utilized_arcs import removeNotUtilizedArcs
+from processing.remove_paths_sequences import remove_initial_part_of_paths_without_conflicts, \
+    remove_final_part_of_paths_without_conflicts
+from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
 from instanceModule.instance import Instance
 from input_data import ACTIVATE_ASSERTIONS
 
 from utils.classes import EpochSolution, CompleteSolution
 
 
-def _setMinReleaseTimeTo0AndAdjustDeadlines(instance: Instance,
-                                            statusQuo: CompleteSolution) -> None:
+def _set_min_release_time_to0_and_adjust_deadlines(instance: Instance,
+                                                   statusQuo: CompleteSolution) -> None:
     minReleaseTime = min(statusQuo.release_times)
     if minReleaseTime == 0:
         return
@@ -35,19 +35,19 @@ def _setMinReleaseTimeTo0AndAdjustDeadlines(instance: Instance,
     return
 
 
-def _assertLenSchedulesIsTheSame(statusQuo):
+def _assert_len_schedules_is_the_same(statusQuo):
     if ACTIVATE_ASSERTIONS:
         assert all(len(congSchedule) == len(ffSchedule) for congSchedule, ffSchedule in
                    zip(statusQuo.congested_schedule, statusQuo.free_flow_schedule))
 
 
-def _assertReleaseTimesStatusQuo(statusQuo):
+def _assert_release_times_status_quo(statusQuo):
     if ACTIVATE_ASSERTIONS:
         assert all(abs(relTime - congSched[0]) < 1e-6 for relTime, congSched in
                    zip(statusQuo.release_times, statusQuo.congested_schedule))
 
 
-def _printCongestionInfoSimplifiedSystem(statusQuo: CompleteSolution):
+def _print_congestion_info_simplified_system(statusQuo: CompleteSolution):
     totalFreeFlowTime = statusQuo.total_travel_time - statusQuo.total_delay
     print(
         f"The delay of the status quo after preprocessing "
@@ -57,7 +57,7 @@ def _printCongestionInfoSimplifiedSystem(statusQuo: CompleteSolution):
         f"is {round((statusQuo.total_travel_time - totalFreeFlowTime) / totalFreeFlowTime * 100, 2)}% of the travel time")
 
 
-def getODArcs(osmInfoArcsUtilized):
+def get_od_arcs(osmInfoArcsUtilized):
     unique_combinations = set()
     for arcInfo in osmInfoArcsUtilized:
         origin = arcInfo.get("origin")
@@ -72,19 +72,19 @@ def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
                     notSimplifiedStatusQuo: CompleteSolution | EpochSolution) -> \
         tuple[Instance | EpochInstance, CompleteSolution | EpochSolution]:
     statusQuo, instance = copy.deepcopy((notSimplifiedStatusQuo, notSimplifiedInstance))
-    print(f"Number of unique arc ODs before simplification: {getODArcs(instance.osm_info_arcs_utilized)}")
-    removeInitialPartOfPathsWithoutConflicts(instance, statusQuo)
+    print(f"Number of unique arc ODs before simplification: {get_od_arcs(instance.osm_info_arcs_utilized)}")
+    remove_initial_part_of_paths_without_conflicts(instance, statusQuo)
     notSimplifiedInstance.removed_vehicles = instance.removed_vehicles[:]  # we will map the ID of vehicles
     allVehiclesRemoved = len(notSimplifiedStatusQuo.congested_schedule) == len(notSimplifiedInstance.removed_vehicles)
     if allVehiclesRemoved:
         return instance, statusQuo
-    removeFinalPartOfPathsWithoutConflicts(instance, statusQuo)
+    remove_final_part_of_paths_without_conflicts(instance, statusQuo)
     merge_arcs_on_paths_where_no_conflicts_can_happen(instance, statusQuo)
-    removeNotUtilizedArcs(instance)
+    remove_not_utilized_arcs(instance)
     statusQuo.binaries = get_conflict_binaries(instance.conflicting_sets,
                                                instance.trip_routes,
                                                statusQuo.congested_schedule)  # necessary if no warm start is given
-    _setMinReleaseTimeTo0AndAdjustDeadlines(instance, statusQuo)
-    _printCongestionInfoSimplifiedSystem(statusQuo)
-    print(f"Number of unique arc ODs after simplification: {getODArcs(instance.osm_info_arcs_utilized)}")
+    _set_min_release_time_to0_and_adjust_deadlines(instance, statusQuo)
+    _print_congestion_info_simplified_system(statusQuo)
+    print(f"Number of unique arc ODs after simplification: {get_od_arcs(instance.osm_info_arcs_utilized)}")
     return instance, statusQuo
