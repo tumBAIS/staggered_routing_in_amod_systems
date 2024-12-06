@@ -14,8 +14,8 @@ from instance_generator.computer import InstanceComputer
 
 import warnings
 
-warnings.filterwarnings("ignore",
-                        message="the convert_dtype parameter is deprecated and will be removed in a future version")
+WARNING = "the convert_dtype parameter is deprecated and will be removed in a future version"
+warnings.filterwarnings("ignore", message=WARNING)
 
 
 def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance:

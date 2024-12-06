@@ -51,7 +51,7 @@ class Scheduler:
         # Gather trip-specific data
         set_of_vehicle_routes = self.trips.get_vehicle_routes()
         release_times = self.trips.release_times
-        parameters = [self.network.instance_params.algorithm_time_limit]
+        parameters = [0]
 
         # Gather network-specific data
         travel_times_arcs = self.network.travel_time_arcs

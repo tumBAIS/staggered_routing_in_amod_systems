@@ -42,7 +42,6 @@ if __name__ == "__main__":
     instance_params = InstanceParameters(
         day=1,
         number_of_trips=2,
-        epoch_size=60,
         seed=0,
         network_name="manhattan_10",
         speed=20,
@@ -50,15 +49,8 @@ if __name__ == "__main__":
         add_shortcuts=False,
         list_of_slopes=[0.05],
         list_of_thresholds=[1],
-        staggering_applicable_method="proportional",
         deadline_factor=100,
         staggering_cap=10,
-        optimize=True,
-        algorithm_time_limit=10000,
-        epoch_time_limit=1000,
-        warm_start=True,
-        improve_warm_start=True,
-        local_search_callback=True,
     )
 
     # ===========================

@@ -82,8 +82,7 @@ class InstanceComputer:
         for trip in trips.R:
             trip.set_deadline(self._get_trip_deadline(trip, status_quo))
             for route in trip.routes.P:
-                route.latest_departure = conflicting_sets.time_bounds.get_latest_departure(trip,
-                                                                                           self.instance_params.staggering_cap)
+                route.latest_departure = route.get_latest_departure(trip, self.instance_params.staggering_cap)
 
     def _get_G(self, replace: bool = False) -> nx.DiGraph:
         """Import OSM graph. If replace is False, loads pre-serialized network, if it exists."""
