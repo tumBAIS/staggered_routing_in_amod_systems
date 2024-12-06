@@ -25,8 +25,8 @@ def _getStaggeringApplied(releaseTimesSolution, releaseTimesStatusQuo):
 
 def getEpochModelSolution(model: Model, epochInstance: EpochInstance, epochStatusQuo: EpochSolution,
                           epochWarmStart: EpochSolution) -> EpochSolution:
-    if not epochInstance.inputData.optimize or not model._optimize:
-        if not epochInstance.inputData.warm_start:
+    if not epochInstance.input_data.optimize or not model._optimize:
+        if not epochInstance.input_data.warm_start:
             return epochStatusQuo
         return epochWarmStart
 
@@ -35,18 +35,18 @@ def getEpochModelSolution(model: Model, epochInstance: EpochInstance, epochStatu
     congestedSchedule = _getModelSchedule(model, epochInstance.trip_routes)
     delaysOnArcs = _getModelDelayOnArcs(model, epochInstance.trip_routes)
     freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
-    staggeringApplied = _getStaggeringApplied(releaseTimes, epochStatusQuo.releaseTimes)
+    staggeringApplied = _getStaggeringApplied(releaseTimes, epochStatusQuo.release_times)
     slack = get_staggering_applicable(epochInstance, staggeringApplied)
     totalTravelTime = get_total_travel_time(congestedSchedule)
 
-    modelSolution = EpochSolution(delaysOnArcs=delaysOnArcs,
-                                  freeFlowSchedule=freeFlowSchedule,
-                                  releaseTimes=releaseTimes,
-                                  staggeringApplicable=slack,
-                                  totalDelay=totalDelay,
-                                  congestedSchedule=congestedSchedule,
-                                  staggeringApplied=staggeringApplied,
-                                  vehiclesUtilizingArcs=epochStatusQuo.vehiclesUtilizingArcs,
-                                  totalTravelTime=totalTravelTime)
+    modelSolution = EpochSolution(delays_on_arcs=delaysOnArcs,
+                                  free_flow_schedule=freeFlowSchedule,
+                                  release_times=releaseTimes,
+                                  staggering_applicable=slack,
+                                  total_delay=totalDelay,
+                                  congested_schedule=congestedSchedule,
+                                  staggering_applied=staggeringApplied,
+                                  vehicles_utilizing_arcs=epochStatusQuo.vehicles_utilizing_arcs,
+                                  total_travel_time=totalTravelTime)
 
     return modelSolution

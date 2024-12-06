@@ -42,7 +42,7 @@ def get_undivided_conflicting_sets(instance: Instance,
                                    boundsOnArcsSplit: list[list[list[TimeBound]]]) -> UndividedConflictingSets:
     undividedConflictingSets = [[[timeBound.vehicle for timeBound in boundsSet] if
                                  len(boundsSet) > max(MIN_SET_CAPACITY, instance.capacities_arcs[
-                                     arc] * instance.inputData.list_of_thresholds[0]) else [] for
+                                     arc] * instance.input_data.list_of_thresholds[0]) else [] for
                                  boundsSet in boundsOnArc
                                  ] if arc > 0 else [] for arc, boundsOnArc in enumerate(boundsOnArcsSplit)
                                 ]
@@ -97,15 +97,15 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehiclesOnArc: int) -> fl
         return 0
     delay_at_pieces = [0]
     height_prev_piece = 0
-    for i in range(len(instance.inputData.list_of_slopes)):
-        th_capacity = instance.inputData.list_of_thresholds[i] * instance.capacities_arcs[arc]
-        slope = instance.travel_times_arcs[arc] * instance.inputData.list_of_slopes[i] / \
+    for i in range(len(instance.input_data.list_of_slopes)):
+        th_capacity = instance.input_data.list_of_thresholds[i] * instance.capacities_arcs[arc]
+        slope = instance.travel_times_arcs[arc] * instance.input_data.list_of_slopes[i] / \
                 instance.capacities_arcs[arc]
         if vehiclesOnArc > th_capacity:
             delay_current_piece = height_prev_piece + slope * (vehiclesOnArc - th_capacity)
             delay_at_pieces.append(delay_current_piece)
-        if i < len(instance.inputData.list_of_slopes) - 1:
-            next_th_cap = instance.inputData.list_of_thresholds[i + 1] * instance.capacities_arcs[arc]
+        if i < len(instance.input_data.list_of_slopes) - 1:
+            next_th_cap = instance.input_data.list_of_thresholds[i + 1] * instance.capacities_arcs[arc]
             height_prev_piece += slope * (next_th_cap - th_capacity)
     return max(delay_at_pieces)
 
@@ -242,7 +242,7 @@ def assert_time_bound(timeBound: TimeBound, instance: Instance, earliestDepartur
 def get_latest_departure(earliestDeparture: EarliestDeparture, instance: Instance, arcBasedTimeBounds) -> float:
     if earliestDeparture.position == 0:
         # First arc
-        latestDeparture = earliestDeparture.time + instance.maxStaggeringApplicable[earliestDeparture.vehicle]
+        latestDeparture = earliestDeparture.time + instance.max_staggering_applicable[earliestDeparture.vehicle]
     else:
         previousArc = instance.trip_routes[earliestDeparture.vehicle][earliestDeparture.position - 1]
         isPreviousDeparture: Callable[[TimeBound], bool] = lambda x: x.vehicle == earliestDeparture.vehicle
@@ -255,7 +255,7 @@ def get_latest_departure(earliestDeparture: EarliestDeparture, instance: Instanc
 def get_earliest_arrival_time(conflictingArrivals: list[Arrival], currentLatestDeparture: float,
                               instance: Instance, earliestDeparture: EarliestDeparture) -> tuple[float, float]:
     arc_threshold_capacity = max(MIN_SET_CAPACITY, instance.capacities_arcs[
-        earliestDeparture.arc] * instance.inputData.list_of_thresholds[0])
+        earliestDeparture.arc] * instance.input_data.list_of_thresholds[0])
     min_vehicles_on_arc = sum(1 for arrival in conflictingArrivals if
                               arrival.latestDeparture < earliestDeparture.time and
                               currentLatestDeparture < arrival.earliest) + 1
@@ -373,10 +373,10 @@ def get_bounds_vehicle(instance, vehicle, arc):
     path = instance.trip_routes[vehicle]
     index_arc = path.index(arc)
     next_arx = instance.trip_routes[vehicle][index_arc + 1]
-    earliest_entry = instance.earliestDepartureTimes[vehicle][index_arc]
-    latest_entry = instance.latestDepartureTimes[vehicle][index_arc]
-    earliest_leave = instance.earliestDepartureTimes[vehicle][index_arc + 1]
-    latest_leave = instance.latestDepartureTimes[vehicle][index_arc + 1]
+    earliest_entry = instance.earliest_departure_times[vehicle][index_arc]
+    latest_entry = instance.latest_departure_times[vehicle][index_arc]
+    earliest_leave = instance.earliest_departure_times[vehicle][index_arc + 1]
+    latest_leave = instance.latest_departure_times[vehicle][index_arc + 1]
     return earliest_entry, latest_entry, earliest_leave, latest_leave
 
 
@@ -384,7 +384,7 @@ def estimate_big_m_necessary(instance) -> int:
     print("estimating big-m...", end=" ")
     necessary_big_m = 0
 
-    for arc, conf_set in enumerate(instance.conflictingSets):
+    for arc, conf_set in enumerate(instance.conflicting_sets):
         for vehicle_1, vehicle_2 in itertools.permutations(conf_set, 2):
             constraints_to_add = 6
             e_e_1, e_l_1, l_e_1, l_l_1 = get_bounds_vehicle(instance, vehicle_1, arc)
@@ -424,11 +424,11 @@ def add_conflicting_sets_to_instance(
             break
         knownLatestArrivalTimes = newLatestArrivalTimes[:]
 
-    instance.undividedConflictingSets = get_undivided_conflicting_sets(instance, boundsOnArcsSplit)
-    instance.earliestDepartureTimes = get_earliest_departure_times(vehicleBasedTimeBounds)
-    instance.latestDepartureTimes = get_latest_departure_times(vehicleBasedTimeBounds)
-    instance.minDelayOnArc = get_min_delay_on_arcs(vehicleBasedTimeBounds)
-    instance.maxDelayOnArc = get_max_delay_on_arcs(vehicleBasedTimeBounds)
+    instance.undivided_conflicting_sets = get_undivided_conflicting_sets(instance, boundsOnArcsSplit)
+    instance.earliest_departure_times = get_earliest_departure_times(vehicleBasedTimeBounds)
+    instance.latest_departure_times = get_latest_departure_times(vehicleBasedTimeBounds)
+    instance.min_delay_on_arc = get_min_delay_on_arcs(vehicleBasedTimeBounds)
+    instance.max_delay_on_arc = get_max_delay_on_arcs(vehicleBasedTimeBounds)
 
     conflicting_sets.split.split_conflicting_sets(instance)
     clock_end = datetime.datetime.now().timestamp()

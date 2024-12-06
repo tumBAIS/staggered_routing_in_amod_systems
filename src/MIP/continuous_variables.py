@@ -9,11 +9,11 @@ from input_data import FIX_MODEL
 def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instance, statusQuo: EpochSolution,
                           epochWarmStart) -> None:
     arcIndex = instance.trip_routes[vehicle].index(arc)
-    earliestDepartureTime = instance.earliestDepartureTimes[vehicle][arcIndex]
-    latestDepartureTime = instance.latestDepartureTimes[vehicle][arcIndex]
-    departure = statusQuo.congestedSchedule[vehicle][arcIndex]
+    earliestDepartureTime = instance.earliest_departure_times[vehicle][arcIndex]
+    latestDepartureTime = instance.latest_departure_times[vehicle][arcIndex]
+    departure = statusQuo.congested_schedule[vehicle][arcIndex]
     if FIX_MODEL:
-        fix_dep = epochWarmStart.congestedSchedule[vehicle][arcIndex]
+        fix_dep = epochWarmStart.congested_schedule[vehicle][arcIndex]
         model._departure[vehicle][arc] = model.addVar(vtype=grb.GRB.CONTINUOUS,
                                                       name=f"departure_vehicle_{str(vehicle)}_arc_{str(arc)}",
                                                       lb=fix_dep, ub=fix_dep)
@@ -29,10 +29,10 @@ def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instan
 
 
 def _addDelayVariable(model: Model, vehicle: int, arc: int, instance: Instance) -> None:
-    if vehicle in instance.conflictingSets[arc]:
+    if vehicle in instance.conflicting_sets[arc]:
         position = instance.trip_routes[vehicle].index(arc)
-        lb = instance.minDelayOnArc[vehicle][position]
-        ub = instance.maxDelayOnArc[vehicle][position]
+        lb = instance.min_delay_on_arc[vehicle][position]
+        ub = instance.max_delay_on_arc[vehicle][position]
 
         model._delay[vehicle][arc] = model.addVar(vtype=grb.GRB.CONTINUOUS,
                                                   name=f"delay_vehicle_{str(vehicle)}_arc_{str(arc)}", lb=lb, ub=ub)
@@ -65,7 +65,7 @@ def _addLoadVariable(model: Model, vehicle: int, arc: int, conflictingSet: list[
 
 
 def _addContinuousVariablesVehicleOnArc(model, instance, statusQuo, vehicle, arc, epochWarmStart) -> None:
-    conflictingSet = instance.conflictingSets[arc]
+    conflictingSet = instance.conflicting_sets[arc]
     _addDepartureVariable(model, vehicle, arc, instance, statusQuo, epochWarmStart)
     _addDelayVariable(model, vehicle, arc, instance)
     _addLoadVariable(model, vehicle, arc, conflictingSet)

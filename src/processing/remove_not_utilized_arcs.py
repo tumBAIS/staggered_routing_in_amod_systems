@@ -33,10 +33,10 @@ def _removeArcs(instance: Instance, arcsToRemove: list[int]) -> None:
     assert arcsToRemove == sorted(arcsToRemove), "arcs to remove are not sored!"
     for arc in reversed(arcsToRemove):
         instance.travel_times_arcs.pop(arc)
-        instance.osmInfoArcsUtilized.pop(arc)
+        instance.osm_info_arcs_utilized.pop(arc)
         instance.capacities_arcs.pop(arc)
-        _assertArcIsNotUtilized(instance.conflictingSets[arc], instance.trip_routes)
-        instance.conflictingSets.pop(arc)
+        _assertArcIsNotUtilized(instance.conflicting_sets[arc], instance.trip_routes)
+        instance.conflicting_sets.pop(arc)
     return
 
 

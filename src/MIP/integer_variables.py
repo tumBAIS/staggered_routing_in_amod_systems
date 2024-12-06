@@ -9,8 +9,8 @@ BinariesBounds = namedtuple("BinariesBounds", ["lbAlpha", "ubAlpha", "lbBeta", "
 def _checkIfED2GreaterThanLD1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> bool:
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    latestDepartureFirst = instance.latestDepartureTimes[firstVehicle][firstPosition]
-    earliestDepartureSecond = instance.earliestDepartureTimes[secondVehicle][secondPosition]
+    latestDepartureFirst = instance.latest_departure_times[firstVehicle][firstPosition]
+    earliestDepartureSecond = instance.earliest_departure_times[secondVehicle][secondPosition]
     if earliestDepartureSecond > latestDepartureFirst:
         return True
     else:
@@ -20,8 +20,8 @@ def _checkIfED2GreaterThanLD1(firstVehicle: int, secondVehicle: int, arc: int, i
 def _checkIfED2GreaterThanLA1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance):
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    earliestDepartureSecond = instance.earliestDepartureTimes[secondVehicle][secondPosition]
-    latestArrivalFirst = instance.latestDepartureTimes[firstVehicle][firstPosition + 1]
+    earliestDepartureSecond = instance.earliest_departure_times[secondVehicle][secondPosition]
+    latestArrivalFirst = instance.latest_departure_times[firstVehicle][firstPosition + 1]
     if earliestDepartureSecond > latestArrivalFirst:
         return True
     else:
@@ -31,8 +31,8 @@ def _checkIfED2GreaterThanLA1(firstVehicle: int, secondVehicle: int, arc: int, i
 def _checkIfLD1SmallerThanEA2(firstVehicle, secondVehicle, arc, instance):
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    ld1 = instance.latestDepartureTimes[firstVehicle][firstPosition]
-    ea2 = instance.earliestDepartureTimes[secondVehicle][secondPosition + 1]
+    ld1 = instance.latest_departure_times[firstVehicle][firstPosition]
+    ea2 = instance.earliest_departure_times[secondVehicle][secondPosition + 1]
     if ld1 < ea2:
         return True
     else:
@@ -49,12 +49,12 @@ def _getBoundsForBinaries(firstVehicle: int, secondVehicle: int, arc: int, insta
 
     position_1 = instance.trip_routes[firstVehicle].index(arc)
     position_2 = instance.trip_routes[secondVehicle].index(arc)
-    e_e_1 = instance.earliestDepartureTimes[firstVehicle][position_1]
-    e_l_1 = instance.latestDepartureTimes[firstVehicle][position_1]
-    e_e_2 = instance.earliestDepartureTimes[secondVehicle][position_2]
-    e_l_2 = instance.latestDepartureTimes[secondVehicle][position_2]
-    l_e_2 = instance.earliestDepartureTimes[secondVehicle][position_2 + 1]
-    l_l_2 = instance.latestDepartureTimes[secondVehicle][position_2 + 1]
+    e_e_1 = instance.earliest_departure_times[firstVehicle][position_1]
+    e_l_1 = instance.latest_departure_times[firstVehicle][position_1]
+    e_e_2 = instance.earliest_departure_times[secondVehicle][position_2]
+    e_l_2 = instance.latest_departure_times[secondVehicle][position_2]
+    l_e_2 = instance.earliest_departure_times[secondVehicle][position_2 + 1]
+    l_l_2 = instance.latest_departure_times[secondVehicle][position_2 + 1]
 
     alpha_must_be_one = e_l_2 < e_e_1
     beta_must_be_one = e_l_1 < l_e_2
@@ -161,7 +161,7 @@ def addConflictVariables(model: Model, instance: Instance) -> None:
     model._alpha = {}
     model._beta = {}
     model._gamma = {}
-    for arc, conflictingSet in enumerate(instance.conflictingSets):
+    for arc, conflictingSet in enumerate(instance.conflicting_sets):
         if conflictingSet:
             _addConflictVariablesAmongVehiclesInConflictingSet(model, arc, conflictingSet, instance)
     print("done!")

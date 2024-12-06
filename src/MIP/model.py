@@ -26,7 +26,7 @@ def constructModel(instance: Instance | EpochInstance, statusQuo: CompleteSoluti
                    epochWarmStart) -> Model:
     model = grb.Model("staggeringRoutingModel")  # create gurobi model
     model._optimize = True
-    if not instance.inputData.optimize or not isThereRemainingTime(instance):
+    if not instance.input_data.optimize or not isThereRemainingTime(instance):
         model._optimize = False
         if not isThereRemainingTime(instance):
             print("no remaining time for optimization - model will not be constructed")
@@ -37,7 +37,7 @@ def constructModel(instance: Instance | EpochInstance, statusQuo: CompleteSoluti
     addContinuousVariables(model, instance, statusQuo, epochWarmStart)
     addConflictConstraints(model, instance)
     addTravelContinuityConstraints(model, instance)
-    addObjectiveFunction(instance.inputData, model)
+    addObjectiveFunction(instance.input_data, model)
     return model
 
 
@@ -49,10 +49,10 @@ def _continueSolving(model, instance) -> bool:
 
 
 def isThereRemainingTime(instance):
-    totalTimeRemaining = instance.inputData.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.startSolutionTime)
-    epochTimeRemaining = instance.inputData.epoch_time_limit - (
-            datetime.datetime.now().timestamp() - instance.clockStartEpoch)
+    totalTimeRemaining = instance.input_data.algorithm_time_limit - (
+            datetime.datetime.now().timestamp() - instance.start_solution_time)
+    epochTimeRemaining = instance.input_data.epoch_time_limit - (
+            datetime.datetime.now().timestamp() - instance.clock_start_epoch)
     timeRemaining = min(epochTimeRemaining, totalTimeRemaining)
     return timeRemaining > 0
 
@@ -70,10 +70,10 @@ def runModel(model: Model,
         except:
             print("no solution to start the model - terminating procedure")
             return
-        if instance.inputData.warm_start:
+        if instance.input_data.warm_start:
             setWarmStartModel(model, initialSolution)
         setGurobiParameters(model, instance)
-        if instance.inputData.call_local_search:
+        if instance.input_data.call_local_search:
             model.optimize(callback(instance, statusQuo))
         else:
             model.optimize()

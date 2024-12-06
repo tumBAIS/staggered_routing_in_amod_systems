@@ -41,10 +41,10 @@ def _reconstructSchedule(epochInstances: list[EpochInstance], epochStatusQuoList
                          globalInstance: Instance) -> VehicleSchedules:
     reconstructedSchedule = [[] for _ in range(len(globalInstance.trip_routes))]  # type: ignore
     for epochID, epochInstance in enumerate(epochInstances):
-        for vehicleEpochID, vehicleGlobalID in enumerate(epochInstance.vehiclesOriginalIDS):
-            lastPosition = epochInstance.lastPositionForReconstruction[vehicleEpochID]
+        for vehicleEpochID, vehicleGlobalID in enumerate(epochInstance.vehicles_original_ids):
+            lastPosition = epochInstance.last_position_for_reconstruction[vehicleEpochID]
             reconstructedSchedule[vehicleGlobalID] = _mergeSchedules(reconstructedSchedule[vehicleGlobalID],
-                                                                     epochStatusQuoList[epochID].congestedSchedule[
+                                                                     epochStatusQuoList[epochID].congested_schedule[
                                                                          vehicleEpochID][:lastPosition])
     return reconstructedSchedule
 
@@ -59,7 +59,7 @@ def _printNotMatchingSchedules(globalInstance, reconstructedSchedule, cppSchedul
                           abs(departure - cppSchedule[vehicle][position]) > 1e-4]
     print(f"Position entries not matching: {notMatchingEntries}")
     for arc in globalInstance.trip_routes[vehicle]:
-        confSet = globalInstance.conflictingSets[arc]
+        confSet = globalInstance.conflicting_sets[arc]
         cppDepAndArrOnArc = []
         rekDepAndArrOnArc = []
         for otherVehicle in confSet:
@@ -99,22 +99,22 @@ def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList
     freeFlowSchedule = get_free_flow_schedule(globalInstance, congestedSchedule)
     releaseTimes = [schedule[0] for schedule in congestedSchedule]
     staggeringApplied = [schedule[0] - datasetTime for schedule, datasetTime in
-                         zip(congestedSchedule, globalInstance.releaseTimesDataset)]
+                         zip(congestedSchedule, globalInstance.release_times_dataset)]
     staggeringApplicable = get_staggering_applicable(globalInstance, staggeringApplied)
     totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = get_total_travel_time(congestedSchedule)
     add_conflicting_sets_to_instance(globalInstance, freeFlowSchedule)
-    binaries = get_conflict_binaries(globalInstance.conflictingSets, globalInstance.trip_routes,
+    binaries = get_conflict_binaries(globalInstance.conflicting_sets, globalInstance.trip_routes,
                                      congestedSchedule)
 
     return CompleteSolution(
-        delaysOnArcs=delaysOnArcs,
-        freeFlowSchedule=freeFlowSchedule,
-        releaseTimes=releaseTimes,
-        staggeringApplicable=staggeringApplicable,
-        totalDelay=totalDelay,
-        congestedSchedule=congestedSchedule,
-        staggeringApplied=staggeringApplied,
-        totalTravelTime=totalTravelTime,
+        delays_on_arcs=delaysOnArcs,
+        free_flow_schedule=freeFlowSchedule,
+        release_times=releaseTimes,
+        staggering_applicable=staggeringApplicable,
+        total_delay=totalDelay,
+        congested_schedule=congestedSchedule,
+        staggering_applied=staggeringApplied,
+        total_travel_time=totalTravelTime,
         binaries=binaries
     )

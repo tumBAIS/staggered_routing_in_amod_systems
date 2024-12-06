@@ -13,7 +13,7 @@ from input_data import ACTIVATE_ASSERTIONS
 def _getDepartureInNextEpoch(currentEpochInstance: EpochInstance, schedule: list[float]) -> \
         tuple[int, float] | tuple[None, None]:
     """Checks if there is an arrival occurring in the subsequent epoch, and returns the respective departure"""
-    isInNextEpoch = lambda x: x / 60 > currentEpochInstance.inputData.epoch_size * (currentEpochInstance.epochID + 1)
+    isInNextEpoch = lambda x: x / 60 > currentEpochInstance.input_data.epoch_size * (currentEpochInstance.epoch_id + 1)
     return next(
         ((position, departure) for position, departure in enumerate(schedule[:-1]) if
          isInNextEpoch(schedule[position + 1])), (None, None))
@@ -22,10 +22,11 @@ def _getDepartureInNextEpoch(currentEpochInstance: EpochInstance, schedule: list
 def _getMaxStaggeringApplicableNextEpoch(departure, globalInstance, nextEpochInstance, originalVehicleID) -> float:
     firstOriginalArc = globalInstance.trip_routes[originalVehicleID][0]
     arcIsOrigin = departure.arc == firstOriginalArc
-    departureIsInNextEpoch = departure.time / 60 > nextEpochInstance.epochID * nextEpochInstance.inputData.epoch_size
+    departureIsInNextEpoch = departure.time / 60 > nextEpochInstance.epoch_id * nextEpochInstance.input_data.epoch_size
     if arcIsOrigin and departureIsInNextEpoch:
-        staggeringApplied = max(1e-2, departure.time - globalInstance.releaseTimesDataset[originalVehicleID])
-        maxStaggeringApplicableNextEpoch = globalInstance.maxStaggeringApplicable[originalVehicleID] - staggeringApplied
+        staggeringApplied = max(1e-2, departure.time - globalInstance.release_times_dataset[originalVehicleID])
+        maxStaggeringApplicableNextEpoch = globalInstance.max_staggering_applicable[
+                                               originalVehicleID] - staggeringApplied
     else:
         maxStaggeringApplicableNextEpoch = 1e-2  # to solve ties.
     return maxStaggeringApplicableNextEpoch
@@ -36,7 +37,7 @@ def _addDeparturesToNextEpoch(nextEpochDepartures: list[NextEpochDeparture],
                               nextEpochInstance: EpochInstance,
                               globalInstance: instanceModule.instance.Instance) -> None:
     for departure in nextEpochDepartures:
-        originalVehicleID = currentEpochInstance.vehiclesOriginalIDS[departure.vehicle]
+        originalVehicleID = currentEpochInstance.vehicles_original_ids[departure.vehicle]
         maxStaggeringApplicable = _getMaxStaggeringApplicableNextEpoch(departure, globalInstance,
                                                                        nextEpochInstance, originalVehicleID)
         lenPathNextEpoch = len(currentEpochInstance.trip_routes[departure.vehicle][departure.position:])
@@ -44,20 +45,20 @@ def _addDeparturesToNextEpoch(nextEpochDepartures: list[NextEpochDeparture],
         lenTotalPath = len(currentEpochInstance.trip_routes[departure.vehicle])
         lenCurrentPath = lenTotalPath - lenPathNextEpoch
 
-        nextEpochInstance.vehiclesOriginalIDS.append(originalVehicleID)
-        nextEpochInstance.maxStaggeringApplicable.append(maxStaggeringApplicable)
-        nextEpochInstance.releaseTimes.append(departure.time)
+        nextEpochInstance.vehicles_original_ids.append(originalVehicleID)
+        nextEpochInstance.max_staggering_applicable.append(maxStaggeringApplicable)
+        nextEpochInstance.release_times.append(departure.time)
         nextEpochInstance.deadlines.append(globalInstance.deadlines[originalVehicleID])
         nextEpochInstance.trip_routes.append(pathToAppend)
-        nextEpochInstance.lastPositionForReconstruction.append(None)
-        currentEpochInstance.lastPositionForReconstruction[departure.vehicle] = lenCurrentPath
+        nextEpochInstance.last_position_for_reconstruction.append(None)
+        currentEpochInstance.last_position_for_reconstruction[departure.vehicle] = lenCurrentPath
 
 
 def _getNextEpochDeparturesActiveVehicles(currentEpochStatusQuo: EpochSolution,
                                           currentEpochInstance: EpochInstance,
                                           vehicleStatusList: list[VehicleStatus]) -> list[NextEpochDeparture]:
     departuresInNextEpochActiveVehicles = []
-    for vehicleEpochID, schedule in enumerate(currentEpochStatusQuo.congestedSchedule):
+    for vehicleEpochID, schedule in enumerate(currentEpochStatusQuo.congested_schedule):
         positionInNextEpoch, timeInNextEpoch = _getDepartureInNextEpoch(currentEpochInstance, schedule)
         if timeInNextEpoch is not None:
             vehicleStatusList[vehicleEpochID] = VehicleStatus.ACTIVE
@@ -100,7 +101,7 @@ def update_next_epoch_instance(currentEpochInstance: EpochInstance,
                                globalInstance: instanceModule.instance.Instance):
     print("Updating next epoch departures...", end=" ")
     clock_start = datetime.datetime.now().timestamp()
-    vehicleStatusList = [VehicleStatus.INACTIVE for _ in range(len(currentEpochStatusQuo.congestedSchedule))]
+    vehicleStatusList = [VehicleStatus.INACTIVE for _ in range(len(currentEpochStatusQuo.congested_schedule))]
     nextEpochDepartures = _getNextEpochDeparturesActiveVehicles(currentEpochStatusQuo,
                                                                 currentEpochInstance,
                                                                 vehicleStatusList)

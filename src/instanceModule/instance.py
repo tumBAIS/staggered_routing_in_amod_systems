@@ -24,25 +24,25 @@ def saveListOfStringsFile(listOfValues: list[typing.Any], fileName: str, path: s
 
 @dataclass
 class Instance:
-    inputData: InputData
-    osmInfoArcsUtilized: list[dict[str:typing.Any]]
+    input_data: InputData
+    osm_info_arcs_utilized: list[dict[str:typing.Any]]
     capacities_arcs: list[int]
-    releaseTimesDataset: list[float]
-    arrivalTimesDataset: list[float]
+    release_times_dataset: list[float]
+    arrival_times_dataset: list[float]
     trip_routes: list[list[int]]
     travel_times_arcs: list[float]
-    clockStartEpoch: int = 0
-    dueDates: list[float] = field(default_factory=list[float])
-    undividedConflictingSets: list[list[list[int]]] = field(default_factory=list[list[list[int]]])
-    conflictingSets: list[list[int]] = field(default_factory=list[list[int]])
-    latestDepartureTimes: list[list[float]] = field(default_factory=list[list[float]])
-    earliestDepartureTimes: list[list[float]] = field(default_factory=list[list[float]])
-    minDelayOnArc: list[list[float]] = field(default_factory=list[list[float]])
-    maxDelayOnArc: list[list[float]] = field(default_factory=list[list[float]])
-    startSolutionTime: float = 0
-    removedVehicles: list[int] = field(default_factory=list[int])
+    clock_start_epoch: int = 0
+    due_dates: list[float] = field(default_factory=list[float])
+    undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=list[list[list[int]]])
+    conflicting_sets: list[list[int]] = field(default_factory=list[list[int]])
+    latest_departure_times: list[list[float]] = field(default_factory=list[list[float]])
+    earliest_departure_times: list[list[float]] = field(default_factory=list[list[float]])
+    min_delay_on_arc: list[list[float]] = field(default_factory=list[list[float]])
+    max_delay_on_arc: list[list[float]] = field(default_factory=list[list[float]])
+    start_solution_time: float = 0
+    removed_vehicles: list[int] = field(default_factory=list[int])
     deadlines: Optional[list[Time]] = None
-    maxStaggeringApplicable: Optional[list[Staggering]] = None
+    max_staggering_applicable: Optional[list[Staggering]] = None
 
     def get_lb_travel_time(self) -> float:
         """Return sum of the free flow times of the routes of trips contained in instance"""
@@ -57,7 +57,7 @@ class Instance:
         """
         if self.deadlines is None:
             self.deadlines = deadlines
-            print(f"Deadline delta is {self.inputData.deadline_factor} % of congested travel time")
+            print(f"Deadline delta is {self.input_data.deadline_factor} % of congested travel time")
         else:
             raise ValueError("trying to override deadlines with class method!")
 
@@ -72,7 +72,7 @@ class Instance:
         if self.deadlines is None:
             raise ValueError("trying to access empty deadlines")
 
-        if self.maxStaggeringApplicable is not None:
+        if self.max_staggering_applicable is not None:
             raise ValueError("trying to override maxStaggeringApplicable with class method")
 
         # Initialize an empty list to store maximum staggering times for each vehicle
@@ -84,15 +84,15 @@ class Instance:
             total_travel_time = sum(self.travel_times_arcs[arc] for arc in path)
 
             # Calculate staggering time based on staggering cap percentage
-            if self.inputData.staggering_applicable_method == "fixed":
-                staggering_cap_time = self.inputData.staggering_cap * 60
-            elif self.inputData.staggering_applicable_method == "proportional":
-                staggering_cap_time = self.inputData.staggering_cap / 100 * total_travel_time
+            if self.input_data.staggering_applicable_method == "fixed":
+                staggering_cap_time = self.input_data.staggering_cap * 60
+            elif self.input_data.staggering_applicable_method == "proportional":
+                staggering_cap_time = self.input_data.staggering_cap / 100 * total_travel_time
             else:
                 raise RuntimeError("wrong staggering applicable method specified!")
 
             # Calculate the maximum time available before the deadline, after accounting for release time
-            time_until_deadline = self.deadlines[vehicle] - (total_travel_time + self.releaseTimesDataset[vehicle])
+            time_until_deadline = self.deadlines[vehicle] - (total_travel_time + self.release_times_dataset[vehicle])
 
             # Determine the minimum of staggering cap time and time until deadline
             max_stagger_time = min(staggering_cap_time, time_until_deadline)
@@ -100,12 +100,12 @@ class Instance:
             # Append the calculated staggering time to the list
             max_staggering_times.append(max_stagger_time)
 
-        self.maxStaggeringApplicable = max_staggering_times
+        self.max_staggering_applicable = max_staggering_times
 
     def check_optional_fields(self):
         if self.deadlines is None:
             raise ValueError("deadlines are none")
-        if self.maxStaggeringApplicable is None:
+        if self.max_staggering_applicable is None:
             raise ValueError("max staggering applicable is none")
 
 
@@ -119,21 +119,21 @@ def _writeArcBasedShortestPathsForCppCode(instance: Instance):
 
 def _writeEarliestDepartureTimesForCppCode(instance: Instance):
     with open(f"{pathToCppInstance}/earliestDepartureTimes.txt", "w") as outfile:
-        for vehicleEDs in instance.earliestDepartureTimes:
+        for vehicleEDs in instance.earliest_departure_times:
             outfile.writelines([str(ED) + "," for ED in vehicleEDs])
             outfile.writelines("\n")
 
 
 def _writeLatestDepartureTimesForCppCode(instance: Instance):
     with open(f"{pathToCppInstance}/latestDepartureTimes.txt", "w") as outfile:
-        for vehicleLDs in instance.latestDepartureTimes:
+        for vehicleLDs in instance.latest_departure_times:
             outfile.writelines([str(LD) + "," for LD in vehicleLDs])
             outfile.writelines("\n")
 
 
 def _writeConflictingSetsAfterPreprocessingForCppCode(instance: Instance):
     with open(f"{pathToCppInstance}/conflictingSets.txt", "w") as outfile:
-        for conflictingSet in instance.conflictingSets:
+        for conflictingSet in instance.conflicting_sets:
             if conflictingSet:
                 outfile.writelines(
                     [str(vehicle) + "," for i, vehicle in enumerate(conflictingSet) if i < len(conflictingSet) - 1])
@@ -146,21 +146,21 @@ def save_instance_for_testing_cpp_code(instance: Instance, statusQuo: CompleteSo
     if SAVE_CPP_INSTANCE:
         if not os.path.exists(pathToCppInstance):
             os.mkdir(pathToCppInstance)
-        parameters = [instance.inputData.algorithm_time_limit]
+        parameters = [instance.input_data.algorithm_time_limit]
         _writeArcBasedShortestPathsForCppCode(instance)
         _writeEarliestDepartureTimesForCppCode(instance)
         _writeLatestDepartureTimesForCppCode(instance)
         _writeConflictingSetsAfterPreprocessingForCppCode(instance)
         saveListOfStringsFile(parameters, "parameters", pathToCppInstance)
         saveListOfStringsFile(instance.deadlines, "deadlines", pathToCppInstance)
-        saveListOfStringsFile(instance.inputData.list_of_slopes, "list_of_slopes", pathToCppInstance)
-        saveListOfStringsFile(instance.inputData.list_of_thresholds, "list_of_thresholds", pathToCppInstance)
+        saveListOfStringsFile(instance.input_data.list_of_slopes, "list_of_slopes", pathToCppInstance)
+        saveListOfStringsFile(instance.input_data.list_of_thresholds, "list_of_thresholds", pathToCppInstance)
         saveListOfStringsFile(instance.deadlines, "dueDates", pathToCppInstance)
         saveListOfStringsFile(instance.travel_times_arcs, "travelTimesArcsUtilized", pathToCppInstance)
         saveListOfStringsFile(instance.capacities_arcs, "nominalCapacitiesArcsUtilized",
                               pathToCppInstance)
-        saveListOfStringsFile(statusQuo.releaseTimes, "releaseTimes", pathToCppInstance)
-        saveListOfStringsFile(statusQuo.staggeringApplicable, "remainingSlack", pathToCppInstance)
+        saveListOfStringsFile(statusQuo.release_times, "releaseTimes", pathToCppInstance)
+        saveListOfStringsFile(statusQuo.staggering_applicable, "remainingSlack", pathToCppInstance)
 
 
 def print_total_free_flow_time(instance: Instance):
@@ -175,11 +175,11 @@ def get_instance(inputData: InputData,
                  releaseTimesDataset: list[Time],
                  arrivalTimesDataset: list[Time]):
     return Instance(
-        osmInfoArcsUtilized=arcsFeatures.osm_info_arcs,
+        osm_info_arcs_utilized=arcsFeatures.osm_info_arcs,
         trip_routes=arcBasedShortestPaths,
         travel_times_arcs=arcsFeatures.travel_times_arcs,
         capacities_arcs=arcsFeatures.capacities_arcs,
-        inputData=inputData,
-        releaseTimesDataset=releaseTimesDataset,
-        arrivalTimesDataset=arrivalTimesDataset
+        input_data=inputData,
+        release_times_dataset=releaseTimesDataset,
+        arrival_times_dataset=arrivalTimesDataset
     )

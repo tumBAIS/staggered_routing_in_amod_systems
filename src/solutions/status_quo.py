@@ -27,9 +27,9 @@ def _getVehiclesUtilizingArcs(arcBasedShortestPaths: list[list[int]]) -> list[li
 
 def _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs):
     if ACTIVATE_ASSERTIONS:
-        assert sorted(list(set(epochInstance.vehiclesOriginalIDS))) == sorted(epochInstance.vehiclesOriginalIDS), \
+        assert sorted(list(set(epochInstance.vehicles_original_ids))) == sorted(epochInstance.vehicles_original_ids), \
             f"vehicles IDs repeat themselves"
-    for arc, conflictingSet in enumerate(epochInstance.conflictingSets):
+    for arc, conflictingSet in enumerate(epochInstance.conflicting_sets):
         if conflictingSet:
             assert sorted(list(set(conflictingSet))) == sorted(conflictingSet), \
                 f"repetitions in conflicting set"
@@ -39,17 +39,17 @@ def _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs):
 
 @dataclasses.dataclass
 class StatusQuoMetrics:
-    congestedSchedule: list[list[float]]
-    freeFlowSchedule: list[list[float]]
-    delaysOnArcs: list[list[float]]
-    releaseTimes: list[float]
-    totalDelay: float
+    congested_schedule: list[list[float]]
+    free_flow_schedule: list[list[float]]
+    delays_on_arcs: list[list[float]]
+    release_times: list[float]
+    total_delay: float
 
 
 def compute_vehicles_on_arc_from_delay(delay, instance, arc, first_capacity, second_capacity):
-    second_slope = instance.travel_times_arcs[arc] * instance.inputData.slopeSecondLine / \
+    second_slope = instance.travel_times_arcs[arc] * instance.input_data.slopeSecondLine / \
                    max(instance.capacities_arcs[arc], MIN_SET_CAPACITY)
-    third_slope = instance.travel_times_arcs[arc] * instance.inputData.slopeThirdLine / \
+    third_slope = instance.travel_times_arcs[arc] * instance.input_data.slopeThirdLine / \
                   max(instance.capacities_arcs[arc], MIN_SET_CAPACITY)
 
     height_third_piece = second_slope * (second_capacity - first_capacity)
@@ -86,7 +86,7 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
     list_vehicles_on_arcs = []
     list_travel_times = []
     list_delays = []
-    for vehicle, delays in enumerate(status_quo_metrics.delaysOnArcs):
+    for vehicle, delays in enumerate(status_quo_metrics.delays_on_arcs):
         for position, delay in enumerate(delays):
             arc = instance.trip_routes[vehicle][position]
             if arc == 0:
@@ -94,17 +94,17 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
             travel_time = instance.travel_times_arcs[arc]
             vehicles_on_arc = flows[vehicle][position]
             slopes = [round(travel_time * x / (60 * instance.capacities_arcs[arc]), 2) for x in
-                      instance.inputData.list_of_slopes]
+                      instance.input_data.list_of_slopes]
             threshold_capacities = [instance.capacities_arcs[arc] * x for x in
-                                    instance.inputData.list_of_thresholds]
+                                    instance.input_data.list_of_thresholds]
             if round(vehicles_on_arc) > 1:
                 list_vehicles_on_arcs.append(round(vehicles_on_arc))
                 list_delays.append(round(delay / 60, 2)) if round(delay / 60, 2) > 1e-4 else None
-                list_travel_times.append((status_quo_metrics.congestedSchedule[vehicle][-1] -
-                                          status_quo_metrics.congestedSchedule[vehicle][0]) / 60)
+                list_travel_times.append((status_quo_metrics.congested_schedule[vehicle][-1] -
+                                          status_quo_metrics.congested_schedule[vehicle][0]) / 60)
                 delay_points.append(
                     {"arc": arc, "delay": round(delay / 60, 2), "vehicles_on_arc": round(vehicles_on_arc),
-                     "travel_time": round(travel_time, 2), "length": instance.osmInfoArcsUtilized[arc]["length"],
+                     "travel_time": round(travel_time, 2), "length": instance.osm_info_arcs_utilized[arc]["length"],
                      "threshold_capacities": threshold_capacities, "slopes": slopes})
     distribution_flows = get_distribution_info(list_vehicles_on_arcs)
     flows_great_75_perc = [value for value in list_vehicles_on_arcs if value > np.percentile(list_vehicles_on_arcs, 75)]
@@ -113,13 +113,13 @@ def save_congestion_info(instance, status_quo_metrics: StatusQuoMetrics, flows: 
     distribution_tt = get_distribution_info(list_travel_times)
     distribution_delays = get_distribution_info(list_delays)
     big_m = estimate_big_m_necessary(instance)
-    congestion_info = {"big_m": big_m, "total_delay": round(status_quo_metrics.totalDelay / 60, 2),
+    congestion_info = {"big_m": big_m, "total_delay": round(status_quo_metrics.total_delay / 60, 2),
                        "distribution_flows": distribution_flows,
                        "distribution_flows_great_75_perc": distribution_flows_greater_75,
                        "distribution_tt": distribution_tt,
                        "distribution_delays": distribution_delays,
                        "delay_points": delay_points}
-    file = os.path.join(instance.inputData.path_to_results, fr"congestion_info.json")
+    file = os.path.join(instance.input_data.path_to_results, fr"congestion_info.json")
     with open(file, "w", encoding='utf-8') as f:
         json.dump(congestion_info, f, ensure_ascii=False, indent=4)
 
@@ -134,21 +134,21 @@ def computeSolutionMetrics(instance, releaseTimes):
 
 
 def printInfoStatusQuoMetrics(statusQuoMetrics):
-    print(f"Number of trips in epoch: {len(statusQuoMetrics.congestedSchedule)}")
-    print(f"Initial delay epoch: {round(statusQuoMetrics.totalDelay / 60, 2)} [min] "
-          f"({round(statusQuoMetrics.totalDelay / len(statusQuoMetrics.congestedSchedule) / 60, 2)} [min] per trip)"
+    print(f"Number of trips in epoch: {len(statusQuoMetrics.congested_schedule)}")
+    print(f"Initial delay epoch: {round(statusQuoMetrics.total_delay / 60, 2)} [min] "
+          f"({round(statusQuoMetrics.total_delay / len(statusQuoMetrics.congested_schedule) / 60, 2)} [min] per trip)"
           )
-    numTripsWithDelays = len([sum(delays) for delays in statusQuoMetrics.delaysOnArcs if sum(delays) > 1e-6])
+    numTripsWithDelays = len([sum(delays) for delays in statusQuoMetrics.delays_on_arcs if sum(delays) > 1e-6])
     if numTripsWithDelays > 0:
         print(
-            f"{numTripsWithDelays}/ {len(statusQuoMetrics.congestedSchedule)} ({round(numTripsWithDelays / len(statusQuoMetrics.congestedSchedule) * 100, 2)} [%]) trips experience some delay "
-            f"({round(statusQuoMetrics.totalDelay / numTripsWithDelays / 60, 2)} [min] per 'congested' trip)")
+            f"{numTripsWithDelays}/ {len(statusQuoMetrics.congested_schedule)} ({round(numTripsWithDelays / len(statusQuoMetrics.congested_schedule) * 100, 2)} [%]) trips experience some delay "
+            f"({round(statusQuoMetrics.total_delay / numTripsWithDelays / 60, 2)} [min] per 'congested' trip)")
 
 
 def printHeaderCurrentEpochStatusQuo(epochInstance):
     print("#" * 20)
-    print(f"COMPUTING STATUS QUO FOR EPOCH {epochInstance.epochID} - "
-          f"START TIME {epochInstance.epochID * epochInstance.inputData.epoch_size * 60}")
+    print(f"COMPUTING STATUS QUO FOR EPOCH {epochInstance.epoch_id} - "
+          f"START TIME {epochInstance.epoch_id * epochInstance.input_data.epoch_size * 60}")
     print("#" * 20)
 
 
@@ -156,31 +156,31 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     """ Compute the schedule given the fixed decisions of the previous epochs and
     that all the trips in the current epoch start at the earliest departure time """
 
-    epochInstance.clockStartEpoch = datetime.datetime.now().timestamp()
+    epochInstance.clock_start_epoch = datetime.datetime.now().timestamp()
     printHeaderCurrentEpochStatusQuo(epochInstance)
-    statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.releaseTimes)
-    add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.freeFlowSchedule)
-    binaries = get_conflict_binaries(epochInstance.conflictingSets,
+    statusQuoMetrics = computeSolutionMetrics(epochInstance, epochInstance.release_times)
+    add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.free_flow_schedule)
+    binaries = get_conflict_binaries(epochInstance.conflicting_sets,
                                      epochInstance.trip_routes,
-                                     statusQuoMetrics.congestedSchedule)
+                                     statusQuoMetrics.congested_schedule)
     flows = get_flow_from_binaries(epochInstance, binaries.gamma)
     # save_congestion_info(epochInstance, statusQuoMetrics, flows)
     printInfoStatusQuoMetrics(statusQuoMetrics)
     print_info_arcs_utilized(epochInstance)
-    print_info_length_trips(epochInstance, statusQuoMetrics.congestedSchedule, statusQuoMetrics.freeFlowSchedule,
-                            statusQuoMetrics.delaysOnArcs)
+    print_info_length_trips(epochInstance, statusQuoMetrics.congested_schedule, statusQuoMetrics.free_flow_schedule,
+                            statusQuoMetrics.delays_on_arcs)
     vehiclesUtilizingArcs = _getVehiclesUtilizingArcs(epochInstance.trip_routes)
     _assertTripsAreNotDuplicated(epochInstance, vehiclesUtilizingArcs)
     print_info_conflicting_sets_sizes(epochInstance)
     return EpochSolution(
-        delaysOnArcs=statusQuoMetrics.delaysOnArcs,
-        freeFlowSchedule=statusQuoMetrics.freeFlowSchedule,
-        releaseTimes=statusQuoMetrics.releaseTimes,
-        staggeringApplicable=epochInstance.maxStaggeringApplicable[:],
-        totalDelay=statusQuoMetrics.totalDelay,
-        congestedSchedule=statusQuoMetrics.congestedSchedule,
-        staggeringApplied=[0.0] * len(statusQuoMetrics.congestedSchedule),
-        totalTravelTime=get_total_travel_time(statusQuoMetrics.congestedSchedule),
-        vehiclesUtilizingArcs=vehiclesUtilizingArcs,
+        delays_on_arcs=statusQuoMetrics.delays_on_arcs,
+        free_flow_schedule=statusQuoMetrics.free_flow_schedule,
+        release_times=statusQuoMetrics.release_times,
+        staggering_applicable=epochInstance.max_staggering_applicable[:],
+        total_delay=statusQuoMetrics.total_delay,
+        congested_schedule=statusQuoMetrics.congested_schedule,
+        staggering_applied=[0.0] * len(statusQuoMetrics.congested_schedule),
+        total_travel_time=get_total_travel_time(statusQuoMetrics.congested_schedule),
+        vehicles_utilizing_arcs=vehiclesUtilizingArcs,
         binaries=binaries
     )

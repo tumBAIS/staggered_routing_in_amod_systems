@@ -8,10 +8,10 @@ from utils.classes import EpochSolution
 
 def mapSimplifiedEpochSolution(epochInstance: EpochInstance,
                                simplifiedEpochSolution: EpochSolution) -> EpochSolution:
-    releaseTimesEpoch = epochInstance.releaseTimes
-    removedVehicles = epochInstance.removedVehicles  # to map back
-    staggeringAppliedInEpoch = simplifiedEpochSolution.staggeringApplied[:]
-    staggeringApplicable = simplifiedEpochSolution.staggeringApplicable[:]
+    releaseTimesEpoch = epochInstance.release_times
+    removedVehicles = epochInstance.removed_vehicles  # to map back
+    staggeringAppliedInEpoch = simplifiedEpochSolution.staggering_applied[:]
+    staggeringApplicable = simplifiedEpochSolution.staggering_applicable[:]
 
     # reinsert vehicles in schedule
     for vehicle in sorted(removedVehicles):
@@ -25,17 +25,17 @@ def mapSimplifiedEpochSolution(epochInstance: EpochInstance,
     totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = get_total_travel_time(congestedSchedule)
     delaysOnArcs = get_delays_on_arcs(epochInstance, congestedSchedule)
-    epochInstance.clockEndEpoch = datetime.datetime.now().timestamp()
+    epochInstance.clock_end_epoch = datetime.datetime.now().timestamp()
     print(
-        f"Time to complete the epoch: {epochInstance.clockEndEpoch - epochInstance.clockStartEpoch:.2f} [s]")
+        f"Time to complete the epoch: {epochInstance.clock_end_epoch - epochInstance.clock_start_epoch:.2f} [s]")
     print(f"total delay mapped solution: {totalDelay / 60:.2f} [min]")
-    epochSolution = EpochSolution(totalDelay=totalDelay,
-                                  congestedSchedule=congestedSchedule,
-                                  delaysOnArcs=delaysOnArcs,
-                                  releaseTimes=staggeredReleaseTimes,
-                                  staggeringApplicable=staggeringApplicable,
-                                  freeFlowSchedule=freeFlowSchedule,
-                                  staggeringApplied=staggeringAppliedInEpoch,
-                                  totalTravelTime=totalTravelTime,
-                                  vehiclesUtilizingArcs=simplifiedEpochSolution.vehiclesUtilizingArcs)
+    epochSolution = EpochSolution(total_delay=totalDelay,
+                                  congested_schedule=congestedSchedule,
+                                  delays_on_arcs=delaysOnArcs,
+                                  release_times=staggeredReleaseTimes,
+                                  staggering_applicable=staggeringApplicable,
+                                  free_flow_schedule=freeFlowSchedule,
+                                  staggering_applied=staggeringAppliedInEpoch,
+                                  total_travel_time=totalTravelTime,
+                                  vehicles_utilizing_arcs=simplifiedEpochSolution.vehicles_utilizing_arcs)
     return epochSolution

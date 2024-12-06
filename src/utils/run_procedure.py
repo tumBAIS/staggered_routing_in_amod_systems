@@ -43,7 +43,7 @@ def run_procedure(source: str) -> None:
             update_next_epoch_instance(epoch_instance, epoch_solution, next_epoch_instance, global_instance)
 
     # Reconstruct the complete solution from all epochs
-    complete_status_quo = get_offline_solution(global_instance, global_instance.releaseTimesDataset)
+    complete_status_quo = get_offline_solution(global_instance, global_instance.release_times_dataset)
     reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, global_instance)
 
     # Print insights and save the results

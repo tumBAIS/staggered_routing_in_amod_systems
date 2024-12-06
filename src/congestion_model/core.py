@@ -21,13 +21,13 @@ def get_free_flow_schedule(instance: Instance | EpochInstance,
 
 def get_congested_schedule(instance: Instance | EpochInstance,
                            release_times: list[float]) -> list[VehicleSchedule]:
-    cpp_parameters = [instance.inputData.algorithm_time_limit]
+    cpp_parameters = [instance.input_data.algorithm_time_limit]
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,
         capacities_arcs=instance.capacities_arcs,
-        list_of_slopes=instance.inputData.list_of_slopes,
-        list_of_thresholds=instance.inputData.list_of_thresholds,
+        list_of_slopes=instance.input_data.list_of_slopes,
+        list_of_thresholds=instance.input_data.list_of_thresholds,
         parameters=cpp_parameters,
         release_times=release_times,
         lb_travel_time=instance.get_lb_travel_time()
@@ -66,15 +66,15 @@ def get_total_travel_time(vehicleSchedule: list[VehicleSchedule]) -> float:
 
 def get_staggering_applicable(instance: Instance | EpochInstance, staggeringApplied: list[float]):
     return [vMaxStaggeringApplicable - vStaggeringApplied for vMaxStaggeringApplicable, vStaggeringApplied in
-            zip(instance.maxStaggeringApplicable, staggeringApplied)]
+            zip(instance.max_staggering_applicable, staggeringApplied)]
 
 
 def add_max_staggering_applicable_to_instance(instance: Instance, freeFlowSchedule: list[VehicleSchedule]):
     # Calculate the maximum staggering for each vehicle based on the free flow schedule if maxStaggering in input data
     # is positive, otherwise set maximum staggering to inf
     staggeringCaps = [
-        instance.inputData.staggering_cap / 100 * (freeFlow[-1] - freeFlow[0])
-        if instance.inputData.staggering_cap >= 0 else float("inf") for freeFlow in freeFlowSchedule
+        instance.input_data.staggering_cap / 100 * (freeFlow[-1] - freeFlow[0])
+        if instance.input_data.staggering_cap >= 0 else float("inf") for freeFlow in freeFlowSchedule
     ]
 
     # Calculate the maximum applicable staggering for each vehicle as the minimum between the maxStaggering computed
@@ -92,7 +92,7 @@ def add_max_staggering_applicable_to_instance(instance: Instance, freeFlowSchedu
     # Print information about the total staggering applicable
     print(f"Total staggering applicable is {round(totalStaggeringApplicable / 60, 2)} [min]"
           f"({round(totalStaggeringApplicable / totalFreeFlowTime * 100, 2)}% of the total free flow time)")
-    instance.maxStaggeringApplicable = maxStaggeringApplicable
+    instance.max_staggering_applicable = maxStaggeringApplicable
     return
 
 
@@ -103,15 +103,15 @@ def get_deadlines(instance: Instance) -> list[Time]:
     travel time to use to extend the deadline
     :return list of deadlines
     """
-    congestedSchedule = get_congested_schedule(instance, instance.releaseTimesDataset)
+    congestedSchedule = get_congested_schedule(instance, instance.release_times_dataset)
     freeFlowSchedule = get_free_flow_schedule(instance, congestedSchedule)
     deadlines = []
     for vehicle, schedule in enumerate(congestedSchedule):
         congestedArrival = schedule[-1]
         totTimeFreeFlow = freeFlowSchedule[vehicle][-1] - freeFlowSchedule[vehicle][0]
-        delta = totTimeFreeFlow * instance.inputData.deadline_factor / 100
+        delta = totTimeFreeFlow * instance.input_data.deadline_factor / 100
         deadline = congestedArrival + delta + 30
         deadlines.append(deadline)
 
-    print(f"Deadline delta is {instance.inputData.deadline_factor} % of nominal travel time")
+    print(f"Deadline delta is {instance.input_data.deadline_factor} % of nominal travel time")
     return deadlines

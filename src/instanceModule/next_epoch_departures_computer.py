@@ -114,7 +114,7 @@ class NextEpochDeparturesComputer:
     def _activateOtherConflictingVehicles(self, currentEpochStatusQuo, followingNextEpochDeparture,
                                           currentEpochInstance, vehicleStatusList, nextEpochDepartures):
         otherVehiclesOnArc = [vehicle for vehicle in
-                              currentEpochStatusQuo.vehiclesUtilizingArcs[followingNextEpochDeparture.arc] if
+                              currentEpochStatusQuo.vehicles_utilizing_arcs[followingNextEpochDeparture.arc] if
                               vehicle != followingNextEpochDeparture.vehicle]
         for otherVehicle in otherVehiclesOnArc:
             otherVehicleInfo = _getOtherVehicleInfo(currentEpochInstance,
@@ -146,8 +146,8 @@ def _getOtherVehicleInfo(currentEpochInstance: EpochInstance, currentEpochStatus
                          otherVehicle: int,
                          arc: int) -> OtherVehicleInfo:
     otherPosition = currentEpochInstance.trip_routes[otherVehicle].index(arc)
-    otherDepartureTime = currentEpochStatusQuo.congestedSchedule[otherVehicle][otherPosition]
-    otherArrivalTime = currentEpochStatusQuo.congestedSchedule[otherVehicle][otherPosition + 1]
+    otherDepartureTime = currentEpochStatusQuo.congested_schedule[otherVehicle][otherPosition]
+    otherArrivalTime = currentEpochStatusQuo.congested_schedule[otherVehicle][otherPosition + 1]
     return OtherVehicleInfo(departureTime=otherDepartureTime, arrivalTime=otherArrivalTime, position=otherPosition,
                             vehicle=otherVehicle, arc=arc)
 
@@ -157,7 +157,8 @@ def _isOtherConflicting(otherVehicleInfo, nextEpochDeparture):
 
 
 def _isTimeInCurrentEpoch(nextEpochDeparture, currentEpochInstance):
-    return nextEpochDeparture.time / 60 < (currentEpochInstance.epochID + 1) * currentEpochInstance.inputData.epoch_size
+    return nextEpochDeparture.time / 60 < (
+            currentEpochInstance.epoch_id + 1) * currentEpochInstance.input_data.epoch_size
 
 
 def _isCurrentVehicleInSystem(nextEpochDeparture, currentEpochInstance) -> bool:
@@ -167,7 +168,7 @@ def _isCurrentVehicleInSystem(nextEpochDeparture, currentEpochInstance) -> bool:
 
 def _getFollowingNextEpochDeparture(currentEpochStatusQuo, currentEpochInstance,
                                     nextEpochDeparture) -> NextEpochDeparture:
-    nextTime = currentEpochStatusQuo.congestedSchedule[nextEpochDeparture.vehicle][
+    nextTime = currentEpochStatusQuo.congested_schedule[nextEpochDeparture.vehicle][
         nextEpochDeparture.position + 1]
     nextArc = currentEpochInstance.trip_routes[nextEpochDeparture.vehicle][
         nextEpochDeparture.position + 1]

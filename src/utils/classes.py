@@ -18,55 +18,55 @@ class Binaries:
 
 @dataclass
 class EpochSolution:
-    delaysOnArcs: list[list[float]]
-    freeFlowSchedule: list[list[float]]
-    congestedSchedule: list[list[float]]
-    releaseTimes: list[float]
-    staggeringApplicable: list[float]
-    staggeringApplied: list[float]
-    vehiclesUtilizingArcs: list[list[int]]
-    totalDelay: float
-    totalTravelTime: float
-    nothingToOptimize: bool = False
+    delays_on_arcs: list[list[float]]
+    free_flow_schedule: list[list[float]]
+    congested_schedule: list[list[float]]
+    release_times: list[float]
+    staggering_applicable: list[float]
+    staggering_applied: list[float]
+    vehicles_utilizing_arcs: list[list[int]]
+    total_delay: float
+    total_travel_time: float
+    nothing_to_optimize: bool = False
     binaries: Binaries = field(default=Binaries)
 
 
 @dataclass
 class CompleteSolution:
-    delaysOnArcs: list[list[float]]
-    freeFlowSchedule: list[list[float]]
-    releaseTimes: list[float]
-    staggeringApplicable: list[float]
-    staggeringApplied: list[float]
-    totalDelay: float
-    totalTravelTime: float
-    congestedSchedule: list[list[float]]
+    delays_on_arcs: list[list[float]]
+    free_flow_schedule: list[list[float]]
+    release_times: list[float]
+    staggering_applicable: list[float]
+    staggering_applied: list[float]
+    total_delay: float
+    total_travel_time: float
+    congested_schedule: list[list[float]]
     binaries: Optional[Binaries]  # type: ignore
-    nothingToOptimize: bool = False
+    nothing_to_optimize: bool = False
 
 
 @dataclass(init=False)
 class OptimizationMeasures:
-    upperBound: list[float] = field(default_factory=list[float])
-    lowerBound: list[float] = field(default_factory=list[float])
-    optimizationTime: list[float] = field(default_factory=list[float])
-    optimalityGap: list[float] = field(default_factory=list[float])
-    measureExist: bool = False
+    upper_bound: list[float] = field(default_factory=list[float])
+    lower_bound: list[float] = field(default_factory=list[float])
+    optimization_time: list[float] = field(default_factory=list[float])
+    optimality_gap: list[float] = field(default_factory=list[float])
+    measure_exist: bool = False
 
     def __init__(self, model: Model):
         try:
-            self.upperBound = model._upperBound
-            self.lowerBound = model._lowerBound
-            self.optimizationTime = model._optimizationTime
-            self.optimalityGap = model._optimalityGap
-            self.measureExist = True
+            self.upper_bound = model._upperBound
+            self.lower_bound = model._lowerBound
+            self.optimization_time = model._optimizationTime
+            self.optimality_gap = model._optimalityGap
+            self.measure_exist = True
         except AttributeError:
             print("optimization measures not collected because not found in model")
 
 
 @dataclass
 class HeuristicSolution:
-    congestedSchedule: VehicleSchedules
+    congested_schedule: VehicleSchedules
     binaries: Binaries
-    delaysOnArcs: VehicleSchedules
-    totalDelay: float
+    delays_on_arcs: VehicleSchedules
+    total_delay: float

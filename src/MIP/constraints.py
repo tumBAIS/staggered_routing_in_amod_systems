@@ -21,7 +21,7 @@ def _addLoadConstraint(model, vehicle, arc):
 def _check_third_piece_can_be_active(instance: Instance, arc: ArcID) -> bool:
     nominalCapacityArc = instance.capacities_arcs[arc]
     return len(
-        instance.conflictingSets[arc]) > nominalCapacityArc * instance.inputData.list_of_thresholds[0]
+        instance.conflicting_sets[arc]) > nominalCapacityArc * instance.input_data.list_of_thresholds[0]
 
 
 def _add_piecewise_linear_delay(model: Model, vehicle: VehicleID, arc: ArcID, first_capacity: float,
@@ -44,8 +44,8 @@ def _addPWLDelayConstraint(model: Model, instance: Instance, vehicle: int, arc: 
     prev_slope = 0
 
     # Iterate through slopes to build the PWL points
-    for i, slope in enumerate(instance.inputData.list_of_slopes):
-        th_capacity = instance.capacities_arcs[arc] * instance.inputData.list_of_thresholds[i]
+    for i, slope in enumerate(instance.input_data.list_of_slopes):
+        th_capacity = instance.capacities_arcs[arc] * instance.input_data.list_of_thresholds[i]
         piece_slope = instance.travel_times_arcs[arc] * slope / instance.capacities_arcs[arc]
 
         # Special handling for the first piece

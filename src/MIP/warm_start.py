@@ -37,18 +37,18 @@ def _setBinariesWarmStartModel(model: Model, warmStart: CompleteSolution | Heuri
 def _setContinuousVariablesWarmStartModel(model: Model, warmStart: CompleteSolution):
     for vehicle in model._departure:
         for position, arc in enumerate(model._departure[vehicle]):
-            model._departure[vehicle][arc].Start = warmStart.congestedSchedule[vehicle][position]
-            assert model._departure[vehicle][arc]._lb - 1e-6 <= warmStart.congestedSchedule[vehicle][position] <= \
+            model._departure[vehicle][arc].Start = warmStart.congested_schedule[vehicle][position]
+            assert model._departure[vehicle][arc]._lb - 1e-6 <= warmStart.congested_schedule[vehicle][position] <= \
                    model._departure[vehicle][arc]._ub + 1e-6, \
-                f"{model._departure[vehicle][arc]._lb} <\= {warmStart.congestedSchedule[vehicle][position]} <\= \
+                f"{model._departure[vehicle][arc]._lb} <\= {warmStart.congested_schedule[vehicle][position]} <\= \
                    {model._departure[vehicle][arc]._ub}"
             if isinstance(model._delay[vehicle][arc], grb.Var):
-                model._delay[vehicle][arc].Start = warmStart.delaysOnArcs[vehicle][position]
-                assert model._delay[vehicle][arc]._lb - 1e-6 <= warmStart.delaysOnArcs[vehicle][position] <= \
+                model._delay[vehicle][arc].Start = warmStart.delays_on_arcs[vehicle][position]
+                assert model._delay[vehicle][arc]._lb - 1e-6 <= warmStart.delays_on_arcs[vehicle][position] <= \
                        model._delay[vehicle][arc]._ub + 1e-6, \
-                    f"{model._delay[vehicle][arc]._lb} <\= {warmStart.delaysOnArcs[vehicle][position]} <\= \
+                    f"{model._delay[vehicle][arc]._lb} <\= {warmStart.delays_on_arcs[vehicle][position]} <\= \
                    {model._delay[vehicle][arc]._ub}, vehicle: {vehicle}, arc: {arc}, " \
-                    f"vehicle schedule: {warmStart.congestedSchedule[vehicle]}, vehicle delays: {warmStart.delaysOnArcs[vehicle]}"
+                    f"vehicle schedule: {warmStart.congested_schedule[vehicle]}, vehicle delays: {warmStart.delays_on_arcs[vehicle]}"
 
 
 def setWarmStartModel(model: Model, warmStart: CompleteSolution | HeuristicSolution) -> None:

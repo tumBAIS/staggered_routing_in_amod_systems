@@ -30,10 +30,10 @@ def addOptimizationMeasuresToModel(model: Model):
 
 
 def setGurobiParameters(model, instance):
-    totalTimeRemaining = instance.inputData.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.startSolutionTime)
-    epochTimeRemaining = instance.inputData.epoch_time_limit - (
-            datetime.datetime.now().timestamp() - instance.clockStartEpoch)
+    totalTimeRemaining = instance.input_data.algorithm_time_limit - (
+            datetime.datetime.now().timestamp() - instance.start_solution_time)
+    epochTimeRemaining = instance.input_data.epoch_time_limit - (
+            datetime.datetime.now().timestamp() - instance.clock_start_epoch)
     timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
     model.setParam("timeLimit", max(0.0, round(timeRemaining, 2)))
     model.setParam("MIPGap", (GUROBI_OPTIMALITY_GAP * 0.01))
@@ -49,8 +49,8 @@ def setGurobiParameters(model, instance):
 
 def initializeOptimizationMeasuresModel(model, statusQuo: CompleteSolution, instance):
     model._lowerBound.append(0)
-    model._upperBound.append(statusQuo.totalDelay)
-    timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.startSolutionTime
+    model._upperBound.append(statusQuo.total_delay)
+    timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.start_solution_time
     model._optimizationTime.append(timeSpentInOptimization)
     model._optimalityGap.append(100)
     model._numBigMConstraints = 0
@@ -64,19 +64,19 @@ def computeIISIfNotSolved(model: Model):
 
 
 def getRemainingTime(instance: Instance) -> float:
-    return instance.inputData.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.startSolutionTime)
+    return instance.input_data.algorithm_time_limit - (
+            datetime.datetime.now().timestamp() - instance.start_solution_time)
 
 
 def _deleteSolutionExternalFile(instance: Instance | EpochInstance) -> None:
-    fileToDelete = f"{pathToResults}/initialSolution_{instance.clockStartEpoch}.p"
+    fileToDelete = f"{pathToResults}/initialSolution_{instance.clock_start_epoch}.p"
     if os.path.isfile(fileToDelete):
         os.remove(fileToDelete)
     return
 
 
 def loadInitialSolution(instance: Instance | EpochInstance) -> HeuristicSolution:
-    with open(f"{pathToResults}/initialSolution_{instance.clockStartEpoch}.p", "rb") as infile:
+    with open(f"{pathToResults}/initialSolution_{instance.clock_start_epoch}.p", "rb") as infile:
         initialSolution: HeuristicSolution = pickle.load(infile)
     _deleteSolutionExternalFile(instance)
     return initialSolution
@@ -86,7 +86,7 @@ def getFinalOptimizationMeasures(model, instance: Instance):
     if model.status not in [3, 4, 5]:
         model._lowerBound.append(model.ObjBound)
         model._upperBound.append(model.getObjective().getValue())
-        timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.startSolutionTime
+        timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.start_solution_time
         model._optimizationTime.append(timeSpentInOptimization)
         model._optimalityGap.append(model.MIPGap)
     return
@@ -97,6 +97,6 @@ def saveSolutionInExternalFile(heuristicSolution: HeuristicSolution | CompleteSo
     pathToResults = os.path.join(os.path.dirname(__file__), "../../results")
     if not os.path.exists(pathToResults):
         os.makedirs(pathToResults, exist_ok=True)
-    with open(f"{pathToResults}/initialSolution_{instance.clockStartEpoch}.p", "wb") as outfile:
+    with open(f"{pathToResults}/initialSolution_{instance.clock_start_epoch}.p", "wb") as outfile:
         pickle.dump(heuristicSolution, outfile)
         print("saved heuristic solution in external file")

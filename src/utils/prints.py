@@ -15,7 +15,7 @@ def print_info_arcs_utilized(instance):
 def print_info_conflicting_sets_sizes(instance):
     """ Prints information about sizes of conflicting sets and related statistics. """
 
-    conflictingSetsSizes = [len(x) for x in instance.conflictingSets if x != []]
+    conflictingSetsSizes = [len(x) for x in instance.conflicting_sets if x != []]
     confSetSeries = pd.Series(conflictingSetsSizes)
 
     print("#" * 44)
@@ -26,12 +26,12 @@ def print_info_conflicting_sets_sizes(instance):
 
     arcWithLargestConflictingSet = max(
         [arc for arc, time in enumerate(instance.travel_times_arcs)],
-        key=lambda x: len(instance.conflictingSets[x])
+        key=lambda x: len(instance.conflicting_sets[x])
     )
 
     print("Info arc with largest conflicting set:")
     print(f"Arc {arcWithLargestConflictingSet} info:")
-    print(f"Conflicting set size: {len(instance.conflictingSets[arcWithLargestConflictingSet])}")
+    print(f"Conflicting set size: {len(instance.conflicting_sets[arcWithLargestConflictingSet])}")
     print(f"Free flow travel time: {instance.travel_times_arcs[arcWithLargestConflictingSet]}")
     print(f"Nominal capacity: {instance.capacities_arcs[arcWithLargestConflictingSet]}")
 
@@ -126,7 +126,7 @@ def _print_delays_on_arcs_info(instance, delaysOnArcs: list[list[int]]) -> None:
 
 
 def _calculateLengthArcsUtilized(instance):
-    return [travelTime * instance.inputData.speed / 3.6 for travelTime in instance.travel_times_arcs]
+    return [travelTime * instance.input_data.speed / 3.6 for travelTime in instance.travel_times_arcs]
 
 
 def _createInfoDataFrame(instance, lengthArcs):
@@ -153,9 +153,10 @@ def print_insights_algorithm(
     print("#" * 20)
     print("FINAL INSIGHTS ALGORITHM")
     print("#" * 20)
-    print(f"Total delay complete status quo: {completeStatusQuo.totalDelay / 60:.2f} [min]")
-    print(f"Total delay final solution: {reconstructedSolution.totalDelay / 60:.2f} [min]")
-    delayReduction = (completeStatusQuo.totalDelay - reconstructedSolution.totalDelay) / \
-                     completeStatusQuo.totalDelay if completeStatusQuo.totalDelay > 1e-6 else 0
+    print(f"Total delay complete status quo: {completeStatusQuo.total_delay / 60:.2f} [min]")
+    print(f"Total delay final solution: {reconstructedSolution.total_delay / 60:.2f} [min]")
+    delayReduction = (completeStatusQuo.total_delay - reconstructedSolution.total_delay) / \
+                     completeStatusQuo.total_delay if completeStatusQuo.total_delay > 1e-6 else 0
     print(f"Total delay reduction: {delayReduction:.2%}")
-    print(f"Total runtime algorithm: {datetime.datetime.now().timestamp() - epochInstances[0].clockStartEpoch:.2f} [s]")
+    print(
+        f"Total runtime algorithm: {datetime.datetime.now().timestamp() - epochInstances[0].clock_start_epoch:.2f} [s]")
