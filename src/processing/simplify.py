@@ -35,18 +35,6 @@ def _set_min_release_time_to0_and_adjust_deadlines(instance: Instance,
     return
 
 
-def _assert_len_schedules_is_the_same(statusQuo):
-    if ACTIVATE_ASSERTIONS:
-        assert all(len(congSchedule) == len(ffSchedule) for congSchedule, ffSchedule in
-                   zip(statusQuo.congested_schedule, statusQuo.free_flow_schedule))
-
-
-def _assert_release_times_status_quo(statusQuo):
-    if ACTIVATE_ASSERTIONS:
-        assert all(abs(relTime - congSched[0]) < 1e-6 for relTime, congSched in
-                   zip(statusQuo.release_times, statusQuo.congested_schedule))
-
-
 def _print_congestion_info_simplified_system(statusQuo: CompleteSolution):
     totalFreeFlowTime = statusQuo.total_travel_time - statusQuo.total_delay
     print(

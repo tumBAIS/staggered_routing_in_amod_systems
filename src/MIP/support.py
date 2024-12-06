@@ -62,12 +62,7 @@ def compute_iis_if_not_solved(model: Model):
         model.write(f"{path_to_results}/unsolvedModel.ilp")
         raise RuntimeError("Model could not be solved.")
 
-
-def get_remaining_time(instance: Instance) -> float:
-    return instance.input_data.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time)
-
-
+ 
 def _delete_solution_external_file(instance: Instance | EpochInstance) -> None:
     fileToDelete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
     if os.path.isfile(fileToDelete):

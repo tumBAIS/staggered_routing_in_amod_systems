@@ -6,17 +6,6 @@ from collections import namedtuple
 BinariesBounds = namedtuple("BinariesBounds", ["lbAlpha", "ubAlpha", "lbBeta", "ubBeta", "lbGamma", "ubGamma"])
 
 
-def _check_if_ld1_smaller_than_ea2(firstVehicle, secondVehicle, arc, instance):
-    firstPosition = instance.trip_routes[firstVehicle].index(arc)
-    secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    ld1 = instance.latest_departure_times[firstVehicle][firstPosition]
-    ea2 = instance.earliest_departure_times[secondVehicle][secondPosition + 1]
-    if ld1 < ea2:
-        return True
-    else:
-        return False
-
-
 def _get_bounds_for_binaries(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> BinariesBounds:
     lbAlpha = 0
     lbBeta = 0
