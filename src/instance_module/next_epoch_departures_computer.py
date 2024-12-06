@@ -108,7 +108,7 @@ class NextEpochDeparturesComputer:
         self.indices_departures_to_modify = []
         self.change_made = False
 
-    def _initialize_vehicles_to_check(self, nextEpochDepartures: list[NextEpochDeparture]):
+    def initialize_vehicles_to_check(self, nextEpochDepartures: list[NextEpochDeparture]):
         self.vehicles_to_check = {departure.vehicle for departure in nextEpochDepartures}
 
     def _activate_other_conflicting_vehicles(self, currentEpochStatusQuo, followingNextEpochDeparture,
