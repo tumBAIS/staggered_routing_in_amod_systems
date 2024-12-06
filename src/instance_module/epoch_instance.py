@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import copy
 import datetime
-import typing
+from dataclasses import dataclass, field
+from typing import Any
 
 from input_data import InputData
-from dataclasses import dataclass, field
 
 
 @dataclass
@@ -21,75 +21,70 @@ class EpochInstance:
     travel_times_arcs: list[float]
     capacities_arcs: list[float]
     last_position_for_reconstruction: list[int | None]
-    osm_info_arcs_utilized: list[dict[str:typing.Any]]  # type: ignore
+    osm_info_arcs_utilized: list[dict[str: Any]]
     start_solution_time: float
     clock_start_epoch: float = field(default_factory=float)
     clock_end_epoch: float = field(default_factory=float)
-    undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=list[list[list[int]]])
-    conflicting_sets: list[list[int]] = field(default_factory=list[list[int]])
-    latest_departure_times: list[list[float]] = field(default_factory=list[list[float]])
-    earliest_departure_times: list[list[float]] = field(default_factory=list[list[float]])
-    min_delay_on_arc: list[list[float]] = field(default_factory=list[list[float]])
-    max_delay_on_arc: list[list[float]] = field(default_factory=list[list[float]])
-    removed_vehicles: list[int] = field(default_factory=list[int])
+    undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=lambda: [])
+    conflicting_sets: list[list[int]] = field(default_factory=list)
+    latest_departure_times: list[list[float]] = field(default_factory=list)
+    earliest_departure_times: list[list[float]] = field(default_factory=list)
+    min_delay_on_arc: list[list[float]] = field(default_factory=list)
+    max_delay_on_arc: list[list[float]] = field(default_factory=list)
+    removed_vehicles: list[int] = field(default_factory=list)
 
     def get_lb_travel_time(self) -> float:
-        """Return sum of the free flow times of the routes of trips contained in instance"""
-        return sum([self.travel_times_arcs[arc] for path in self.trip_routes for arc in path])
+        """Returns the sum of the free flow times of the routes of trips contained in the instance."""
+        return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
 
 
 EpochInstances = list[EpochInstance]
 
 
-def _get_last_vehicle_for_each_epoch(epochSize: int, releaseTimesDataset) -> list[int]:
-    lastVehicleEpochs = []
-
-    for epoch_ID in range(int(60 / epochSize)):
-        trips_in_epoch = [trip for trip, releaseTime in enumerate(releaseTimesDataset) if
-                          epoch_ID * epochSize <= releaseTime / 60 < (epoch_ID + 1) * epochSize]
-
+def _get_last_vehicle_for_each_epoch(epoch_size: int, release_times_dataset) -> list[int]:
+    last_vehicle_epochs = []
+    for epoch_id in range(int(60 / epoch_size)):
+        trips_in_epoch = [trip for trip, release_time in enumerate(release_times_dataset) if
+                          epoch_id * epoch_size <= release_time / 60 < (epoch_id + 1) * epoch_size]
         if trips_in_epoch:
             last_trip_in_epoch = trips_in_epoch[-1]
-            lastVehicleEpochs.append(last_trip_in_epoch)
+            last_vehicle_epochs.append(last_trip_in_epoch)
         else:
-            print(f"Epoch {epoch_ID} does not have any trips and will be excluded.")
-    print(f"Number of epochs: {len(lastVehicleEpochs)}")
-    return lastVehicleEpochs
+            print(f"Epoch {epoch_id} does not have any trips and will be excluded.")
+    print(f"Number of epochs: {len(last_vehicle_epochs)}")
+    return last_vehicle_epochs
 
 
-def _get_epoch_instance(instance, epochID, firstVehicleInEpoch, lastVehicleInEpoch) -> EpochInstance:
-    arcBasedShortestPaths = copy.deepcopy(instance.trip_routes[firstVehicleInEpoch:lastVehicleInEpoch + 1])
+def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch) -> EpochInstance:
+    arc_based_shortest_paths = copy.deepcopy(instance.trip_routes[first_vehicle_in_epoch:last_vehicle_in_epoch + 1])
 
     return EpochInstance(
+        epoch_id=epoch_id,
         input_data=instance.input_data,
-        vehicles_original_ids=list(range(firstVehicleInEpoch, lastVehicleInEpoch + 1)),
-        release_times=instance.release_times_dataset[
-                      firstVehicleInEpoch:lastVehicleInEpoch + 1],
-        trip_routes=arcBasedShortestPaths,
-        deadlines=instance.deadlines[firstVehicleInEpoch:lastVehicleInEpoch + 1],
-        max_staggering_applicable=instance.max_staggering_applicable[
-                                  firstVehicleInEpoch:lastVehicleInEpoch + 1],
+        vehicles_original_ids=list(range(first_vehicle_in_epoch, last_vehicle_in_epoch + 1)),
+        release_times=instance.release_times_dataset[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
+        trip_routes=arc_based_shortest_paths,
+        deadlines=instance.deadlines[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
+        max_staggering_applicable=instance.max_staggering_applicable[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         capacities_arcs=instance.capacities_arcs[:],
         travel_times_arcs=instance.travel_times_arcs[:],
         osm_info_arcs_utilized=instance.osm_info_arcs_utilized[:],
-        last_position_for_reconstruction=[None for _ in
-                                          instance.trip_routes[firstVehicleInEpoch:lastVehicleInEpoch + 1]],
-        epoch_id=epochID,
-        due_dates=instance.deadlines[firstVehicleInEpoch:lastVehicleInEpoch + 1],
-        start_solution_time=datetime.datetime.now().timestamp(),
+        last_position_for_reconstruction=[None for _ in range(last_vehicle_in_epoch + 1 - first_vehicle_in_epoch)],
+        due_dates=instance.deadlines[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
+        start_solution_time=datetime.datetime.now().timestamp()
     )
 
 
-def get_epoch_instances(globalInstance) -> EpochInstances:
-    epochSize = globalInstance.input_data.epoch_size
-    lastVehicleEpochs = _get_last_vehicle_for_each_epoch(epochSize, globalInstance.release_times_dataset)
-    numberOfEpochs = len(lastVehicleEpochs)
-    firstVehicleInEpoch = 0
-    epochInstances = []
-    for epoch in range(numberOfEpochs):
-        lastVehicleInEpoch = lastVehicleEpochs[epoch]
-        epochInstance = _get_epoch_instance(globalInstance, epoch, firstVehicleInEpoch, lastVehicleInEpoch)
-        firstVehicleInEpoch = lastVehicleInEpoch + 1
-        epochInstances.append(epochInstance)
+def get_epoch_instances(global_instance) -> EpochInstances:
+    epoch_size = global_instance.input_data.epoch_size
+    last_vehicle_epochs = _get_last_vehicle_for_each_epoch(epoch_size, global_instance.release_times_dataset)
+    number_of_epochs = len(last_vehicle_epochs)
+    first_vehicle_in_epoch = 0
+    epoch_instances = []
+    for epoch in range(number_of_epochs):
+        last_vehicle_in_epoch = last_vehicle_epochs[epoch]
+        epoch_instance = _get_epoch_instance(global_instance, epoch, first_vehicle_in_epoch, last_vehicle_in_epoch)
+        first_vehicle_in_epoch = last_vehicle_in_epoch + 1
+        epoch_instances.append(epoch_instance)
 
-    return epochInstances
+    return epoch_instances
