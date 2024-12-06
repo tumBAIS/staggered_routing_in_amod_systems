@@ -1,91 +1,90 @@
-import networkx as nx
-import numpy as np
 import os
-import shapely
-
-import inputData
-from instanceModule.paths import pairwise
+import numpy as np
+import networkx as nx
 from networkx import DiGraph
+from shapely.geometry import Point
 import jsonpickle
 from networkx.readwrite import json_graph
 
-from shapely.geometry import LineString
+import inputData
+from instanceModule.paths import pairwise
 
 
-def set_arcs_nominal_travel_times_and_capacities(manhattanGraph, inputData):
+def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
     """
-    Assigns nominal travel times and capacities to arcs in the Manhattan graph.
-
+    Assigns nominal travel times and capacities to arcs in the Manhattan graph based on
+    the speed and max flow allowed specified in the input data.
     """
-
-    print(f"Assigning nominal travel times assuming vehicles traveling at {inputData.speed} kph")
+    print(f"Assigning nominal travel times assuming vehicles traveling at {input_data.speed} kph")
 
     # Set initial nominal travel time attributes to NaN
-    nx.set_edge_attributes(manhattanGraph, float('nan'), "nominal_travel_time")
+    nx.set_edge_attributes(manhattan_graph, float('nan'), 'nominal_travel_time')
 
-    for origin, destination in manhattanGraph.edges():
-        # Calculate nominal travel time in seconds
-        nominalTravelTimeArc = manhattanGraph[origin][destination]['length'] * 3.6 / inputData.speed
-        manhattanGraph[origin][destination]['nominal_travel_time'] = (nominalTravelTimeArc)
+    for origin, destination in manhattan_graph.edges():
+        distance = manhattan_graph[origin][destination]['length']
+        nominal_travel_time = distance * 3.6 / input_data.speed
+        manhattan_graph[origin][destination]['nominal_travel_time'] = nominal_travel_time
 
         # Calculate nominal capacity based on max flow allowed
-        nominalCapacityArc = int(
-            np.ceil(manhattanGraph[origin][destination]["nominal_travel_time"] / inputData.max_flow_allowed))
-        manhattanGraph[origin][destination]["nominal_capacity"] = nominalCapacityArc
-
-    return
+        nominal_capacity = int(np.ceil(nominal_travel_time / input_data.max_flow_allowed))
+        manhattan_graph[origin][destination]['nominal_capacity'] = nominal_capacity
 
 
-def _addInitialArcsAttributes(manhattanGraph):
+def add_initial_arcs_attributes(manhattan_graph):
     """
-    Adds to the arcs the following attributes: original (obtained from OSM), arc origin and destination ,
-    coordinates of origin and destination of the arc (x and y)
+    Enhances each arc with attributes indicating its origin and destination coordinates,
+    and marks them as 'original' from OpenStreetMap.
     """
+    nx.set_edge_attributes(manhattan_graph, 'original', 'type_of_arc')
 
-    nx.set_edge_attributes(manhattanGraph, "original", "typeOfArc")
+    for origin, destination in manhattan_graph.edges():
+        origin_point = Point(manhattan_graph.nodes[origin]['x'], manhattan_graph.nodes[origin]['y'])
+        destination_point = Point(manhattan_graph.nodes[destination]['x'], manhattan_graph.nodes[destination]['y'])
 
-    for origin, destination in manhattanGraph.edges:
-        manhattanGraph[origin][destination]["origin"] = origin
-        manhattanGraph[origin][destination]["destination"] = destination
-
-        origin_coords = shapely.Point(manhattanGraph.nodes[origin]["x"], manhattanGraph.nodes[origin]["y"])
-        dest_coords = shapely.Point(manhattanGraph.nodes[destination]["x"], manhattanGraph.nodes[destination]["y"])
-
-        manhattanGraph[origin][destination]["coordinates_origin"] = origin_coords
-        manhattanGraph[origin][destination]["coordinates_destination"] = dest_coords
+        manhattan_graph[origin][destination].update({
+            'origin': origin,
+            'destination': destination,
+            'coordinates_origin': origin_point,
+            'coordinates_destination': destination_point
+        })
 
 
-def reduce_graph(manhattanGraph: DiGraph, nodeBasedShortestPaths: list[list[int]], inputData):
+def reduce_graph(manhattan_graph: DiGraph, node_based_shortest_paths: list[list[int]], input_data):
     """
-    Removes from Manhattan graph nodes and arcs not utilized in node based shortest paths.
-
+    Prunes the Manhattan graph by removing nodes and arcs not utilized in node-based shortest paths.
     """
+    nodes_utilized = {node for path in node_based_shortest_paths for node in path}
+    nodes_to_remove = [node for node in manhattan_graph if node not in nodes_utilized]
+    manhattan_graph.remove_nodes_from(nodes_to_remove)
 
-    nodes_utilized = set(node for path in nodeBasedShortestPaths for node in path)
-    nodes_to_remove = [node for node in manhattanGraph if node not in nodes_utilized]
-    manhattanGraph.remove_nodes_from(nodes_to_remove)
+    arcs_utilized = {(u, v) for path in node_based_shortest_paths for u, v in pairwise(path)}
+    arcs_to_remove = [arc for arc in manhattan_graph.edges() if arc not in arcs_utilized]
+    manhattan_graph.remove_edges_from(arcs_to_remove)
 
-    arcs_utilized = {(u, v) for path in nodeBasedShortestPaths for u, v in pairwise(path)}
-    arcs_to_remove = [arc for arc in manhattanGraph.edges() if arc not in arcs_utilized]
-    manhattanGraph.remove_edges_from(arcs_to_remove)
-
-    print(f"Arcs original network: {len(manhattanGraph.edges)}")
+    print(f"Arcs remaining in network: {len(manhattan_graph.edges())}")
 
 
-# https://gist.github.com/nuthanmunaiah/523a5e112f1e1f458e2c
-def _deserialize(file_path):
-    '''Function to _deserialize a NetworkX DiGraph from a JSON file.'''
-    with open(file_path, 'r+') as _file:
-        call_graph = json_graph.adjacency_graph(jsonpickle.decode(_file.read()), directed=True)
-    return call_graph
+def deserialize_graph(file_path: str) -> DiGraph:
+    """
+    Deserializes a NetworkX DiGraph from a JSON file using jsonpickle and json_graph.
+    """
+    with open(file_path, 'r') as file:
+        graph_data = jsonpickle.decode(file.read())
+        return json_graph.adjacency_graph(graph_data, directed=True)
 
 
 def import_graph(input_data: inputData.InputData) -> DiGraph:
-    pathToInstances = os.path.join(os.path.dirname(__file__), f"../../data/{input_data.network_name}")
-    if os.path.exists(f"{pathToInstances}/network.json"):
-        graph = DiGraph(_deserialize(f"{pathToInstances}/network.json"))
+    """
+    Imports a graph structure from a JSON file located based on the network name provided in input_data.
+    """
+    network_path = os.path.join(os.path.dirname(__file__), f"../../data/{input_data.network_name}")
+    network_file = os.path.join(network_path, "network.json")
+
+    if os.path.exists(network_file):
+        graph = DiGraph(deserialize_graph(network_file))
         print(f"Loaded {input_data.network_name} network")
     else:
         raise RuntimeError(f"{input_data.network_name} network not found")
-    _addInitialArcsAttributes(graph)
+
+    add_initial_arcs_attributes(graph)
     return graph
