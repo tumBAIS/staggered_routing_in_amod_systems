@@ -1,14 +1,8 @@
 import json
-
 import jsonpickle
 import networkx as nx
 from networkx import MultiDiGraph
 from networkx.readwrite import json_graph
-
-import cpp_module as cpp
-
-from input_data import CONSTR_TOLERANCE, TOLERANCE
-import random
 from typing import TypeVar
 
 K = TypeVar('K')

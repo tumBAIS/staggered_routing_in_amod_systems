@@ -23,8 +23,7 @@ def update_path_vehicles_of_conflicting_set(instance: Instance, arc: int) -> Non
 
 
 def split_conflicting_sets(instance: Instance) -> None:
-    "create an arc for each conflicting set,\
-    and updates the instanceModule attribute PotentialConflictingSetsAfterPreProcessing"
+    """create an arc for each conflicting set and updates the instanceModule attribute PotentialConflictingSetsAfterPreProcessing"""
     instance.conflicting_sets = [[] for _ in range(len(instance.travel_times_arcs))]
     for arc, conflictingSetsOnArc in enumerate(instance.undivided_conflicting_sets):
         if not conflictingSetsOnArc:
@@ -32,7 +31,7 @@ def split_conflicting_sets(instance: Instance) -> None:
             continue
         for conflictingSetId, conflictingSet in enumerate(conflictingSetsOnArc):
             if conflictingSetId == 0:
-                "assign first conflicting set to original arc"
+                # "assign first conflicting set to original arc"
                 instance.conflicting_sets[arc] = conflictingSet
                 instance.undivided_conflicting_sets[arc] = [conflictingSet]
                 continue

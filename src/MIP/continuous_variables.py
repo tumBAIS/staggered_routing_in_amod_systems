@@ -23,8 +23,8 @@ def _add_departure_variable(model: Model, vehicle: int, arc: int, instance: Inst
                                                       lb=earliestDepartureTime, ub=latestDepartureTime)
     model._departure[vehicle][arc]._lb = earliestDepartureTime
     model._departure[vehicle][arc]._ub = latestDepartureTime
-    assert earliestDepartureTime - 1e-4 <= departure <= latestDepartureTime + 1e-6, f"earliest departure time: {earliestDepartureTime} <\=" \
-                                                                                    f"departure: {departure} <\= " \
+    assert earliestDepartureTime - 1e-4 <= departure <= latestDepartureTime + 1e-6, rf"earliest departure time: {earliestDepartureTime} <\=" \
+                                                                                    rf"departure: {departure} <\= " \
                                                                                     f"latest departure time: {latestDepartureTime}"
 
 

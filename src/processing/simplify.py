@@ -9,7 +9,6 @@ from processing.remove_paths_sequences import remove_initial_part_of_paths_witho
     remove_final_part_of_paths_without_conflicts
 from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
 from instanceModule.instance import Instance
-from input_data import ACTIVATE_ASSERTIONS
 
 from utils.classes import EpochSolution, CompleteSolution
 

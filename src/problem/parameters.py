@@ -2,7 +2,7 @@ import datetime
 import os
 from dataclasses import dataclass
 from pathlib import Path
-
+from typing import Optional
 # Import utilities
 from utils.aliases import *  # Consider specifying which aliases are needed to avoid wildcard imports
 

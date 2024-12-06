@@ -37,7 +37,7 @@ def construct_model(instance: Instance | EpochInstance, statusQuo: CompleteSolut
     add_continuous_variables(model, instance, statusQuo, epochWarmStart)
     add_conflict_constraints(model, instance)
     add_travel_continuity_constraints(model, instance)
-    add_objective_function(instance.input_data, model)
+    add_objective_function(model)
     return model
 
 

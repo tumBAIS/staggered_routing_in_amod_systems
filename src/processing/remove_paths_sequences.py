@@ -56,19 +56,19 @@ def _remove_initial_part_of_vehicle_path(instance: Instance, statusQuo: Complete
 def _assert_max_delay_is_zero(instance, vehicle):
     try:
         instance.max_delay_on_arc[vehicle] != []
-    except:
+    except IndexError:
         raise IndexError(f"vehicle {vehicle} has no maxDelayOnArc")
     try:
         instance.max_delay_on_arc[vehicle][0] < 1e-6, \
             f"vehicle {vehicle} can have delay {instance.max_delay_on_arc[vehicle][0]} on his first arc"
-    except:
+    except IndexError:
         raise IndexError(
             f"vehicle: {vehicle} len instanceModule.maxDelayOnArc: {len(instance.max_delay_on_arc[vehicle])}")
 
 
 def _assert_shift_applicable_is_correct_after_deletion(instance, vehicle):
-    if instance.latest_departure_times[vehicle] != []:
-        assert abs(instance.latest_departure_times[vehicle][0] - (instance.earliest_departure_times[vehicle][0] + \
+    if instance.latest_departure_times[vehicle]:
+        assert abs(instance.latest_departure_times[vehicle][0] - (instance.earliest_departure_times[vehicle][0] +
                                                                   instance.max_staggering_applicable[
                                                                       vehicle])) < 1e-6, \
             "Shift applicable has changed while removing first part of paths: \n" \

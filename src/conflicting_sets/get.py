@@ -21,8 +21,7 @@ TimeBound = namedtuple("TimeBound",
 
 
 def split_time_bounds_on_arcs(instance: Instance,
-                              timeBoundsOnArcs: list[list[TimeBound]]) -> list[
-    list[list[TimeBound]]]:
+                              timeBoundsOnArcs: list[list[TimeBound]]) -> list[list[list[TimeBound]]]:
     boundsOnArcsSplit = [[] for _ in instance.travel_times_arcs]
     for arc, timeBounds in enumerate(timeBoundsOnArcs[1:], start=1):  # start enumeration from 1
         maximumLatestArrival = float('-inf')
@@ -171,20 +170,20 @@ def get_conflicting_departures(allEarliestDepartures: list[list[EarliestDepartur
 
 
 def combine_conflicts(conflictingArrivals: list[Arrival],
-                      conflcitingDepartures: list[KnownBoundDeparture]) -> list[tuple[float, str]]:
+                      conflicting_departures: list[KnownBoundDeparture]) -> list[tuple[float, str]]:
     """
     Combine conflicting latest arrivals and earliest departures into a sorted list of tuples.
 
     Args:
         conflictingArrivals (List[float]): List of conflicting latest arrivals.
-        conflcitingDepartures (List[float]): List of conflicting earliest departures.
+        conflicting_departures (List[float]): List of conflicting earliest departures.
 
     Returns: List[Tuple[float, str]]: Sorted list of tuples (time, type), where type 'a' represents arrival and 'd'
     represents departure.
     """
     arrivals = [(arrival.latest, 'a') for arrival in conflictingArrivals]
-    departures = [(departure.earliest, 'd') for departure in conflcitingDepartures]
-    latest_arrivals = [(departure.latestArrival, 'a') for departure in conflcitingDepartures]
+    departures = [(departure.earliest, 'd') for departure in conflicting_departures]
+    latest_arrivals = [(departure.latestArrival, 'a') for departure in conflicting_departures]
 
     listOfTuples = arrivals + departures + latest_arrivals
     sortedList = sorted(listOfTuples, key=lambda x: x[0])
@@ -372,7 +371,6 @@ def get_initial_latest_arrival_times(instance, ffSchedule):
 def get_bounds_vehicle(instance, vehicle, arc):
     path = instance.trip_routes[vehicle]
     index_arc = path.index(arc)
-    next_arx = instance.trip_routes[vehicle][index_arc + 1]
     earliest_entry = instance.earliest_departure_times[vehicle][index_arc]
     latest_entry = instance.latest_departure_times[vehicle][index_arc]
     earliest_leave = instance.earliest_departure_times[vehicle][index_arc + 1]

@@ -4,7 +4,6 @@ import cpp_module as cpp
 from instanceModule.instance import Instance
 from instanceModule.epoch_instance import EpochInstance
 from utils.aliases import *
-from utils.aliases import Time
 
 
 def get_free_flow_schedule(instance: Instance | EpochInstance,

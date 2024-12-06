@@ -84,7 +84,7 @@ def _assert_schedule(model: Model, congestedSchedule: VehicleSchedules, delaysOn
                 assert model._departure[vehicle][arc]._lb - 1e-6 <= schedule[position] <= model._departure[vehicle][
                     arc]._ub + 1e-6, \
                     f"Invalid departure time for arc {arc} of vehicle {vehicle} " \
-                    f"({model._departure[vehicle][arc]._lb} <\= {schedule[position]} <\= {model._departure[vehicle][arc]._ub})"
+                    rf"({model._departure[vehicle][arc]._lb} <\= {schedule[position]} <\= {model._departure[vehicle][arc]._ub})"
 
                 # Assert the delay is within the lower and upper bounds
                 assert model._delay[vehicle][arc]._lb - 1e-6 <= delays[position] <= model._delay[vehicle][

@@ -1,13 +1,9 @@
-import datetime
 import json
 import os.path
 import random
-from dataclasses import dataclass
-
 import numpy as np
 import shapely as shp
-
-from problem.parameters import InstanceParams
+from input_data import InputData
 from problem.network import Network
 from problem.route import TripRoutes, TripRoute
 from utils.aliases import *
@@ -20,10 +16,9 @@ def _get_point_from_dict(point_dict: dict) -> shp.Point:
 
 class Trip:
 
-    def __init__(self, network: Network, routes_info: dict, instance_params: InstanceParams):
-        """Initialize Trip object
-        :param trip_dict: contains coords o-d, release_time and trip_id
-        :param k_disjoint_shortest_paths_nodes: given if instance is loaded, else is None.
+    def __init__(self, network: Network, routes_info: dict, instance_params: InputData):
+        """
+        Initialize Trip object
         If given, contains for each trip a list of paths, represented as list of nodes.
         """
         # Properties
@@ -161,7 +156,7 @@ class Trip:
 
 class Trips:
 
-    def __init__(self, instance_params: InstanceParams, network: Network, instance_available: bool = True):
+    def __init__(self, instance_params: InputData, network: Network, instance_available: bool = True):
         self.R = []
         routes_info_list = self._get_routes_from_file(instance_params)
 
@@ -182,7 +177,7 @@ class Trips:
         self.free_flow_travel_time_matrix = self._get_free_flow_travel_time_matrix()
 
     @staticmethod
-    def _get_routes_from_file(instance_params: InstanceParams) -> RoutesFile:
+    def _get_routes_from_file(instance_params: InputData) -> RoutesFile:
         """
         Import precomputed routes from routes.json
         """

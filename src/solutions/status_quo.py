@@ -1,19 +1,14 @@
 import dataclasses
 import datetime
-import json
-import os.path
-
-import numpy as np
-
-from congestion_model.conflict_binaries import get_conflict_binaries, get_flow_from_binaries
+from congestion_model.conflict_binaries import get_conflict_binaries
 from utils.prints import print_info_conflicting_sets_sizes, \
     print_info_arcs_utilized, print_info_length_trips
 from utils.classes import EpochSolution
 from instanceModule.epoch_instance import EpochInstance
-from conflicting_sets.get import add_conflicting_sets_to_instance, estimate_big_m_necessary
+from conflicting_sets.get import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time, get_congested_schedule, get_free_flow_schedule, \
     get_delays_on_arcs, get_total_delay
-from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
+from input_data import ACTIVATE_ASSERTIONS
 
 
 def _get_vehicles_utilizing_arcs(arcBasedShortestPaths: list[list[int]]) -> list[list[int]]:
@@ -85,8 +80,6 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance) -> EpochSolution:
     binaries = get_conflict_binaries(epochInstance.conflicting_sets,
                                      epochInstance.trip_routes,
                                      statusQuoMetrics.congested_schedule)
-    flows = get_flow_from_binaries(epochInstance, binaries.gamma)
-    # save_congestion_info(epochInstance, statusQuoMetrics, flows)
     print_info_status_quo_metrics(statusQuoMetrics)
     print_info_arcs_utilized(epochInstance)
     print_info_length_trips(epochInstance, statusQuoMetrics.congested_schedule, statusQuoMetrics.free_flow_schedule,

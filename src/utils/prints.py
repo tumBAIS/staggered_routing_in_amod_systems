@@ -76,7 +76,7 @@ def _create_length_trips_dataframe(congestedSchedule, freeFlowSchedule):
 
 
 def _get_delays_on_arcs_in_minutes_series(instance, delaysOnArcs):
-    delaysOnArcsInMins = []
+    delays_on_arcs_minutes = []
     delaysOnArcsInPerc = []
     travelTimeArcsOnWhichDelayOccur = []
 
@@ -88,14 +88,14 @@ def _get_delays_on_arcs_in_minutes_series(instance, delaysOnArcs):
                 delay_in_sec = delay
                 delay_percentage = (delay / travel_time) * 100
 
-                delaysOnArcsInMins.append(delay_in_sec / 60)
+                delays_on_arcs_minutes.append(delay_in_sec / 60)
                 delaysOnArcsInPerc.append(delay_percentage)
                 travelTimeArcsOnWhichDelayOccur.append(travel_time / 60)
 
     # Create a DataFrame
     data = {
         'Nominal travel time arc [min]': travelTimeArcsOnWhichDelayOccur,
-        'Delay on arcs [min]': delaysOnArcsInMins,
+        'Delay on arcs [min]': delays_on_arcs_minutes,
     }
     return pd.DataFrame(data)
 

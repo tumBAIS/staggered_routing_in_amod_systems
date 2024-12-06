@@ -1,13 +1,8 @@
-import itertools
-
 import gurobipy as grb
 import numpy as np
 from gurobipy import Model
-import math
-
 from input_data import CONSTR_TOLERANCE, USE_GUROBI_INDICATORS, TOLERANCE
 from instanceModule.instance import Instance
-from input_data import MIN_SET_CAPACITY
 from utils.aliases import *
 
 
@@ -192,7 +187,7 @@ def add_travel_continuity_constraints(model: Model, instance: Instance) -> None:
             )
 
 
-def add_objective_function(inputData, model) -> None:
+def add_objective_function(model) -> None:
     print("Writing the objective function:", end=" ")
     model.addConstr(model._totalDelay ==
                     grb.quicksum(

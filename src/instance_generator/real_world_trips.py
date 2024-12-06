@@ -243,7 +243,7 @@ def _convert_dataset_to_gdf(dataset: pd.DataFrame, lon_col: str, lat_col: str) -
     return osm.project_gdf(gdf, to_crs=WEB_MERCATOR_CRS)
 
 
-def _load_dataset(instance_params: InstanceParams) -> pd.DataFrame:
+def _load_dataset(instance_params: InputData) -> pd.DataFrame:
     """Load TLC data relative to Manhattan."""
     tlc_folder_name = "YellowTripDataManhattan2015-01"
     path_to_repo = Path(__file__).resolve().parents[2]
@@ -259,7 +259,7 @@ def _load_dataset(instance_params: InstanceParams) -> pd.DataFrame:
     return loaded_df.drop(columns=columns_to_drop, axis=1)
 
 
-def _preprocess_real_world_times(trips_gdf: pd.DataFrame) -> pd.DataFrame:
+def _preprocess_real_world_times(trips_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """Convert datetime to timestamps and adjust them relative to the minimum departure time."""
     min_departure_time = trips_gdf["Trip_Pickup_DateTime"].min()
     trips_gdf["release_time"] = trips_gdf["Trip_Pickup_DateTime"].apply(
@@ -269,7 +269,7 @@ def _preprocess_real_world_times(trips_gdf: pd.DataFrame) -> pd.DataFrame:
     return trips_gdf
 
 
-def _filter_dataset_by_time(loaded_dataset: pd.DataFrame, instance_params: InstanceParams) -> pd.DataFrame:
+def _filter_dataset_by_time(loaded_dataset: pd.DataFrame, instance_params: InputData) -> pd.DataFrame:
     """Filter trips by start and end times."""
     start_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=0, second=0)
     end_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=59, second=59)

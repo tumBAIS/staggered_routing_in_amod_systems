@@ -1,10 +1,4 @@
 import json
-import typing
-
-import scipy.special
-
-import input_data
-from problem.parameters import SolverParams
 import utils.timer
 from problem.trip import Trips
 import cpp_module as cpp
@@ -101,10 +95,7 @@ class Scheduler:
     def save_cpp_instance_for_debugging(self):
         """
                 Saves the current iteration state for debugging purposes in C++.
-
-                Args:
-                    trip (Trip): The trip being processed.
-                """
+        """
         # Define the directory where the file will be saved
         path_to_repo = Path(__file__).parent.parent.parent
         path_to_file = path_to_repo / "cpp_module/validation_errors/schedule_mismatch/"
@@ -115,13 +106,11 @@ class Scheduler:
 
         # Prepare the error data for JSON serialization
         cpp_instance = {
-            "controlled_flags": self.trips.controlled_flags,
             "deadlines": self.trips.deadlines,
             "release_times": self.trips.release_times,
             "routes_latest_departures": self.trips.routes_latest_departures,
             "free_flow_travel_matrix": self.trips.free_flow_travel_time_matrix,
             "lb_travel_time": self.trips.lb_travel_time,
-            "lb_travel_time_controlled": self.trips.lb_travel_time_controlled,
             "list_of_slopes": self.network.instance_params.list_of_slopes,
             "list_of_thresholds": self.network.instance_params.list_of_thresholds,
             "max_cascade_level": -1,

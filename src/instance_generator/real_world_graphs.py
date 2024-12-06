@@ -81,7 +81,7 @@ def get_southern_percentage_of_network(G: nx.MultiDiGraph, percentage: int, path
 
     # Get the largest strongly connected component
     largest_scc = max(nx.strongly_connected_components(subgraph), key=len)
-    H = subgraph.subgraph(largest_scc).copy()
+    H = nx.MultiDiGraph(subgraph.subgraph(largest_scc).copy())
     _merge_arcs_by_degree_two_nodes(H)
 
     # Renumber nodes to be sequential from 0
@@ -95,7 +95,7 @@ def get_southern_percentage_of_network(G: nx.MultiDiGraph, percentage: int, path
 
 
 def _add_extended_length_attribute(G: nx.MultiDiGraph) -> None:
-    """Add extended length edge attribute: used to compute alterantive shortest paths."""
+    """Add extended length edge attribute: used to compute alternative shortest paths."""
     # Iterate over all edges to copy the 'length' attribute to 'extended_length'
     for u, v, data in G.edges(data=True):
         if 'length' in data:
@@ -147,7 +147,7 @@ def _remove_motorways_and_connecting_arcs(G: nx.MultiDiGraph) -> None:
 
 def _merge_arcs_by_degree_two_nodes(G: nx.MultiDiGraph):
     """
-    Repeatedly merges arcs connected by degree two nodes in a network multidigraph by replacing them with a single arc,
+    Repeatedly merges arcs connected by degree two nodes in a network multi digraph by replacing them with a single arc,
     ensuring that the geometry of the new arc is correctly formed.
     """
 
@@ -183,7 +183,7 @@ def _extract_largest_strongly_connected_component(G: nx.MultiDiGraph) -> nx.Mult
     # Create a subgraph of the graph containing only the nodes in the largest SCC
     largest_scc = G.subgraph(largest_scc_nodes).copy()
 
-    return largest_scc
+    return nx.MultiDiGraph(largest_scc)
 
 
 def plot_real_world_G(G: nx.MultiDiGraph, path_to_G: Path, paths: Optional[list[list[int]]] = None,
@@ -214,11 +214,11 @@ def plot_real_world_G(G: nx.MultiDiGraph, path_to_G: Path, paths: Optional[list[
 
 
 def _plot_paths(G, ax: plt.Axes, paths: list[list[int]], edges: gpd.GeoDataFrame):
-    # Define colors and linewidths
+    # Define colors and line widths
     colors = cm.viridis(np.linspace(0, 1, len(paths)))
-    max_linewidth = 6
-    min_linewidth = 2
-    linewidths = np.linspace(max_linewidth, min_linewidth, len(paths))
+    max_line_width = 6
+    min_line_width = 2
+    line_widths = np.linspace(max_line_width, min_line_width, len(paths))
 
     # Plot the paths
     for idx, path in enumerate(paths):
@@ -234,7 +234,7 @@ def _plot_paths(G, ax: plt.Axes, paths: list[list[int]], edges: gpd.GeoDataFrame
         if path_edges:
             path_line = LineString([point for line in path_edges for point in line.coords])
             path_gdf = gpd.GeoDataFrame(geometry=[path_line], crs=edges.crs)
-            path_gdf.plot(ax=ax, linewidth=linewidths[idx], edgecolor=colors[idx], zorder=5)
+            path_gdf.plot(ax=ax, linewidth=line_widths[idx], edgecolor=colors[idx], zorder=5)
 
         # Plot the OD pairs
         origin_node = path[0]

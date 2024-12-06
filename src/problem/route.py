@@ -1,3 +1,4 @@
+from input_data import InputData
 from utils.aliases import *
 from utils.tools import pairwise
 from problem.network import Network
@@ -5,7 +6,6 @@ from problem.arc import Arc
 import random
 from typing import TypeVar
 from problem.parameters import SPEED
-from problem.parameters import InstanceParams
 
 Trip = TypeVar("Trip")  # Alias for trip
 
@@ -13,7 +13,7 @@ Trip = TypeVar("Trip")  # Alias for trip
 class TripRoute:
 
     def __init__(self, node_based_path: list[NodeID], network: Network, arg_route_id: int, trip: Trip,
-                 instance_params: InstanceParams):
+                 instance_params: InputData):
         self.path_nodes = node_based_path  # nodes are integers starting from 0
         self.path_tuples_of_nodes = self._get_path_tuples_of_nodes()
         self.path_travel_time = self._get_path_travel_time(network)
@@ -57,7 +57,7 @@ class TripRoute:
         """Get latest departure on route
         WARNING: we are losing control over the maximum staggering parameter.
         """
-        assert 0 <= staggering_cap <= 100, "staggering cap is not correclty set"
+        assert 0 <= staggering_cap <= 100, "staggering cap is not correctly set"
         time_window = trip.deadline - trip.release_time
         slack = time_window - self.path_travel_time
         return trip.release_time + (slack * staggering_cap / 100)
@@ -66,9 +66,9 @@ class TripRoute:
 class TripRoutes:
     """Class regarding paths of a **single** trip"""
 
-    def __init__(self, trip, network: Network, route_nodes: list[NodeID], instance_params: InstanceParams):
-        """Initialize trip routes
-        :param routes_nodes_list: list of list of node ids.
+    def __init__(self, trip, network: Network, route_nodes: list[NodeID], instance_params: InputData):
+        """
+        Initialize trip routes
         """
 
         self.trip = trip  # store associated trip
@@ -86,7 +86,7 @@ class TripRoutes:
         # Ensure that the route ID matches the expected position's ID in the list.
         try:
             return self.P[route_id]
-        except:
+        except IndexError:
             raise IndexError(f"Trip {self.trip.id} has the following routes: {self.P} "
                              f"Trying to access route at index {route_id}")
 

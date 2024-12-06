@@ -45,7 +45,6 @@ if __name__ == "__main__":
         epoch_size=60,
         seed=0,
         network_name="manhattan_10",
-        type_of_instance="synthetic",
         speed=20,
         max_flow_allowed=100,
         add_shortcuts=False,

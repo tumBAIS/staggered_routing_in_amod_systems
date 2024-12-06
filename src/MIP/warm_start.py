@@ -46,7 +46,7 @@ def _set_continuous_variables_warm_start_model(model: Model, warmStart: Complete
                 model._delay[vehicle][arc].Start = warmStart.delays_on_arcs[vehicle][position]
                 assert model._delay[vehicle][arc]._lb - 1e-6 <= warmStart.delays_on_arcs[vehicle][position] <= \
                        model._delay[vehicle][arc]._ub + 1e-6, \
-                    f"{model._delay[vehicle][arc]._lb} <\= {warmStart.delays_on_arcs[vehicle][position]} <\= \
+                    rf"{model._delay[vehicle][arc]._lb} <\= {warmStart.delays_on_arcs[vehicle][position]} <\= \
                    {model._delay[vehicle][arc]._ub}, vehicle: {vehicle}, arc: {arc}, " \
                     f"vehicle schedule: {warmStart.congested_schedule[vehicle]}, vehicle delays: {warmStart.delays_on_arcs[vehicle]}"
 

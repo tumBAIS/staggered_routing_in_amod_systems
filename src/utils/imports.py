@@ -22,7 +22,7 @@ def get_not_simplified_instance(input_data: InputData) -> Instance:
     """Constructs an instance from input data without simplification."""
     trips_df = import_trips_df(input_data)
     graph = import_graph(input_data)
-    reduce_graph(graph, trips_df['path'], input_data)
+    reduce_graph(graph, trips_df['path'])
 
     node_based_shortest_paths = add_shortcuts(input_data, graph, trips_df, trips_df['path'])
     set_arcs_nominal_travel_times_and_capacities(graph, input_data)

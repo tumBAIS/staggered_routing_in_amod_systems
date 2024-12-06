@@ -8,8 +8,7 @@ from shapely import Polygon
 
 from input_data import InputData
 from problem.arc import Arc
-from problem.parameters import InstanceParams
-from utils.aliases import *
+from typing import Optional
 
 
 class Network:
@@ -144,7 +143,7 @@ class Network:
         nodes_gdf.sort_index(inplace=True)
         return nodes_gdf
 
-    def add_arcs(self, trips, instance_params: InstanceParams):
+    def add_arcs(self, trips):
         """
         Add both dummy arcs (for disjoint paths) and real arcs (from OSM data) to the internal lists.
         """

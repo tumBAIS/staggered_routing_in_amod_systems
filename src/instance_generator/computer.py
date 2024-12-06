@@ -6,8 +6,7 @@ import networkx as nx
 import numpy as np
 import cpp_module as cpp
 import utils.tools
-from instance_generator import synthetic_graphs as synthetic_graphs, real_world_graphs as real_world_graphs, \
-    synthetic_trips as synthetic_trips, real_world_trips as real_world_trips
+from instance_generator import real_world_graphs as real_world_graphs, real_world_trips as real_world_trips
 from methods import scheduler as sq
 from problem.network import Network
 from problem.trip import Trips
@@ -29,7 +28,7 @@ class InstanceComputer:
         network = Network(self.instance_params, G)
         self._compute_routes_file(network)
         trips = Trips(self.instance_params, network, instance_available=False)
-        network.add_arcs(trips, self.instance_params)
+        network.add_arcs(trips)
         trips.set_trips_network_paths(network)
         self.plot_paths(network, trips, plot_flag)
         # Construct status quo
@@ -114,12 +113,7 @@ class InstanceComputer:
 
     def _create_network_from_name(self, network_name: str, path_to_G: Path, replace: bool) -> nx.DiGraph:
         """Create G based on network name."""
-        if network_name == "pigou":
-            return synthetic_graphs.create_pigou_network(path_to_G)
-        elif "lattice" in network_name:
-            num_nodes = int(network_name.split("_")[-1])
-            return synthetic_graphs.generate_directed_lattice_graph(num_nodes, 20, path_to_G)
-        elif "manhattan" in network_name:
+        if "manhattan" in network_name:
             return self._get_manhattan_network(network_name, replace, path_to_G)
         else:
             raise RuntimeError("Network type not implemented.")
@@ -181,10 +175,7 @@ class InstanceComputer:
         print(f"Generating routes info for network: {network_name}...")
         print("-" * 60 + "\n")
 
-        if network_name == "pigou" or "lattice" in network_name:
-            routes_file = synthetic_trips.get_synthetic_trips(self.instance_params, network)
-        else:
-            routes_file = real_world_trips.get_real_world_trips(self.instance_params, network)
+        routes_file = real_world_trips.get_real_world_trips(self.instance_params, network)
 
         self._save_routes_file(routes_file)
 

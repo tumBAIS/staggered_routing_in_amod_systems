@@ -94,8 +94,8 @@ def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSol
     # save twice on cluster
     if inputSource == "console":
         pathToResults = sys.argv[2]
-        with open(f'{pathToResults}/results.p', 'wb') as picklefile:
-            pickle.dump(output_data, picklefile)
+        with open(f'{pathToResults}/results.p', 'wb') as pickle_file:
+            pickle.dump(output_data, pickle_file)
 
     return
 

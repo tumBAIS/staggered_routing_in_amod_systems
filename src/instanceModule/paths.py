@@ -1,6 +1,7 @@
 import collections
 import typing
 from itertools import tee
+from typing import Any
 
 import networkx as nx
 from networkx import DiGraph
@@ -26,7 +27,7 @@ def get_node_based_shortest_paths(taxi_rides_with_pudo: DataFrame, manhattan_gra
             path = nx.shortest_path(manhattan_graph, source=row["origin"], target=row["destination"], weight='length')
             node_based_shortest_paths.append(path)
         except nx.NetworkXNoPath:
-            indices_paths_to_remove.append(idx_record)
+            indices_paths_to_remove.append(int(idx_record))
     print("done!")
     if indices_paths_to_remove:
         remove_unreachable_paths(taxi_rides_with_pudo, indices_paths_to_remove)
@@ -41,8 +42,8 @@ def pairwise(iterable):
     return zip(a, b)
 
 
-def get_arc_based_shortest_paths_original_ids(node_based_shortest_paths: list[list[int]]) -> list[
-    list[tuple[int, int]]]:
+def get_arc_based_shortest_paths_original_ids(node_based_shortest_paths: list[list[int]]) -> (
+        list)[list[tuple[int, int]]]:
     """Converts node-based paths to arc-based paths using original node IDs."""
     return [[(u, v) for (u, v) in pairwise(path)] for path in node_based_shortest_paths]
 
@@ -69,7 +70,8 @@ def map_arc_based_shortest_paths(arc_based_shortest_paths_original_ids: list[lis
     return arc_based_shortest_paths
 
 
-def get_travel_times_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> list[float]:
+def get_travel_times_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> (
+        list)[dict[str, Any]]:
     """Retrieves the travel times for utilized arcs, adding a zero at the start for the dummy node."""
     travel_times = [manhattan_graph[origin][destination]["nominal_travel_time"] for origin, destination in
                     arcs_utilized_ids]
@@ -84,8 +86,8 @@ def get_nominal_capacity_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_i
     return capacities
 
 
-def get_osm_info_arcs(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> list[
-    dict[str, typing.Any]]:
+def get_osm_info_arcs(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> (
+        list)[dict[str, typing.Any]]:
     """Extracts OpenStreetMap info for utilized arcs, adding an empty dictionary at the start for the dummy node."""
     osm_info = [{**manhattan_graph[origin][destination]} for origin, destination in arcs_utilized_ids]
     osm_info.insert(0, {})

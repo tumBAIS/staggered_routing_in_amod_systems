@@ -49,7 +49,7 @@ def add_initial_arcs_attributes(manhattan_graph):
         })
 
 
-def reduce_graph(manhattan_graph: DiGraph, node_based_shortest_paths: list[list[int]], input_data):
+def reduce_graph(manhattan_graph: DiGraph, node_based_shortest_paths: list[list[int]]):
     """
     Prunes the Manhattan graph by removing nodes and arcs not utilized in node-based shortest paths.
     """
