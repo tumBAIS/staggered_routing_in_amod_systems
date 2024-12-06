@@ -9,11 +9,11 @@ from input_data import InputData, SAVE_CPP_INSTANCE
 from utils.aliases import *
 from utils.aliases import Time, Staggering
 
-pathToCppInstance = os.path.join(os.path.dirname(__file__),
-                                 "../../cpp_module/catch2_tests/instancesForTest/instanceForLocalSearch")
+path_to_cpp_instance = os.path.join(os.path.dirname(__file__),
+                                    "../../cpp_module/catch2_tests/instancesForTest/instanceForLocalSearch")
 
 
-def saveListOfStringsFile(listOfValues: list[typing.Any], fileName: str, path: str):
+def save_list_of_strings_file(listOfValues: list[typing.Any], fileName: str, path: str):
     with open(f"{path}/{fileName}.txt", "w") as outfile:
         for i, value in enumerate(listOfValues):
             if i < len(listOfValues) - 1:
@@ -109,30 +109,30 @@ class Instance:
             raise ValueError("max staggering applicable is none")
 
 
-def _writeArcBasedShortestPathsForCppCode(instance: Instance):
-    with open(f"{pathToCppInstance}/arcBasedShortestPaths.txt", "w") as outfile:
+def _write_arc_based_shortest_paths_for_cpp_code(instance: Instance):
+    with open(f"{path_to_cpp_instance}/arcBasedShortestPaths.txt", "w") as outfile:
         for vehiclePath in instance.trip_routes:
             outfile.writelines([str(arc) + "," for arc in vehiclePath if arc != 0])
             outfile.write("0")
             outfile.writelines("\n")
 
 
-def _writeEarliestDepartureTimesForCppCode(instance: Instance):
-    with open(f"{pathToCppInstance}/earliestDepartureTimes.txt", "w") as outfile:
+def _write_earliest_departure_times_for_cpp_code(instance: Instance):
+    with open(f"{path_to_cpp_instance}/earliestDepartureTimes.txt", "w") as outfile:
         for vehicleEDs in instance.earliest_departure_times:
             outfile.writelines([str(ED) + "," for ED in vehicleEDs])
             outfile.writelines("\n")
 
 
-def _writeLatestDepartureTimesForCppCode(instance: Instance):
-    with open(f"{pathToCppInstance}/latestDepartureTimes.txt", "w") as outfile:
+def _write_latest_departure_times_for_cpp_code(instance: Instance):
+    with open(f"{path_to_cpp_instance}/latestDepartureTimes.txt", "w") as outfile:
         for vehicleLDs in instance.latest_departure_times:
             outfile.writelines([str(LD) + "," for LD in vehicleLDs])
             outfile.writelines("\n")
 
 
-def _writeConflictingSetsAfterPreprocessingForCppCode(instance: Instance):
-    with open(f"{pathToCppInstance}/conflictingSets.txt", "w") as outfile:
+def _write_conflicting_sets_after_preprocessing_for_cpp_code(instance: Instance):
+    with open(f"{path_to_cpp_instance}/conflictingSets.txt", "w") as outfile:
         for conflictingSet in instance.conflicting_sets:
             if conflictingSet:
                 outfile.writelines(
@@ -144,23 +144,23 @@ def _writeConflictingSetsAfterPreprocessingForCppCode(instance: Instance):
 
 def save_instance_for_testing_cpp_code(instance: Instance, statusQuo: CompleteSolution) -> None:
     if SAVE_CPP_INSTANCE:
-        if not os.path.exists(pathToCppInstance):
-            os.mkdir(pathToCppInstance)
+        if not os.path.exists(path_to_cpp_instance):
+            os.mkdir(path_to_cpp_instance)
         parameters = [instance.input_data.algorithm_time_limit]
-        _writeArcBasedShortestPathsForCppCode(instance)
-        _writeEarliestDepartureTimesForCppCode(instance)
-        _writeLatestDepartureTimesForCppCode(instance)
-        _writeConflictingSetsAfterPreprocessingForCppCode(instance)
-        saveListOfStringsFile(parameters, "parameters", pathToCppInstance)
-        saveListOfStringsFile(instance.deadlines, "deadlines", pathToCppInstance)
-        saveListOfStringsFile(instance.input_data.list_of_slopes, "list_of_slopes", pathToCppInstance)
-        saveListOfStringsFile(instance.input_data.list_of_thresholds, "list_of_thresholds", pathToCppInstance)
-        saveListOfStringsFile(instance.deadlines, "dueDates", pathToCppInstance)
-        saveListOfStringsFile(instance.travel_times_arcs, "travelTimesArcsUtilized", pathToCppInstance)
-        saveListOfStringsFile(instance.capacities_arcs, "nominalCapacitiesArcsUtilized",
-                              pathToCppInstance)
-        saveListOfStringsFile(statusQuo.release_times, "releaseTimes", pathToCppInstance)
-        saveListOfStringsFile(statusQuo.staggering_applicable, "remainingSlack", pathToCppInstance)
+        _write_arc_based_shortest_paths_for_cpp_code(instance)
+        _write_earliest_departure_times_for_cpp_code(instance)
+        _write_latest_departure_times_for_cpp_code(instance)
+        _write_conflicting_sets_after_preprocessing_for_cpp_code(instance)
+        save_list_of_strings_file(parameters, "parameters", path_to_cpp_instance)
+        save_list_of_strings_file(instance.deadlines, "deadlines", path_to_cpp_instance)
+        save_list_of_strings_file(instance.input_data.list_of_slopes, "list_of_slopes", path_to_cpp_instance)
+        save_list_of_strings_file(instance.input_data.list_of_thresholds, "list_of_thresholds", path_to_cpp_instance)
+        save_list_of_strings_file(instance.deadlines, "dueDates", path_to_cpp_instance)
+        save_list_of_strings_file(instance.travel_times_arcs, "travelTimesArcsUtilized", path_to_cpp_instance)
+        save_list_of_strings_file(instance.capacities_arcs, "nominalCapacitiesArcsUtilized",
+                                  path_to_cpp_instance)
+        save_list_of_strings_file(statusQuo.release_times, "releaseTimes", path_to_cpp_instance)
+        save_list_of_strings_file(statusQuo.staggering_applicable, "remainingSlack", path_to_cpp_instance)
 
 
 def print_total_free_flow_time(instance: Instance):
