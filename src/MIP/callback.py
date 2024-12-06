@@ -4,7 +4,7 @@ import datetime
 import itertools
 
 from MIP.support import saveSolutionInExternalFile
-from congestionModel.core import getDelaysOnArcs, getStaggeringApplicable
+from congestion_model.core import getDelaysOnArcs, getStaggeringApplicable
 from gurobipy import Model
 from inputData import TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
@@ -13,7 +13,7 @@ from instanceModule.instance import Instance
 import gurobipy as grb
 import cpp_module as cpp
 from typing import Callable
-from congestionModel.conflictBinaries import getConflictBinaries
+from congestion_model.conflict_binaries import getConflictBinaries
 
 
 def _getCurrentBounds(model: Model, startSolutionTime) -> None:

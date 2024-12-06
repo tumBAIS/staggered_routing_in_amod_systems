@@ -1,6 +1,6 @@
 import datetime
 
-from congestionModel.core import getCongestedSchedule, getFreeFlowSchedule, \
+from congestion_model.core import getCongestedSchedule, getFreeFlowSchedule, \
     getTotalTravelTime, getTotalDelay, getDelaysOnArcs
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution

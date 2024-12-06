@@ -2,11 +2,11 @@ from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution
 from instanceModule.instance import Instance
 from utils.aliases import VehicleSchedules
-from congestionModel.core import getDelaysOnArcs, getFreeFlowSchedule, \
+from congestion_model.core import getDelaysOnArcs, getFreeFlowSchedule, \
     getStaggeringApplicable, getTotalDelay, getTotalTravelTime, getCongestedSchedule
 
-from congestionModel.conflictBinaries import getConflictBinaries
-from conflictingSetModule.undividedConflictingSets import addConflictingSetsToInstance
+from congestion_model.conflict_binaries import getConflictBinaries
+from conflicting_sets.get import addConflictingSetsToInstance
 
 from inputData import ACTIVATE_ASSERTIONS
 

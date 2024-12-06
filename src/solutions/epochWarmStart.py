@@ -3,9 +3,9 @@ import datetime
 from utils.aliases import VehicleSchedules
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution
-from congestionModel.core import getFreeFlowSchedule, \
+from congestion_model.core import getFreeFlowSchedule, \
     getTotalTravelTime, getDelaysOnArcs, getStaggeringApplicable
-from congestionModel.conflictBinaries import getConflictBinaries
+from congestion_model.conflict_binaries import getConflictBinaries
 import cpp_module as cpp
 
 

@@ -2,17 +2,16 @@ import dataclasses
 import datetime
 import json
 import os.path
-import typing
 
 import numpy as np
 
-from congestionModel.conflictBinaries import getConflictBinaries, get_flow_from_binaries
+from congestion_model.conflict_binaries import getConflictBinaries, get_flow_from_binaries
 from utils.prints import printInfoConflictingSetsSizes, \
     printInfoArcsUtilized, printInfoLengthTrips
 from utils.classes import EpochSolution
 from instanceModule.epochInstance import EpochInstance
-from conflictingSetModule.undividedConflictingSets import addConflictingSetsToInstance, estimate_big_m_necessary
-from congestionModel.core import getTotalTravelTime, getCongestedSchedule, getFreeFlowSchedule, \
+from conflicting_sets.get import addConflictingSetsToInstance, estimate_big_m_necessary
+from congestion_model.core import getTotalTravelTime, getCongestedSchedule, getFreeFlowSchedule, \
     getDelaysOnArcs, getTotalDelay
 from inputData import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
 

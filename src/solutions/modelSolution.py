@@ -1,4 +1,4 @@
-from congestionModel.core import getFreeFlowSchedule, \
+from congestion_model.core import getFreeFlowSchedule, \
     getTotalTravelTime, getStaggeringApplicable
 from instanceModule.epochInstance import EpochInstance
 from utils.classes import EpochSolution

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 
-from congestionModel.conflictBinaries import getConflictBinaries
+from congestion_model.conflict_binaries import getConflictBinaries
 from instanceModule.epochInstance import EpochInstance
 from processing.mergeArcsWithoutConflicts import mergeArcsOnPathsWhereNoConflictsCanHappen
 from processing.removePathsSequences import removeInitialPartOfPathsWithoutConflicts, \
