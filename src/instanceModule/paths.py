@@ -16,7 +16,7 @@ def _removeUnreachablePaths(taxiRidesWithPuDo: DataFrame, indicesPathsToRemove: 
         f"Removed {len(indicesPathsToRemove)} unreachable/too short path(s) - Current number of trips: {len(taxiRidesWithPuDo)}")
 
 
-def getNodeBasedShortestPaths(taxiRidesWithPuDo: DataFrame, manhattanGraph: DiGraph) -> list[list[int]]:
+def get_node_based_shortest_paths(taxiRidesWithPuDo: DataFrame, manhattanGraph: DiGraph) -> list[list[int]]:
     """Compute node-based-shortest-paths and remove records associated to unreachable paths"""
     print("Computing the shortest paths ... ", end="")
     nodeBasedShortestPaths = []

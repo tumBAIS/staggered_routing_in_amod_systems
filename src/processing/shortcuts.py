@@ -1,163 +1,131 @@
 from __future__ import annotations
 
-from queue import PriorityQueue
-
-import pandas as pd
-import shapely
-from shapely import Point
-import networkx as nx
-
-from networkx import DiGraph
 import copy
-
+import pandas as pd
+from queue import PriorityQueue
+from typing import List, Tuple, Dict
+import networkx as nx
+from networkx import DiGraph
+from shapely.geometry import Point, LineString
 from instanceModule.graph import reduce_graph
-from instanceModule.paths import getNodeBasedShortestPaths
+from instanceModule.paths import get_node_based_shortest_paths
 from inputData import InputData
 
+import warnings
 
-def _getIncidentArcs(v: int, G: DiGraph) -> (list[tuple[int, int, dict]],
-                                             list[tuple[int, int, dict]]):
-    """
-    Return incident arcs of v
-    """
-    inEdges = list(G.in_edges(v, data=True))[:]
-    outEdges = list(G.out_edges(v, data=True))[:]
-    return inEdges, outEdges
+warnings.filterwarnings("ignore",
+                        message="the convert_dtype parameter is deprecated and will be removed in a future version")
 
 
-def _isolateNode(G: DiGraph,
-                 inEdges: list[tuple[int, int, dict]],
-                 outEdges: list[tuple[int, int, dict]]) -> None:
-    G.remove_edges_from(inEdges)
-    G.remove_edges_from(outEdges)
+def get_incident_arcs(v: int, G: DiGraph) -> Tuple[List[Tuple[int, int, dict]], List[Tuple[int, int, dict]]]:
+    """Return incoming and outgoing arcs of node v."""
+    in_edges = list(G.in_edges(v, data=True))
+    out_edges = list(G.out_edges(v, data=True))
+    return in_edges, out_edges
 
 
-def _getLengthsIncidentArcs(inArcs: list[tuple[int, int, dict]],
-                            outArcs: list[tuple[int, int, dict]]) -> (dict[int:float], dict[int:float]):
-    inArcsLengths = {u: data["length"] for u, _, data in inArcs}
-    outArcsLengths = {w: data["length"] for _, w, data in outArcs}
-    return inArcsLengths, outArcsLengths
+def isolate_node(G: DiGraph, in_edges: List[Tuple[int, int, dict]], out_edges: List[Tuple[int, int, dict]]) -> None:
+    """Remove all incoming and outgoing edges of a node."""
+    G.remove_edges_from(in_edges)
+    G.remove_edges_from(out_edges)
 
 
-def getShortcuts(u: int,
-                 G: DiGraph,
-                 inArcsLengths: dict[int:float],
-                 outArcsLengths: dict[int:float]) -> list[tuple[int, int, dict]]:
-    Pw = {w: inArcsLengths[u] + outArcsLengths[w] for w in outArcsLengths}  # cost to reach w going through v
-    PMax = max(Pw.values())
-    distances, _ = nx.single_source_dijkstra(G, source=u, cutoff=PMax,
-                                             weight="length")  # v is excluded cause isolated
-    wTargets = [target for target in outArcsLengths if target not in distances or distances[target] > Pw[target]]
-    shortcuts = [(u, w, {"length": Pw[w],
-                         "origin": u,
-                         "destination": w,
-                         "typeOfArc": "shortcut",
+def get_lengths_incident_arcs(in_arcs: List[Tuple[int, int, dict]], out_arcs: List[Tuple[int, int, dict]]) -> Tuple[
+    Dict[int, float], Dict[int, float]]:
+    """Retrieve the lengths of incoming and outgoing arcs."""
+    in_arcs_lengths = {u: data["length"] for u, _, data in in_arcs}
+    out_arcs_lengths = {w: data["length"] for _, w, data in out_arcs}
+    return in_arcs_lengths, out_arcs_lengths
+
+
+def get_shortcuts(u: int, G: DiGraph, in_arcs_lengths: Dict[int, float], out_arcs_lengths: Dict[int, float]) -> List[
+    Tuple[int, int, dict]]:
+    """Calculate shortcuts to reduce graph complexity."""
+    pw = {w: in_arcs_lengths[u] + out_arcs_lengths[w] for w in out_arcs_lengths}  # path weight through u
+    p_max = max(pw.values())
+    distances, _ = nx.single_source_dijkstra(G, source=u, cutoff=p_max, weight="length")
+    w_targets = [w for w in out_arcs_lengths if w not in distances or distances[w] > pw[w]]
+    shortcuts = [(u, w, {"length": pw[w], "origin": u, "destination": w, "type_of_arc": "shortcut",
                          "coordinates_origin": Point(G.nodes[u]["x"], G.nodes[u]["y"]),
                          "coordinates_destination": Point(G.nodes[w]["x"], G.nodes[w]["y"]),
-                         "geometry": shapely.LineString([Point(G.nodes[u]["x"], G.nodes[u]["y"]),
-                                                         Point(G.nodes[w]["x"], G.nodes[w]["y"])])})
-                 for w in wTargets]
+                         "geometry": LineString([Point(G.nodes[u]["x"], G.nodes[u]["y"]),
+                                                 Point(G.nodes[w]["x"], G.nodes[w]["y"])])})
+                 for w in w_targets]
     return shortcuts
 
 
-def _restoreGraph(G: DiGraph,
-                  allShortcuts: list[tuple[int, int, dict]],
-                  inArcs: list[tuple[int, int, dict]],
-                  outArcs: list[tuple[int, int, dict]]):
-    G.remove_edges_from(allShortcuts)
-    G.add_edges_from(inArcs)
-    G.add_edges_from(outArcs)
+def restore_graph(G: DiGraph, all_shortcuts: List[Tuple[int, int, dict]], in_arcs: List[Tuple[int, int, dict]],
+                  out_arcs: List[Tuple[int, int, dict]]):
+    """Restore the graph after contraction by removing shortcuts and adding original arcs."""
+    G.remove_edges_from(all_shortcuts)
+    G.add_edges_from(in_arcs)
+    G.add_edges_from(out_arcs)
 
 
-def _getEdgeDifference(v: int, graph: DiGraph) -> int:
-    inArcs, outArcs = _getIncidentArcs(v, graph)
-    numIncidentEdges = len(inArcs) + len(outArcs)
-    if not inArcs or not outArcs:
+def get_edge_difference(v: int, graph: DiGraph) -> int:
+    """Calculate the difference in number of edges after potential node contraction."""
+    in_arcs, out_arcs = get_incident_arcs(v, graph)
+    num_incident_edges = len(in_arcs) + len(out_arcs)
+    if not in_arcs or not out_arcs:
         return 0
-    inArcsLengths, outArcsLengths = _getLengthsIncidentArcs(inArcs, outArcs)
-    _isolateNode(graph, inArcs, outArcs)
-    allShortcuts = []
-    for u in inArcsLengths:
-        shortcuts = getShortcuts(u, graph, inArcsLengths, outArcsLengths)
+    in_arcs_lengths, out_arcs_lengths = get_lengths_incident_arcs(in_arcs, out_arcs)
+    isolate_node(graph, in_arcs, out_arcs)
+    all_shortcuts = []
+    for u in in_arcs_lengths:
+        shortcuts = get_shortcuts(u, graph, in_arcs_lengths, out_arcs_lengths)
         graph.add_edges_from(shortcuts)
-        allShortcuts.extend(shortcuts)
-    _restoreGraph(graph, allShortcuts, inArcs, outArcs)
-    edgeDifference = len(allShortcuts) - numIncidentEdges
-    return edgeDifference
+        all_shortcuts.extend(shortcuts)
+    restore_graph(graph, all_shortcuts, in_arcs, out_arcs)
+    edge_difference = len(all_shortcuts) - num_incident_edges
+    return edge_difference
 
 
-def _getNodeOrdering(graph: DiGraph) -> PriorityQueue:
-    """
-    Returns a priority queue with all the nodes of the graph, and whose priority is given by the edge difference
-    the edge difference is the number of arcs to add to the graph if node is contracted
-    it is computed as the number of shortcuts (we add) - number of incident edges (we remove)
-    """
-    nodeOrdering = PriorityQueue()
+def get_node_ordering(graph: DiGraph) -> PriorityQueue:
+    """Create a priority queue of nodes based on their edge difference for graph contraction."""
+    node_ordering = PriorityQueue()
     for v in graph.nodes:
-        edgeDifference = _getEdgeDifference(v, graph)
-        nodeOrdering.put((edgeDifference, v))
-    return nodeOrdering
+        edge_difference = get_edge_difference(v, graph)
+        node_ordering.put((edge_difference, v))
+    return node_ordering
 
 
-def _printShortcutsAdded(shortcuts: list[tuple[int, int, dict]]) -> None:
-    if shortcuts:
-        for u, w, k in shortcuts:
-            print(f"Added shortcut from {u} to {w} of len {k['length']}")
-
-
-def _getMaxContractionLevelIncidentArcs(inArcs: list[tuple[int, int, dict]],
-                                        outArcs: list[tuple[int, int, dict]]) -> int:
-    inArcsLengths = {u: k["contraction_level"] for u, _, k in inArcs}
-    outArcsLengths = {w: k["contraction_level"] for _, w, k in outArcs}
-    return max(max(inArcsLengths.values()), max(outArcsLengths.values()))
-
-
-def _contractNode(v: int, graph: DiGraph, GContracted: DiGraph) -> None:
+def _contract_node(v: int, graph: DiGraph, GContracted: DiGraph) -> None:
     """
     contract node v on GContracted, obtain the relative shortcuts and add them both to GContracted and graph
 
     """
-    inArcs, outArcs = _getIncidentArcs(v, GContracted)
+    inArcs, outArcs = get_incident_arcs(v, GContracted)
     if not inArcs or not outArcs:
         return
-    inArcsLengths, outArcsLengths = _getLengthsIncidentArcs(inArcs, outArcs)
+    inArcsLengths, outArcsLengths = get_lengths_incident_arcs(inArcs, outArcs)
     GContracted.remove_node(v)
     for u in inArcsLengths:
-        shortcuts = getShortcuts(u, GContracted, inArcsLengths, outArcsLengths)
+        shortcuts = get_shortcuts(u, GContracted, inArcsLengths, outArcsLengths)
         graph.add_edges_from(shortcuts)
         GContracted.add_edges_from(shortcuts)
 
 
-def _has_isolated_nodes(graph):
-    isolated_nodes = [node for node in graph.nodes if graph.degree(node) == 0]
-    return len(isolated_nodes) > 0
-
-
-def _addShortcutsToGraph(graph: DiGraph) -> None:
-    """
-    Add shortcuts to graph according to CH preprocessing
-    """
-    nodeOrderingPQ = _getNodeOrdering(graph)
-    edgesBefore = len(graph.edges())
-    print(f"Number of arcs before augmenting the graph: {edgesBefore}")
-    GContracted = copy.deepcopy(graph)
-    while not nodeOrderingPQ.empty():
-        edgeDifference, v = nodeOrderingPQ.get()
-        newEdgeDiff = _getEdgeDifference(v, GContracted)
-        lazyUpdateCondition1 = newEdgeDiff > edgeDifference
-        lazyUpdateCondition2 = not nodeOrderingPQ.empty() and newEdgeDiff > nodeOrderingPQ.queue[0][0]
-        if lazyUpdateCondition1 and lazyUpdateCondition2:
-            nodeOrderingPQ.put((newEdgeDiff, v))
+def add_shortcuts_to_graph(graph: DiGraph) -> None:
+    """Add shortcuts to graph using CH preprocessing."""
+    node_ordering_pq = get_node_ordering(graph)
+    edges_before = len(graph.edges())
+    print(f"Number of arcs before augmenting the graph: {edges_before}")
+    G_contracted = copy.deepcopy(graph)
+    while not node_ordering_pq.empty():
+        edge_difference, v = node_ordering_pq.get()
+        new_edge_diff = get_edge_difference(v, G_contracted)
+        if new_edge_diff > edge_difference:
+            node_ordering_pq.put((new_edge_diff, v))
             continue
-        _contractNode(v, graph, GContracted)
-    edgesAfter = len(graph.edges())
-    print(f"Shortcuts added: {edgesAfter - edgesBefore}")
+        _contract_node(v, graph, G_contracted)
+    edges_after = len(graph.edges())
+    print(f"Shortcuts added: {edges_after - edges_before}")
 
 
-def add_shortcuts(inputData: InputData, manhattanGraph: DiGraph, taxiRides: pd.Dataframe,
-                  nodeBasedShortestPaths):
-    if inputData.add_shortcuts:
-        _addShortcutsToGraph(manhattanGraph)
-        nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, manhattanGraph)
-        reduce_graph(manhattanGraph, nodeBasedShortestPaths, inputData)
-    return nodeBasedShortestPaths
+def add_shortcuts(input_data: InputData, manhattan_graph: DiGraph, taxi_rides: pd.DataFrame, node_based_shortest_paths):
+    """Entry point for adding shortcuts based on input conditions."""
+    if input_data.add_shortcuts:
+        add_shortcuts_to_graph(manhattan_graph)
+        node_based_shortest_paths = get_node_based_shortest_paths(taxi_rides, manhattan_graph)
+        reduce_graph(manhattan_graph, node_based_shortest_paths, input_data)
+    return node_based_shortest_paths
