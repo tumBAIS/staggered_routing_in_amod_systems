@@ -73,18 +73,18 @@ def deserialize_graph(file_path: str) -> DiGraph:
         return json_graph.adjacency_graph(graph_data, directed=True)
 
 
-def import_graph(input_data: InstanceParameters) -> DiGraph:
+def import_graph(instance_params: InstanceParameters) -> DiGraph:
     """
     Imports a graph structure from a JSON file located based on the network name provided in input_data.
     """
-    network_path = os.path.join(os.path.dirname(__file__), f"../../data/{input_data.network_name}")
-    network_file = os.path.join(network_path, "network.json")
+    # network_path = os.path.join(os.path.dirname(__file__), f"../../data/{instance_params.network_name}")
+    # network_file = os.path.join(network_path, "network.json")
 
-    if os.path.exists(network_file):
-        graph = DiGraph(deserialize_graph(network_file))
-        print(f"Loaded {input_data.network_name} network")
+    if os.path.exists(instance_params.path_to_G):
+        graph = DiGraph(deserialize_graph(instance_params.path_to_G))
+        print(f"Loaded {instance_params.network_name} network")
     else:
-        raise RuntimeError(f"{input_data.network_name} network not found")
+        raise RuntimeError(f"{instance_params.network_name} network not found in {instance_params.path_to_G}")
 
     add_initial_arcs_attributes(graph)
     return graph
