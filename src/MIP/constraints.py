@@ -18,20 +18,6 @@ def _add_load_constraint(model, vehicle, arc):
         model._gamma[arc][vehicle]) + 1, name=f"load_constraint_arc_{arc}_vehicle_{vehicle}")
 
 
-def _check_third_piece_can_be_active(instance: Instance, arc: ArcID) -> bool:
-    nominalCapacityArc = instance.capacities_arcs[arc]
-    return len(
-        instance.conflicting_sets[arc]) > nominalCapacityArc * instance.input_data.list_of_thresholds[0]
-
-
-def _add_piecewise_linear_delay(model: Model, vehicle: VehicleID, arc: ArcID, first_capacity: float,
-                                slope_second: float) -> None:
-    x_axis_values = [0, first_capacity, first_capacity + 1, first_capacity + 2]
-    y_axis_values = [0, 0, slope_second, 2 * slope_second]
-    model.addGenConstrPWL(model._load[vehicle][arc], model._delay[vehicle][arc],
-                          x_axis_values, y_axis_values, name=f"two_pieces_delay_arc_{arc}_vehicle_{vehicle}")
-
-
 def _add_pwl_delay_constraint(model: Model, instance: Instance, vehicle: int, arc: ArcID) -> None:
     # Initialize x-axis (vehicles count) and y-axis (delay) for the PWL function
     x_axis_values, y_axis_values = [0], [0]
@@ -158,23 +144,6 @@ def _add_conflict_constraints_between_vehicle_pair(model, firstVehicle, secondVe
     _add_alpha_constraints(model, arc, firstVehicle, secondVehicle)
     _add_beta_constraints(model, arc, firstVehicle, secondVehicle, secondVehiclePath, arc_travel_time)
     _add_gamma_constraints(model, arc, firstVehicle, secondVehicle)
-
-
-def _add_constraint_on_max_sum_alphas(model: Model, arc: int, conflictingSetOnArc) -> None:
-    # Create a constraint on the maximum sum of alpha variables for the given arc
-    model.addConstr(
-        grb.quicksum(
-            model._alpha[arc][firstVehicle][secondVehicle]  # Sum of alpha variables for all vehicle pairs
-            for firstVehicle in model._alpha[arc]
-            for secondVehicle in model._alpha[arc][firstVehicle]
-        ) == len(list(itertools.combinations(conflictingSetOnArc, 2))),  # Number of pairs in the conflicting set
-        name=f"max_sum_alpha_arc_{arc}"
-    )
-
-
-def _add_sum_alphas_constraint(model: Model, firstVehicle: int, secondVehicle: int, arc: int) -> None:
-    model.addConstr(model._alpha[arc][firstVehicle][secondVehicle] + model._alpha[arc][secondVehicle][
-        firstVehicle] == 1, name=f"sum_alphas_arc_{arc}_vehicles_{firstVehicle}_{secondVehicle}")
 
 
 def add_conflict_constraints(model: Model, instance: Instance) -> None:

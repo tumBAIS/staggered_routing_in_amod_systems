@@ -6,28 +6,6 @@ from collections import namedtuple
 BinariesBounds = namedtuple("BinariesBounds", ["lbAlpha", "ubAlpha", "lbBeta", "ubBeta", "lbGamma", "ubGamma"])
 
 
-def _check_if_ed2_greater_than_ld1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> bool:
-    firstPosition = instance.trip_routes[firstVehicle].index(arc)
-    secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    latestDepartureFirst = instance.latest_departure_times[firstVehicle][firstPosition]
-    earliestDepartureSecond = instance.earliest_departure_times[secondVehicle][secondPosition]
-    if earliestDepartureSecond > latestDepartureFirst:
-        return True
-    else:
-        return False
-
-
-def _check_if_ed2_greater_than_la1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance):
-    firstPosition = instance.trip_routes[firstVehicle].index(arc)
-    secondPosition = instance.trip_routes[secondVehicle].index(arc)
-    earliestDepartureSecond = instance.earliest_departure_times[secondVehicle][secondPosition]
-    latestArrivalFirst = instance.latest_departure_times[firstVehicle][firstPosition + 1]
-    if earliestDepartureSecond > latestArrivalFirst:
-        return True
-    else:
-        return False
-
-
 def _check_if_ld1_smaller_than_ea2(firstVehicle, secondVehicle, arc, instance):
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
