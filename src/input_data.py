@@ -35,18 +35,11 @@ class InstanceParameters:
 
     def __post_init__(self):
         self.validate_inputs()
-        self.path_to_G = Path(
-            __file__).parent.parent / f"data/{self.network_name}/{self.get_shortcuts_string()}SHORTCUTS/network.json"
+        self.path_to_G = Path(__file__).parent.parent / f"data/{self.network_name}/network.json"
         self.path_to_routes = self.path_to_G.parent / f"{self.get_day_string()}{self.get_number_trips_string()}/routes.json"
         self.path_to_instance = self.path_to_routes.parent / f"S{self.staggering_cap}_D{self.deadline_factor}_VDF{self.list_of_slopes}{self.list_of_thresholds}/instance.json"
         os.makedirs(self.path_to_instance.parent, exist_ok=True)
         self.demand_factor = 1  # Placeholder for actual implementation
-
-    def get_shortcuts_string(self):
-        if self.add_shortcuts:
-            return "WITH_"
-        else:
-            return "WITHOUT_"
 
     def validate_inputs(self):
         if self.day not in range(1, 32):
@@ -113,7 +106,7 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
         speed=20, max_flow_allowed=100, add_shortcuts=True,
         list_of_slopes=[0.05], list_of_thresholds=[1], deadline_factor=100, staggering_cap=10)
 
-    solver_params = SolverParameters(epoch_size=60, optimize=True, algorithm_time_limit=10, epoch_time_limit=10,
+    solver_params = SolverParameters(epoch_size=6, optimize=True, algorithm_time_limit=10, epoch_time_limit=10,
                                      warm_start=True, improve_warm_start=True, local_search_callback=True,
                                      instance_parameters=instance_params)
     return instance_params, solver_params

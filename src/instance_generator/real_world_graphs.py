@@ -88,6 +88,9 @@ def get_southern_percentage_of_network(G: nx.MultiDiGraph, percentage: int, path
     mapping = {node: i for i, node in enumerate(H.nodes())}
     H = nx.relabel_nodes(H, mapping)
 
+    plot_real_world_G(H, path_to_H)  # Make sure this function can handle the relabeled graph
+    utils.tools.serialize(H, path_to_H)  # Serialize the relabeled graph
+
     return nx.DiGraph(H)
 
 
