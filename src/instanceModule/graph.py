@@ -12,7 +12,7 @@ from networkx.readwrite import json_graph
 from shapely.geometry import LineString
 
 
-def setArcsNominalTravelTimesAndCapacities(manhattanGraph, inputData):
+def set_arcs_nominal_travel_times_and_capacities(manhattanGraph, inputData):
     """
     Assigns nominal travel times and capacities to arcs in the Manhattan graph.
 
@@ -55,7 +55,7 @@ def _addInitialArcsAttributes(manhattanGraph):
         manhattanGraph[origin][destination]["coordinates_destination"] = dest_coords
 
 
-def reduceGraph(manhattanGraph: DiGraph, nodeBasedShortestPaths: list[list[int]], inputData):
+def reduce_graph(manhattanGraph: DiGraph, nodeBasedShortestPaths: list[list[int]], inputData):
     """
     Removes from Manhattan graph nodes and arcs not utilized in node based shortest paths.
 

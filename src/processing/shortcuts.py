@@ -10,7 +10,7 @@ import networkx as nx
 from networkx import DiGraph
 import copy
 
-from instanceModule.graph import reduceGraph
+from instanceModule.graph import reduce_graph
 from instanceModule.paths import getNodeBasedShortestPaths
 from inputData import InputData
 
@@ -154,10 +154,10 @@ def _addShortcutsToGraph(graph: DiGraph) -> None:
     print(f"Shortcuts added: {edgesAfter - edgesBefore}")
 
 
-def addShortcuts(inputData: InputData, manhattanGraph: DiGraph, taxiRides: pd.Dataframe,
-                 nodeBasedShortestPaths):
+def add_shortcuts(inputData: InputData, manhattanGraph: DiGraph, taxiRides: pd.Dataframe,
+                  nodeBasedShortestPaths):
     if inputData.add_shortcuts:
         _addShortcutsToGraph(manhattanGraph)
         nodeBasedShortestPaths = getNodeBasedShortestPaths(taxiRides, manhattanGraph)
-        reduceGraph(manhattanGraph, nodeBasedShortestPaths, inputData)
+        reduce_graph(manhattanGraph, nodeBasedShortestPaths, inputData)
     return nodeBasedShortestPaths

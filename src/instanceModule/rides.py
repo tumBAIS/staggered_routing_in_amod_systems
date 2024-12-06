@@ -53,7 +53,7 @@ def _getNearestNodes(projectedGeometriesNodes: Series, graph: DiGraph, maximumMe
     return nearestNodes
 
 
-def import_rides_df(inputData: InputData) -> DataFrame:
+def import_trips_df(inputData: InputData) -> DataFrame:
     path_to_instance = inputData.path_to_instance
     if not os.path.exists(f"{path_to_instance}"):
         InstanceComputer(inputData).run()

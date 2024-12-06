@@ -163,17 +163,17 @@ def save_instance_for_testing_cpp_code(instance: Instance, statusQuo: CompleteSo
         saveListOfStringsFile(statusQuo.staggeringApplicable, "remainingSlack", pathToCppInstance)
 
 
-def printTotalFreeFlowTime(instance: Instance):
+def print_total_free_flow_time(instance: Instance):
     totalFreeFlowTime = sum(
         [instance.travel_times_arcs[arc] for path in instance.trip_routes for arc in path])
     print(f"Total free flow time instance: {round(totalFreeFlowTime / 3600, 2)} [h]")
 
 
-def getInstance(inputData: InputData,
-                arcBasedShortestPaths: list[NodesPath],
-                arcsFeatures,
-                releaseTimesDataset: list[Time],
-                arrivalTimesDataset: list[Time]):
+def get_instance(inputData: InputData,
+                 arcBasedShortestPaths: list[NodesPath],
+                 arcsFeatures,
+                 releaseTimesDataset: list[Time],
+                 arrivalTimesDataset: list[Time]):
     return Instance(
         osmInfoArcsUtilized=arcsFeatures.osm_info_arcs,
         trip_routes=arcBasedShortestPaths,

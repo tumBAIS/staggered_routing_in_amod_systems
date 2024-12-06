@@ -111,8 +111,8 @@ ArcsFeatures = collections.namedtuple("ArcsFeatures", ["travel_times_arcs",
                                                        "osm_info_arcs"])
 
 
-def getArcBasedPathsWithFeatures(nodeBasedShortestPaths: list[list[int]],
-                                 manhattanGraph: DiGraph) -> (
+def get_arc_based_paths_with_features(nodeBasedShortestPaths: list[list[int]],
+                                      manhattanGraph: DiGraph) -> (
         list[list[int]], list[float], list[int], list[dict[str, typing.Any]]):
     arcBasedShortestPathsOriginalIDs = getArcBasedShortestPathsOriginalIDs(nodeBasedShortestPaths)
     arcsUtilizedIDs = _getArcsUtilizedIDs(arcBasedShortestPathsOriginalIDs)
