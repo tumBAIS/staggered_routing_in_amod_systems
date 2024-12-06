@@ -7,15 +7,15 @@ from utils.aliases import *
 
 
 def get_free_flow_schedule(instance: Instance | EpochInstance,
-                           congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
-    freeFlowSchedule = [[schedule[0]] for schedule in congestedSchedule]
+                           congested_schedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+    free_flow_schedule = [[schedule[0]] for schedule in congested_schedule]
 
     for vehicle, path in enumerate(instance.trip_routes):
-        for arcIndex, arc in enumerate(path[:-1]):
-            departureTime = freeFlowSchedule[vehicle][-1] + instance.travel_times_arcs[arc]
-            freeFlowSchedule[vehicle].append(departureTime)
+        for arc_index, arc in enumerate(path[:-1]):
+            departure_time = free_flow_schedule[vehicle][-1] + instance.travel_times_arcs[arc]
+            free_flow_schedule[vehicle].append(departure_time)
 
-    return freeFlowSchedule
+    return free_flow_schedule
 
 
 def get_congested_schedule(instance: Instance | EpochInstance,
@@ -38,31 +38,33 @@ def get_congested_schedule(instance: Instance | EpochInstance,
     return schedule
 
 
-def get_total_delay(freeFlowSchedule: list[VehicleSchedule], congestedSchedule: list[VehicleSchedule]) -> float:
-    totalDelay = sum(congestedSchedule[vehicle][-1] - congestedSchedule[vehicle][0] -
-                     (freeFlowSchedule[vehicle][-1] - freeFlowSchedule[vehicle][0])
-                     for vehicle in range(len(congestedSchedule)))
-    return totalDelay
+def get_total_delay(free_flow_schedule: list[VehicleSchedule], congested_schedule: list[VehicleSchedule]) -> float:
+    total_delay = sum(
+        congested_schedule[vehicle][-1] - congested_schedule[vehicle][0] -
+        (free_flow_schedule[vehicle][-1] - free_flow_schedule[vehicle][0])
+        for vehicle in range(len(congested_schedule))
+    )
+    return total_delay
 
 
 def get_delays_on_arcs(instance: Instance | EpochInstance,
-                       congestedSchedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
-    delaysOnArcs = [
+                       congested_schedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+    delays_on_arcs = [
         [
-            congestedSchedule[vehicle][position + 1] - congestedSchedule[vehicle][position] -
+            congested_schedule[vehicle][position + 1] - congested_schedule[vehicle][position] -
             instance.travel_times_arcs[arc]
             for position, arc in enumerate(path[:-1])
         ]
         for vehicle, path in enumerate(instance.trip_routes)
     ]
-    delaysOnArcs = [[0 if abs(element) < 1e-6 else element for element in delays] + [0] for delays in delaysOnArcs]
-    return delaysOnArcs
+    delays_on_arcs = [[0 if abs(element) < 1e-6 else element for element in delays] + [0] for delays in delays_on_arcs]
+    return delays_on_arcs
 
 
-def get_total_travel_time(vehicleSchedule: list[VehicleSchedule]) -> float:
-    return sum([schedule[-1] - schedule[0] for schedule in vehicleSchedule])
+def get_total_travel_time(vehicle_schedule: list[VehicleSchedule]) -> float:
+    return sum([schedule[-1] - schedule[0] for schedule in vehicle_schedule])
 
 
-def get_staggering_applicable(instance: Instance | EpochInstance, staggeringApplied: list[float]):
-    return [vMaxStaggeringApplicable - vStaggeringApplied for vMaxStaggeringApplicable, vStaggeringApplied in
-            zip(instance.max_staggering_applicable, staggeringApplied)]
+def get_staggering_applicable(instance: Instance | EpochInstance, staggering_applied: list[float]):
+    return [v_max_staggering_applicable - v_staggering_applied for v_max_staggering_applicable, v_staggering_applied in
+            zip(instance.max_staggering_applicable, staggering_applied)]
