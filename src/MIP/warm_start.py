@@ -7,7 +7,7 @@ from gurobipy import Model
 from utils.classes import CompleteSolution, HeuristicSolution
 
 
-def _setBinariesWarmStartModel(model: Model, warmStart: CompleteSolution | HeuristicSolution) -> None:
+def _set_binaries_warm_start_model(model: Model, warmStart: CompleteSolution | HeuristicSolution) -> None:
     for arc in model._gamma:
         for firstVehicle, secondVehicle in itertools.combinations(model._gamma[arc], 2):
             if warmStart.binaries.gamma[arc][firstVehicle][secondVehicle] != -1:
@@ -34,7 +34,7 @@ def _setBinariesWarmStartModel(model: Model, warmStart: CompleteSolution | Heuri
     return
 
 
-def _setContinuousVariablesWarmStartModel(model: Model, warmStart: CompleteSolution):
+def _set_continuous_variables_warm_start_model(model: Model, warmStart: CompleteSolution):
     for vehicle in model._departure:
         for position, arc in enumerate(model._departure[vehicle]):
             model._departure[vehicle][arc].Start = warmStart.congested_schedule[vehicle][position]
@@ -51,7 +51,7 @@ def _setContinuousVariablesWarmStartModel(model: Model, warmStart: CompleteSolut
                     f"vehicle schedule: {warmStart.congested_schedule[vehicle]}, vehicle delays: {warmStart.delays_on_arcs[vehicle]}"
 
 
-def setWarmStartModel(model: Model, warmStart: CompleteSolution | HeuristicSolution) -> None:
-    _setBinariesWarmStartModel(model, warmStart)
-    _setContinuousVariablesWarmStartModel(model, warmStart)
+def set_warm_start_model(model: Model, warmStart: CompleteSolution | HeuristicSolution) -> None:
+    _set_binaries_warm_start_model(model, warmStart)
+    _set_continuous_variables_warm_start_model(model, warmStart)
     return

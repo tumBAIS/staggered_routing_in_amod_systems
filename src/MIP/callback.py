@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 import itertools
 
-from MIP.support import saveSolutionInExternalFile
+from MIP.support import save_solution_in_external_file
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from gurobipy import Model
 from input_data import TOLERANCE, ACTIVATE_ASSERTIONS
@@ -163,7 +163,7 @@ def _set_heuristic_binary_variables(model, heuristicSolution):
 
 
 def _suspend_procedure(heuristicSolution, model, instance) -> None:
-    saveSolutionInExternalFile(heuristicSolution, instance)
+    save_solution_in_external_file(heuristicSolution, instance)
     if model.cbGet(grb.GRB.Callback.MIP_OBJBND) > model._bestLowerBound:
         model._bestLowerBound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
     model.terminate()

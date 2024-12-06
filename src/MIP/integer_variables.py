@@ -6,7 +6,7 @@ from collections import namedtuple
 BinariesBounds = namedtuple("BinariesBounds", ["lbAlpha", "ubAlpha", "lbBeta", "ubBeta", "lbGamma", "ubGamma"])
 
 
-def _checkIfED2GreaterThanLD1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> bool:
+def _check_if_ed2_greater_than_ld1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> bool:
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
     latestDepartureFirst = instance.latest_departure_times[firstVehicle][firstPosition]
@@ -17,7 +17,7 @@ def _checkIfED2GreaterThanLD1(firstVehicle: int, secondVehicle: int, arc: int, i
         return False
 
 
-def _checkIfED2GreaterThanLA1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance):
+def _check_if_ed2_greater_than_la1(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance):
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
     earliestDepartureSecond = instance.earliest_departure_times[secondVehicle][secondPosition]
@@ -28,7 +28,7 @@ def _checkIfED2GreaterThanLA1(firstVehicle: int, secondVehicle: int, arc: int, i
         return False
 
 
-def _checkIfLD1SmallerThanEA2(firstVehicle, secondVehicle, arc, instance):
+def _check_if_ld1_smaller_than_ea2(firstVehicle, secondVehicle, arc, instance):
     firstPosition = instance.trip_routes[firstVehicle].index(arc)
     secondPosition = instance.trip_routes[secondVehicle].index(arc)
     ld1 = instance.latest_departure_times[firstVehicle][firstPosition]
@@ -39,7 +39,7 @@ def _checkIfLD1SmallerThanEA2(firstVehicle, secondVehicle, arc, instance):
         return False
 
 
-def _getBoundsForBinaries(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> BinariesBounds:
+def _get_bounds_for_binaries(firstVehicle: int, secondVehicle: int, arc: int, instance: Instance) -> BinariesBounds:
     lbAlpha = 0
     lbBeta = 0
     lbGamma = 0
@@ -81,8 +81,8 @@ def _getBoundsForBinaries(firstVehicle: int, secondVehicle: int, arc: int, insta
                           ubGamma=ubGamma)
 
 
-def _storeBoundsInVariables(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
-                            binariesBounds: BinariesBounds) -> None:
+def _store_bounds_in_variables(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
+                               binariesBounds: BinariesBounds) -> None:
     if isinstance(model._alpha[arc][firstVehicle][secondVehicle], grb.Var):
         model._alpha[arc][firstVehicle][secondVehicle]._lb = binariesBounds.lbAlpha
         model._alpha[arc][firstVehicle][secondVehicle]._ub = binariesBounds.ubAlpha
@@ -95,9 +95,9 @@ def _storeBoundsInVariables(model: Model, arc: int, firstVehicle: int, secondVeh
         model._gamma[arc][firstVehicle][secondVehicle]._ub = binariesBounds.ubGamma
 
 
-def _addConflictVariablesBetweenTwoVehicles(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
-                                            instance: Instance):
-    binariesBounds = _getBoundsForBinaries(firstVehicle, secondVehicle, arc, instance)
+def _add_conflict_variables_between_two_vehicles(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
+                                                 instance: Instance):
+    binariesBounds = _get_bounds_for_binaries(firstVehicle, secondVehicle, arc, instance)
 
     alphaName = f"alpha_arc_{str(arc)}_vehicles_{str(firstVehicle)}_{str(secondVehicle)}"
     if binariesBounds.lbAlpha != binariesBounds.ubAlpha:
@@ -127,12 +127,12 @@ def _addConflictVariablesBetweenTwoVehicles(model: Model, arc: int, firstVehicle
     else:
         model._gamma[arc][firstVehicle][secondVehicle] = binariesBounds.lbGamma
 
-    _storeBoundsInVariables(model, arc, firstVehicle, secondVehicle, binariesBounds)
+    _store_bounds_in_variables(model, arc, firstVehicle, secondVehicle, binariesBounds)
     return
 
 
-def _addConflictVariablesAmongVehiclesInConflictingSet(model: Model, arc: int,
-                                                       conflictingSet: list[int], instance: Instance) -> None:
+def _add_conflict_variables_among_vehicles_in_conflicting_set(model: Model, arc: int,
+                                                              conflictingSet: list[int], instance: Instance) -> None:
     model._alpha[arc] = {}
     model._beta[arc] = {}
     model._gamma[arc] = {}
@@ -152,16 +152,16 @@ def _addConflictVariablesAmongVehiclesInConflictingSet(model: Model, arc: int,
                 model._gamma[arc][secondVehicle] = {}
 
             if firstVehicle < secondVehicle:
-                _addConflictVariablesBetweenTwoVehicles(model, arc, firstVehicle, secondVehicle, instance)
-                _addConflictVariablesBetweenTwoVehicles(model, arc, secondVehicle, firstVehicle, instance)
+                _add_conflict_variables_between_two_vehicles(model, arc, firstVehicle, secondVehicle, instance)
+                _add_conflict_variables_between_two_vehicles(model, arc, secondVehicle, firstVehicle, instance)
 
 
-def addConflictVariables(model: Model, instance: Instance) -> None:
+def add_conflict_variables(model: Model, instance: Instance) -> None:
     print("Creating conflict variables ...", end=" ")
     model._alpha = {}
     model._beta = {}
     model._gamma = {}
     for arc, conflictingSet in enumerate(instance.conflicting_sets):
         if conflictingSet:
-            _addConflictVariablesAmongVehiclesInConflictingSet(model, arc, conflictingSet, instance)
+            _add_conflict_variables_among_vehicles_in_conflicting_set(model, arc, conflictingSet, instance)
     print("done!")

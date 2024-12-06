@@ -1,4 +1,4 @@
-from MIP.model import constructModel, runModel
+from MIP.model import construct_model, run_model
 from solutions.status_quo import computeSolutionMetrics, printInfoStatusQuoMetrics
 from conflicting_sets.get import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
@@ -53,8 +53,8 @@ def _printInfoEpochSolution(epochStatusQuo, epochSolution):
 def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo) -> EpochSolution:
     if len(simplifiedStatusQuo.congested_schedule):
         epochWarmStart = getEpochWarmStart(simplifiedInstance, simplifiedStatusQuo)
-        model = constructModel(simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
-        runModel(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo)
+        model = construct_model(simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
+        run_model(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo)
         modelSolution = getEpochModelSolution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart)
         # map back to the full system
         epochSolution = mapSimplifiedEpochSolution(epochInstance, modelSolution)

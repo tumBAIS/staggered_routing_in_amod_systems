@@ -4,7 +4,7 @@ import copy
 
 from congestion_model.conflict_binaries import get_conflict_binaries
 from instanceModule.epoch_instance import EpochInstance
-from processing.merge_arcs_without_conflicts import mergeArcsOnPathsWhereNoConflictsCanHappen
+from processing.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_conflicts_can_happen
 from processing.remove_paths_sequences import removeInitialPartOfPathsWithoutConflicts, \
     removeFinalPartOfPathsWithoutConflicts
 from processing.remove_not_utilized_arcs import removeNotUtilizedArcs
@@ -79,7 +79,7 @@ def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
     if allVehiclesRemoved:
         return instance, statusQuo
     removeFinalPartOfPathsWithoutConflicts(instance, statusQuo)
-    mergeArcsOnPathsWhereNoConflictsCanHappen(instance, statusQuo)
+    merge_arcs_on_paths_where_no_conflicts_can_happen(instance, statusQuo)
     removeNotUtilizedArcs(instance)
     statusQuo.binaries = get_conflict_binaries(instance.conflicting_sets,
                                                instance.trip_routes,

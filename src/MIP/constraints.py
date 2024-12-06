@@ -11,7 +11,7 @@ from input_data import MIN_SET_CAPACITY
 from utils.aliases import *
 
 
-def _addLoadConstraint(model, vehicle, arc):
+def _add_load_constraint(model, vehicle, arc):
     model.addConstr(model._load[vehicle][arc] == grb.quicksum(
         model._gamma[arc][vehicle][other_vehicles_utilizing_road]
         for other_vehicles_utilizing_road in
@@ -32,7 +32,7 @@ def _add_piecewise_linear_delay(model: Model, vehicle: VehicleID, arc: ArcID, fi
                           x_axis_values, y_axis_values, name=f"two_pieces_delay_arc_{arc}_vehicle_{vehicle}")
 
 
-def _addPWLDelayConstraint(model: Model, instance: Instance, vehicle: int, arc: ArcID) -> None:
+def _add_pwl_delay_constraint(model: Model, instance: Instance, vehicle: int, arc: ArcID) -> None:
     # Initialize x-axis (vehicles count) and y-axis (delay) for the PWL function
     x_axis_values, y_axis_values = [0], [0]
 
@@ -75,7 +75,7 @@ def _addPWLDelayConstraint(model: Model, instance: Instance, vehicle: int, arc: 
                           name=f"piecewise_delay_arc_{arc}_vehicle_{vehicle}")
 
 
-def _addAlphaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int) -> None:
+def _add_alpha_constraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int) -> None:
     if isinstance(model._alpha[arc][firstVehicle][secondVehicle], grb.Var):
         model._numBigMConstraints += 2
         if USE_GUROBI_INDICATORS:
@@ -105,8 +105,8 @@ def _addAlphaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicl
                 name=f"alpha_constr_two_arc_{arc}_vehicles_{firstVehicle}_{secondVehicle}")
 
 
-def _addBetaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
-                        secondVehiclePath: list[int], arc_travel_time: float) -> None:
+def _add_beta_constraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int,
+                          secondVehiclePath: list[int], arc_travel_time: float) -> None:
     if isinstance(model._beta[arc][firstVehicle][secondVehicle], grb.Var):
         indexArcSecondVehiclePath = secondVehiclePath.index(arc)
         nextArcSecond = secondVehiclePath[indexArcSecondVehiclePath + 1]
@@ -140,7 +140,7 @@ def _addBetaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicle
                             name=f"beta_to_one_{arc}_vehicles_{firstVehicle}_{secondVehicle}")
 
 
-def _addGammaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int) -> None:
+def _add_gamma_constraints(model: Model, arc: int, firstVehicle: int, secondVehicle: int) -> None:
     if isinstance(model._gamma[arc][firstVehicle][secondVehicle], grb.Var):
         model._numBigMConstraints += 2
         model.addConstr(model._gamma[arc][firstVehicle][secondVehicle] >=
@@ -153,14 +153,14 @@ def _addGammaConstraints(model: Model, arc: int, firstVehicle: int, secondVehicl
                         name=f"gamma_2_constr_arc_{arc}_vehicles_{firstVehicle}_{secondVehicle}")
 
 
-def _addConflictConstraintsBetweenVehiclePair(model, firstVehicle, secondVehicle, arc, secondVehiclePath,
-                                              arc_travel_time):
-    _addAlphaConstraints(model, arc, firstVehicle, secondVehicle)
-    _addBetaConstraints(model, arc, firstVehicle, secondVehicle, secondVehiclePath, arc_travel_time)
-    _addGammaConstraints(model, arc, firstVehicle, secondVehicle)
+def _add_conflict_constraints_between_vehicle_pair(model, firstVehicle, secondVehicle, arc, secondVehiclePath,
+                                                   arc_travel_time):
+    _add_alpha_constraints(model, arc, firstVehicle, secondVehicle)
+    _add_beta_constraints(model, arc, firstVehicle, secondVehicle, secondVehiclePath, arc_travel_time)
+    _add_gamma_constraints(model, arc, firstVehicle, secondVehicle)
 
 
-def _addConstraintOnMaxSumAlphas(model: Model, arc: int, conflictingSetOnArc) -> None:
+def _add_constraint_on_max_sum_alphas(model: Model, arc: int, conflictingSetOnArc) -> None:
     # Create a constraint on the maximum sum of alpha variables for the given arc
     model.addConstr(
         grb.quicksum(
@@ -172,12 +172,12 @@ def _addConstraintOnMaxSumAlphas(model: Model, arc: int, conflictingSetOnArc) ->
     )
 
 
-def _addSumAlphasConstraint(model: Model, firstVehicle: int, secondVehicle: int, arc: int) -> None:
+def _add_sum_alphas_constraint(model: Model, firstVehicle: int, secondVehicle: int, arc: int) -> None:
     model.addConstr(model._alpha[arc][firstVehicle][secondVehicle] + model._alpha[arc][secondVehicle][
         firstVehicle] == 1, name=f"sum_alphas_arc_{arc}_vehicles_{firstVehicle}_{secondVehicle}")
 
 
-def addConflictConstraints(model: Model, instance: Instance) -> None:
+def add_conflict_constraints(model: Model, instance: Instance) -> None:
     print("Adding conflict constraints...", end=" ")
 
     for arc in model._alpha:
@@ -187,18 +187,18 @@ def addConflictConstraints(model: Model, instance: Instance) -> None:
         for firstVehicle in model._alpha[arc]:
             if isinstance(model._load[firstVehicle][arc], grb.Var):
                 # Add load constraint and piecewise linear delay constraint for the first vehicle on the current arc
-                _addLoadConstraint(model, firstVehicle, arc)
-                _addPWLDelayConstraint(model, instance, firstVehicle, arc)
+                _add_load_constraint(model, firstVehicle, arc)
+                _add_pwl_delay_constraint(model, instance, firstVehicle, arc)
 
                 for secondVehicle in model._alpha[arc][firstVehicle]:
                     if firstVehicle < secondVehicle:
                         # Add conflict constraints between the first and second vehicles on the current arc
-                        _addConflictConstraintsBetweenVehiclePair(model, firstVehicle, secondVehicle, arc,
-                                                                  instance.trip_routes[secondVehicle],
-                                                                  arc_travel_time)
-                        _addConflictConstraintsBetweenVehiclePair(model, secondVehicle, firstVehicle, arc,
-                                                                  instance.trip_routes[firstVehicle],
-                                                                  arc_travel_time)
+                        _add_conflict_constraints_between_vehicle_pair(model, firstVehicle, secondVehicle, arc,
+                                                                       instance.trip_routes[secondVehicle],
+                                                                       arc_travel_time)
+                        _add_conflict_constraints_between_vehicle_pair(model, secondVehicle, firstVehicle, arc,
+                                                                       instance.trip_routes[firstVehicle],
+                                                                       arc_travel_time)
                         # Add constraint on the sum of alpha variables for the first and second vehicles on the current arc
                         # _addSumAlphasConstraint(model, firstVehicle, secondVehicle, arc)
     print("done!")
@@ -207,7 +207,7 @@ def addConflictConstraints(model: Model, instance: Instance) -> None:
     return
 
 
-def addTravelContinuityConstraints(model: Model, instance: Instance) -> None:
+def add_travel_continuity_constraints(model: Model, instance: Instance) -> None:
     print("Writing the continuity constraints")
     for vehicle in model._departure:
         for position in range(1, len(model._departure[vehicle])):
@@ -223,7 +223,7 @@ def addTravelContinuityConstraints(model: Model, instance: Instance) -> None:
             )
 
 
-def addObjectiveFunction(inputData, model) -> None:
+def add_objective_function(inputData, model) -> None:
     print("Writing the objective function:", end=" ")
     model.addConstr(model._totalDelay ==
                     grb.quicksum(

@@ -6,8 +6,8 @@ from instanceModule.instance import Instance
 from input_data import FIX_MODEL
 
 
-def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instance, statusQuo: EpochSolution,
-                          epochWarmStart) -> None:
+def _add_departure_variable(model: Model, vehicle: int, arc: int, instance: Instance, statusQuo: EpochSolution,
+                            epochWarmStart) -> None:
     arcIndex = instance.trip_routes[vehicle].index(arc)
     earliestDepartureTime = instance.earliest_departure_times[vehicle][arcIndex]
     latestDepartureTime = instance.latest_departure_times[vehicle][arcIndex]
@@ -28,7 +28,7 @@ def _addDepartureVariable(model: Model, vehicle: int, arc: int, instance: Instan
                                                                                     f"latest departure time: {latestDepartureTime}"
 
 
-def _addDelayVariable(model: Model, vehicle: int, arc: int, instance: Instance) -> None:
+def _add_delay_variable(model: Model, vehicle: int, arc: int, instance: Instance) -> None:
     if vehicle in instance.conflicting_sets[arc]:
         position = instance.trip_routes[vehicle].index(arc)
         lb = instance.min_delay_on_arc[vehicle][position]
@@ -44,7 +44,7 @@ def _addDelayVariable(model: Model, vehicle: int, arc: int, instance: Instance) 
         model._delay[vehicle][arc] = 0
 
 
-def _addLoadVariable(model: Model, vehicle: int, arc: int, conflictingSet: list[int]) -> None:
+def _add_load_variable(model: Model, vehicle: int, arc: int, conflictingSet: list[int]) -> None:
     if vehicle in conflictingSet:
         # ub = max load
 
@@ -64,14 +64,14 @@ def _addLoadVariable(model: Model, vehicle: int, arc: int, conflictingSet: list[
         model._load[vehicle][arc] = 1
 
 
-def _addContinuousVariablesVehicleOnArc(model, instance, statusQuo, vehicle, arc, epochWarmStart) -> None:
+def _add_continuous_variables_vehicle_on_arc(model, instance, statusQuo, vehicle, arc, epochWarmStart) -> None:
     conflictingSet = instance.conflicting_sets[arc]
-    _addDepartureVariable(model, vehicle, arc, instance, statusQuo, epochWarmStart)
-    _addDelayVariable(model, vehicle, arc, instance)
-    _addLoadVariable(model, vehicle, arc, conflictingSet)
+    _add_departure_variable(model, vehicle, arc, instance, statusQuo, epochWarmStart)
+    _add_delay_variable(model, vehicle, arc, instance)
+    _add_load_variable(model, vehicle, arc, conflictingSet)
 
 
-def addContinuousVariables(model: Model, instance: Instance, statusQuo: EpochSolution, epochWarmStart) -> None:
+def add_continuous_variables(model: Model, instance: Instance, statusQuo: EpochSolution, epochWarmStart) -> None:
     # continuous variables
     print("Creating continuous variables... ", end="")
     model._totalDelay = model.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay")
@@ -86,6 +86,6 @@ def addContinuousVariables(model: Model, instance: Instance, statusQuo: EpochSol
         model._load[vehicle] = {}
 
         for position, arc in enumerate(path):
-            _addContinuousVariablesVehicleOnArc(model, instance, statusQuo, vehicle, arc, epochWarmStart)
+            _add_continuous_variables_vehicle_on_arc(model, instance, statusQuo, vehicle, arc, epochWarmStart)
 
     print("done!")

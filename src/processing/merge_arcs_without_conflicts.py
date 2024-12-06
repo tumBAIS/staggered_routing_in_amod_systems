@@ -4,20 +4,20 @@ from utils.classes import CompleteSolution
 from instanceModule.instance import Instance
 
 
-def mergeArcsOnPathsWhereNoConflictsCanHappen(instance: Instance, statusQuo: CompleteSolution) -> None:
+def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: Instance, statusQuo: CompleteSolution) -> None:
     for vehicle, vehiclePath in enumerate(instance.trip_routes):
-        listOfListOfArcsToMerge = _getArcsWhichCanBeMerged(vehicle, instance)
+        listOfListOfArcsToMerge = _get_arcs_which_can_be_merged(vehicle, instance)
         if len(listOfListOfArcsToMerge) > 1:
             for listOfArcsToMerge in listOfListOfArcsToMerge:
-                idMergedArc = _appendMergedArcToInstance(instance, listOfArcsToMerge)
-                _mergeEntriesVehicleSchedule(vehiclePath, vehicle, statusQuo, listOfArcsToMerge, instance)
-                _mergeArcsInPath(vehiclePath, listOfArcsToMerge, idMergedArc)
+                idMergedArc = _append_merged_arc_to_instance(instance, listOfArcsToMerge)
+                _merge_entries_vehicle_schedule(vehiclePath, vehicle, statusQuo, listOfArcsToMerge, instance)
+                _merge_arcs_in_path(vehiclePath, listOfArcsToMerge, idMergedArc)
 
     return
 
 
-def _mergeEntriesVehicleSchedule(vehiclePath: list[int], vehicle: int, statusQuo: CompleteSolution,
-                                 listOfArcsToMerge: list[int], instance: Instance) -> None:
+def _merge_entries_vehicle_schedule(vehiclePath: list[int], vehicle: int, statusQuo: CompleteSolution,
+                                    listOfArcsToMerge: list[int], instance: Instance) -> None:
     idFirstArcToMerge = vehiclePath.index(listOfArcsToMerge[0])
     idLastArcToMerge = vehiclePath.index(listOfArcsToMerge[-1])
     del statusQuo.congested_schedule[vehicle][idFirstArcToMerge + 1: idLastArcToMerge + 1]
@@ -30,14 +30,14 @@ def _mergeEntriesVehicleSchedule(vehiclePath: list[int], vehicle: int, statusQuo
     del instance.min_delay_on_arc[vehicle][idFirstArcToMerge + 1: idLastArcToMerge + 1]
 
 
-def _mergeArcsInPath(vehiclePath: list[int], listOfArcsToMerge: list[int], idMergedArc: int) -> None:
+def _merge_arcs_in_path(vehiclePath: list[int], listOfArcsToMerge: list[int], idMergedArc: int) -> None:
     idFirstArcToMerge = vehiclePath.index(listOfArcsToMerge[0])
     idLastArcToMerge = vehiclePath.index(listOfArcsToMerge[-1])
     del vehiclePath[idFirstArcToMerge: idLastArcToMerge + 1]
     vehiclePath.insert(idFirstArcToMerge, idMergedArc)
 
 
-def _appendMergedArcToInstance(instance, listOfArcsToMerge: list[int]) -> int:
+def _append_merged_arc_to_instance(instance, listOfArcsToMerge: list[int]) -> int:
     travelTimeNewArc = sum([instance.travel_times_arcs[arc] for arc in listOfArcsToMerge])
     mergedArcInfo = {"typeOfArc": "merged",
                      "origin": instance.osm_info_arcs_utilized[listOfArcsToMerge[0]]["origin"],
@@ -57,7 +57,7 @@ def _appendMergedArcToInstance(instance, listOfArcsToMerge: list[int]) -> int:
     return len(instance.travel_times_arcs) - 1
 
 
-def _getArcsWhichCanBeMerged(vehicle: int, instance: Instance) -> list[list[int]]:
+def _get_arcs_which_can_be_merged(vehicle: int, instance: Instance) -> list[list[int]]:
     listOfListOfArcsToMerge: list[list[int]] = []
     listOfArcsToMerge: list[int] = []
 
