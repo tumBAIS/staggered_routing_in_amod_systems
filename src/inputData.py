@@ -83,28 +83,6 @@ class InputData:
         else:
             return ""
 
-    # def add_paths(self):
-    #     # Construct the path to the instance
-    #     second_part_path_to_instance = f"../../data/{self.network_name}/{self.type_of_instance}/" + \
-    #                                    f"{self.t_min}_minutes/{self.numberRides}_rides/day_{self.day}/" + \
-    #                                    f"seed_{self.seed}"
-    #     self.path_to_instance = os.path.join(os.path.abspath(__file__),
-    #                                          second_part_path_to_instance.replace("/", os.sep))
-    #
-    #     # Construct the path to the results
-    #     shortcuts_string = "no_" if not self.addShortcuts else ""
-    #     latency_string = (
-    #             "slopes_" + "-".join(map(lambda x: str(x).replace(".", "_"), self.list_of_slopes)) + "_th_" +
-    #             "-".join(map(lambda x: str(x).replace(".", "_"), self.list_of_thresholds)))
-    #
-    #     second_part_path_to_results = f"{shortcuts_string}shortcuts/{self.deadline_factor}_dead/" + \
-    #                                   f"{self.staggering_cap}_stag/{self.maxFlowAllowed}_max_flow/" + \
-    #                                   f"{latency_string}"
-    #
-    #     self.path_to_results = os.path.join(self.path_to_instance, second_part_path_to_results)
-    #     if not os.path.exists(self.path_to_results):
-    #         os.makedirs(self.path_to_results, exist_ok=True)
-
 
 def printInputData(inputData):
     print("#" * 20)
@@ -136,7 +114,7 @@ def getInputData(input: str) -> InputData:
     if input == "script":
         inputData = InputData(
             # instanceModule selection
-            day=1, numberRides=50, t_min=0, epochSize=60, seed=0, network_name="manhattan_5",
+            day=1, numberRides=100, t_min=0, epochSize=60, seed=0, network_name="manhattan_10",
             type_of_instance="synthetic",
             # network parameters
             speed=20, maxFlowAllowed=100, addShortcuts=False,
