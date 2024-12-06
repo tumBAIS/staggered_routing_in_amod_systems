@@ -2,7 +2,7 @@ import gurobipy as grb
 from gurobipy import Model
 
 from utils.classes import EpochSolution
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 from input_data import FIX_MODEL
 
 

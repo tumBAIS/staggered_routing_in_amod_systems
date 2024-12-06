@@ -1,5 +1,5 @@
 from input_data import ACTIVATE_ASSERTIONS
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 
 def _get_vehicles_utilizing_arcs(instance: Instance) -> list[list[int]]:

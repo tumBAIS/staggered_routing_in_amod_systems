@@ -1,7 +1,7 @@
 import datetime
 
 from utils.aliases import VehicleSchedules
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 from congestion_model.core import get_free_flow_schedule, \
     get_total_travel_time, get_delays_on_arcs, get_staggering_applicable

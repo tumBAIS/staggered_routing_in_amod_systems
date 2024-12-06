@@ -1,6 +1,6 @@
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 from utils.aliases import VehicleSchedules
 from congestion_model.core import get_delays_on_arcs, get_free_flow_schedule, \
     get_staggering_applicable, get_total_delay, get_total_travel_time, get_congested_schedule

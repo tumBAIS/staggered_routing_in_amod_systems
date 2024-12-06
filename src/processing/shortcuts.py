@@ -7,8 +7,8 @@ from typing import List, Tuple, Dict
 import networkx as nx
 from networkx import DiGraph
 from shapely.geometry import Point, LineString
-from instanceModule.graph import reduce_graph
-from instanceModule.paths import get_node_based_shortest_paths
+from instance_module.graph import reduce_graph
+from instance_module.paths import get_node_based_shortest_paths
 from input_data import InputData
 
 import warnings

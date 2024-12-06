@@ -9,7 +9,7 @@ from gurobipy import Model
 from input_data import TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
 from utils.aliases import VehicleSchedules
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 import gurobipy as grb
 import cpp_module as cpp
 from typing import Callable

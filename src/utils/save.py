@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import shapely
 
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 from utils.classes import CompleteSolution, OptimizationMeasures
 
 

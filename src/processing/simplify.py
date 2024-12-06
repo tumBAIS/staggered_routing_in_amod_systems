@@ -3,12 +3,12 @@ from __future__ import annotations
 import copy
 
 from congestion_model.conflict_binaries import get_conflict_binaries
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from processing.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_conflicts_can_happen
 from processing.remove_paths_sequences import remove_initial_part_of_paths_without_conflicts, \
     remove_final_part_of_paths_without_conflicts
 from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 from utils.classes import EpochSolution, CompleteSolution
 

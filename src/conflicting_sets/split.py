@@ -1,4 +1,4 @@
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 
 def append_arc_copy_to_instance(instance: Instance, arcToCopy: int, conflictingSet: list[int]) -> None:

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import cpp_module as cpp
-from instanceModule.instance import Instance
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.instance import Instance
+from instance_module.epoch_instance import EpochInstance
 from utils.aliases import *
 
 

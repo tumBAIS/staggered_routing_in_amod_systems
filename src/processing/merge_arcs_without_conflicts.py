@@ -1,7 +1,7 @@
 import shapely
 
 from utils.classes import CompleteSolution
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 
 def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: Instance, statusQuo: CompleteSolution) -> None:

@@ -2,7 +2,7 @@ import datetime
 
 from congestion_model.core import get_congested_schedule, get_free_flow_schedule, \
     get_total_travel_time, get_total_delay, get_delays_on_arcs
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 
 

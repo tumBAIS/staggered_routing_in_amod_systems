@@ -12,12 +12,12 @@ from MIP.constraints import add_conflict_constraints, add_travel_continuity_cons
     add_objective_function
 from MIP.callback import callback
 from MIP.warm_start import set_warm_start_model
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 from gurobipy import Model
 import gurobipy as grb
 from input_data import GUROBI_OPTIMALITY_GAP, TOLERANCE
 from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
 

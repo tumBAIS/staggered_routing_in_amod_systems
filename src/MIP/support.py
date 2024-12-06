@@ -7,10 +7,10 @@ import pickle
 
 from gurobipy import Model
 
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from input_data import GUROBI_OPTIMALITY_GAP
 from utils.classes import CompleteSolution, HeuristicSolution
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
 
@@ -62,7 +62,7 @@ def compute_iis_if_not_solved(model: Model):
         model.write(f"{path_to_results}/unsolvedModel.ilp")
         raise RuntimeError("Model could not be solved.")
 
- 
+
 def _delete_solution_external_file(instance: Instance | EpochInstance) -> None:
     fileToDelete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
     if os.path.isfile(fileToDelete):

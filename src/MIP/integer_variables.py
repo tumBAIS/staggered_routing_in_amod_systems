@@ -1,5 +1,5 @@
 from gurobipy import Model
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 import gurobipy as grb
 from collections import namedtuple
 

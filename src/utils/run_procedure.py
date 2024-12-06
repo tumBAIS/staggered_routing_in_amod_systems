@@ -1,12 +1,12 @@
 # Import necessary modules and functions
-from instanceModule.instance import save_instance_for_testing_cpp_code
+from instance_module.instance import save_instance_for_testing_cpp_code
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from utils.imports import get_not_simplified_instance
-from instanceModule.epoch_instance import get_epoch_instances
+from instance_module.epoch_instance import get_epoch_instances
 from solutions.status_quo import get_current_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution
-from instanceModule.update_epoch_instance import update_next_epoch_instance
+from instance_module.update_epoch_instance import update_next_epoch_instance
 from processing.simplify import simplify_system
 from utils.prints import print_insights_algorithm
 from utils.save import save_experiment

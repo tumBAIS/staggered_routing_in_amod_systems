@@ -1,5 +1,5 @@
 from utils.classes import CompleteSolution
-from instanceModule.instance import Instance
+from instance_module.instance import Instance
 
 
 def _assert_every_vehicle_is_in_a_conflicting_set(instance: Instance, removedVehicles=None):

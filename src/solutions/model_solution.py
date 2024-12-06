@@ -1,6 +1,6 @@
 from congestion_model.core import get_free_flow_schedule, \
     get_total_travel_time, get_staggering_applicable
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 from gurobipy import Model
 import gurobipy as grb

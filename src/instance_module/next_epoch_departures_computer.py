@@ -4,7 +4,7 @@ import copy
 from collections import namedtuple
 from enum import Enum
 
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 
 

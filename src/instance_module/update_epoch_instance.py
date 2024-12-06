@@ -3,10 +3,11 @@ from __future__ import annotations
 import datetime
 from collections import Counter
 
-import instanceModule.instance
-from instanceModule.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, VehicleStatus
+import instance_module.instance
+from instance_module.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, \
+    VehicleStatus
 from utils.classes import EpochSolution
-from instanceModule.epoch_instance import EpochInstance
+from instance_module.epoch_instance import EpochInstance
 from input_data import ACTIVATE_ASSERTIONS
 
 
@@ -35,7 +36,7 @@ def _get_max_staggering_applicable_next_epoch(departure, globalInstance, nextEpo
 def _add_departures_to_next_epoch(nextEpochDepartures: list[NextEpochDeparture],
                                   currentEpochInstance: EpochInstance,
                                   nextEpochInstance: EpochInstance,
-                                  globalInstance: instanceModule.instance.Instance) -> None:
+                                  globalInstance: instance_module.instance.Instance) -> None:
     for departure in nextEpochDepartures:
         originalVehicleID = currentEpochInstance.vehicles_original_ids[departure.vehicle]
         maxStaggeringApplicable = _get_max_staggering_applicable_next_epoch(departure, globalInstance,
@@ -98,7 +99,7 @@ def _assert_maximum_one_departure_for_vehicle(nextEpochDepartures: list[NextEpoc
 def update_next_epoch_instance(currentEpochInstance: EpochInstance,
                                currentEpochStatusQuo: EpochSolution,
                                nextEpochInstance: EpochInstance,
-                               globalInstance: instanceModule.instance.Instance):
+                               globalInstance: instance_module.instance.Instance):
     print("Updating next epoch departures...", end=" ")
     clock_start = datetime.datetime.now().timestamp()
     vehicleStatusList = [VehicleStatus.INACTIVE for _ in range(len(currentEpochStatusQuo.congested_schedule))]
