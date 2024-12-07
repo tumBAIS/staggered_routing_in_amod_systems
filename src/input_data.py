@@ -187,13 +187,13 @@ def get_input_from_dicts(instance_params_dict: dict, solver_params_dict: dict) -
     solver_params = SolverParameters(
         set_of_experiments=format_set_of_experiments_string(sys.argv[3]),
         instance_parameters=instance_params,
-        epoch_size=int(instance_params_dict["epoch_size"]),
-        optimize=format_bool(instance_params_dict["optimize"]),
-        warm_start=format_bool(instance_params_dict["warm_start"]),
-        improve_warm_start=format_bool(instance_params_dict["improve_warm_start"]),
-        local_search_callback=format_bool(instance_params_dict["local_search_callback"]),
-        epoch_time_limit=int(instance_params_dict["epoch_time_limit"]),
-        algorithm_time_limit=int(instance_params_dict["algorithm_time_limit"])
+        epoch_size=int(solver_params_dict["epoch_size"]),
+        optimize=format_bool(solver_params_dict["optimize"]),
+        warm_start=format_bool(solver_params_dict["warm_start"]),
+        improve_warm_start=format_bool(solver_params_dict["improve_warm_start"]),
+        local_search_callback=format_bool(solver_params_dict["local_search_callback"]),
+        epoch_time_limit=int(solver_params_dict["epoch_time_limit"]),
+        algorithm_time_limit=int(solver_params_dict["algorithm_time_limit"])
     )
 
     return instance_params, solver_params

@@ -279,7 +279,7 @@ def main(preset_name: str, network_name: str, congestion_level: str,
                 instance_params_dict = {
                     "network_name": network_name,
                     "day": day,
-                    "number_trips": 0,
+                    "number_of_trips": number_of_trips,
                     "seed": seed,
                     "max_flow_allowed": max_flow_allowed,
                     "add_shortcuts": add_shortcuts,
@@ -295,7 +295,7 @@ def main(preset_name: str, network_name: str, congestion_level: str,
     # Define solver parameters for the simulation
     solver_params_list = []
     solver_params_dict = {
-        "algo_time_limit": algorithm_time_limit,
+        "algorithm_time_limit": algorithm_time_limit,
         "epoch_time_limit": epoch_time_limit,
         "epoch_size": epoch_size,
         "optimize": optimize,

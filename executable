@@ -2,4 +2,4 @@
 
 # Attention to commandline arguments
 echo "Starting"
-python3 ./cluster_main.py $1 $2 $3
+python3 ./main_cluster.py $1 $2 $3
