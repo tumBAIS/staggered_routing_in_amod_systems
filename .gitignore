@@ -17,9 +17,8 @@ desktop.ini
 venv/
 
 # Data files and directories
-/data/
-!/data/change_names.py
-*.csv
+/data/manhattan*
+/data/YellowTripDataManhattan2015-01
 *.json
 *.xml
 *.parquet
