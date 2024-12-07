@@ -56,7 +56,7 @@ def transform_path_to_string(path: Path) -> str:
         transformed = transformed.replace("manhattan_", "MAN")
         return transformed
     except IndexError:
-        raise ValueError("'data\\' not found in the path.")
+        raise ValueError(f"'data\\' not found in path {path_str}.")
 
 
 def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
