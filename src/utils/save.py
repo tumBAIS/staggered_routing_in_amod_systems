@@ -38,6 +38,8 @@ def linestring_to_dict(linestring):
 
 def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
                     solver_params: SolverParameters):
+    # TODO: Once obtsined the code analyze the results, ensure you don't save unnecessary information.
+
     path_to_results = solver_params.path_to_results
     # Create a Pandas DataFrame with data from different classes
     instance_parameters_to_save = instance.input_data.__dict__
@@ -97,13 +99,7 @@ def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSol
 
     with open(path_to_results / "results.json", 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=3)
-
-    # save twice on cluster
-    if inputSource == "console":
-        pathToResults = sys.argv[2]
-        with open(f'{pathToResults}/results.p', 'wb') as pickle_file:
-            pickle.dump(output_data, pickle_file)
-
+        
     return
 
 

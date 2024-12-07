@@ -1,8 +1,5 @@
 from __future__ import annotations
-
 import datetime
-import os
-
 from input_data import SolverParameters
 from MIP.support import add_optimization_measures_to_model, set_gurobi_parameters, \
     initialize_optimization_measures_model, compute_iis_if_not_solved, load_initial_solution, \
@@ -19,8 +16,9 @@ import gurobipy as grb
 from input_data import GUROBI_OPTIMALITY_GAP, TOLERANCE
 from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
 from instance_module.epoch_instance import EpochInstance
+from pathlib import Path
 
-path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
+path_to_temp = Path(__file__).parent.parent.parent / "temp"
 
 
 def construct_model(instance: Instance | EpochInstance, statusQuo: CompleteSolution | EpochSolution,
@@ -59,30 +57,50 @@ def is_there_remaining_time(instance, solver_params: SolverParameters):
     return timeRemaining > 0
 
 
-def run_model(model: Model,
-              instance: Instance | EpochInstance,
-              warmStart: CompleteSolution | HeuristicSolution | EpochSolution,
-              statusQuo: CompleteSolution | EpochSolution,
-              solver_params: SolverParameters):
+def run_model(
+        model: Model,
+        instance: Instance | EpochInstance,
+        warmStart: CompleteSolution | HeuristicSolution | EpochSolution,
+        statusQuo: CompleteSolution | EpochSolution,
+        solver_params: SolverParameters,
+):
+    """
+    Runs the optimization model with given parameters, handling warm starts and callbacks.
+    """
+    # Check if optimization should proceed
     if not model._optimize or not is_there_remaining_time(instance, solver_params):
         return
+
+    # Save the initial solution for reference
     save_solution_in_external_file(warmStart, instance)
+
+    # Continue solving while criteria are met
     while _continue_solving(model, instance, solver_params):
         try:
+            # Load the initial solution
             initialSolution = load_initial_solution(instance)
-        except:
-            print("no solution to start the model - terminating procedure")
+        except Exception as e:
+            print("No solution to start the model - terminating procedure")
             return
+
+        # Set up the warm start if required
         if solver_params.warm_start:
             set_warm_start_model(model, initialSolution)
+
+        # Configure solver parameters
         set_gurobi_parameters(model, instance, solver_params)
+
+        # Run the optimization with or without a local search callback
         if solver_params.local_search_callback:
             model.optimize(callback(instance, statusQuo, solver_params))
         else:
             model.optimize()
+
+        # Try to obtain final optimization measures
         try:
             get_final_optimization_measures(model, instance)
-        except:
-            print("not possible to obtain final optimization measures")
+        except Exception as e:
+            print("Not possible to obtain final optimization measures")
+
+    # Compute an IIS if the model was not solved successfully
     compute_iis_if_not_solved(model)
-    model.write(f"{path_to_results}/model.lp")
