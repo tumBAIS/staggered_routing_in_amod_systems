@@ -8,6 +8,7 @@ from networkx.readwrite import json_graph
 
 from input_data import InstanceParameters
 from instance_module.paths import pairwise
+from input_data import SPEED_KPH
 
 
 def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
@@ -15,7 +16,7 @@ def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
     Assigns nominal travel times and capacities to arcs in the Manhattan graph based on
     the speed and max flow allowed specified in the input data.
     """
-    print(f"Assigning nominal travel times assuming vehicles traveling at {input_data.speed} kph")
+    print(f"Assigning nominal travel times assuming vehicles traveling at {SPEED_KPH} kph")
 
     # Set initial nominal travel time attributes to NaN
     nx.set_edge_attributes(manhattan_graph, float('nan'), 'nominal_travel_time')

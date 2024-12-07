@@ -11,6 +11,7 @@ ACTIVATE_ASSERTIONS = False
 FIX_MODEL = False
 SAVE_CPP_INSTANCE = False
 USE_GUROBI_INDICATORS = False
+SPEED_KPH = 20  # kph
 TOLERANCE = 1e-6
 MIN_SET_CAPACITY = 1.01
 CONSTR_TOLERANCE = 1e-3
@@ -22,12 +23,11 @@ os.environ['USE_PYGEOS'] = '0'  # Suppress warning from Shapely library
 @dataclasses.dataclass
 class InstanceParameters:
     network_name: str
+    add_shortcuts: bool
     day: int
     number_of_trips: float
     seed: int
-    speed: int
     max_flow_allowed: float
-    add_shortcuts: bool
     list_of_slopes: list[float]
     list_of_thresholds: list[float]
     staggering_cap: float
@@ -40,7 +40,6 @@ class InstanceParameters:
         self.path_to_routes = self.path_to_G.parent / f"{self.get_day_string()}{self.get_number_trips_string()}/routes.json"
         self.path_to_instance = self.path_to_routes.parent / f"S{self.staggering_cap}_D{self.deadline_factor}_VDF{self.list_of_slopes}{self.list_of_thresholds}/instance.json"
         os.makedirs(self.path_to_instance.parent, exist_ok=True)
-        self.demand_factor = 1  # Placeholder for actual implementation
 
     def get_shortcuts_string(self):
         if self.add_shortcuts:
@@ -110,8 +109,8 @@ def print_parameters(instance_parameters, solver_parameters):
 def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParameters]:
     instance_params = InstanceParameters(
         day=1, number_of_trips=100, seed=0, network_name="manhattan_10",
-        speed=20, max_flow_allowed=100, add_shortcuts=False,
-        list_of_slopes=[0.15], list_of_thresholds=[1], deadline_factor=100, staggering_cap=10)
+        max_flow_allowed=100, add_shortcuts=False, list_of_slopes=[0.15], list_of_thresholds=[1],
+        deadline_factor=100, staggering_cap=10)
 
     solver_params = SolverParameters(epoch_size=60, optimize=True, algorithm_time_limit=10, epoch_time_limit=10,
                                      warm_start=True, improve_warm_start=True, local_search_callback=True,

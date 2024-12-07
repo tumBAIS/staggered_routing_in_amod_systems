@@ -16,8 +16,6 @@ fi
 
 # Create CMake files using the correct interpreter and build type
 cmake -S cpp_module/ -B cpp_module/cmake-build-release -DCMAKE_BUILD_TYPE=Release
-cmake -S kspwlo/ -B kspwlo/cmake-build-release -DCMAKE_BUILD_TYPE=Release
 
 # Build CPP module
 cmake --build cpp_module/cmake-build-release --target cpp_module
-cmake --build kspwlo/cmake-build-release --target kspwlo

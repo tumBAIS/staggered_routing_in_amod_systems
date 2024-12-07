@@ -1,10 +1,10 @@
 import csv
-import datetime
 import itertools
 import os
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from tabulate import tabulate
 
 # Define paths relative to the current script location
 path_to_data = Path(__file__).parent / "data"
@@ -111,217 +111,140 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
         writer.writerow(input_data_dict)  # Write the data row
 
 
-def get_set_of_experiments_name(preset_name: str, network_name: str, demand_factor_list: list[int],
-                                kspwlo_algo_list: list[str],
-                                num_alternative_paths_list: list[int], path_similarity_theta_list: list[float],
-                                algo_list: list[str], mode_list: list[str], GA_iterations: int, LS_iterations: int,
-                                staggering_cap: int, fraction_controlled_list: list[float],
-                                goal_list: list[str]) -> str:
-    today = datetime.datetime.today()
-    # Format the date as ddmmyy
-    date_string = today.strftime('%d%m%y')
-
-    name_split: list[str] = network_name.split("_")
-    network_abbreviated = name_split[0][:3].upper()
-    size = name_split[1]
-    name_formatted = network_abbreviated + size
-
-    if len(demand_factor_list) == 1:
-        demand_factor_string = "DF" + str(demand_factor_list[0])
-    else:
-        demand_factor_string = "VARDF"
-
-    if len(kspwlo_algo_list) == 1:
-        kspwlo_algo_string = kspwlo_algo_list[0].replace("_", "").upper()
-    else:
-        kspwlo_algo_string = "VARALGO"
-
-    if len(num_alternative_paths_list) == 1:
-        alternative_paths_string = str(num_alternative_paths_list[0]) + "K"
-    else:
-        alternative_paths_string = "VARK"
-
-    # Path similarity string using THETA as indicator
-    if len(path_similarity_theta_list) == 1:
-        path_similarity_string = "THETA" + str(path_similarity_theta_list[0])
-    else:
-        path_similarity_string = "VARTHETA"
-
-    # Algorithm list processing
-    if len(algo_list) == 1:
-        algo_string = algo_list[0].replace("_", "").upper()
-    else:
-        algo_string = "VARALGO"
-
-    # Mode list processing
-    if len(mode_list) == 1:
-        mode_string = mode_list[0].replace("_", "").upper()
-    else:
-        mode_string = "VARMODES"
-
-    # LS parameterization when using LS as an algorithm
-    if "LS" in algo_string:
-        LS_iterations = PRESETS[preset_name]["LS_iterations"]
-        LS_max_cascade_level = PRESETS[preset_name].get("LS_max_cascade_level", -1)
-        LS_ls_frequency = PRESETS[preset_name].get("LS_ls_frequency", 0)
-        LS_destroy_percentage = PRESETS[preset_name].get("LS_destroy_percentage", 0)
-        LS_improve_with_ls = PRESETS[preset_name].get("LS_improve_with_ls", False)
-        LS_min_improvement = PRESETS[preset_name].get("LS_min_improvement", 0.05)
-
-        # Determine whether to append improve_with_ls flag to the experiment name
-        improve_with_ls_string = "EndLS" if LS_improve_with_ls else "NoEndLS"
-
-        # Append the LS parameters to the experiment name, including the improvement flag
-        ls_params_string = (f"{LS_ls_frequency}LSFreq_"
-                            f"{LS_destroy_percentage}DP_{LS_min_improvement}MI_{improve_with_ls_string}")
-    else:
-        ls_params_string = ""
-
-    # Iterations string
-    if algo_string == "VARALGO":
-        iterations_string = f"{GA_iterations // 1000}KGAIT_{LS_iterations // 1000}KLSIT"
-    elif "GA" in algo_string:
-        iterations_string = f"{GA_iterations // 1000}KGAIT"
-    elif "LS" in algo_string:
-        iterations_string = f"{LS_iterations // 1000}KLSIT"
-    else:
-        iterations_string = "UNKNOWN"
-
-    # Fraction controlled string
-    if len(fraction_controlled_list) == 1:
-        fraction_controlled_string = f"{int(fraction_controlled_list[0] * 100)}Contr"
-    else:
-        fraction_controlled_string = "VARContr"
-
-    # Goal string
-    if len(goal_list) == 1:
-        goal_string = goal_list[0]
-    else:
-        goal_string = "VARGoals"
-
-    # Combine everything into the final name string
-    final_name = f"{date_string}_{preset_name.upper()}_{name_formatted}_{demand_factor_string}_{staggering_cap}STAGCAP_{kspwlo_algo_string}_" \
-                 f"{path_similarity_string}_{alternative_paths_string}_{algo_string}_{mode_string}_" \
-                 f"{iterations_string}_{ls_params_string}_{fraction_controlled_string}_{goal_string}"
-
-    print(f"SET OF EXPERIMENT NAME: {final_name}")
-    return final_name
-
-
+# TODO: add LC and HC scenarios
+# TODO: add ONLINE and OFFLINE scenarios
 PRESETS = {
     "algo_performance": {
-        "num_alternative_paths_list": [10],
-        "path_similarity_theta_list": [.9],
-        "day_list": list(range(1, 32)),
-        "staggering_cap": 25,
-        "deadline_factor": 100,
-        "list_of_slopes_list": [[0.15]],
+        "day_list": list(range(1, 32)),  # start instance params
+        "seed_list": [0],
+        "list_of_slopes": [0.15],
         "list_of_thresholds": [1],
-        "kspwlo_algo_list": ["svp_plus"],
-        "fraction_controlled_list": [1],
-        "goal_list": ["WELFARE"],
-        "algo_list": ["LS"],
-        "mode_list": ["STAG", "BAL", "INTEG"],
-        "LS_iterations": 1000,
-        "LS_max_cascade_level": -1,
-        "LS_ls_frequency": 0.2,
-        "LS_destroy_percentage": 0.2,
-        "LS_improve_with_ls": True,
-        "LS_min_improvement": 0.05
-    },
-    "path_analysis": {
-        "num_alternative_paths_list": [2, 5, 10, 20, 30, 50],
-        "path_similarity_theta_list": [0, .3, .6, .9, 1],
-        "day_list": list(range(1, 32)),
-        "staggering_cap": 25,
-        "deadline_factor": 100,
-        "list_of_slopes_list": [[0.15]],
-        "list_of_thresholds": [1],
-        "kspwlo_algo_list": ["svp_plus"],
-        "fraction_controlled_list": [1],
-        "goal_list": ["WELFARE"],
-        "algo_list": ["LS"],
-        "mode_list": ["BAL"],
-        "LS_iterations": 1000,
-        "LS_max_cascade_level": -1,
-        "LS_ls_frequency": 0.2,
-        "LS_destroy_percentage": 0.2,
-        "LS_improve_with_ls": True,
-        "LS_min_improvement": 0.05
-    },
-
-    "fraction_controlled": {
-        "num_alternative_paths_list": [10],
-        "path_similarity_theta_list": [.9],
-        "day_list": [25],
-        "staggering_cap": 25,
-        "deadline_factor": 100,
-        "list_of_slopes_list": [[0.15]],
-        "list_of_thresholds": [1],
-        "kspwlo_algo_list": ["svp_plus"],
-        "fraction_controlled_list": [round(i * 0.1, 1) for i in range(11)],
-        "goal_list": ["WELFARE", "SELFISH"],
-        "algo_list": ["LS"],
-        "mode_list": ["INTEG"],
-        "LS_iterations": 1000,
-        "LS_max_cascade_level": -1,
-        "LS_ls_frequency": 0.2,
-        "LS_destroy_percentage": 0.2,
-        "LS_improve_with_ls": True,
-        "LS_min_improvement": 0.05
+        "staggering_cap_list": [25],
+        "deadline_factor": 100,  # end instance params
+        "algorithm_time_limit": 100,  # start solver params
+        "epoch_time_limit": 100,
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start": True,
+        "local_search_callback": True  # end solver params
     }
 }
 
 
-def main(preset_name: str, network_name: str, demand_factor_list: list[int]):
+def format_list_as_range(lst):
+    """Formats a list of integers into a compact range format."""
+    if not lst:
+        return "[]"
+    ranges = []
+    start = lst[0]
+    for i in range(1, len(lst)):
+        if lst[i] != lst[i - 1] + 1:
+            end = lst[i - 1]
+            ranges.append(f"{start}-{end}" if start != end else str(start))
+            start = lst[i]
+    ranges.append(f"{start}-{lst[-1]}" if start != lst[-1] else str(start))
+    return ", ".join(ranges)
+
+
+def pretty_print_experiment_parameters(
+        preset_parameters: dict, network_name: str, congestion_level: str, algo_mode: str,
+        number_of_trips: int, add_shortcuts: bool):
+    # Start with the explicitly passed arguments
+    parameters = [
+        ("Network Name", network_name),
+        ("Congestion Level", congestion_level),
+        ("Algorithm Mode", algo_mode),
+        ("Number of Trips", number_of_trips),
+        ("Add Shortcuts", "Yes" if add_shortcuts else "No")
+    ]
+
+    # Add the parameters from the preset dictionary
+    for key, value in preset_parameters.items():
+        # Special handling for the day list
+        if key == "day_list" and isinstance(value, list):
+            value = format_list_as_range(value)
+        parameters.append((key.replace("_", " ").title(), value))
+
+    # Print the table using tabulate
+    print(tabulate(parameters, headers=["Parameter", "Value"], tablefmt="simple"))
+
+
+def get_set_of_experiments_name(
+        preset_name: str, network_name: str, congestion_level: str, algo_mode: str,
+        number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed: int,
+        seed_list: list[int], list_of_slopes: list[float], list_of_thresholds: list[float],
+        staggering_cap: list[int], deadline_factor: int, algorithm_time_limit: int,
+        epoch_time_limit: int, epoch_size: int, optimize: bool, warm_start: bool,
+        improve_warm_start: bool, local_search_callback: bool) -> str:
+    # Format the string based on the arguments and convert to uppercase
+
+    def format_stag_cap(stag_cap):
+        if len(stag_cap) == 1:
+            return f"STAG{stag_cap[0]}"
+        else:
+            return f"VARSTAG"
+
+    name = (
+        f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_{congestion_level}_MF{max_flow_allowed}"
+        f"_{algo_mode}_T{number_of_trips}_D{len(day_list)}_"
+        f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
+        f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
+        f"ETL{epoch_time_limit}_OPT{'YES' if optimize else 'NO'}_"
+        f"WARM{'YES' if warm_start else 'NO'}_IWARM{'YES' if improve_warm_start else 'NO'}_"
+        f"CBLS{'YES' if local_search_callback else 'NO'}"
+    )
+
+    # CUSTOM RULES
+    name = name.replace("manhattan_", "MAN")
+    name = name.replace("performance", "perf")
+    name = name.replace("OFFLINE", "OFF")
+    name = name.replace("ONLINE", "ON")
+
+    return name.upper()
+
+
+def main(preset_name: str, network_name: str, congestion_level: str,
+         algo_mode: str, number_of_trips: int, add_shortcuts: bool):
     """
     Main function to execute the setup and configuration for cluster jobs.
     """
-    # Instance parameters
-
+    # Sanity checks
     if preset_name not in PRESETS:
         raise ValueError("preset name not in presets")
 
-    num_alternative_paths_list = PRESETS[preset_name]["num_alternative_paths_list"]
-    path_similarity_theta_list = PRESETS[preset_name]["path_similarity_theta_list"]
+    if congestion_level not in ["LC", "HC"]:
+        raise ValueError(f"Congestion level {congestion_level} not in ['LC','HC']")
+
+    if algo_mode not in ["OFFLINE", "ONLINE"]:
+        raise ValueError(f"Algo mode {algo_mode} not in ['OFFLINE','ONLINE']")
+
+    # Instance parameters
     day_list = PRESETS[preset_name]["day_list"]
-    staggering_cap = PRESETS[preset_name]["staggering_cap"]
-    deadline_factor = PRESETS[preset_name]["deadline_factor"]
-    list_of_slopes_list = PRESETS[preset_name]["list_of_slopes_list"]
+    max_flow_allowed = 100 if congestion_level == "HC" else 10  # if LC
+    seed_list = PRESETS[preset_name]["seed_list"]
+    list_of_slopes = PRESETS[preset_name]["list_of_slopes"]
     list_of_thresholds = PRESETS[preset_name]["list_of_thresholds"]
-    kspwlo_algo_list = PRESETS[preset_name]["kspwlo_algo_list"]
-    fraction_controlled_list = PRESETS[preset_name]["fraction_controlled_list"]
+    staggering_cap_list = PRESETS[preset_name]["staggering_cap_list"]
+    deadline_factor = PRESETS[preset_name]["deadline_factor"]
 
     # Solver parameters
-    goal_list = PRESETS[preset_name]["goal_list"]
-    algo_list = PRESETS[preset_name]["algo_list"]
-    mode_list = PRESETS[preset_name]["mode_list"]
-    plot_flag = False
-    verbose = False
+    algorithm_time_limit = PRESETS[preset_name]["algorithm_time_limit"]
+    epoch_time_limit = PRESETS[preset_name]["epoch_time_limit"]
+    epoch_size = 60 if algo_mode == "OFFLINE" else 6  # if algo_mode == "ONLINE"
+    optimize = PRESETS[preset_name]["optimize"]
+    warm_start = PRESETS[preset_name]["warm_start"]
+    improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
+    local_search_callback = PRESETS[preset_name]["local_search_callback"]
 
-    # GA parameters
-    GA_seed_list = range(1)  # set this to range(1) if not using GA
-    GA_population_size_list = [100]
-    GA_iterations = 5000
-    GA_penalization = 10
-    GA_it_pen = 1000
-    GA_crossover_mode_list = ["UN"]  # 2P, UN, 1P
-    GA_parents_selection_mode_list = ["2ARY"]  # kARY, #FIT
-    GA_start_times_distribution_list = ["NOR"]  # NOR #UN
-    GA_offspring_operator = "MUT"  # MUT #EDU #None
+    pretty_print_experiment_parameters(PRESETS[preset_name], network_name, congestion_level, algo_mode,
+                                       number_of_trips, add_shortcuts)
 
-    # LS parameterization
-    LS_iterations = PRESETS[preset_name]["LS_iterations"]
-    LS_max_cascade_level = PRESETS[preset_name]["LS_max_cascade_level"]
-    LS_ls_frequency = PRESETS[preset_name]["LS_ls_frequency"]
-    LS_destroy_percentage = PRESETS[preset_name]["LS_destroy_percentage"]
-    LS_improve_with_ls = PRESETS[preset_name]["LS_improve_with_ls"]
-    LS_min_improvement = PRESETS[preset_name]["LS_min_improvement"]
-
-    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, demand_factor_list, kspwlo_algo_list,
-                                                     num_alternative_paths_list, path_similarity_theta_list,
-                                                     algo_list, mode_list, GA_iterations, LS_iterations, staggering_cap,
-                                                     fraction_controlled_list, goal_list)
+    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, congestion_level, algo_mode,
+                                                     number_of_trips, add_shortcuts, day_list, max_flow_allowed,
+                                                     seed_list, list_of_slopes, list_of_thresholds, staggering_cap_list,
+                                                     deadline_factor, algorithm_time_limit, epoch_time_limit,
+                                                     epoch_size, optimize, warm_start, improve_warm_start,
+                                                     local_search_callback)
 
     # Cluster parameters
     job_title = set_of_experiments
@@ -350,69 +273,41 @@ def main(preset_name: str, network_name: str, demand_factor_list: list[int]):
 
     instance_params_names_list = []
     for day in day_list:
-        for num_alternative_paths in num_alternative_paths_list:
-            for demand_factor in demand_factor_list:
-                for list_of_slopes in list_of_slopes_list:
-                    for path_similarity_theta in path_similarity_theta_list:
-                        for kspwlo_algo in kspwlo_algo_list:
-                            for fraction_controlled in fraction_controlled_list:
-                                # Create a dictionary of parameters for the current configuration
-                                instance_params_dict = {
-                                    "network_name": network_name,
-                                    "day": day,
-                                    "number_trips": 0,
-                                    "staggering_cap": staggering_cap,
-                                    "deadline_factor": deadline_factor,
-                                    "list_of_slopes": list_of_slopes,
-                                    "list_of_thresholds": list_of_thresholds,
-                                    "num_alternative_paths": num_alternative_paths,
-                                    "path_similarity_theta": path_similarity_theta,
-                                    "kspwlo_algo": kspwlo_algo,
-                                    "demand_factor": demand_factor,
-                                    "fraction_controlled": fraction_controlled
-                                }
-                                instance_params_name = get_csv_data_name(instance_params_dict)
-                                write_instance_parameters_csv(instance_params_dict, instance_params_name,
-                                                              mode="instance")
-                                instance_params_names_list.append(instance_params_name)
+        for seed in seed_list:
+            for staggering_cap in staggering_cap_list:
+                # Create a dictionary of parameters for the current configuration
+                instance_params_dict = {
+                    "network_name": network_name,
+                    "day": day,
+                    "number_trips": 0,
+                    "seed": seed,
+                    "max_flow_allowed": max_flow_allowed,
+                    "add_shortcuts": add_shortcuts,
+                    "list_of_slopes": list_of_slopes,
+                    "list_of_thresholds": list_of_thresholds,
+                    "staggering_cap": staggering_cap,
+                    "deadline_factor": deadline_factor
+                }
+                instance_params_name = get_csv_data_name(instance_params_dict)
+                write_instance_parameters_csv(instance_params_dict, instance_params_name, mode="instance")
+                instance_params_names_list.append(instance_params_name)
 
     # Define solver parameters for the simulation
     solver_params_list = []
-    for algo in algo_list:
-        for mode in mode_list:
-            for seed in GA_seed_list:
-                for GA_population_size in GA_population_size_list:
-                    for GA_parents_selection_mode in GA_parents_selection_mode_list:
-                        for GA_crossover_mode in GA_crossover_mode_list:
-                            for GA_start_times_distribution in GA_start_times_distribution_list:
-                                for goal in goal_list:
-                                    solver_params_dict = {
-                                        "algo": algo,
-                                        "mode": mode,
-                                        "GA_seed": seed,
-                                        "GA_population_size": GA_population_size,
-                                        "GA_iterations": GA_iterations,
-                                        "GA_penalization": GA_penalization,
-                                        "GA_it_pen": GA_it_pen,
-                                        "GA_crossover_mode": GA_crossover_mode,  # 2P, UN
-                                        "GA_parents_selection_mode": GA_parents_selection_mode,  # BIN, #FIT
-                                        "GA_start_times_distribution": GA_start_times_distribution,  # NOR #UN
-                                        "GA_offspring_operator": GA_offspring_operator,
-                                        "verbose": verbose,
-                                        "plot_flag": plot_flag,
-                                        "LS_iterations": LS_iterations,
-                                        "goal": goal,
-                                        "LS_max_cascade_level": LS_max_cascade_level,
-                                        "LS_ls_frequency": LS_ls_frequency,
-                                        "LS_destroy_percentage": LS_destroy_percentage,
-                                        "LS_improve_with_ls": LS_improve_with_ls,
-                                        "LS_min_improvement": LS_min_improvement
-                                    }
+    solver_params_dict = {
+        "algo_time_limit": algorithm_time_limit,
+        "epoch_time_limit": epoch_time_limit,
+        "epoch_size": epoch_size,
+        "optimize": optimize,
+        "warm_start": warm_start,
+        "improve_warm_start": improve_warm_start,
+        "local_search_callback": local_search_callback,
+    }
 
-                                    # Generate the solver parameters filename
-                                    solver_params_name = get_csv_data_name(solver_params_dict)
-                                    write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
-                                    solver_params_list.append(solver_params_name)
+    # Generate the solver parameters filename
+    solver_params_name = get_csv_data_name(solver_params_dict)
+    write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
+    solver_params_list.append(solver_params_name)
 
     # Execution
     write_run_list(instance_params_names_list, solver_params_list, set_of_experiments, cluster_setup.job_title)
@@ -420,4 +315,5 @@ def main(preset_name: str, network_name: str, demand_factor_list: list[int]):
 
 
 if __name__ == "__main__":
-    main(preset_name="fraction_controlled", network_name="manhattan_20", demand_factor_list=[10])
+    main(preset_name="algo_performance", congestion_level="LC", algo_mode="OFFLINE",
+         network_name="manhattan_10", number_of_trips=100, add_shortcuts=True)
