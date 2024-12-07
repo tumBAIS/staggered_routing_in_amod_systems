@@ -47,7 +47,7 @@ class InstanceParameters:
         if self.add_shortcuts:
             return "WITH_"
         else:
-            return "WITHOUT_"
+            return "NO_"
 
     def validate_inputs(self):
         if self.day not in range(1, 32):

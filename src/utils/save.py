@@ -6,7 +6,7 @@ import sys
 import pickle
 import typing
 from dataclasses import dataclass
-
+from pathlib import Path
 import shapely
 
 from input_data import SolverParameters
@@ -34,6 +34,29 @@ def linestring_to_dict(linestring):
     }
 
     return geom_dict
+
+
+def transform_path_to_string(path: Path) -> str:
+    """
+    Transforms the portion of the path after 'data/' into a string
+    where '/' is replaced by '_'.
+
+    Parameters:
+        path (Path): The full path object.
+
+    Returns:
+        str: Transformed string.
+    """
+    try:
+        # Convert path to string and split at 'data/'
+        path_str = str(path)
+        after_data = path_str.split("data\\")[1]  # Get everything after 'data/'
+        # Replace '/' with '_'
+        transformed = after_data.replace("\\", "_")
+        transformed = transformed.replace("manhattan_", "MAN")
+        return transformed
+    except IndexError:
+        raise ValueError("'data\\' not found in the path.")
 
 
 def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
@@ -99,7 +122,15 @@ def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSol
 
     with open(path_to_results / "results.json", 'w', encoding='utf-8') as f:
         json.dump(output_data, f, ensure_ascii=False, indent=3)
-        
+
+    if solver_params.set_of_experiments:
+        path_to_set_of_experiments = Path(
+            __file__).parent.parent.parent / f"sets_of_experiments/{solver_params.set_of_experiments}"
+        name_experiment = transform_path_to_string(path_to_results)
+        os.makedirs(path_to_set_of_experiments / "results" / name_experiment, exist_ok=True)
+        with open(path_to_set_of_experiments / "results" / name_experiment / "results.json", 'w',
+                  encoding='utf-8') as f:
+            json.dump(output_data, f, ensure_ascii=False, indent=3)
     return
 
 
