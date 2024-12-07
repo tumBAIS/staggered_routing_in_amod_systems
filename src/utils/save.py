@@ -48,19 +48,19 @@ def transform_path_to_string(path: Path) -> str:
         str: Transformed string.
     """
     try:
-        # Convert the path to a string and find the portion after 'data'
+        # Convert the path to a string and find the portion after 'data/'
         path_str = str(path)
-        split_marker = f"data{Path.sep}"  # Adjust to OS-specific separator
+        split_marker = f"data{os.path.sep}"  # Use os.path.sep for platform-specific separator
         after_data = path_str.split(split_marker, 1)[1]  # Get everything after 'data/'
 
-        # Replace path separators with '_'
+        # Replace all separators with '_'
         transformed = after_data.replace("/", "_").replace("\\", "_")
 
         # Apply additional transformations
         transformed = transformed.replace("manhattan_", "MAN")
         return transformed
     except IndexError:
-        raise ValueError(f"'data{Path.sep}' not found in path {path_str}.")
+        raise ValueError(f"'data{os.path.sep}' not found in path {path_str}.")
 
 
 def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
