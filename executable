@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# Attention to commandline arguments
+echo "Starting"
+python3 ./cluster_main.py $1 $2 $3
