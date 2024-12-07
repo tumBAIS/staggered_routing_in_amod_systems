@@ -39,7 +39,7 @@ def linestring_to_dict(linestring):
 def transform_path_to_string(path: Path) -> str:
     """
     Transforms the portion of the path after 'data/' into a string
-    where '/' is replaced by '_'.
+    where '/' or '\\' is replaced by '_'.
 
     Parameters:
         path (Path): The full path object.
@@ -48,15 +48,19 @@ def transform_path_to_string(path: Path) -> str:
         str: Transformed string.
     """
     try:
-        # Convert path to string and split at 'data/'
+        # Convert the path to a string and find the portion after 'data'
         path_str = str(path)
-        after_data = path_str.split("data\\")[1]  # Get everything after 'data/'
-        # Replace '/' with '_'
-        transformed = after_data.replace("\\", "_")
+        split_marker = f"data{Path.sep}"  # Adjust to OS-specific separator
+        after_data = path_str.split(split_marker, 1)[1]  # Get everything after 'data/'
+
+        # Replace path separators with '_'
+        transformed = after_data.replace("/", "_").replace("\\", "_")
+
+        # Apply additional transformations
         transformed = transformed.replace("manhattan_", "MAN")
         return transformed
     except IndexError:
-        raise ValueError(f"'data\\' not found in path {path_str}.")
+        raise ValueError(f"'data{Path.sep}' not found in path {path_str}.")
 
 
 def save_experiment(inputSource: str, instance: Instance, statusQuo: CompleteSolution, solution: CompleteSolution,
