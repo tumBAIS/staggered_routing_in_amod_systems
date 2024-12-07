@@ -23,7 +23,7 @@ def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
 
     for origin, destination in manhattan_graph.edges():
         distance = manhattan_graph[origin][destination]['length']
-        nominal_travel_time = distance * 3.6 / input_data.speed
+        nominal_travel_time = distance * 3.6 / SPEED_KPH
         manhattan_graph[origin][destination]['nominal_travel_time'] = nominal_travel_time
 
         # Calculate nominal capacity based on max flow allowed

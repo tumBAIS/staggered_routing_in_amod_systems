@@ -2,6 +2,7 @@ import datetime
 
 import pandas as pd
 
+from input_data import SPEED_KPH
 from instance_module.epoch_instance import EpochInstances
 from utils.classes import CompleteSolution
 
@@ -126,7 +127,7 @@ def _print_delays_on_arcs_info(instance, delaysOnArcs: list[list[int]]) -> None:
 
 
 def _calculateLengthArcsUtilized(instance):
-    return [travelTime * instance.input_data.speed / 3.6 for travelTime in instance.travel_times_arcs]
+    return [travelTime * SPEED_KPH / 3.6 for travelTime in instance.travel_times_arcs]
 
 
 def _createInfoDataFrame(instance, lengthArcs):
