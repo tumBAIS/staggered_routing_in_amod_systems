@@ -121,6 +121,7 @@ PRESETS = {
         "list_of_thresholds": [1],
         "staggering_cap_list": [25],
         "deadline_factor": 100,  # end instance params
+        "algo_mode_list": ["OFFLINE", "ONLINE"],
         "algorithm_time_limit": 100,  # start solver params
         "epoch_time_limit": 100,
         "optimize": True,
@@ -147,13 +148,11 @@ def format_list_as_range(lst):
 
 
 def pretty_print_experiment_parameters(
-        preset_parameters: dict, network_name: str, congestion_level: str, algo_mode: str,
-        number_of_trips: int, add_shortcuts: bool):
+        preset_parameters: dict, network_name: str, congestion_level: str, number_of_trips: int, add_shortcuts: bool):
     # Start with the explicitly passed arguments
     parameters = [
         ("Network Name", network_name),
         ("Congestion Level", congestion_level),
-        ("Algorithm Mode", algo_mode),
         ("Number of Trips", number_of_trips),
         ("Add Shortcuts", "Yes" if add_shortcuts else "No")
     ]
@@ -170,11 +169,11 @@ def pretty_print_experiment_parameters(
 
 
 def get_set_of_experiments_name(
-        preset_name: str, network_name: str, congestion_level: str, algo_mode: str,
+        preset_name: str, network_name: str, congestion_level: str, algo_mode_list: list[str],
         number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed: int,
         seed_list: list[int], list_of_slopes: list[float], list_of_thresholds: list[float],
         staggering_cap: list[int], deadline_factor: int, algorithm_time_limit: int,
-        epoch_time_limit: int, epoch_size: int, optimize: bool, warm_start: bool,
+        epoch_time_limit: int, optimize: bool, warm_start: bool,
         improve_warm_start: bool, local_search_callback: bool) -> str:
     # Format the string based on the arguments and convert to uppercase
 
@@ -186,7 +185,7 @@ def get_set_of_experiments_name(
 
     name = (
         f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_{congestion_level}_MF{max_flow_allowed}"
-        f"_{algo_mode}_T{number_of_trips}_D{len(day_list)}_"
+        f"_{algo_mode_list}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
         f"ETL{epoch_time_limit}_OPT{'YES' if optimize else 'NO'}_"
@@ -203,8 +202,7 @@ def get_set_of_experiments_name(
     return name.upper()
 
 
-def main(preset_name: str, network_name: str, congestion_level: str,
-         algo_mode: str, number_of_trips: int, add_shortcuts: bool):
+def main(preset_name: str, network_name: str, congestion_level: str, number_of_trips: int, add_shortcuts: bool):
     """
     Main function to execute the setup and configuration for cluster jobs.
     """
@@ -214,9 +212,6 @@ def main(preset_name: str, network_name: str, congestion_level: str,
 
     if congestion_level not in ["LC", "HC"]:
         raise ValueError(f"Congestion level {congestion_level} not in ['LC','HC']")
-
-    if algo_mode not in ["OFFLINE", "ONLINE"]:
-        raise ValueError(f"Algo mode {algo_mode} not in ['OFFLINE','ONLINE']")
 
     # Instance parameters
     day_list = PRESETS[preset_name]["day_list"]
@@ -230,20 +225,21 @@ def main(preset_name: str, network_name: str, congestion_level: str,
     # Solver parameters
     algorithm_time_limit = PRESETS[preset_name]["algorithm_time_limit"]
     epoch_time_limit = PRESETS[preset_name]["epoch_time_limit"]
-    epoch_size = 60 if algo_mode == "OFFLINE" else 6  # if algo_mode == "ONLINE"
+    algo_mode_list = PRESETS[preset_name]["algo_mode_list"]
+    epoch_size_list = [60 if x == "OFFLINE" else 6 for x in algo_mode_list]
     optimize = PRESETS[preset_name]["optimize"]
     warm_start = PRESETS[preset_name]["warm_start"]
     improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
     local_search_callback = PRESETS[preset_name]["local_search_callback"]
 
-    pretty_print_experiment_parameters(PRESETS[preset_name], network_name, congestion_level, algo_mode,
-                                       number_of_trips, add_shortcuts)
+    pretty_print_experiment_parameters(PRESETS[preset_name], network_name, congestion_level, number_of_trips,
+                                       add_shortcuts)
 
-    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, congestion_level, algo_mode,
+    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, congestion_level, algo_mode_list,
                                                      number_of_trips, add_shortcuts, day_list, max_flow_allowed,
                                                      seed_list, list_of_slopes, list_of_thresholds, staggering_cap_list,
                                                      deadline_factor, algorithm_time_limit, epoch_time_limit,
-                                                     epoch_size, optimize, warm_start, improve_warm_start,
+                                                     optimize, warm_start, improve_warm_start,
                                                      local_search_callback)
 
     # Cluster parameters
@@ -294,20 +290,21 @@ def main(preset_name: str, network_name: str, congestion_level: str,
 
     # Define solver parameters for the simulation
     solver_params_list = []
-    solver_params_dict = {
-        "algorithm_time_limit": algorithm_time_limit,
-        "epoch_time_limit": epoch_time_limit,
-        "epoch_size": epoch_size,
-        "optimize": optimize,
-        "warm_start": warm_start,
-        "improve_warm_start": improve_warm_start,
-        "local_search_callback": local_search_callback,
-    }
+    for epoch_size in epoch_size_list:
+        solver_params_dict = {
+            "algorithm_time_limit": algorithm_time_limit,
+            "epoch_time_limit": epoch_time_limit,
+            "epoch_size": epoch_size,
+            "optimize": optimize,
+            "warm_start": warm_start,
+            "improve_warm_start": improve_warm_start,
+            "local_search_callback": local_search_callback,
+        }
 
-    # Generate the solver parameters filename
-    solver_params_name = get_csv_data_name(solver_params_dict)
-    write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
-    solver_params_list.append(solver_params_name)
+        # Generate the solver parameters filename
+        solver_params_name = get_csv_data_name(solver_params_dict)
+        write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
+        solver_params_list.append(solver_params_name)
 
     # Execution
     write_run_list(instance_params_names_list, solver_params_list, set_of_experiments, cluster_setup.job_title)
@@ -315,5 +312,5 @@ def main(preset_name: str, network_name: str, congestion_level: str,
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance", congestion_level="LC", algo_mode="OFFLINE",
-         network_name="manhattan_10", number_of_trips=100, add_shortcuts=True)
+    main(preset_name="algo_performance", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
+         add_shortcuts=True)
