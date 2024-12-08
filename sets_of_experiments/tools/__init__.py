@@ -79,13 +79,36 @@ def set_instance_parameters_id(results_df: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
+from pprint import pprint
+
+
 def get_results_df(path_to_results: Path) -> pd.DataFrame:
     """
     Imports results from JSON files located in subdirectories of a given path.
     """
+    print("\n" + "=" * 50)
+    print("Starting get_results_df function".center(50))
+    print("=" * 50 + "\n")
+
+    # Step 1: Import results into a DataFrame
+    print("Step 1: Importing results from files...")
     results_df = import_results_df_from_files(path_to_results)
+    print(f"Results imported. DataFrame shape: {results_df.shape}")
+
+    # Step 2: Flatten the DataFrame
+    print("\nStep 2: Flattening the results DataFrame...")
     results_df = flatten_results_df(results_df)
+    print(f"Results flattened. DataFrame shape: {results_df.shape}")
+
+    # Step 3: Assign instance parameter IDs
+    print("\nStep 3: Assigning instance parameter IDs...")
     results_df = set_instance_parameters_id(results_df)
+    print(f"Instance parameters assigned. DataFrame shape: {results_df.shape}")
+
+    print("\n" + "=" * 50)
+    print("Completed get_results_df function".center(50))
+    print("=" * 50 + "\n")
+
     return results_df
 
 
