@@ -214,7 +214,17 @@ def find_destination_node(row, network):
 
 
 def find_shortest_path(row, network: Network):
-    return nx.shortest_path(network.G, source=row['origin'], target=row['destination'], weight='length')
+    # Get all shortest paths of the same length
+    all_shortest_paths = list(nx.all_shortest_paths(
+        network.G,
+        source=row['origin'],
+        target=row['destination'],
+        weight='length'
+    ))
+
+    # Select the shortest path with the fewest arcs
+    optimal_path = min(all_shortest_paths, key=len)
+    return optimal_path
 
 
 def _filter_trips_not_in_network(gdf: gpd.GeoDataFrame, network: Network) -> gpd.GeoDataFrame:
