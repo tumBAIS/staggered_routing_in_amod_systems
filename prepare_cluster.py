@@ -183,9 +183,15 @@ def get_set_of_experiments_name(
         else:
             return f"VARSTAG"
 
+    def format_algo_mode_list(algo_mode_list: list[str]):
+        if len(algo_mode_list) == 1:
+            return algo_mode_list[0]
+        else:
+            return "_".join(algo_mode_list)
+
     name = (
         f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_{congestion_level}_MF{max_flow_allowed}"
-        f"_{algo_mode_list}_T{number_of_trips}_D{len(day_list)}_"
+        f"_{format_algo_mode_list(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
         f"ETL{epoch_time_limit}_OPT{'YES' if optimize else 'NO'}_"

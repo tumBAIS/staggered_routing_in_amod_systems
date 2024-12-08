@@ -39,11 +39,56 @@ def flatten_results_df(results_df: DataFrame) -> DataFrame:
     return results_df
 
 
+def set_instance_parameters_id(results_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Assigns unique IDs to each unique `instance_parameters` row in the flattened DataFrame.
+
+    Args:
+        results_df (pd.DataFrame): The input DataFrame with flattened `instance_parameters` columns.
+
+    Returns:
+        pd.DataFrame: A DataFrame with a new column `instance_parameters_id` indicating the unique ID.
+    """
+
+    def normalize_value(value):
+        """
+        Normalize unhashable types to hashable equivalents.
+        """
+        if isinstance(value, list):
+            return tuple(value)  # Convert list to tuple
+        return value  # Leave other types unchanged
+
+    # Select instance_parameter columns and normalize their values
+    instance_columns = results_df.filter(like='instance_parameters_')
+    normalized_instance_rows = instance_columns.applymap(normalize_value).apply(tuple, axis=1)
+
+    # Map unique rows to IDs
+    unique_instance_map = {value: idx for idx, value in enumerate(pd.unique(normalized_instance_rows))}
+
+    # Assign IDs to a new column
+    results_df['instance_parameters_id'] = normalized_instance_rows.map(unique_instance_map)
+
+    return results_df
+
+
 def get_results_df(path_to_results: Path) -> pd.DataFrame:
     """
     Imports results from JSON files located in subdirectories of a given path.
     """
     results_df = import_results_df_from_files(path_to_results)
     results_df = flatten_results_df(results_df)
-
+    results_df = set_instance_parameters_id(results_df)
     return results_df
+
+
+def filter_non_comparable_experiments(results_df: pd.DataFrame, n_experiments_required: int = 2) -> pd.DataFrame:
+    # Count occurrences of each `instance_parameters_id`
+    counts = results_df['instance_parameters_id'].value_counts()
+
+    # Filter IDs that meet the minimum required experiments
+    valid_ids = counts[counts >= n_experiments_required].index
+
+    # Filter the DataFrame to keep only rows with valid IDs
+    filtered_df = results_df[results_df['instance_parameters_id'].isin(valid_ids)]
+
+    return filtered_df
