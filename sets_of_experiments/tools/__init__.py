@@ -2,6 +2,14 @@ import pandas as pd
 import json
 from pathlib import Path
 from pandas import DataFrame
+import warnings
+
+# Suppress the specific FutureWarning about applymap
+warnings.filterwarnings(
+    "ignore",
+    message="DataFrame.applymap has been deprecated.*",
+    category=FutureWarning
+)
 
 
 def import_results_df_from_files(path_to_results: Path):

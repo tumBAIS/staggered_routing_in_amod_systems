@@ -3,6 +3,11 @@ import pandas as pd
 from pathlib import Path
 import seaborn as sns
 import tikzplotlib
+import warnings
+from matplotlib import MatplotlibDeprecationWarning
+
+# Suppress specific MatplotlibDeprecationWarning
+warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
 
 def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> None:
