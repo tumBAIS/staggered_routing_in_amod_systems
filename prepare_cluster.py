@@ -333,5 +333,5 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
 
 
 if __name__ == "__main__":
-    main(preset_name="staggering_analysis", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
+    main(preset_name="algo_performance", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
          add_shortcuts=True)
