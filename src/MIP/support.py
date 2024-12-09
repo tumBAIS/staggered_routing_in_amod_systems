@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import dataclasses
 import datetime
 import os
 import pickle
@@ -11,8 +12,16 @@ from instance_module.epoch_instance import EpochInstance
 from input_data import GUROBI_OPTIMALITY_GAP
 from utils.classes import CompleteSolution, HeuristicSolution
 from instance_module.instance import Instance
+from typing import Optional
 
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
+
+
+@dataclasses.dataclass
+class OptimizationMeasures:
+    lower_bound_list: list[float]
+    upper_bound_list: list[float]
+    optimality_gap_list: list[float]
 
 
 def add_optimization_measures_to_model(model: Model):
@@ -77,14 +86,16 @@ def load_initial_solution(instance: Instance | EpochInstance) -> HeuristicSoluti
     return initialSolution
 
 
-def get_final_optimization_measures(model, instance: Instance):
+def get_final_optimization_measures(model, instance: Instance) -> Optional[OptimizationMeasures]:
     if model.status not in [3, 4, 5]:
-        model._lowerBound.append(model.ObjBound)
-        model._upperBound.append(model.getObjective().getValue())
+        model._lowerBound.append(round(model.ObjBound, 2))
+        model._upperBound.append(round(model.getObjective().getValue(), 2))
         timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.start_solution_time
         model._optimizationTime.append(timeSpentInOptimization)
-        model._optimalityGap.append(model.MIPGap)
-    return
+        model._optimalityGap.append(round(model.MIPGap * 100, 2))
+        return OptimizationMeasures(lower_bound_list=model._lowerBound,
+                                    upper_bound_list=model._upperBound,
+                                    optimality_gap_list=model._optimalityGap)
 
 
 def save_solution_in_external_file(heuristicSolution: HeuristicSolution | CompleteSolution,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 import datetime
+
+import MIP.support
 from input_data import SolverParameters
 from MIP.support import add_optimization_measures_to_model, set_gurobi_parameters, \
     initialize_optimization_measures_model, compute_iis_if_not_solved, load_initial_solution, \
@@ -63,10 +65,11 @@ def run_model(
         warmStart: CompleteSolution | HeuristicSolution | EpochSolution,
         statusQuo: CompleteSolution | EpochSolution,
         solver_params: SolverParameters,
-):
+) -> MIP.support.OptimizationMeasures:
     """
     Runs the optimization model with given parameters, handling warm starts and callbacks.
     """
+    optimization_measures = None
     # Check if optimization should proceed
     if not model._optimize or not is_there_remaining_time(instance, solver_params):
         return
@@ -98,9 +101,10 @@ def run_model(
 
         # Try to obtain final optimization measures
         try:
-            get_final_optimization_measures(model, instance)
+            optimization_measures = get_final_optimization_measures(model, instance)
         except Exception as e:
             print("Not possible to obtain final optimization measures")
 
     # Compute an IIS if the model was not solved successfully
     compute_iis_if_not_solved(model)
+    return optimization_measures

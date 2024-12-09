@@ -22,7 +22,7 @@ def run_procedure(source: str) -> None:
 
     # Initialize a list to store solutions for each epoch
     epoch_solutions = []
-
+    optimization_measures_list = []
     # Process each epoch instance
     for epoch_id, epoch_instance in enumerate(epoch_instances):
         # Get the status quo for the current epoch
@@ -32,10 +32,11 @@ def run_procedure(source: str) -> None:
         simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
 
         # Solve for the current epoch
-        epoch_solution = get_epoch_solution(simplified_instance, simplified_status_quo, epoch_instance,
-                                            epoch_status_quo, solver_params)
+        epoch_solution, optimization_measures = get_epoch_solution(simplified_instance, simplified_status_quo,
+                                                                   epoch_instance,
+                                                                   epoch_status_quo, solver_params)
         epoch_solutions.append(epoch_solution)
-
+        optimization_measures_list.append(optimization_measures)
         # Update the instance for the next epoch if not the last one
         if epoch_id < len(epoch_instances) - 1:
             next_epoch_instance = epoch_instances[epoch_id + 1]
@@ -48,4 +49,5 @@ def run_procedure(source: str) -> None:
 
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
-    save_experiment(source, global_instance, complete_status_quo, reconstructed_solution, solver_params)
+    save_experiment(global_instance, complete_status_quo, reconstructed_solution, solver_params,
+                    optimization_measures_list)
