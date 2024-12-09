@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import pickle
 import typing
@@ -125,6 +126,8 @@ def save_experiment(instance: Instance, status_quo: CompleteSolution,
         "optimization_measures_list": [getattr(x, '__dict__', x) for x in optimization_measures_list]
     }
 
+    path_to_G = output_data["instance_parameters"]["path_to_G"]
+
     cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance"]
     for col in cols_input_data_to_delete:
         output_data["instance_parameters"].pop(col, None)
@@ -140,7 +143,15 @@ def save_experiment(instance: Instance, status_quo: CompleteSolution,
             __file__).parent.parent.parent / f"sets_of_experiments/{solver_params.set_of_experiments}"
         experiment_name = transform_path_to_string(path_to_results)
         os.makedirs(path_to_set_of_experiments / "results" / experiment_name, exist_ok=True)
+        os.makedirs(path_to_set_of_experiments / "networks", exist_ok=True)
+        # Copy the file to the target location
+        file_name = (
+            output_data["instance_parameters"]["network_name"] + "_with_shortcuts.json"
+            if output_data["instance_parameters"]["add_shortcuts"]
+            else output_data["instance_parameters"]["network_name"] + "_no_shortcuts.json"
+        )
 
+        shutil.copy(path_to_G, path_to_set_of_experiments / "networks" / file_name)
         with open(path_to_set_of_experiments / "results" / experiment_name / "results.json", "w",
                   encoding="utf-8") as f:
             json.dump(output_data, f, ensure_ascii=False, indent=3)
