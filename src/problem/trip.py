@@ -8,6 +8,7 @@ from problem.network import Network
 from problem.route import TripRoutes, TripRoute
 from utils.aliases import *
 import time
+from typing import Optional
 
 
 def _get_point_from_dict(point_dict: dict) -> shp.Point:

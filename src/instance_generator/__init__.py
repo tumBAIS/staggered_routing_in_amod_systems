@@ -44,7 +44,6 @@ if __name__ == "__main__":
         number_of_trips=2,
         seed=0,
         network_name="manhattan_10",
-        speed=20,
         max_flow_allowed=100,
         add_shortcuts=False,
         list_of_slopes=[0.05],

@@ -150,46 +150,6 @@ def sample_dataset(dataset_gdf, instance_parameters) -> gpd.GeoDataFrame:
     return dataset_gdf
 
 
-def _scale_demand(dataset_gdf: pd.DataFrame, instance_parameters: InstanceParams, network: Network,
-                  gittering_seed: int = 42) -> pd.DataFrame:
-    """Scale the demand in the dataset by creating additional copies of trips."""
-
-    # Create a separate random generator instance with its own seed
-    rng = np.random.default_rng(seed=gittering_seed)
-
-    new_trips = []
-    for _, trip in dataset_gdf.iterrows():
-        # Append the original trip first
-        new_trips.append(trip)
-
-        # Create (demand_factor - 1) new trips based on the original trip
-        for _ in range(int(instance_parameters.demand_factor) - 1):
-            new_trip = trip.copy()
-
-            # Generate a random total adjustment time within the range of -5 to +5 minutes
-            total_seconds = rng.integers(-DEPARTURE_GITTERING * 60, DEPARTURE_GITTERING * 60 + 1)
-
-            # Convert numpy.int64 to a regular Python int
-            time_adjustment = timedelta(seconds=int(total_seconds))
-            new_trip["Trip_Pickup_DateTime"] = trip["Trip_Pickup_DateTime"] + time_adjustment
-
-            # Adjust origin and destination by moving them randomly within a 500-meter radius
-            new_trip["origin_coords"] = _move_point_within_radius(trip["origin_coords"], 500, rng)
-            new_trip["destination_coords"] = _move_point_within_radius(trip["destination_coords"], 500, rng)
-
-            # Update origin and destination nodes
-            new_trip["origin"] = network.find_closest_node(new_trip["origin_coords"])
-            new_trip["destination"] = network.find_closest_node(new_trip["destination_coords"])
-
-            if new_trip["origin"] != new_trip["destination"]:
-                new_trips.append(new_trip)
-
-    # Create a new DataFrame from the new_trips list
-    new_trips_df = pd.DataFrame(new_trips)
-
-    return new_trips_df
-
-
 def _move_point_within_radius(point: Point, radius: float, rng: np.random.Generator) -> Point:
     """Move a point randomly within a given radius."""
     angle = rng.uniform(0, 2 * np.pi)

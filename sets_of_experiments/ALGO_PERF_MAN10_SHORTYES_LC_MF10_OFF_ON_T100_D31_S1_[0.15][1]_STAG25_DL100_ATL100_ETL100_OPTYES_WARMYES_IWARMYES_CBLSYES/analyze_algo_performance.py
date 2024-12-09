@@ -13,3 +13,4 @@ if __name__ == "__main__":
     results_df = filter_non_comparable_experiments(results_df)
     get_algo_performance_boxplots(results_df, PATH_TO_FIGURES)
     get_mip_bounds_boxplots(results_df, PATH_TO_FIGURES)
+    get_arc_congestion_distribution_barplot(results_df, PATH_TO_FIGURES)
