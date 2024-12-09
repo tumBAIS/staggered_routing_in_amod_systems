@@ -1,3 +1,5 @@
+import os
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
@@ -75,11 +77,12 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         plt.tight_layout()
 
         # Save the figure as a JPEG
-        plt.savefig(path_to_figures / f"{file_name}.jpeg", format="jpeg", dpi=300)
+        os.makedirs(path_to_figures / "performance_boxplots", exist_ok=True)
+        plt.savefig(path_to_figures / "performance_boxplots" / f"{file_name}.jpeg", format="jpeg", dpi=300)
 
         # Save the figure as TeX, with custom placeholders for width and height
         tikzplotlib.save(
-            str(path_to_figures / f"{file_name}.tex"),
+            str(path_to_figures / "performance_boxplots" / f"{file_name}.tex"),
             axis_width=r"\DelayReductionWidth",
             axis_height=r"\DelayReductionHeight"
         )

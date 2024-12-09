@@ -10,6 +10,11 @@ from typing import Optional
 import geopandas as gpd
 import numpy as np
 import matplotlib.cm as cm
+import warnings
+from matplotlib import MatplotlibDeprecationWarning
+
+# Ignore specific matplotlib deprecation warnings
+warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
 WEB_MERCATOR_CRS = "EPSG:3857"
 

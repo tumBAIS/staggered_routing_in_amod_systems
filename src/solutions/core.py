@@ -10,57 +10,62 @@ from solutions.model_solution import get_epoch_model_solution
 from utils.classes import EpochSolution, CompleteSolution
 
 
-def _print_header_offline_solution():
+def print_header_offline_solution():
+    """Prints header for offline solution computation."""
     print("#" * 20)
-    print(f"COMPUTING OFFLINE SOLUTION")
+    print("COMPUTING OFFLINE SOLUTION")
     print("#" * 20)
 
 
-def get_offline_solution(instance: Instance, releaseTimes: list[float],
+def get_offline_solution(instance: Instance, release_times: list[float],
                          solver_params: SolverParameters) -> CompleteSolution:
-    """ Compute the global status quo to compare solution against """
-    _print_header_offline_solution()
-    solutionMetrics = compute_solution_metrics(instance, releaseTimes, solver_params)
-    print_info_status_quo_metrics(solutionMetrics)
-    add_conflicting_sets_to_instance(instance, solutionMetrics.free_flow_schedule)
-    staggeringAppliedInEpoch = [0.0] * len(solutionMetrics.congested_schedule)
- 
+    """Compute the global status quo to compare solutions against."""
+    print_header_offline_solution()
+    solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
+    print_info_status_quo_metrics(solution_metrics)
+    add_conflicting_sets_to_instance(instance, solution_metrics.free_flow_schedule)
+    staggering_applied_in_epoch = [0.0] * len(solution_metrics.congested_schedule)
+
     return CompleteSolution(
-        delays_on_arcs=solutionMetrics.delays_on_arcs,
-        free_flow_schedule=solutionMetrics.free_flow_schedule,
-        release_times=solutionMetrics.release_times,
+        delays_on_arcs=solution_metrics.delays_on_arcs,
+        free_flow_schedule=solution_metrics.free_flow_schedule,
+        release_times=solution_metrics.release_times,
         staggering_applicable=instance.max_staggering_applicable[:],
-        total_delay=solutionMetrics.total_delay,
-        congested_schedule=solutionMetrics.congested_schedule,
-        staggering_applied=staggeringAppliedInEpoch,
-        total_travel_time=get_total_travel_time(solutionMetrics.congested_schedule),
+        total_delay=solution_metrics.total_delay,
+        congested_schedule=solution_metrics.congested_schedule,
+        staggering_applied=staggering_applied_in_epoch,
+        total_travel_time=get_total_travel_time(solution_metrics.congested_schedule),
         binaries=None
     )
 
 
-def _print_info_epoch_solution(epochStatusQuo, epochSolution):
+def print_info_epoch_solution(epoch_status_quo, epoch_solution):
+    """Prints information about the epoch solution."""
     print("#" * 20)
-    print(f"INFO EPOCH SOLUTION")
+    print("INFO EPOCH SOLUTION")
     print("#" * 20)
 
-    print(f"Total delay epoch status quo: {epochStatusQuo.total_delay / 60 :.2f} [min]")
-    print(f"Total delay epoch model solution: {epochSolution.total_delay / 60 :.2f} [min]")
-    delayReduction = (epochStatusQuo.total_delay - epochSolution.total_delay) / epochStatusQuo.total_delay \
-        if epochStatusQuo.total_delay > 1e-6 else 0
-    print(f"Total delay epoch reduction: {delayReduction:.2%}")
+    print(f"Total delay epoch status quo: {epoch_status_quo.total_delay / 60:.2f} [min]")
+    print(f"Total delay epoch model solution: {epoch_solution.total_delay / 60:.2f} [min]")
+    delay_reduction = (
+        (epoch_status_quo.total_delay - epoch_solution.total_delay) / epoch_status_quo.total_delay
+        if epoch_status_quo.total_delay > 1e-6 else 0
+    )
+    print(f"Total delay epoch reduction: {delay_reduction:.2%}")
 
 
-def get_epoch_solution(simplifiedInstance, simplifiedStatusQuo, epochInstance, epochStatusQuo,
+def get_epoch_solution(simplified_instance, simplified_status_quo, epoch_instance, epoch_status_quo,
                        solver_params: SolverParameters) -> EpochSolution:
-    if len(simplifiedStatusQuo.congested_schedule):
-        epochWarmStart = get_epoch_warm_start(simplifiedInstance, simplifiedStatusQuo, solver_params)
-        model = construct_model(simplifiedInstance, simplifiedStatusQuo, epochWarmStart, solver_params)
-        run_model(model, simplifiedInstance, epochWarmStart, simplifiedStatusQuo, solver_params)
-        modelSolution = get_epoch_model_solution(model, simplifiedInstance, simplifiedStatusQuo, epochWarmStart,
-                                                 solver_params)
-        # map back to the full system
-        epochSolution = map_simplified_epoch_solution(epochInstance, modelSolution, solver_params)
-        _print_info_epoch_solution(epochStatusQuo, epochSolution)
-        return epochSolution
+    """Compute the epoch solution."""
+    if len(simplified_status_quo.congested_schedule):
+        epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
+        model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
+        run_model(model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params)
+        model_solution = get_epoch_model_solution(model, simplified_instance, simplified_status_quo, epoch_warm_start,
+                                                  solver_params)
+        # Map back to the full system
+        epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
+        print_info_epoch_solution(epoch_status_quo, epoch_solution)
+        return epoch_solution
     else:
-        return epochStatusQuo
+        return epoch_status_quo
