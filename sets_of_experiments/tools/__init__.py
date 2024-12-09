@@ -82,6 +82,32 @@ def set_instance_parameters_id(results_df: pd.DataFrame) -> pd.DataFrame:
 from pprint import pprint
 
 
+def set_arc_to_node_mapping(results_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create a mapping of arc IDs to corresponding node pairs and add it as a new column in the DataFrame.
+     """
+
+    def create_mapping(arc_routes, node_routes):
+        """
+        Create a dictionary mapping arcs to node pairs for a single pair of arc and node routes.
+        """
+        arc_to_node = {}
+        for x in range(len(arc_routes)):  # Iterate over all routes
+            for y in range(len(arc_routes[x]) - 1):  # Ignore the last arc (dummy arc)
+                arc = arc_routes[x][y]
+                node_pair = (node_routes[x][y], node_routes[x][y + 1])  # Get corresponding node pair
+                arc_to_node[arc] = node_pair
+        return arc_to_node
+
+    # Apply the mapping creation for each row
+    results_df['arc_to_node_mapping'] = results_df.apply(
+        lambda row: create_mapping(row['instance_trip_routes'], row['instance_node_based_trip_routes']),
+        axis=1
+    )
+
+    return results_df
+
+
 def get_results_df(path_to_results: Path) -> pd.DataFrame:
     """
     Imports results from JSON files located in subdirectories of a given path.
@@ -104,6 +130,11 @@ def get_results_df(path_to_results: Path) -> pd.DataFrame:
     print("\nStep 3: Assigning instance parameter IDs...")
     results_df = set_instance_parameters_id(results_df)
     print(f"Instance parameters assigned. DataFrame shape: {results_df.shape}")
+
+    # Step 3: Assign instance parameter IDs
+    print("\nStep 3: Creating arc to node mapping...")
+    results_df = set_arc_to_node_mapping(results_df)
+    print(f"Arc mapping assigned. DataFrame shape: {results_df.shape}")
 
     print("\n" + "=" * 50)
     print("Completed get_results_df function".center(50))
