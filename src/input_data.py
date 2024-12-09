@@ -123,7 +123,7 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
     instance_params = InstanceParameters(
         day=1, number_of_trips=100, seed=0, network_name="manhattan_10",
         max_flow_allowed=100, add_shortcuts=False, list_of_slopes=[0.15], list_of_thresholds=[1],
-        deadline_factor=100, staggering_cap=10)
+        deadline_factor=100, staggering_cap=0)
 
     solver_params = SolverParameters(epoch_size=6, optimize=True, algorithm_time_limit=10, epoch_time_limit=10,
                                      warm_start=True, improve_warm_start=True, local_search_callback=True,
