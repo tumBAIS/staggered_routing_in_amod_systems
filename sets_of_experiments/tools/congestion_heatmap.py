@@ -1,7 +1,6 @@
 from pathlib import Path
 from utils.tools import deserialize
 import pandas as pd
-import networkx as nx
 import matplotlib.pyplot as plt
 from shapely.geometry import LineString
 from matplotlib.colors import LinearSegmentedColormap
@@ -79,21 +78,49 @@ def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path
 
     # Step 6: Plot combined heatmap
     print("\nStep 6: Generating combined heatmap...")
-    fig, axs = plt.subplots(1, 3, figsize=(15, 5), gridspec_kw={'width_ratios': [1, 1, 1], 'wspace': 0.05})
+    fig, axs = plt.subplots(1, 3, figsize=(14, 3), gridspec_kw={'width_ratios': [1, 1, 1], 'wspace': -0.05})
+    fig.tight_layout()
 
     def plot_heatmap(data, ax, title):
+        """Plot a single heatmap and draw the bounding box of the map."""
+        # Sort edges by delay in ascending order to plot least congested arcs first
         sorted_edges = sorted(
             G.edges(data=True),
             key=lambda edge: data.get((edge[0], edge[1]), 0),
         )
+
+        # Initialize bounding box variables
+        min_x, min_y, max_x, max_y = float('inf'), float('inf'), float('-inf'), float('-inf')
+
         for u, v, edge_data in sorted_edges:
             geometry = edge_data.get("geometry", None)
             if isinstance(geometry, LineString):
                 delay = data.get((u, v), 0)
                 color = cmap(norm(delay))
-                ax.plot(*geometry.xy, color=color, linewidth=2)
+                ax.plot(*geometry.xy, color=color, linewidth=1)  # Reduced line width to 1
+
+                # Update bounding box
+                bounds = geometry.bounds
+                min_x = min(min_x, bounds[0])
+                min_y = min(min_y, bounds[1])
+                max_x = max(max_x, bounds[2])
+                max_y = max(max_y, bounds[3])
+
+        # Draw the bounding box
+        rect = plt.Rectangle(
+            (min_x, min_y),
+            max_x - min_x,
+            max_y - min_y,
+            linewidth=0.5,
+            edgecolor="black",
+            facecolor="none",
+            zorder=3
+        )
+        ax.add_patch(rect)
+
+        # Set aspect ratio and title
         ax.set_aspect("equal", adjustable="datalim")
-        ax.set_title(title)
+        # ax.set_title(title, pad=0)  # Added padding for title spacing
         ax.axis("off")
 
     plot_heatmap(offline_status_quo_delays, axs[0], "UNC")
@@ -101,60 +128,22 @@ def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path
     plot_heatmap(online_solution_delays, axs[2], "ON")
 
     # Add a shared colorbar to the right of all plots
-    cbar_ax = fig.add_axes([0.92, 0.2, 0.02, 0.6])  # Adjusted size: smaller and vertically aligned with plots
+    cbar_ax = fig.add_axes([0.945, 0.165, 0.02, 0.68])  # Adjusted for a smaller vertical size
     sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
     sm.set_array([])
     cbar = plt.colorbar(sm, cax=cbar_ax, orientation="vertical")
     cbar.set_label(r"$\Omega_a$ [seconds]")
 
     # Adjust layout to remove extra white space
-    plt.subplots_adjust(top=0.85, bottom=0.15)
-
+    fig.subplots_adjust(left=0, right=0.95, top=1, bottom=0)
     # Save the combined heatmap
     output_dir = path_to_figures / "heatmaps"
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(output_dir / "congestion_heatmap.jpeg", dpi=300, format="jpeg")
+    plt.savefig(output_dir / "congestion_heatmap.pdf", dpi=300, format="pdf")
     print(f"Saved: {output_dir / 'congestion_heatmap.jpeg'}")
     plt.close()
 
     print("\n" + "=" * 50)
     print("Completed Congestion Heatmap Generation".center(50))
     print("=" * 50 + "\n")
-
-
-def plot_congestion_heatmap(
-        G: nx.MultiDiGraph, arc_delays: Dict, ax: plt.Axes, title: str, cmap, norm
-):
-    """Plot a congestion heatmap based on the total delays for arcs."""
-    print(f"Plotting heatmap: {title}...")
-
-    # Sort arcs by delay in ascending order to plot least congested arcs first
-    sorted_edges = sorted(
-        G.edges(data=True),
-        key=lambda edge: arc_delays.get((edge[0], edge[1]), 0),
-    )
-
-    for u, v, data in sorted_edges:
-        geometry = data.get("geometry", None)
-        if isinstance(geometry, LineString):
-            delay = arc_delays.get((u, v), 0)  # Default delay is 0
-            color = cmap(norm(delay))
-            ax.plot(*geometry.xy, color=color, linewidth=2)
-
-    # Set the aspect ratio to maintain the original map shape
-    ax.set_aspect("equal", adjustable="datalim")
-    ax.set_title(title)
-    ax.axis("off")
-
-    # Add a colorbar with matching vertical size
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    cbar = plt.colorbar(
-        sm,
-        ax=ax,
-        orientation="vertical",
-        fraction=0.02,  # Adjust fraction to match the height of the plot
-        pad=0.04,  # Padding between the plot and the color bar
-    )
-    cbar.set_label("Total Delay (seconds)")
-    print(f"Heatmap '{title}' completed.")
