@@ -114,6 +114,7 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
 PRESETS = {
     "algo_performance": {
         "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [10, 100],
         "seed_list": [0],
         "list_of_slopes": [0.15],
         "list_of_thresholds": [1],
@@ -129,6 +130,7 @@ PRESETS = {
     },
     "staggering_analysis": {
         "day_list": [1],  # start instance params
+        "max_flow_allowed_list": [10, 100],
         "seed_list": [0],
         "list_of_slopes": [0.15],
         "list_of_thresholds": [1],
@@ -161,11 +163,10 @@ def format_list_as_range(lst):
 
 
 def pretty_print_experiment_parameters(
-        preset_parameters: dict, network_name: str, congestion_level: str, number_of_trips: int, add_shortcuts: bool):
+        preset_parameters: dict, network_name: str, number_of_trips: int, add_shortcuts: bool):
     # Start with the explicitly passed arguments
     parameters = [
         ("Network Name", network_name),
-        ("Congestion Level", congestion_level),
         ("Number of Trips", number_of_trips),
         ("Add Shortcuts", "Yes" if add_shortcuts else "No")
     ]
@@ -182,8 +183,8 @@ def pretty_print_experiment_parameters(
 
 
 def get_set_of_experiments_name(
-        preset_name: str, network_name: str, congestion_level: str, algo_mode_list: list[str],
-        number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed: int,
+        preset_name: str, network_name: str, algo_mode_list: list[str],
+        number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed_list: list[int],
         seed_list: list[int], list_of_slopes: list[float], list_of_thresholds: list[float],
         staggering_cap: list[int], deadline_factor: int, algorithm_time_limit: int,
         epoch_time_limit: int, optimize: bool, warm_start: bool,
@@ -202,8 +203,14 @@ def get_set_of_experiments_name(
         else:
             return "_".join(algo_mode_list)
 
+    def format_list_int(algo_mode_list: list[int]):
+        if len(algo_mode_list) == 1:
+            return algo_mode_list[0]
+        else:
+            return str(algo_mode_list)
+
     name = (
-        f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_{congestion_level}_MF{max_flow_allowed}"
+        f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
         f"_{format_algo_mode_list(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
@@ -221,7 +228,7 @@ def get_set_of_experiments_name(
     return name.upper()
 
 
-def main(preset_name: str, network_name: str, congestion_level: str, number_of_trips: int, add_shortcuts: bool):
+def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcuts: bool):
     """
     Main function to execute the setup and configuration for cluster jobs.
     """
@@ -229,12 +236,9 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
     if preset_name not in PRESETS:
         raise ValueError("preset name not in presets")
 
-    if congestion_level not in ["LC", "HC"]:
-        raise ValueError(f"Congestion level {congestion_level} not in ['LC','HC']")
-
     # Instance parameters
     day_list = PRESETS[preset_name]["day_list"]
-    max_flow_allowed = 100 if congestion_level == "HC" else 10  # if LC
+    max_flow_allowed_list = PRESETS[preset_name]["max_flow_allowed_list"]
     seed_list = PRESETS[preset_name]["seed_list"]
     list_of_slopes = PRESETS[preset_name]["list_of_slopes"]
     list_of_thresholds = PRESETS[preset_name]["list_of_thresholds"]
@@ -251,11 +255,11 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
     improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
     local_search_callback = PRESETS[preset_name]["local_search_callback"]
 
-    pretty_print_experiment_parameters(PRESETS[preset_name], network_name, congestion_level, number_of_trips,
+    pretty_print_experiment_parameters(PRESETS[preset_name], network_name, number_of_trips,
                                        add_shortcuts)
 
-    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, congestion_level, algo_mode_list,
-                                                     number_of_trips, add_shortcuts, day_list, max_flow_allowed,
+    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, algo_mode_list,
+                                                     number_of_trips, add_shortcuts, day_list, max_flow_allowed_list,
                                                      seed_list, list_of_slopes, list_of_thresholds, staggering_cap_list,
                                                      deadline_factor, algorithm_time_limit, epoch_time_limit,
                                                      optimize, warm_start, improve_warm_start,
@@ -290,22 +294,23 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
     for day in day_list:
         for seed in seed_list:
             for staggering_cap in staggering_cap_list:
-                # Create a dictionary of parameters for the current configuration
-                instance_params_dict = {
-                    "network_name": network_name,
-                    "day": day,
-                    "number_of_trips": number_of_trips,
-                    "seed": seed,
-                    "max_flow_allowed": max_flow_allowed,
-                    "add_shortcuts": add_shortcuts,
-                    "list_of_slopes": list_of_slopes,
-                    "list_of_thresholds": list_of_thresholds,
-                    "staggering_cap": staggering_cap,
-                    "deadline_factor": deadline_factor
-                }
-                instance_params_name = get_csv_data_name(instance_params_dict)
-                write_instance_parameters_csv(instance_params_dict, instance_params_name, mode="instance")
-                instance_params_names_list.append(instance_params_name)
+                for max_flow_allowed in max_flow_allowed_list:
+                    # Create a dictionary of parameters for the current configuration
+                    instance_params_dict = {
+                        "network_name": network_name,
+                        "day": day,
+                        "number_of_trips": number_of_trips,
+                        "seed": seed,
+                        "max_flow_allowed": max_flow_allowed,
+                        "add_shortcuts": add_shortcuts,
+                        "list_of_slopes": list_of_slopes,
+                        "list_of_thresholds": list_of_thresholds,
+                        "staggering_cap": staggering_cap,
+                        "deadline_factor": deadline_factor
+                    }
+                    instance_params_name = get_csv_data_name(instance_params_dict)
+                    write_instance_parameters_csv(instance_params_dict, instance_params_name, mode="instance")
+                    instance_params_names_list.append(instance_params_name)
 
     # Define solver parameters for the simulation
     solver_params_list = []
@@ -331,5 +336,5 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
+    main(preset_name="algo_performance", network_name="manhattan_10", number_of_trips=100,
          add_shortcuts=True)
