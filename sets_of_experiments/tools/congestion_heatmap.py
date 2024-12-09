@@ -27,37 +27,8 @@ def calculate_total_arc_delays(results_df: pd.DataFrame, delay_column: str, mapp
     return arc_delays
 
 
-def plot_congestion_heatmap(
-        G: nx.MultiDiGraph, arc_delays: Dict, ax: plt.Axes, title: str
-):
-    """Plot a congestion heatmap based on the total delays for arcs."""
-    print(f"Plotting heatmap: {title}...")
-
-    # Define the color map
-    cmap = LinearSegmentedColormap.from_list("heatmap", ["lightgreen", "orange", "red"])
-    norm = plt.Normalize(vmin=0, vmax=max(arc_delays.values(), default=1))
-
-    for u, v, data in G.edges(data=True):
-        geometry = data.get("geometry", None)
-        if isinstance(geometry, LineString):
-            delay = arc_delays.get((u, v), 0)  # Default delay is 0
-            color = cmap(norm(delay))
-            ax.plot(*geometry.xy, color=color, linewidth=2)
-
-    # Add a colorbar
-    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
-    sm.set_array([])
-    plt.colorbar(sm, ax=ax, orientation="vertical", label="Total Delay (seconds)")
-
-    # Set the aspect ratio to maintain the original map shape
-    ax.set_aspect('equal', adjustable='datalim')
-    ax.set_title(title)
-    ax.axis("off")
-    print(f"Heatmap '{title}' completed.")
-
-
 def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path_to_networks: Path):
-    """Generate congestion heatmaps based on total arc delays."""
+    """Generate a single congestion heatmap figure with UNC, OFF, and ON maps."""
     print("\n" + "=" * 50)
     print("Starting Congestion Heatmap Generation".center(50))
     print("=" * 50 + "\n")
@@ -94,50 +65,96 @@ def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path
         online_df, delay_column="solution_delays_on_arcs", mapping_column="arc_to_node_mapping"
     )
 
-    # Step 5: Plot and save separate heatmaps
-    print("\nStep 5: Generating and saving separate heatmaps...")
+    # Step 5: Determine a shared color scale
+    print("\nStep 5: Determining shared color scale...")
+    all_delays = list(offline_status_quo_delays.values()) + \
+                 list(offline_solution_delays.values()) + \
+                 list(online_solution_delays.values())
+    max_delay = max(all_delays, default=1)
+    print(f"Maximum delay across all datasets: {max_delay} seconds.")
+
+    # Create a shared color map and normalization
+    cmap = LinearSegmentedColormap.from_list("heatmap", ["lightgreen", "orange", "red"])
+    norm = plt.Normalize(vmin=0, vmax=max_delay)
+
+    # Step 6: Plot combined heatmap
+    print("\nStep 6: Generating combined heatmap...")
+    fig, axs = plt.subplots(1, 3, figsize=(15, 5), gridspec_kw={'width_ratios': [1, 1, 1], 'wspace': 0.05})
+
+    def plot_heatmap(data, ax, title):
+        sorted_edges = sorted(
+            G.edges(data=True),
+            key=lambda edge: data.get((edge[0], edge[1]), 0),
+        )
+        for u, v, edge_data in sorted_edges:
+            geometry = edge_data.get("geometry", None)
+            if isinstance(geometry, LineString):
+                delay = data.get((u, v), 0)
+                color = cmap(norm(delay))
+                ax.plot(*geometry.xy, color=color, linewidth=2)
+        ax.set_aspect("equal", adjustable="datalim")
+        ax.set_title(title)
+        ax.axis("off")
+
+    plot_heatmap(offline_status_quo_delays, axs[0], "UNC")
+    plot_heatmap(offline_solution_delays, axs[1], "OFF")
+    plot_heatmap(online_solution_delays, axs[2], "ON")
+
+    # Add a shared colorbar to the right of all plots
+    cbar_ax = fig.add_axes([0.92, 0.2, 0.02, 0.6])  # Adjusted size: smaller and vertically aligned with plots
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(sm, cax=cbar_ax, orientation="vertical")
+    cbar.set_label(r"$\Omega_a$ [seconds]")
+
+    # Adjust layout to remove extra white space
+    plt.subplots_adjust(top=0.85, bottom=0.15)
+
+    # Save the combined heatmap
     output_dir = path_to_figures / "heatmaps"
     os.makedirs(output_dir, exist_ok=True)
-
-    # Offline Status Quo
-    fig, ax = plt.subplots(figsize=(6, 6))
-    plot_congestion_heatmap(
-        G,
-        offline_status_quo_delays,
-        ax=ax,
-        title="Offline Status Quo",
-    )
-    plt.tight_layout()
-    plt.savefig(output_dir / "offline_status_quo_heatmap.jpeg", dpi=300, format="jpeg")
-    print(f"Saved: {output_dir / 'offline_status_quo_heatmap.jpeg'}")
-    plt.close()
-
-    # Offline Solution
-    fig, ax = plt.subplots(figsize=(6, 6))
-    plot_congestion_heatmap(
-        G,
-        offline_solution_delays,
-        ax=ax,
-        title="Offline Solution",
-    )
-    plt.tight_layout()
-    plt.savefig(output_dir / "offline_solution_heatmap.jpeg", dpi=300, format="jpeg")
-    print(f"Saved: {output_dir / 'offline_solution_heatmap.jpeg'}")
-    plt.close()
-
-    # Online Solution
-    fig, ax = plt.subplots(figsize=(6, 6))
-    plot_congestion_heatmap(
-        G,
-        online_solution_delays,
-        ax=ax,
-        title="Online Solution",
-    )
-    plt.tight_layout()
-    plt.savefig(output_dir / "online_solution_heatmap.jpeg", dpi=300, format="jpeg")
-    print(f"Saved: {output_dir / 'online_solution_heatmap.jpeg'}")
+    plt.savefig(output_dir / "congestion_heatmap.jpeg", dpi=300, format="jpeg")
+    print(f"Saved: {output_dir / 'congestion_heatmap.jpeg'}")
     plt.close()
 
     print("\n" + "=" * 50)
     print("Completed Congestion Heatmap Generation".center(50))
     print("=" * 50 + "\n")
+
+
+def plot_congestion_heatmap(
+        G: nx.MultiDiGraph, arc_delays: Dict, ax: plt.Axes, title: str, cmap, norm
+):
+    """Plot a congestion heatmap based on the total delays for arcs."""
+    print(f"Plotting heatmap: {title}...")
+
+    # Sort arcs by delay in ascending order to plot least congested arcs first
+    sorted_edges = sorted(
+        G.edges(data=True),
+        key=lambda edge: arc_delays.get((edge[0], edge[1]), 0),
+    )
+
+    for u, v, data in sorted_edges:
+        geometry = data.get("geometry", None)
+        if isinstance(geometry, LineString):
+            delay = arc_delays.get((u, v), 0)  # Default delay is 0
+            color = cmap(norm(delay))
+            ax.plot(*geometry.xy, color=color, linewidth=2)
+
+    # Set the aspect ratio to maintain the original map shape
+    ax.set_aspect("equal", adjustable="datalim")
+    ax.set_title(title)
+    ax.axis("off")
+
+    # Add a colorbar with matching vertical size
+    sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+    sm.set_array([])
+    cbar = plt.colorbar(
+        sm,
+        ax=ax,
+        orientation="vertical",
+        fraction=0.02,  # Adjust fraction to match the height of the plot
+        pad=0.04,  # Padding between the plot and the color bar
+    )
+    cbar.set_label("Total Delay (seconds)")
+    print(f"Heatmap '{title}' completed.")
