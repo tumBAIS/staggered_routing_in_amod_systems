@@ -21,7 +21,6 @@ class EpochInstance:
     travel_times_arcs: list[float]
     capacities_arcs: list[float]
     last_position_for_reconstruction: list[int | None]
-    osm_info_arcs_utilized: list[dict[str: Any]]
     start_solution_time: float
     clock_start_epoch: float = field(default_factory=float)
     clock_end_epoch: float = field(default_factory=float)
@@ -68,7 +67,6 @@ def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle
         max_staggering_applicable=instance.max_staggering_applicable[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         capacities_arcs=instance.capacities_arcs[:],
         travel_times_arcs=instance.travel_times_arcs[:],
-        osm_info_arcs_utilized=instance.osm_info_arcs_utilized[:],
         last_position_for_reconstruction=[None for _ in range(last_vehicle_in_epoch + 1 - first_vehicle_in_epoch)],
         due_dates=instance.deadlines[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         start_solution_time=datetime.datetime.now().timestamp()

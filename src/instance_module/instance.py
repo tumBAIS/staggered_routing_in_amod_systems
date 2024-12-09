@@ -22,7 +22,6 @@ def save_list_of_strings_file(list_of_values: list[typing.Any], file_name: str, 
 @dataclass
 class Instance:
     input_data: InstanceParameters
-    osm_info_arcs_utilized: list[dict[str, typing.Any]]
     capacities_arcs: list[int]
     release_times_dataset: list[float]
     arrival_times_dataset: list[float]
@@ -81,7 +80,6 @@ def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[
                  release_times_dataset: list[Time], arrival_times_dataset: list[Time],
                  node_based_trip_routes: list[list[int]]):
     return Instance(
-        osm_info_arcs_utilized=arcs_features.osm_info_arcs,
         trip_routes=arc_based_shortest_paths,
         travel_times_arcs=arcs_features.travel_times_arcs,
         capacities_arcs=arcs_features.capacities_arcs,

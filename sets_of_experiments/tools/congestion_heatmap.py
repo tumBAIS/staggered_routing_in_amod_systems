@@ -6,6 +6,9 @@ from shapely.geometry import LineString
 from matplotlib.colors import LinearSegmentedColormap
 from typing import Dict
 import os
+import warnings
+
+warnings.filterwarnings("ignore", message="This figure includes Axes that are not compatible with tight_layout")
 
 
 def calculate_total_arc_delays(results_df: pd.DataFrame, delay_column: str, mapping_column: str) -> Dict:

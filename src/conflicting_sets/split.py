@@ -4,9 +4,7 @@ from instance_module.instance import Instance
 def append_arc_copy_to_instance(instance: Instance, arcToCopy: int, conflictingSet: list[int]) -> None:
     arcTravelTime = instance.travel_times_arcs[arcToCopy]
     arcNominalCapacity = instance.capacities_arcs[arcToCopy]
-    osmInfo = instance.osm_info_arcs_utilized[arcToCopy]
     instance.travel_times_arcs.append(arcTravelTime)
-    instance.osm_info_arcs_utilized.append(osmInfo)
     instance.capacities_arcs.append(arcNominalCapacity)
     instance.conflicting_sets.append(conflictingSet)
     instance.undivided_conflicting_sets.append([conflictingSet])

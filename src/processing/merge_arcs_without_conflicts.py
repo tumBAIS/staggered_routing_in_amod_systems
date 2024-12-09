@@ -39,18 +39,6 @@ def _merge_arcs_in_path(vehiclePath: list[int], listOfArcsToMerge: list[int], id
 
 def _append_merged_arc_to_instance(instance, listOfArcsToMerge: list[int]) -> int:
     travelTimeNewArc = sum([instance.travel_times_arcs[arc] for arc in listOfArcsToMerge])
-    mergedArcInfo = {"typeOfArc": "merged",
-                     "origin": instance.osm_info_arcs_utilized[listOfArcsToMerge[0]]["origin"],
-                     "coordinates_origin": instance.osm_info_arcs_utilized[listOfArcsToMerge[0]]["coordinates_origin"],
-                     "destination": instance.osm_info_arcs_utilized[listOfArcsToMerge[-1]]["destination"],
-                     "coordinates_destination": instance.osm_info_arcs_utilized[listOfArcsToMerge[-1]][
-                         "coordinates_destination"],
-                     "geometry": shapely.LineString(
-                         [instance.osm_info_arcs_utilized[listOfArcsToMerge[0]]["coordinates_origin"],
-                          instance.osm_info_arcs_utilized[listOfArcsToMerge[-1]]["coordinates_destination"]]),
-                     "length": sum([instance.osm_info_arcs_utilized[arc]["length"] for arc in listOfArcsToMerge])
-                     }
-    instance.osm_info_arcs_utilized.append(mergedArcInfo)
     instance.travel_times_arcs.append(travelTimeNewArc)
     instance.capacities_arcs.append(1)
     instance.conflicting_sets.append([])

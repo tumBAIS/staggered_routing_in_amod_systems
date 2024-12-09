@@ -15,25 +15,6 @@ from instance_module.instance import Instance
 from utils.classes import CompleteSolution, OptimizationMeasures
 
 
-def linestring_to_dict(linestring):
-    """
-    Transform a LineString into a dictionary format.
-
-    Args:
-        linestring (LineString): The LineString object to transform.
-
-    Returns:
-        dict: A dictionary representing the LineString.
-    """
-    if not isinstance(linestring, shapely.LineString):
-        return linestring
-
-    return {
-        "type": "LineString",
-        "coordinates": list(linestring.coords),
-    }
-
-
 def transform_path_to_string(path: Path) -> str:
     """
     Transforms the portion of the path after 'data/' into a string
@@ -73,11 +54,6 @@ def save_experiment(instance: Instance, status_quo: CompleteSolution,
 
     # Process instance data
     instance_parameters_to_save = instance.input_data.__dict__
-    for arc, _ in enumerate(instance.osm_info_arcs_utilized):
-        if arc > 0:
-            instance.osm_info_arcs_utilized[arc] = linestring_to_dict(
-                instance.osm_info_arcs_utilized[arc]["geometry"]
-            )
 
     # Clear unnecessary data
     status_quo.binaries = {}

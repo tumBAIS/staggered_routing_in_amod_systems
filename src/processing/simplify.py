@@ -59,7 +59,6 @@ def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
                     notSimplifiedStatusQuo: CompleteSolution | EpochSolution) -> \
         tuple[Instance | EpochInstance, CompleteSolution | EpochSolution]:
     statusQuo, instance = copy.deepcopy((notSimplifiedStatusQuo, notSimplifiedInstance))
-    print(f"Number of unique arc ODs before simplification: {get_od_arcs(instance.osm_info_arcs_utilized)}")
     remove_initial_part_of_paths_without_conflicts(instance, statusQuo)
     notSimplifiedInstance.removed_vehicles = instance.removed_vehicles[:]  # we will map the ID of vehicles
     allVehiclesRemoved = len(notSimplifiedStatusQuo.congested_schedule) == len(notSimplifiedInstance.removed_vehicles)
@@ -73,5 +72,4 @@ def simplify_system(notSimplifiedInstance: Instance | EpochInstance,
                                                statusQuo.congested_schedule)  # necessary if no warm start is given
     _set_min_release_time_to0_and_adjust_deadlines(instance, statusQuo)
     _print_congestion_info_simplified_system(statusQuo)
-    print(f"Number of unique arc ODs after simplification: {get_od_arcs(instance.osm_info_arcs_utilized)}")
     return instance, statusQuo
