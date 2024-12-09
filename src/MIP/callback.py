@@ -24,14 +24,14 @@ def get_current_bounds(model: Model, start_solution_time) -> None:
     if lower_bound_improved and upper_bound_improved:
         lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
         upper_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBST)
-        model._lowerBound.append(lower_bound)
-        model._upperBound.append(upper_bound)
+        model._lowerBound.append(round(lower_bound, 2))
+        model._upperBound.append(round(upper_bound, 2))
 
         time_spent_in_optimization = datetime.datetime.now().timestamp() - start_solution_time
         model._optimizationTime.append(time_spent_in_optimization)
 
         optimality_gap = (upper_bound - lower_bound) / upper_bound * 100 if upper_bound > TOLERANCE else 0
-        model._optimalityGap.append(optimality_gap)
+        model._optimalityGap.append(round(optimality_gap, 2))
 
 
 def update_remaining_time_for_optimization(model: Model, instance: Instance, solver_params: SolverParameters) -> None:

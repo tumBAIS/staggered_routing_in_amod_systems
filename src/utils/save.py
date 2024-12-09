@@ -55,8 +55,9 @@ def transform_path_to_string(path: Path) -> str:
         raise ValueError(f"'data{os.path.sep}' not found in path {path_str}.")
 
 
-def save_experiment(input_source: str, instance: Instance, status_quo: CompleteSolution,
-                    solution: CompleteSolution, solver_params: SolverParameters):
+def save_experiment(instance: Instance, status_quo: CompleteSolution,
+                    solution: CompleteSolution, solver_params: SolverParameters,
+                    optimization_measures_list: list[OptimizationMeasures]):
     """
     Save experiment results to JSON files.
 
@@ -121,6 +122,7 @@ def save_experiment(input_source: str, instance: Instance, status_quo: CompleteS
         "instance": instance_data_to_save,
         "status_quo": status_quo.__dict__,
         "solution": solution.__dict__,
+        "optimization_measures_list": [x.__dict__ if x else x for x in optimization_measures_list]
     }
 
     cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance"]

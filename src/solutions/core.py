@@ -1,3 +1,4 @@
+import MIP.support
 from input_data import SolverParameters
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics, print_info_status_quo_metrics
@@ -55,17 +56,18 @@ def print_info_epoch_solution(epoch_status_quo, epoch_solution):
 
 
 def get_epoch_solution(simplified_instance, simplified_status_quo, epoch_instance, epoch_status_quo,
-                       solver_params: SolverParameters) -> EpochSolution:
+                       solver_params: SolverParameters) -> (EpochSolution, MIP.support.OptimizationMeasures):
     """Compute the epoch solution."""
     if len(simplified_status_quo.congested_schedule):
         epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
         model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
-        run_model(model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params)
+        optimization_measures = run_model(model, simplified_instance, epoch_warm_start, simplified_status_quo,
+                                          solver_params)
         model_solution = get_epoch_model_solution(model, simplified_instance, simplified_status_quo, epoch_warm_start,
                                                   solver_params)
         # Map back to the full system
         epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
         print_info_epoch_solution(epoch_status_quo, epoch_solution)
-        return epoch_solution
+        return epoch_solution, optimization_measures
     else:
-        return epoch_status_quo
+        return epoch_status_quo, None
