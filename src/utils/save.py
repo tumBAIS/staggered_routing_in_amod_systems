@@ -122,7 +122,7 @@ def save_experiment(instance: Instance, status_quo: CompleteSolution,
         "instance": instance_data_to_save,
         "status_quo": status_quo.__dict__,
         "solution": solution.__dict__,
-        "optimization_measures_list": [x.__dict__ if x else x for x in optimization_measures_list]
+        "optimization_measures_list": [getattr(x, '__dict__', x) for x in optimization_measures_list]
     }
 
     cols_input_data_to_delete = ["path_to_G", "path_to_routes", "path_to_instance"]
