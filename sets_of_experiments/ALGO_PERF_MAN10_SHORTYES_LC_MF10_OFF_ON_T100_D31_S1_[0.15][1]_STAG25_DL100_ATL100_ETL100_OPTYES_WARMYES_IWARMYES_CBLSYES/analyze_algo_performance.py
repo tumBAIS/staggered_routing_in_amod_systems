@@ -2,6 +2,7 @@ import os
 from sets_of_experiments.tools import get_results_df, filter_non_comparable_experiments
 from sets_of_experiments.tools.algo_performance_boxplots import get_algo_performance_boxplots
 from sets_of_experiments.tools.mip_bounds_boxplots import get_mip_bounds_boxplots
+from sets_of_experiments.tools.arc_congestion_distribution_barplot import get_arc_congestion_distribution_barplot
 from pathlib import Path
 
 PATH_TO_RESULTS = Path(__file__).parent / "results"

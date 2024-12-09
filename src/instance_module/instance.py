@@ -27,6 +27,7 @@ class Instance:
     release_times_dataset: list[float]
     arrival_times_dataset: list[float]
     trip_routes: list[list[int]]
+    node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
     clock_start_epoch: int = 0
     due_dates: list[float] = field(default_factory=list)
@@ -77,7 +78,8 @@ def print_total_free_flow_time(instance: Instance):
 
 
 def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[list[int]], arcs_features,
-                 release_times_dataset: list[Time], arrival_times_dataset: list[Time]):
+                 release_times_dataset: list[Time], arrival_times_dataset: list[Time],
+                 node_based_trip_routes: list[list[int]]):
     return Instance(
         osm_info_arcs_utilized=arcs_features.osm_info_arcs,
         trip_routes=arc_based_shortest_paths,
@@ -85,5 +87,6 @@ def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[
         capacities_arcs=arcs_features.capacities_arcs,
         input_data=input_data,
         release_times_dataset=release_times_dataset,
-        arrival_times_dataset=arrival_times_dataset
+        arrival_times_dataset=arrival_times_dataset,
+        node_based_trip_routes=node_based_trip_routes
     )

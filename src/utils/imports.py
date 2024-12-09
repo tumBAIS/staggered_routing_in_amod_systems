@@ -29,7 +29,7 @@ def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance
 
     arc_based_shortest_paths, arcs_features = get_arc_based_paths_with_features(trips_df['path'], graph)
     instance = get_instance(instance_params, arc_based_shortest_paths, arcs_features, trips_df['release_time'].tolist(),
-                            trips_df['deadline'].tolist())
+                            trips_df['deadline'].tolist(), trips_df['path'].tolist())
 
     print_total_free_flow_time(instance)
     instance.set_deadlines(trips_df['deadline'].tolist())
