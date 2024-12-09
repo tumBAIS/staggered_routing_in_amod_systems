@@ -30,7 +30,6 @@ class Trip:
         self.id = int(routes_info["trip_id"])
         self._release_time = routes_info["release_time"]
         self._deadline: float = routes_info["deadline"]
-
         self._routes = TripRoutes(self, network, routes_info["path"], instance_params)
 
         # Variables
