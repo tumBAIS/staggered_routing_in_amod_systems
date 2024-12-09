@@ -111,8 +111,6 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
         writer.writerow(input_data_dict)  # Write the data row
 
 
-# TODO: add LC and HC scenarios
-# TODO: add ONLINE and OFFLINE scenarios
 PRESETS = {
     "algo_performance": {
         "day_list": list(range(1, 32)),  # start instance params
@@ -271,7 +269,7 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
         memory_per_cpu = "2G"
     elif network_name == "manhattan_10":
         minutes_per_run = 60
-        memory_per_cpu = "5G"
+        memory_per_cpu = "500MB"
     else:
         minutes_per_run = 500
         memory_per_cpu = "10G"
