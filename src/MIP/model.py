@@ -71,7 +71,8 @@ def run_model(
     """
     optimization_measures = None
     # Check if optimization should proceed
-    if not model._optimize or not is_there_remaining_time(instance, solver_params):
+    if not model._optimize or not is_there_remaining_time(instance,
+                                                          solver_params) or instance.input_data.staggering_cap == 0:
         return
 
     # Save the initial solution for reference
