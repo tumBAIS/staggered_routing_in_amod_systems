@@ -128,6 +128,21 @@ PRESETS = {
         "warm_start": True,
         "improve_warm_start": True,
         "local_search_callback": True  # end solver params
+    },
+    "staggering_analysis": {
+        "day_list": [1],  # start instance params
+        "seed_list": [0],
+        "list_of_slopes": [0.15],
+        "list_of_thresholds": [1],
+        "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
+        "deadline_factor": 100,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "algorithm_time_limit": 100,  # start solver params
+        "epoch_time_limit": 100,
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start": True,
+        "local_search_callback": True  # end solver params
     }
 }
 
@@ -318,5 +333,5 @@ def main(preset_name: str, network_name: str, congestion_level: str, number_of_t
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
+    main(preset_name="staggering_analysis", congestion_level="LC", network_name="manhattan_10", number_of_trips=100,
          add_shortcuts=True)
