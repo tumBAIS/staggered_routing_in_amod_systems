@@ -26,14 +26,14 @@ namespace cpp_module {
         construct_schedule(completeSolution);
         initializeConflictingSetsForConstructSchedule(instance);
         checkIfSolutionHasTies(instance, completeSolution);
-        if (completeSolution.has_ties) {
+        if (completeSolution.get_ties_flag()) {
             solveSolutionTies(instance, completeSolution, *this);
         }
         return completeSolution;
     }
 
     auto addTotalFFTTVehicles(Instance &instance) -> void {
-        for (auto vehicle = 0; vehicle < instance.numberOfVehicles; vehicle++) {
+        for (auto vehicle = 0; vehicle < instance.number_of_trips; vehicle++) {
             for (auto arc: instance.trip_routes[vehicle]) {
                 instance.freeFlowTravelTimesVehicles[vehicle] += instance.travel_times_arcs[arc];
             }
@@ -78,12 +78,12 @@ namespace cpp_module {
                                           const std::vector<double> &argStaggeringApplied) -> Solution {
         Solution currentSolution(argReleaseTimes, instance);
         scheduler.construct_schedule(currentSolution);
-        if (!currentSolution.is_feasible_and_improving) {
+        if (!currentSolution.get_feasible_and_improving_flag()) {
             std::cout << "Initial solution is infeasible - local search stopped \n";
             return currentSolution;
         }
-        currentSolution.remaining_time_slack = argRemainingTimeSlack;
-        currentSolution.staggering_applied = argStaggeringApplied;
+        currentSolution.set_remaining_time_slack(argRemainingTimeSlack);
+        currentSolution.set_staggering_applied(argStaggeringApplied);
         return currentSolution;
     }
 
@@ -122,18 +122,18 @@ namespace cpp_module {
         Solution currentSolution = getInitialSolutionForLocalSearch(scheduler, instance,
                                                                     arg_release_times, argRemainingTimeSlack,
                                                                     argStaggeringApplied);
-        std::cout << "Local search received a solution with " << std::round(currentSolution.total_delay)
+        std::cout << "Local search received a solution with " << std::round(currentSolution.get_total_delay())
                   << " sec. of delay \n";
-        if (!currentSolution.is_feasible_and_improving) {
-            return currentSolution.schedule;
+        if (!currentSolution.get_feasible_and_improving_flag()) {
+            return currentSolution.get_schedule();
         }
         checkIfSolutionHasTies(instance, currentSolution);
-        if (currentSolution.has_ties) {
+        if (currentSolution.get_ties_flag()) {
             solveSolutionTies(instance, currentSolution, scheduler);
         }
         improveTowardsSolutionQuality(instance, currentSolution, scheduler);
 
-        return currentSolution.schedule;
+        return currentSolution.get_schedule();
     } // end local_search function
 }
 

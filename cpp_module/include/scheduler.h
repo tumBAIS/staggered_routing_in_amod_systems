@@ -57,8 +57,8 @@ namespace cpp_module {
 
     struct Conflict {
         long arc;
-        long currentVehicle;
-        long otherVehicle;
+        long current_trip_id;
+        long other_trip_id;
         double delayConflict;
         double distanceToCover;
         double staggeringCurrentVehicle;
@@ -147,7 +147,7 @@ namespace cpp_module {
             startSearchClock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
             maxTimesCapReached = std::numeric_limits<long>::max();
-            vehicleStatus = std::vector<vehicleStatusType>(instance.numberOfVehicles, vehicleStatusType::INACTIVE);
+            vehicleStatus = std::vector<vehicleStatusType>(instance.number_of_trips, vehicleStatusType::INACTIVE);
             iteration = 0;
         };
 
@@ -169,7 +169,7 @@ namespace cpp_module {
 
         void _initializeSchedulerForUpdatingCongestedSchedule(const VehicleSchedule &congestedSchedule);
 
-        void _initializePriorityQueue(const Conflict &conflict, Solution &completeSolution);
+        void _initializePriorityQueue(const Conflict &conflict, Solution &solution);
 
         auto _checkIfOtherShouldBeMarked(long otherVehicle, long otherPosition,
                                          bool currentConflictsWithOther) -> vehicleShouldBeMarked;
@@ -192,12 +192,11 @@ namespace cpp_module {
 
         auto _checkIfTravelDepartureShouldBeSkipped() -> bool;
 
-        void _updateVehicleSchedule(VehicleSchedule &congestedSchedule,
-                                    double currentNewArrival) const;
+        void _updateVehicleSchedule(Solution &solution, double currentNewArrival) const;
 
         void _activateStagingVehicle();
 
-        void _reinsertOtherInQueue(VehicleSchedule &congestedSchedule,
+        void _reinsertOtherInQueue(Solution &congestedSchedule,
                                    long otherVehicle,
                                    long otherPosition,
                                    double otherDeparture,
@@ -209,7 +208,7 @@ namespace cpp_module {
 
         void _addDepartureToPriorityQueue(double releaseTimeVehicle, long vehicle);
 
-        void _updateVehiclesOnArcOfConflictingSet(VehicleSchedule &congestedSchedule, double &vehiclesOnArc);
+        void _updateVehiclesOnArcOfConflictingSet(Solution &solution, double &vehiclesOnArc);
 
         void
         _decideOnVehiclesMaybeToMark(const VehicleSchedule &congestedSchedule, double currentNewArrival);
@@ -258,15 +257,15 @@ namespace cpp_module {
 
         bool _checkIfTieInSet(const VehicleSchedule &congestedSchedule);
 
-        void _assertDepartureIsFeasible(VehicleSchedule &congestedSchedule);
+        void _assertDepartureIsFeasible(const VehicleSchedule &congestedSchedule);
 
         void _assertLazyUpdateIsNecessary(double otherDeparture) const;
 
         void _assertNoVehiclesAreLate(Solution &completeSolution);
 
-        void _assertVehiclesOnArcIsCorrect(double vehiclesOnArc, VehicleSchedule &congestedSchedule);
+        void _assertVehiclesOnArcIsCorrect(double vehiclesOnArc, const VehicleSchedule &congestedSchedule);
 
-        void _resetOtherScheduleToReinsertionTime(VehicleSchedule &congestedSchedule, long otherVehicle,
+        void _resetOtherScheduleToReinsertionTime(Solution &solution, long otherVehicle,
                                                   long otherPosition);
 
         void _assertAnalyzingSmallestDeparture(VehicleSchedule &congestedSchedule);

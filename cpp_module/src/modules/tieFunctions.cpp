@@ -20,10 +20,10 @@ namespace cpp_module {
                         const long &vehicleOne,
                         const CorrectSolution &correctSolution) -> void {
         staggerVehicle(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
-        completeSolution.has_ties = true;
-        completeSolution.schedule = correctSolution.schedule;
-        completeSolution.total_delay = correctSolution.totalDelay;
-        completeSolution.is_feasible_and_improving = correctSolution.scheduleIsFeasibleAndImproving;
+        completeSolution.set_ties_flag(true);
+        completeSolution.set_schedule(correctSolution.schedule);
+        completeSolution.set_total_delay(correctSolution.totalDelay);
+        completeSolution.set_feasible_and_improving_flag(correctSolution.scheduleIsFeasibleAndImproving);
     }
 
     auto _checkIfSlackISEnoughToSolveTie(const double slackVehicle) -> bool {
@@ -38,8 +38,8 @@ namespace cpp_module {
     auto _setCorrectSolution(const Solution &completeSolution) -> CorrectSolution {
         CorrectSolution correctSolution{};
 
-        correctSolution.schedule = completeSolution.schedule;
-        correctSolution.totalDelay = completeSolution.total_delay;
+        correctSolution.schedule = completeSolution.get_schedule();
+        correctSolution.totalDelay = completeSolution.get_total_delay();
         return correctSolution;
     }
 
@@ -65,20 +65,22 @@ namespace cpp_module {
     }
 
     auto _solveTie(Solution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
-        auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
-        auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remaining_time_slack[tie.vehicleOne]);
+        auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
+        auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(
+                completeSolution.get_trip_remaining_time_slack(tie.vehicleOne));
         while (thereIsTie && slackIsEnough) {
             const CorrectSolution correctSolution = _setCorrectSolution(completeSolution);
             staggerVehicle(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
             scheduler.construct_schedule(completeSolution);
-            if (!completeSolution.is_feasible_and_improving) {
+            if (!completeSolution.get_feasible_and_improving_flag()) {
                 _resetSolution(completeSolution, tie.vehicleOne, correctSolution);
 
                 return;
             }
             _printTieSolved(tie);
-            thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
-            slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remaining_time_slack[tie.vehicleOne]);
+            thereIsTie = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
+            slackIsEnough = _checkIfSlackISEnoughToSolveTie(
+                    completeSolution.get_trip_remaining_time_slack(tie.vehicleOne));
         }
     }
 
@@ -92,7 +94,7 @@ namespace cpp_module {
                 if (vehicleOne < vehicleTwo) {
                     const long positionTwo = getIndex(instance.trip_routes[vehicleTwo], arc);
                     tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
-                    bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
+                    bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
                     if (tieOnArc) {
                         return true;
                     }
@@ -135,17 +137,17 @@ namespace cpp_module {
             }
             bool thereIsTie = _checkArcTies(instance, arc, completeSolution);
             if (thereIsTie) {
-                completeSolution.has_ties = true;
+                completeSolution.set_ties_flag(true);
                 _printIfSolutionHasTies(completeSolution);
                 return;
             }
-            completeSolution.has_ties = false;
+            completeSolution.set_ties_flag(false);
         }
     }
 
 
     auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
-        completeSolution.has_ties = false; // will be set to true if a tie cannot be solved
+        completeSolution.set_ties_flag(false); // will be set to true if a tie cannot be solved
         for (long arc = 1; arc < instance.numberOfArcs; arc++) {
             bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();
             if (noTiesCanHappenOnArc) {

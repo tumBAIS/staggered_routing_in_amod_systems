@@ -12,7 +12,7 @@ namespace cpp_module {
         if (a.delayConflict > b.delayConflict) {
             return true;
         } else if (a.delayConflict == b.delayConflict) {
-            if (a.currentVehicle > b.currentVehicle) {
+            if (a.current_trip_id > b.current_trip_id) {
                 return true;
             } else { return false; }
         } else {
@@ -78,8 +78,8 @@ namespace cpp_module {
                                             ConflictingArrival &sortedArrival) const -> Conflict {
         Conflict conflict{};
         conflict.arc = arc;
-        conflict.currentVehicle = currentVehicleInfo.vehicle;
-        conflict.otherVehicle = sortedArrival.vehicle;
+        conflict.current_trip_id = currentVehicleInfo.vehicle;
+        conflict.other_trip_id = sortedArrival.vehicle;
         conflict.delayConflict = delay;
         conflict.distanceToCover = sortedArrival.arrival - currentVehicleInfo.departureTime + CONSTR_TOLERANCE;
         conflict.staggeringCurrentVehicle = 0;

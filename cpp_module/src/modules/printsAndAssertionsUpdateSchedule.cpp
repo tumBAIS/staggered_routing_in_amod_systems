@@ -156,7 +156,7 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::_assertDepartureIsFeasible(VehicleSchedule &congestedSchedule) -> void {
+    auto Scheduler::_assertDepartureIsFeasible(const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         if (departure.reinsertionNumber > numberOfReInsertions[departure.vehicle]) {
             throw std::invalid_argument("Departure reinsertion number > number of reinsertions vehicle");
@@ -215,7 +215,8 @@ namespace cpp_module {
 
 
     auto
-    Scheduler::_assertVehiclesOnArcIsCorrect(const double vehiclesOnArc, VehicleSchedule &congestedSchedule) -> void {
+    Scheduler::_assertVehiclesOnArcIsCorrect(const double vehiclesOnArc,
+                                             const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         double testVehiclesOnArc = 1;
         for (auto otherVehicle: instance.conflictingSet[departure.arc]) {

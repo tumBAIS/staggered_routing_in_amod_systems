@@ -32,9 +32,9 @@ namespace cpp_module {
 
 
     auto _initializeCompleteSolution(Solution &completeSolution) -> void {
-        completeSolution.total_delay = 0;
-        completeSolution.is_feasible_and_improving = true;
-        completeSolution.has_ties = false;
+        completeSolution.set_total_delay(0);
+        completeSolution.set_feasible_and_improving_flag(true);
+        completeSolution.set_ties_flag(false);
     }
 
     auto
@@ -43,7 +43,7 @@ namespace cpp_module {
         priorityQueueDepartures = MinQueueDepartures();
         arrivalsOnArcs = std::vector<MinQueueDepartures>(instance.numberOfArcs);
         departure = Departure();
-        for (auto vehicle = 0; vehicle < instance.numberOfVehicles; vehicle++) {
+        for (auto vehicle = 0; vehicle < instance.number_of_trips; vehicle++) {
             departure.time = releaseTimes[vehicle];
             departure.trip_id = vehicle;
             departure.position = 0;
@@ -82,7 +82,7 @@ namespace cpp_module {
     auto Scheduler::_getNextDeparture(Solution &completeSolution) -> void {
         departure = priorityQueueDepartures.top();
         priorityQueueDepartures.pop();
-        completeSolution.schedule[departure.trip_id][departure.position] = departure.time;
+        completeSolution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
     }
 
 
@@ -90,7 +90,7 @@ namespace cpp_module {
     Scheduler::construct_schedule(Solution &completeSolution) -> void {
         // computes solution, value of solution, checks if solution is feasible and improving
         // breaks early if it is not.
-        _initializeScheduler(completeSolution.start_times);
+        _initializeScheduler(completeSolution.get_start_times());
         _initializeCompleteSolution(completeSolution);
         while (!priorityQueueDepartures.empty()) {
             _getNextDeparture(completeSolution);
@@ -99,11 +99,11 @@ namespace cpp_module {
                                                                 departure.time);
                 const auto delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc);
                 completeSolution.set_delay_on_arc(delay, departure.trip_id, departure.position);
-                completeSolution.total_delay += delay;
+                completeSolution.increase_total_delay(delay);
                 _setNextDepartureOfVehicleAndPushToQueue(delay);
-                bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(completeSolution.total_delay);
+                bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(completeSolution.get_total_delay());
                 if (!scheduleIsFeasibleAndImproving) {
-                    completeSolution.is_feasible_and_improving = false;
+                    completeSolution.set_feasible_and_improving_flag(false);
                 }
             }
         }

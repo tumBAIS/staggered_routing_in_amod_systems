@@ -10,9 +10,9 @@
 namespace cpp_module {
 
     auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void {
-        completeSolution.start_times[vehicle] += staggering;
-        completeSolution.staggering_applied[vehicle] += staggering;
-        completeSolution.remaining_time_slack[vehicle] -= staggering;
+        completeSolution.increase_trip_start_time(vehicle, staggering);
+        completeSolution.increase_staggering_applied(vehicle, staggering);
+        completeSolution.increase_remaining_time_slack(vehicle, -staggering); //staggering is negative
     }
 
     auto checkIfTimeLimitIsReached(const double startSearchClock, double maxTimeOptimization) -> bool {
@@ -29,17 +29,17 @@ namespace cpp_module {
     auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
                            Conflict &conflict) -> void {
         staggerVehicle(newSolution,
-                       conflict.currentVehicle,
+                       conflict.current_trip_id,
                        -conflict.staggeringCurrentVehicle);
         conflict.staggeringCurrentVehicle = 0;
         staggerVehicle(newSolution,
-                       conflict.otherVehicle,
+                       conflict.other_trip_id,
                        conflict.destaggeringOtherVehicle);
         conflict.destaggeringOtherVehicle = 0;
-        newSolution.schedule = currentSolution.schedule;
-        newSolution.total_delay = currentSolution.total_delay;
-        newSolution.has_ties = currentSolution.has_ties;
-        newSolution.is_feasible_and_improving = currentSolution.is_feasible_and_improving;
+        newSolution.set_schedule(currentSolution.get_schedule());
+        newSolution.set_total_delay(currentSolution.get_total_delay());
+        newSolution.set_ties_flag(currentSolution.get_ties_flag());
+        newSolution.set_feasible_and_improving_flag(currentSolution.get_feasible_and_improving_flag());
     }
 
     auto _applyStaggeringToSolveConflict(Scheduler &scheduler,
@@ -47,20 +47,20 @@ namespace cpp_module {
                                          Conflict &conflict) -> void {
         assert(conflict.distanceToCover > 0);
         bool moveVehicleOne =
-                conflict.distanceToCover < completeSolution.remaining_time_slack[conflict.currentVehicle];
+                conflict.distanceToCover < completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id);
         bool moveBothVehicles =
-                conflict.distanceToCover < completeSolution.remaining_time_slack[conflict.currentVehicle] +
-                                           completeSolution.staggering_applied[conflict.otherVehicle];
+                conflict.distanceToCover < completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id) +
+                                           completeSolution.get_trip_staggering_applied(conflict.other_trip_id);
         if (moveVehicleOne) {
-            staggerVehicle(completeSolution, conflict.currentVehicle, conflict.distanceToCover);
+            staggerVehicle(completeSolution, conflict.current_trip_id, conflict.distanceToCover);
             conflict.staggeringCurrentVehicle += conflict.distanceToCover;
             assert(conflict.distanceToCover > 0);
         } else if (moveBothVehicles) {
             // distance can be covered removing staggering to other vehicle
-            auto staggering = std::max(0.0, completeSolution.remaining_time_slack[conflict.currentVehicle]);
+            auto staggering = std::max(0.0, completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id));
             auto destaggering = conflict.distanceToCover - staggering;
-            staggerVehicle(completeSolution, conflict.currentVehicle, staggering);
-            staggerVehicle(completeSolution, conflict.otherVehicle, -destaggering);
+            staggerVehicle(completeSolution, conflict.current_trip_id, staggering);
+            staggerVehicle(completeSolution, conflict.other_trip_id, -destaggering);
             conflict.staggeringCurrentVehicle += staggering;
             conflict.destaggeringOtherVehicle += destaggering;
             assert(staggering > 0 || destaggering > 0);
@@ -73,29 +73,31 @@ namespace cpp_module {
                                 const Solution &newSolution,
                                 Conflict &conflict) -> void {
         // update current vehicle
-        staggerVehicle(currentSolution, conflict.currentVehicle, conflict.staggeringCurrentVehicle);
-        staggerVehicle(currentSolution, conflict.otherVehicle, -conflict.destaggeringOtherVehicle);
-        currentSolution.schedule = newSolution.schedule;
-        currentSolution.total_delay = newSolution.total_delay;
-        currentSolution.has_ties = newSolution.has_ties;
-        currentSolution.is_feasible_and_improving = newSolution.is_feasible_and_improving;
+        staggerVehicle(currentSolution, conflict.current_trip_id, conflict.staggeringCurrentVehicle);
+        staggerVehicle(currentSolution, conflict.other_trip_id, -conflict.destaggeringOtherVehicle);
+        currentSolution.set_schedule(newSolution.get_schedule());
+        currentSolution.set_total_delay(newSolution.get_total_delay());
+        currentSolution.set_ties_flag(newSolution.get_ties_flag());
+        currentSolution.set_feasible_and_improving_flag(newSolution.get_feasible_and_improving_flag());
     }
 
     auto _printMove(const Solution &oldSolution,
                     const Solution &newSolution,
                     const Conflict &conflict) -> void {
-        if (std::abs(oldSolution.total_delay - newSolution.total_delay) > TOLERANCE) {
+        if (std::abs(oldSolution.get_total_delay() - newSolution.get_total_delay()) > TOLERANCE) {
             if (conflict.staggeringCurrentVehicle > 0) {
-                std::cout << std::fixed << std::setprecision(2) << " - staggering " << conflict.currentVehicle << " by "
+                std::cout << std::fixed << std::setprecision(2) << " - staggering " << conflict.current_trip_id
+                          << " by "
                           << conflict.staggeringCurrentVehicle;
             }
             if (conflict.destaggeringOtherVehicle > 0) {
-                std::cout << std::fixed << std::setprecision(2) << " - destaggering " << conflict.otherVehicle << " by "
+                std::cout << std::fixed << std::setprecision(2) << " - destaggering " << conflict.other_trip_id
+                          << " by "
                           << conflict.destaggeringOtherVehicle;
             }
             std::cout << std::fixed << std::setprecision(2) << " - DELnew: "
-                      << newSolution.total_delay << " -> DELold - DELnew = "
-                      << oldSolution.total_delay - newSolution.total_delay;
+                      << newSolution.get_total_delay() << " -> DELold - DELnew = "
+                      << oldSolution.get_total_delay() - newSolution.get_total_delay();
             std::cout << std::endl;
         }
 
@@ -105,14 +107,14 @@ namespace cpp_module {
     auto _updateDistanceToCover(const Solution &completeSolution,
                                 Conflict &conflict,
                                 const Instance &instance) -> void {
-        auto indexArcInPathCurrentVehicle = getIndex(instance.trip_routes[conflict.currentVehicle],
+        auto indexArcInPathCurrentVehicle = getIndex(instance.trip_routes[conflict.current_trip_id],
                                                      conflict.arc);
-        auto indexArcInPathOtherVehicle = getIndex(instance.trip_routes[conflict.otherVehicle],
+        auto indexArcInPathOtherVehicle = getIndex(instance.trip_routes[conflict.other_trip_id],
                                                    conflict.arc);
 
         conflict.distanceToCover =
-                completeSolution.schedule[conflict.otherVehicle][indexArcInPathOtherVehicle + 1] -
-                completeSolution.schedule[conflict.currentVehicle][indexArcInPathCurrentVehicle] -
+                completeSolution.get_trip_arc_departure(conflict.other_trip_id, indexArcInPathOtherVehicle + 1) -
+                completeSolution.get_trip_arc_departure(conflict.current_trip_id, indexArcInPathCurrentVehicle) -
                 CONSTR_TOLERANCE;
     }
 
@@ -129,10 +131,10 @@ namespace cpp_module {
     auto _checkIfSolutionIsAdmissible(const Instance &instance,
                                       Solution &completeSolution,
                                       Scheduler &scheduler) -> bool {
-        if (!completeSolution.is_feasible_and_improving) {
+        if (!completeSolution.get_feasible_and_improving_flag()) {
             return false;
         }
-        if (completeSolution.has_ties) {
+        if (completeSolution.get_ties_flag()) {
             scheduler.solutionWithTies++;
             return false;
         }
@@ -151,15 +153,15 @@ namespace cpp_module {
             }
             scheduler.slackIsEnough =
                     _checkIfPossibleToSolveConflict(conflict.distanceToCover,
-                                                    newSolution.remaining_time_slack[conflict.currentVehicle],
-                                                    newSolution.staggering_applied[conflict.otherVehicle]);
+                                                    newSolution.get_trip_remaining_time_slack(conflict.current_trip_id),
+                                                    newSolution.get_trip_staggering_applied(conflict.other_trip_id));
             if (!scheduler.slackIsEnough) {
                 scheduler.slackNotEnough++; // printing purposes
                 break;
             }
             _applyStaggeringToSolveConflict(scheduler, newSolution, conflict);
             scheduler.updateExistingCongestedSchedule(newSolution, conflict);
-            if (!newSolution.is_feasible_and_improving) { break; }
+            if (!newSolution.get_feasible_and_improving_flag()) { break; }
             _updateDistanceToCover(newSolution, conflict, instance);
             conflictIsNotSolved = conflict.distanceToCover > CONSTR_TOLERANCE;
         }
@@ -206,8 +208,8 @@ namespace cpp_module {
         while (isImproved) { //initially set to true
             bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock, instance.maxTimeOptimization);
             if (timeLimitReached) { break; }
-            scheduler.best_total_delay = currentSolution.total_delay;
-            auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.schedule);
+            scheduler.best_total_delay = currentSolution.get_total_delay();
+            auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.get_schedule());
             _sortConflicts(conflictsList);
             if (conflictsList.empty()) { break; }
             isImproved = _improveSolution(instance, conflictsList, scheduler, currentSolution);

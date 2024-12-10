@@ -1,16 +1,13 @@
 #include "scheduler.h"
 #include <queue>
-#include <utility>
-#include "algorithm"
-#include "iostream"
 #include "stdexcept"
 
 namespace cpp_module {
 
     auto Scheduler::_initializeStatusVehicles() -> void {
-        vehicleStatus = std::vector<vehicleStatusType>(instance.numberOfVehicles, vehicleStatusType::INACTIVE);
-        numberOfReInsertions = std::vector<long>(instance.numberOfVehicles, 0);
-        lastProcessedPosition = std::vector<long>(instance.numberOfVehicles, -1);
+        vehicleStatus = std::vector<vehicleStatusType>(instance.number_of_trips, vehicleStatusType::INACTIVE);
+        numberOfReInsertions = std::vector<long>(instance.number_of_trips, 0);
+        lastProcessedPosition = std::vector<long>(instance.number_of_trips, -1);
     }
 
 
@@ -44,17 +41,19 @@ namespace cpp_module {
     }
 
     auto
-    Scheduler::_initializePriorityQueue(const Conflict &conflict, Solution &completeSolution) -> void {
+    Scheduler::_initializePriorityQueue(const Conflict &conflict, Solution &solution) -> void {
         // add vehicles which are staggered at this iteration of the algorithm.
         if (conflict.staggeringCurrentVehicle != 0) {
-            _addDepartureToPriorityQueue(completeSolution.start_times[conflict.currentVehicle],
-                                         conflict.currentVehicle);
-            completeSolution.schedule[conflict.currentVehicle][0] = completeSolution.start_times[conflict.currentVehicle];
+            _addDepartureToPriorityQueue(solution.get_trip_start_time(conflict.current_trip_id),
+                                         conflict.current_trip_id);
+            solution.set_trip_arc_departure(conflict.current_trip_id, 0,
+                                            solution.get_trip_start_time(conflict.current_trip_id));
         }
         if (conflict.destaggeringOtherVehicle != 0) {
-            _addDepartureToPriorityQueue(completeSolution.start_times[conflict.otherVehicle],
-                                         conflict.otherVehicle);
-            completeSolution.schedule[conflict.otherVehicle][0] = completeSolution.start_times[conflict.otherVehicle];
+            _addDepartureToPriorityQueue(solution.get_trip_start_time(conflict.other_trip_id),
+                                         conflict.other_trip_id);
+            solution.set_trip_arc_departure(conflict.other_trip_id, 0,
+                                            solution.get_trip_start_time(conflict.other_trip_id));
         }
 
     }
@@ -97,24 +96,25 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::_resetOtherScheduleToReinsertionTime(VehicleSchedule &congestedSchedule,
+    auto Scheduler::_resetOtherScheduleToReinsertionTime(Solution &solution,
                                                          const long otherVehicle,
                                                          const long otherPosition) -> void {
 
         long stepsBack = lastProcessedPosition[otherVehicle] - otherPosition;
         for (auto step = 0; step < stepsBack; step++) {
-            congestedSchedule[otherVehicle][otherPosition + step + 1] = originalSchedule[otherVehicle][otherPosition +
-                                                                                                       step + 1];
+            solution.set_trip_arc_departure(otherVehicle, otherPosition + step + 1,
+                                            originalSchedule[otherVehicle][otherPosition +
+                                                                           step + 1]);
         }
     }
 
-    auto Scheduler::_reinsertOtherInQueue(VehicleSchedule &congestedSchedule,
+    auto Scheduler::_reinsertOtherInQueue(Solution &solution,
                                           const long otherVehicle,
                                           const long otherPosition,
                                           const double otherDeparture,
                                           const long arc) -> void {
         _printReinsertionVehicle(arc, otherVehicle, otherDeparture);
-        _resetOtherScheduleToReinsertionTime(congestedSchedule, otherVehicle, otherPosition);
+        _resetOtherScheduleToReinsertionTime(solution, otherVehicle, otherPosition);
         lastProcessedPosition[otherVehicle] = otherPosition - 1;
         otherVehicleDeparture.trip_id = otherVehicle;
         otherVehicleDeparture.arc = arc;
@@ -156,7 +156,7 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::_updateVehiclesOnArcOfConflictingSet(VehicleSchedule &congestedSchedule,
+    auto Scheduler::_updateVehiclesOnArcOfConflictingSet(Solution &solution,
                                                          double &vehiclesOnArc) -> void {
         for (auto otherVehicle: instance.conflictingSet[departure.arc]) {
             if (otherVehicle == departure.trip_id) {
@@ -173,8 +173,8 @@ namespace cpp_module {
 
             const bool otherVehicleIsActive = vehicleStatus[otherVehicle] == ACTIVE;
             const bool otherVehicleIsNotActive = !otherVehicleIsActive;
-            const double otherDeparture = congestedSchedule[otherVehicle][otherPosition];
-            const double otherArrival = congestedSchedule[otherVehicle][otherPosition + 1];
+            const double otherDeparture = solution.get_trip_arc_departure(otherVehicle, otherPosition);
+            const double otherArrival = solution.get_trip_arc_departure(otherVehicle, otherPosition + 1);
             const bool currentConflictsWithOther = _checkConflictWithOtherVehicle(otherVehicle,
                                                                                   otherDeparture,
                                                                                   otherArrival);
@@ -197,7 +197,7 @@ namespace cpp_module {
                 const bool otherIsNotFirst = !otherIsFirst;
                 if (otherIsProcessedOnThisArc) {
                     if (otherIsNotFirst) {
-                        _reinsertOtherInQueue(congestedSchedule, otherVehicle, otherPosition, otherDeparture,
+                        _reinsertOtherInQueue(solution, otherVehicle, otherPosition, otherDeparture,
                                               departure.arc);
                         continue;
                     }
@@ -226,22 +226,16 @@ namespace cpp_module {
 
     auto Scheduler::_updateTotalValueSolution(Solution &completeSolution) -> void {
 
-        for (auto vehicle = 0; vehicle < instance.numberOfVehicles; ++vehicle) {
-            if (vehicleStatus[vehicle] != ACTIVE) { continue; }
+        for (auto trip_id = 0; trip_id < instance.number_of_trips; ++trip_id) {
+            if (vehicleStatus[trip_id] != ACTIVE) { continue; }
 
-            const double oldDelayVehicle = originalSchedule[vehicle].back() -
-                                           originalSchedule[vehicle][0] -
-                                           instance.freeFlowTravelTimesVehicles[vehicle];
-            const double newDelayVehicle = completeSolution.schedule[vehicle].back() -
-                                           completeSolution.start_times[vehicle] -
-                                           instance.freeFlowTravelTimesVehicles[vehicle];
-            completeSolution.total_delay += (newDelayVehicle - oldDelayVehicle);
-            const double OldTardinessVehicle = std::max(0.0,
-                                                        originalSchedule[vehicle].back() - instance.dueDates[vehicle]);
-            const double newTardinessOnArc = std::max(0.0,
-                                                      completeSolution.schedule[vehicle].back() -
-                                                      instance.dueDates[vehicle]);
-
+            const double oldDelayVehicle = originalSchedule[trip_id].back() -
+                                           originalSchedule[trip_id][0] -
+                                           instance.freeFlowTravelTimesVehicles[trip_id];
+            const double newDelayVehicle = completeSolution.get_trip_schedule(trip_id).back() -
+                                           completeSolution.get_trip_start_time(trip_id) -
+                                           instance.freeFlowTravelTimesVehicles[trip_id];
+            completeSolution.increase_total_delay(newDelayVehicle - oldDelayVehicle);
         }
     }
 
@@ -282,9 +276,9 @@ namespace cpp_module {
                                            double &delay,
                                            double &currentVehicleNewArrival,
                                            double &vehiclesOnArc) -> void {
-        _updateVehiclesOnArcOfConflictingSet(completeSolution.schedule, vehiclesOnArc);
+        _updateVehiclesOnArcOfConflictingSet(completeSolution, vehiclesOnArc);
         if (lazyUpdatePriorityQueue) { return; }
-        tieFound = _checkIfTieInSet(completeSolution.schedule);
+        tieFound = _checkIfTieInSet(completeSolution.get_schedule());
         if (tieFound) {
             return;
         }
@@ -295,7 +289,7 @@ namespace cpp_module {
         if (vehicleIsLate) {
             return;
         }
-        _decideOnVehiclesMaybeToMark(completeSolution.schedule, currentVehicleNewArrival);
+        _decideOnVehiclesMaybeToMark(completeSolution.get_schedule(), currentVehicleNewArrival);
 
     }
 
@@ -314,8 +308,8 @@ namespace cpp_module {
                 return;
             }
         }
-        _assertVehiclesOnArcIsCorrect(vehiclesOnArc, completeSolution.schedule);
-        _updateVehicleSchedule(completeSolution.schedule, currentVehicleNewArrival);
+        _assertVehiclesOnArcIsCorrect(vehiclesOnArc, completeSolution.get_schedule());
+        _updateVehicleSchedule(completeSolution, currentVehicleNewArrival);
         _assertEventPushedToQueueIsCorrect();
         moveVehicleForwardInTheQueue(currentVehicleNewArrival); // O(2 * log n) - pq.push
     }
@@ -562,20 +556,18 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_updateVehicleSchedule(VehicleSchedule &congestedSchedule,
+    auto Scheduler::_updateVehicleSchedule(Solution &solution,
                                            const double currentNewArrival) const -> void {
-
-
         // update departureTime and arrival in new schedule
-        congestedSchedule[departure.trip_id][departure.position] = departure.time;
-        congestedSchedule[departure.trip_id][departure.position + 1] = currentNewArrival;
+        solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
+        solution.set_trip_arc_departure(departure.trip_id, departure.position + 1, currentNewArrival);
     }
 
 
     auto Scheduler::updateExistingCongestedSchedule(Solution &completeSolution,
                                                     const Conflict &conflict) -> void {
 
-        _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.schedule);
+        _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.get_schedule());
         _initializeStatusVehicles();
         _initializePriorityQueue(conflict, completeSolution);
         while (!priorityQueueDepartures.empty()) {
@@ -585,14 +577,12 @@ namespace cpp_module {
             if (skipDeparture) { continue; }
             _printDeparture();
             _activateStagingVehicle();
-            completeSolution.schedule[departure.trip_id][departure.position] = departure.time;
-            _assertDepartureIsFeasible(completeSolution.schedule);
+            completeSolution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
             vehiclesToMaybeMark.clear();
             lazyUpdatePriorityQueue = false;
-            _assertAnalyzingSmallestDeparture(completeSolution.schedule);
             _processVehicle(completeSolution);
             if (tieFound || vehicleIsLate) {
-                completeSolution.is_feasible_and_improving = false;
+                completeSolution.set_feasible_and_improving_flag(false);
                 return;
             }
             if (lazyUpdatePriorityQueue) {
@@ -601,9 +591,9 @@ namespace cpp_module {
             }
         }
         _updateTotalValueSolution(completeSolution);
-        if (completeSolution.total_delay >= best_total_delay) {
+        if (completeSolution.get_total_delay() >= best_total_delay) {
             worseSolutions++;
-            completeSolution.is_feasible_and_improving = false;
+            completeSolution.set_feasible_and_improving_flag(false);
         }
         _assertNoVehiclesAreLate(completeSolution);
     }

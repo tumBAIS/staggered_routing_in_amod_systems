@@ -8,6 +8,11 @@
 #include <stdexcept>  // Include for std::out_of_range
 
 namespace cpp_module {
+
+    // Data types
+    using TripID = long;
+    using Position = long;
+    using Time = double;
     using VehicleSchedule = std::vector<std::vector<double>>;
     using PotentiallyConflictingVehiclesSets = std::vector<std::vector<long>>;
 
@@ -24,7 +29,7 @@ namespace cpp_module {
         std::vector<std::vector<double>> earliestDepartureTimes;
         std::vector<std::vector<double>> latestDepartureTimes;
         std::vector<double> freeFlowTravelTimesVehicles;
-        long numberOfVehicles;
+        long number_of_trips;
         long numberOfArcs;
         std::vector<double> list_of_slopes;
         std::vector<double> list_of_thresholds;
@@ -50,14 +55,14 @@ namespace cpp_module {
                 travel_times_arcs(argNominalTravelTimesArcs),
                 nominalCapacitiesArcs(argNominalCapacitiesArcs),
                 conflictingSet(argNominalCapacitiesArcs.size()) {
-            numberOfVehicles = (long) argArcBasedShortestPaths.size();
+            number_of_trips = (long) argArcBasedShortestPaths.size();
             numberOfArcs = (long) argNominalTravelTimesArcs.size();
             maxTimeOptimization = argParameters[0];
             list_of_slopes = arg_list_of_slopes;
             list_of_thresholds = arg_list_of_thresholds;
             lb_travel_time = arg_lb_travel_time;
 
-            for (auto i = 0; i < numberOfVehicles; i++) {
+            for (auto i = 0; i < number_of_trips; i++) {
                 deadlines[i] = std::numeric_limits<double>::max();
                 dueDates[i] = std::numeric_limits<double>::max();
             }
