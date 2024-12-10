@@ -61,7 +61,7 @@ def get_last_vehicle_for_each_epoch(epoch_size: int, release_times_dataset: list
     return last_vehicle_epochs
 
 
-def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch) -> EpochInstance:
+def get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch) -> EpochInstance:
     arc_based_shortest_paths = copy.deepcopy(instance.trip_routes[first_vehicle_in_epoch:last_vehicle_in_epoch + 1])
 
     return EpochInstance(
@@ -77,7 +77,7 @@ def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle
         last_position_for_reconstruction=[None for _ in range(last_vehicle_in_epoch + 1 - first_vehicle_in_epoch)])
 
 
-def get_epoch_instances(global_instance: Instance, solver_params: SolverParameters) -> list[EpochInstance]:
+def get_epoch_instances(global_instance: Instance, solver_params: SolverParameters) -> EpochInstances:
     """
     Create epoch instances from the global instance based on solver parameters.
     """
@@ -90,7 +90,7 @@ def get_epoch_instances(global_instance: Instance, solver_params: SolverParamete
 
     for epoch_id, last_vehicle_in_epoch in enumerate(last_vehicle_epochs):
         # Generate an epoch instance for the current epoch
-        epoch_instance = _get_epoch_instance(
+        epoch_instance = get_epoch_instance(
             global_instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch
         )
         epoch_instances.append(epoch_instance)
