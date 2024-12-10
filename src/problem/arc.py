@@ -1,11 +1,14 @@
 from typing import Optional, Union
+
+import numpy as np
+
 from problem.parameters import InstanceParams, SPEED
 from utils.aliases import *
 
 
 class Arc:
 
-    def __init__(self, id: ArcID, osm_info: Optional[OsmInfo] = None, is_dummy: bool = False):
+    def __init__(self, id: ArcID, max_flow_allowed: float, osm_info: Optional[OsmInfo] = None, is_dummy: bool = False):
         """
         Initialize an Arc. Use the class method `Arc.create_dummy_arc()` to create dummy arcs.
         """
@@ -23,14 +26,16 @@ class Arc:
             self.u_original = osm_info["u_original"]
             self.v_original = osm_info["v_original"]
             self.u_v_original = (self.u_original, self.v_original)
+            self.nominal_capacity = self.get_nominal_capacity(max_flow_allowed)
         else:
             self.geometry = None
             self.length = 0
+            self.nominal_capacity = 0
 
     @classmethod
     def create_dummy_arc(cls, id: ArcID):
         """Factory method to create a dummy arc."""
-        return cls(id=id, is_dummy=True)
+        return cls(id=id, is_dummy=True, max_flow_allowed=0)
 
     @property
     def nominal_travel_time(self):
@@ -39,13 +44,6 @@ class Arc:
         if self.length is None:
             raise AttributeError("Arc length is not set.")
         return self.length * 3.6 / SPEED
-
-    @property
-    def nominal_capacity(self):
-        # Potentially a computed property in the future
-        if self.is_dummy:
-            return 0
-        return 1  # Replace with logic if nominal capacity varies
 
     def __str__(self):
         return f"arc_{self.id}"
@@ -101,3 +99,6 @@ class Arc:
                            for slope in instance_params.list_of_slopes]
         self.arc_thresholds = [threshold * self.nominal_capacity
                                for threshold in instance_params.list_of_thresholds]
+
+    def get_nominal_capacity(self, max_flow_allowed: float) -> int:
+        return int(np.ceil(self.nominal_travel_time / max_flow_allowed))

@@ -95,18 +95,12 @@ def get_osm_info_arcs(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[in
     return osm_info
 
 
-ArcsFeatures = collections.namedtuple("ArcsFeatures", ["travel_times_arcs", "capacities_arcs", "osm_info_arcs"])
-
-
-def get_arc_based_paths_with_features(node_based_shortest_paths: list[list[int]], manhattan_graph: DiGraph):
+def get_arc_based_paths_with_features(node_based_shortest_paths: list[list[int]], manhattan_graph: DiGraph) -> (
+        (list[list[int]], list[float], list[int])):
     """Combines arc paths with feature extraction for nominal capacities and travel times."""
     arc_based_shortest_paths_original_ids = get_arc_based_shortest_paths_original_ids(node_based_shortest_paths)
     arcs_utilized_ids = get_arcs_utilized_ids(arc_based_shortest_paths_original_ids)
     arc_based_shortest_paths = map_arc_based_shortest_paths(arc_based_shortest_paths_original_ids, arcs_utilized_ids)
-    osm_info_arcs = get_osm_info_arcs(manhattan_graph, arcs_utilized_ids)
     travel_times_arcs_utilized = get_travel_times_arcs_utilized(manhattan_graph, arcs_utilized_ids)
     nominal_capacities_arcs = get_nominal_capacity_arcs_utilized(manhattan_graph, arcs_utilized_ids)
-    arcs_features = ArcsFeatures(travel_times_arcs=travel_times_arcs_utilized,
-                                 capacities_arcs=nominal_capacities_arcs,
-                                 osm_info_arcs=osm_info_arcs)
-    return arc_based_shortest_paths, arcs_features
+    return arc_based_shortest_paths, travel_times_arcs_utilized, nominal_capacities_arcs

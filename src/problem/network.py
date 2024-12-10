@@ -159,7 +159,7 @@ class Network:
         # Add real arcs from OSM data, starting with an ID after the dummy arcs
         for id_offset, osm_arc_id in enumerate(osm_arcs_utilized, start=1):
             osm_arc_info = self.G.edges[osm_arc_id]  # Get OSM info from the graph
-            arc = Arc(id=id_offset, osm_info=osm_arc_info)
+            arc = Arc(id=id_offset, osm_info=osm_arc_info, max_flow_allowed=self.instance_params.max_flow_allowed)
             self.arcs.append(arc)
             self.travel_time_arcs.append(arc.nominal_travel_time)
             self.nominal_capacities_arcs.append(arc.nominal_capacity)

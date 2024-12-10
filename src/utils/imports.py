@@ -21,14 +21,13 @@ def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance
     """Constructs an instance from input data without simplification."""
     trips_df = import_trips_df(instance_params)
     graph = import_graph(instance_params)
-    reduce_graph(graph, trips_df['path'])
-
-    # node_based_shortest_paths = add_shortcuts(instance_params, graph, trips_df, trips_df['path'])
+    reduce_graph(graph, trips_df['path'].tolist())
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
 
-    arc_based_shortest_paths, arcs_features = get_arc_based_paths_with_features(trips_df['path'], graph)
-    instance = get_instance(instance_params, arc_based_shortest_paths, arcs_features, trips_df['release_time'].tolist(),
-                            trips_df['deadline'].tolist(), trips_df['path'].tolist())
+    arc_based_shortest_paths, nominal_travel_times, nominal_capacities = get_arc_based_paths_with_features(
+        trips_df['path'].to_list(), graph)
+    instance = get_instance(instance_params, arc_based_shortest_paths, nominal_travel_times, nominal_capacities,
+                            trips_df['release_time'].tolist(), trips_df['deadline'].tolist(), trips_df['path'].tolist())
 
     print_total_free_flow_time(instance)
     instance.set_deadlines(trips_df['deadline'].tolist())
@@ -37,11 +36,11 @@ def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance
     return instance
 
 
-def import_trips_df(input_data: InstanceParameters) -> DataFrame:
+def import_trips_df(instance_parameters: InstanceParameters) -> DataFrame:
     """Imports trip data from JSON and integrates route data, raising an error if mismatched."""
-    path_to_instance = input_data.path_to_instance
+    path_to_instance = instance_parameters.path_to_instance
     if not os.path.exists(path_to_instance):
-        InstanceComputer(input_data).run()
+        InstanceComputer(instance_parameters).run()
 
     with open(path_to_instance, 'r') as file:
         data = json.load(file)
@@ -51,7 +50,7 @@ def import_trips_df(input_data: InstanceParameters) -> DataFrame:
     trips_df = pd.json_normalize(trip_data)
     print(f"Initial number of trips: {len(trips_df)}")
 
-    path_to_routes = input_data.path_to_routes
+    path_to_routes = instance_parameters.path_to_routes
     with open(path_to_routes, 'r') as file:
         routes_data = json.load(file)
 

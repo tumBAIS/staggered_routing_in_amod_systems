@@ -31,25 +31,6 @@ def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
         manhattan_graph[origin][destination]['nominal_capacity'] = nominal_capacity
 
 
-def add_initial_arcs_attributes(manhattan_graph):
-    """
-    Enhances each arc with attributes indicating its origin and destination coordinates,
-    and marks them as 'original' from OpenStreetMap.
-    """
-    nx.set_edge_attributes(manhattan_graph, 'original', 'type_of_arc')
-
-    for origin, destination in manhattan_graph.edges():
-        origin_point = Point(manhattan_graph.nodes[origin]['x'], manhattan_graph.nodes[origin]['y'])
-        destination_point = Point(manhattan_graph.nodes[destination]['x'], manhattan_graph.nodes[destination]['y'])
-
-        manhattan_graph[origin][destination].update({
-            'origin': origin,
-            'destination': destination,
-            'coordinates_origin': origin_point,
-            'coordinates_destination': destination_point
-        })
-
-
 def reduce_graph(manhattan_graph: DiGraph, node_based_shortest_paths: list[list[int]]):
     """
     Prunes the Manhattan graph by removing nodes and arcs not utilized in node-based shortest paths.
@@ -78,14 +59,10 @@ def import_graph(instance_params: InstanceParameters) -> DiGraph:
     """
     Imports a graph structure from a JSON file located based on the network name provided in input_data.
     """
-    # network_path = os.path.join(os.path.dirname(__file__), f"../../data/{instance_params.network_name}")
-    # network_file = os.path.join(network_path, "network.json")
-
     if os.path.exists(instance_params.path_to_G):
         graph = DiGraph(deserialize_graph(instance_params.path_to_G))
         print(f"Loaded {instance_params.network_name} network")
     else:
         raise RuntimeError(f"{instance_params.network_name} network not found in {instance_params.path_to_G}")
 
-    add_initial_arcs_attributes(graph)
     return graph
