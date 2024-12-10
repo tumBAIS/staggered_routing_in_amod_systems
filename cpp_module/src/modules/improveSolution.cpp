@@ -10,7 +10,7 @@
 namespace cpp_module {
 
     auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void {
-        completeSolution.releaseTimes[vehicle] += staggering;
+        completeSolution.start_times[vehicle] += staggering;
         completeSolution.staggeringApplied[vehicle] += staggering;
         completeSolution.remainingTimeSlack[vehicle] -= staggering;
     }
@@ -115,9 +115,9 @@ namespace cpp_module {
     auto _updateDistanceToCover(const Solution &completeSolution,
                                 Conflict &conflict,
                                 const Instance &instance) -> void {
-        auto indexArcInPathCurrentVehicle = getIndex(instance.arcBasedShortestPaths[conflict.currentVehicle],
+        auto indexArcInPathCurrentVehicle = getIndex(instance.trip_routes[conflict.currentVehicle],
                                                      conflict.arc);
-        auto indexArcInPathOtherVehicle = getIndex(instance.arcBasedShortestPaths[conflict.otherVehicle],
+        auto indexArcInPathOtherVehicle = getIndex(instance.trip_routes[conflict.otherVehicle],
                                                    conflict.arc);
 
         conflict.distanceToCover =

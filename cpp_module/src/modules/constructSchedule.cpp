@@ -7,7 +7,7 @@ namespace cpp_module {
 
     auto initializeConflictingSetsForConstructSchedule(Instance &instance) -> void {
         long vehicle = 0;
-        for (const auto &path: instance.arcBasedShortestPaths) {
+        for (const auto &path: instance.trip_routes) {
             for (auto arc: path) {
                 instance.conflictingSet[arc].push_back(vehicle);
             }
@@ -53,20 +53,20 @@ namespace cpp_module {
         departure = Departure();
         for (auto vehicle = 0; vehicle < instance.numberOfVehicles; vehicle++) {
             departure.time = releaseTimes[vehicle];
-            departure.vehicle = vehicle;
+            departure.trip_id = vehicle;
             departure.position = 0;
-            departure.arc = instance.arcBasedShortestPaths[departure.vehicle][departure.position];
+            departure.arc = instance.trip_routes[departure.trip_id][departure.position];
             priorityQueueDepartures.push(departure);
         }
     }
 
     auto
     Scheduler::_setNextDepartureOfVehicleAndPushToQueue(const double delay) -> void {
-        departure.time = departure.time + instance.nominalTravelTimesArcs[departure.arc] + delay;
+        departure.time = departure.time + instance.travel_times_arcs[departure.arc] + delay;
         arrivalsOnArcs[departure.arc].push(departure);
-        if (departure.position + 1 < instance.arcBasedShortestPaths[departure.vehicle].size()) {
+        if (departure.position + 1 < instance.trip_routes[departure.trip_id].size()) {
             departure.position = (departure.position + 1);
-            departure.arc = instance.arcBasedShortestPaths[departure.vehicle][departure.position];
+            departure.arc = instance.trip_routes[departure.trip_id][departure.position];
             priorityQueueDepartures.push(departure);
         }
     }
@@ -74,10 +74,10 @@ namespace cpp_module {
     auto Scheduler::checkIfSolutionIsAdmissible(const double solutionValue,
                                                 const double timesCapIsReached) -> bool {
 
-        if (departure.time > instance.deadlines[departure.vehicle] + TOLERANCE) {
-            std::cout << "Deadline vehicle " << departure.vehicle << " : " << instance.deadlines[departure.vehicle] <<
+        if (departure.time > instance.deadlines[departure.trip_id] + TOLERANCE) {
+            std::cout << "Deadline vehicle " << departure.trip_id << " : " << instance.deadlines[departure.trip_id] <<
                       " position :" << departure.position << " len path :"
-                      << instance.arcBasedShortestPaths[departure.vehicle].size() <<
+                      << instance.trip_routes[departure.trip_id].size() <<
                       " time: " << departure.time << "\n";
             return false;
         }
@@ -93,7 +93,7 @@ namespace cpp_module {
     auto Scheduler::_getNextDeparture(Solution &completeSolution) -> void {
         departure = priorityQueueDepartures.top();
         priorityQueueDepartures.pop();
-        completeSolution.schedule[departure.vehicle][departure.position] = departure.time;
+        completeSolution.schedule[departure.trip_id][departure.position] = departure.time;
     }
 
     auto Scheduler::_computeSolutionTardiness(Solution &completeSolution) -> void {
@@ -110,14 +110,15 @@ namespace cpp_module {
     Scheduler::construct_schedule(Solution &completeSolution) -> void {
         // computes solution, value of solution, checks if solution is feasible and improving
         // breaks early if it is not.
-        _initializeScheduler(completeSolution.releaseTimes);
+        _initializeScheduler(completeSolution.start_times);
         _initializeCompleteSolution(completeSolution);
         while (!priorityQueueDepartures.empty()) {
             _getNextDeparture(completeSolution);
-            if (departure.position < instance.arcBasedShortestPaths[departure.vehicle].size()) {
+            if (departure.position < instance.trip_routes[departure.trip_id].size()) {
                 const auto vehiclesOnArc = computeVehiclesOnArc(arrivalsOnArcs[departure.arc],
                                                                 departure.time);
                 const auto delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc);
+                completeSolution.set_delay_on_arc(delay, departure.trip_id, departure.position);
                 completeSolution.total_delay += delay;
                 _setNextDepartureOfVehicleAndPushToQueue(delay);
                 bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(

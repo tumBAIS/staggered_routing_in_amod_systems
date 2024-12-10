@@ -54,7 +54,7 @@ namespace cpp_module {
 
         for (std::size_t i = 0; i < instance.list_of_slopes.size(); ++i) {
             const double th_capacity = instance.list_of_thresholds[i] * instance.nominalCapacitiesArcs[arc];
-            const double slope = instance.nominalTravelTimesArcs[arc] * instance.list_of_slopes[i] /
+            const double slope = instance.travel_times_arcs[arc] * instance.list_of_slopes[i] /
                                  instance.nominalCapacitiesArcs[arc];
 
             if (vehiclesOnArc > th_capacity) {
@@ -173,16 +173,16 @@ namespace cpp_module {
             auto vehicleHasDelay = _checkIfVehicleHasDelay(congestedSchedule, currentVehicle);
             if (vehicleHasDelay) {
                 for (auto position = 0; position < congestedSchedule[currentVehicle].size() - 1; position++) {
-                    long arc = instance.arcBasedShortestPaths[currentVehicle][position];
+                    long arc = instance.trip_routes[currentVehicle][position];
                     double delay = congestedSchedule[currentVehicle][position + 1] -
                                    congestedSchedule[currentVehicle][position] -
-                                   instance.nominalTravelTimesArcs[arc];
+                                   instance.travel_times_arcs[arc];
                     if (delay > TOLERANCE) {
                         conflictingArrivals.clear();
                         updateCurrentVehicleInfo(currentVehicle, congestedSchedule, position);
                         for (auto otherVehicle: instance.conflictingSet[arc]) {
                             otherVehicleInfo.vehicle = otherVehicle;
-                            const long otherPosition = getIndex(instance.arcBasedShortestPaths[otherVehicle], arc);
+                            const long otherPosition = getIndex(instance.trip_routes[otherVehicle], arc);
                             auto instructionsConflict = getInstructionsConflict(congestedSchedule, otherPosition);
                             if (instructionsConflict == CONTINUE) {
                                 continue;

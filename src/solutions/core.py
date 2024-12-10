@@ -1,7 +1,7 @@
 import MIP.support
 from input_data import SolverParameters
 from MIP.model import construct_model, run_model
-from solutions.status_quo import compute_solution_metrics, print_status_quo_metrics
+from solutions.status_quo import compute_solution_metrics
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
 from instance_module.instance import Instance
@@ -23,7 +23,6 @@ def get_offline_solution(instance: Instance, release_times: list[float],
     """Compute the global status quo to compare solutions against."""
     print_header_offline_solution()
     solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
-    print_status_quo_metrics(solution_metrics)
     add_conflicting_sets_to_instance(instance, solution_metrics.free_flow_schedule)
     staggering_applied_in_epoch = [0.0] * len(solution_metrics.congested_schedule)
 

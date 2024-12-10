@@ -20,6 +20,7 @@ from congestion_model.core import (
     get_total_delay,
 )
 from input_data import ACTIVATE_ASSERTIONS
+import cpp_module as cpp
 
 
 def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> List[List[int]]:
@@ -86,26 +87,6 @@ def compute_solution_metrics(instance: EpochInstance, release_times: List[float]
     )
 
 
-def print_status_quo_metrics(status_quo_metrics: StatusQuoMetrics):
-    """
-    Print details about the status quo metrics for an epoch.
-    """
-    print(f"Number of trips in epoch: {len(status_quo_metrics.congested_schedule)}")
-    print(f"Initial delay epoch: {round(status_quo_metrics.total_delay / 60, 2)} [min] "
-          f"({round(status_quo_metrics.total_delay / len(status_quo_metrics.congested_schedule) / 60, 2)} [min] per trip)")
-
-    trips_with_delays = [
-        sum(delays) for delays in status_quo_metrics.delays_on_arcs if sum(delays) > 1e-6
-    ]
-    if trips_with_delays:
-        num_trips_with_delays = len(trips_with_delays)
-        print(
-            f"{num_trips_with_delays} / {len(status_quo_metrics.congested_schedule)} "
-            f"({round(num_trips_with_delays / len(status_quo_metrics.congested_schedule) * 100, 2)} [%]) trips experience delays "
-            f"({round(status_quo_metrics.total_delay / num_trips_with_delays / 60, 2)} [min] per delayed trip)"
-        )
-
-
 def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int):
     """
     Print a header for the current epoch's status quo computation.
@@ -116,41 +97,44 @@ def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int):
     print("#" * 20)
 
 
-def get_current_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
-    """
-    Compute the schedule for the current epoch under the status quo scenario.
-
-    Args:
-        epoch_instance (EpochInstance): The instance for the current epoch.
-        solver_params (SolverParameters): Solver parameters.
-
-    Returns:
-        EpochSolution: The computed solution for the current epoch.
-    """
-    epoch_instance.clock_start_epoch = datetime.datetime.now().timestamp()
-    print_epoch_status_header(epoch_instance, epoch_size=solver_params.epoch_size)
-
-    status_quo_metrics = compute_solution_metrics(
-        instance=epoch_instance,
-        release_times=epoch_instance.release_times,
-        solver_params=solver_params,
+def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:
+    return cpp.cpp_instance(
+        set_of_vehicle_paths=instance.trip_routes,
+        travel_times_arcs=instance.travel_times_arcs,
+        capacities_arcs=instance.capacities_arcs,
+        list_of_slopes=instance.input_data.list_of_slopes,
+        list_of_thresholds=instance.input_data.list_of_thresholds,
+        parameters=[solver_params.algorithm_time_limit],
+        release_times=instance.release_times,
+        lb_travel_time=instance.get_lb_travel_time()
     )
 
-    add_conflicting_sets_to_instance(epoch_instance, status_quo_metrics.free_flow_schedule)
+
+def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
+    """
+    Compute the schedule for the current epoch under the status quo scenario.
+    """
+    epoch_instance.set_clock_start_epoch()
+    print_epoch_status_header(epoch_instance, epoch_size=solver_params.epoch_size)
+    cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
+    cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
+    cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)
+    delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
+    free_flow_schedule = cpp_epoch_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
+    add_conflicting_sets_to_instance(epoch_instance, free_flow_schedule)
 
     binaries = get_conflict_binaries(
         epoch_instance.conflicting_sets,
         epoch_instance.trip_routes,
-        status_quo_metrics.congested_schedule,
+        cpp_status_quo.get_schedule(),
     )
 
-    print_status_quo_metrics(status_quo_metrics)
     print_info_arcs_utilized(epoch_instance)
     print_info_length_trips(
         epoch_instance,
-        status_quo_metrics.congested_schedule,
-        status_quo_metrics.free_flow_schedule,
-        status_quo_metrics.delays_on_arcs,
+        cpp_status_quo.get_schedule(),
+        free_flow_schedule,
+        cpp_status_quo.get_delays_on_arcs(),
     )
 
     vehicles_utilizing_arcs = get_vehicles_utilizing_arcs(epoch_instance.trip_routes)
@@ -158,14 +142,14 @@ def get_current_epoch_status_quo(epoch_instance: EpochInstance, solver_params: S
     print_info_conflicting_sets_sizes(epoch_instance)
 
     return EpochSolution(
-        delays_on_arcs=status_quo_metrics.delays_on_arcs,
-        free_flow_schedule=status_quo_metrics.free_flow_schedule,
-        release_times=status_quo_metrics.release_times,
+        delays_on_arcs=delays_on_arcs,
+        free_flow_schedule=free_flow_schedule,
+        release_times=cpp_status_quo.get_start_times(),
         staggering_applicable=epoch_instance.max_staggering_applicable[:],
-        total_delay=status_quo_metrics.total_delay,
-        congested_schedule=status_quo_metrics.congested_schedule,
-        staggering_applied=[0.0] * len(status_quo_metrics.congested_schedule),
-        total_travel_time=get_total_travel_time(status_quo_metrics.congested_schedule),
+        total_delay=cpp_status_quo.get_total_delay(),
+        congested_schedule=cpp_status_quo.get_schedule(),
+        staggering_applied=[0.0] * len(free_flow_schedule),
+        total_travel_time=cpp_status_quo.get_total_travel_time(),
         vehicles_utilizing_arcs=vehicles_utilizing_arcs,
         binaries=binaries,
     )

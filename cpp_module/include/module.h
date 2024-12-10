@@ -23,7 +23,7 @@ namespace cpp_module {
     struct Departure {
         double time;
         long arc;
-        long vehicle;
+        long trip_id;
         long position;
         enum {
             TRAVEL, ACTIVATION
@@ -113,8 +113,8 @@ namespace cpp_module {
 
     class Instance {
     public:
-        const std::vector<std::vector<long>> arcBasedShortestPaths;
-        const std::vector<double> nominalTravelTimesArcs;
+        const std::vector<std::vector<long>> trip_routes;
+        const std::vector<double> travel_times_arcs;
         const std::vector<long> nominalCapacitiesArcs;
         std::vector<double> deadlines;
         std::vector<double> dueDates;
@@ -145,8 +145,8 @@ namespace cpp_module {
                 dueDates(argArcBasedShortestPaths.size()),
                 freeFlowTravelTimesVehicles(argArcBasedShortestPaths.size(), 0),
                 release_times(arg_release_times),
-                arcBasedShortestPaths(argArcBasedShortestPaths),
-                nominalTravelTimesArcs(argNominalTravelTimesArcs),
+                trip_routes(argArcBasedShortestPaths),
+                travel_times_arcs(argNominalTravelTimesArcs),
                 nominalCapacitiesArcs(argNominalCapacitiesArcs),
                 conflictingSet(argNominalCapacitiesArcs.size()) {
             numberOfVehicles = (long) argArcBasedShortestPaths.size();
@@ -162,21 +162,50 @@ namespace cpp_module {
             }
         }
 
-        [[nodiscard]] const std::vector<std::vector<long>>& get_set_of_vehicle_paths() const { return arcBasedShortestPaths; }
-        [[nodiscard]]const std::vector<double>& get_travel_times_arcs() const { return nominalTravelTimesArcs; }
-        [[nodiscard]]const std::vector<long>& get_capacities_arcs() const { return nominalCapacitiesArcs; }
-        [[nodiscard]]const std::vector<double>& get_list_of_slopes() const { return list_of_slopes; }
-        [[nodiscard]]const std::vector<double>& get_list_of_thresholds() const { return list_of_thresholds; }
-        [[nodiscard]] std::vector<double> get_parameters() const { return {maxTimeOptimization}; }
-        [[nodiscard]]const std::vector<double>& get_release_times() const { return release_times; }
+        [[nodiscard]] const std::vector<std::vector<long>> &get_trip_routes() const { return trip_routes; }
 
+        [[nodiscard]]const std::vector<double> &get_travel_times_arcs() const { return travel_times_arcs; }
+
+        [[nodiscard]]const std::vector<long> &get_capacities_arcs() const { return nominalCapacitiesArcs; }
+
+        [[nodiscard]]const std::vector<double> &get_list_of_slopes() const { return list_of_slopes; }
+
+        [[nodiscard]]const std::vector<double> &get_list_of_thresholds() const { return list_of_thresholds; }
+
+        [[nodiscard]] std::vector<double> get_parameters() const { return {maxTimeOptimization}; }
+
+        [[nodiscard]]const std::vector<double> &get_release_times() const { return release_times; }
+
+        VehicleSchedule get_free_flow_schedule(const std::vector<double> &start_times) {
+            // Initialize the free flow schedule with start times
+            std::vector<std::vector<double>> free_flow_schedule;
+            free_flow_schedule.reserve(start_times.size());
+
+            for (double start_time: start_times) {
+                free_flow_schedule.push_back({start_time});
+            }
+
+            // Compute the free flow schedule for each vehicle
+            for (size_t vehicle = 0; vehicle < trip_routes.size(); ++vehicle) {
+                const std::vector<long> &path = trip_routes[vehicle];
+                for (size_t arc_index = 0; arc_index < path.size() - 1; ++arc_index) {
+                    int arc = path[arc_index];
+                    double last_departure_time = free_flow_schedule[vehicle].back();
+                    double next_departure_time = last_departure_time + travel_times_arcs[arc];
+                    free_flow_schedule[vehicle].push_back(next_departure_time);
+                }
+            }
+
+            return free_flow_schedule;
+        }
     };
 
     class Solution {
     public:
         VehicleSchedule schedule;
+        VehicleSchedule delays_on_arcs;
         std::vector<std::vector<bool>> tableWithCapReached;
-        std::vector<double> releaseTimes;
+        std::vector<double> start_times;
         std::vector<double> remainingTimeSlack;
         std::vector<double> staggeringApplied;
         double total_delay;
@@ -189,13 +218,11 @@ namespace cpp_module {
         long timesCapIsReached{};
 
         explicit Solution(const std::vector<double> &argReleaseTimes, Instance &instance)
-                : schedule(
-                argReleaseTimes.size()), staggeringApplied(argReleaseTimes.size()),
-                  remainingTimeSlack(
-                          argReleaseTimes.size()),
-                  tableWithCapReached(
-                          argReleaseTimes.size()) {
-            releaseTimes = argReleaseTimes;
+                : schedule(argReleaseTimes.size()), staggeringApplied(argReleaseTimes.size()),
+                  delays_on_arcs(argReleaseTimes.size()),
+                  remainingTimeSlack(argReleaseTimes.size()),
+                  tableWithCapReached(argReleaseTimes.size()) {
+            start_times = argReleaseTimes;
             total_delay = 0;
             totalTardiness = 0;
             solutionValue = 0;
@@ -204,34 +231,49 @@ namespace cpp_module {
             solutionHasTies = false;
             capReached = false;
             for (auto vehicle = 0; vehicle < size(argReleaseTimes); vehicle++) {
-                schedule[vehicle].resize(instance.arcBasedShortestPaths[vehicle].size());
+                schedule[vehicle].resize(instance.trip_routes[vehicle].size());
+                delays_on_arcs[vehicle] = delays_on_arcs[vehicle] = std::vector<double>(
+                        instance.trip_routes[vehicle].size(), 0.0);
                 staggeringApplied[vehicle] = 0.0;
                 remainingTimeSlack[vehicle] = std::numeric_limits<double>::max();
-                tableWithCapReached[vehicle].resize(instance.arcBasedShortestPaths[vehicle].size());
+                tableWithCapReached[vehicle].resize(instance.trip_routes[vehicle].size());
             }
         };
 
         // Method to get the trip schedule for a given trip_id
-        [[nodiscard]] const std::vector<double>& get_trip_schedule(int trip_id) const {
+        [[nodiscard]] const std::vector<double> &get_trip_schedule(int trip_id) const {
             if (trip_id < 0 || trip_id >= schedule.size()) {
                 throw std::out_of_range("Trip ID is out of range.");
             }
             return schedule[trip_id];
         }
 
-        [[nodiscard]] const VehicleSchedule & get_schedule() const {
+
+        [[nodiscard]] const VehicleSchedule &get_schedule() const {
             return schedule;
         }
 
-        [[nodiscard]] const double& get_total_delay() const {
+        [[nodiscard]] const VehicleSchedule &get_delays_on_arcs() const {
+            return delays_on_arcs;
+        }
+
+        [[nodiscard]] const std::vector<double> &get_start_times() const {
+            return start_times;
+        }
+
+        [[nodiscard]] const double &get_total_delay() const {
             return total_delay;
         }
 
         [[nodiscard]] double get_total_travel_time() const {
-            double total_travel_time = total_delay + lb_travel_time; // Assuming total_delay and lb_travel_time are accessible
+            double total_travel_time =
+                    total_delay + lb_travel_time; // Assuming total_delay and lb_travel_time are accessible
             return total_travel_time;
         }
 
+        void set_delay_on_arc(double delay, int trip_id, int position) {
+            delays_on_arcs[trip_id][position] = delay;
+        }
 
 
     };

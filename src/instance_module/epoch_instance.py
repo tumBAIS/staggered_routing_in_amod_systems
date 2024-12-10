@@ -30,6 +30,10 @@ class EpochInstance(Instance):
         self.last_position_for_reconstruction = last_position_for_reconstruction
         self.start_solution_time = datetime.datetime.now().timestamp()
         self.max_staggering_applicable = max_staggering_applicable  # TODO: avoid this override.
+        self.clock_start_epoch = None
+
+    def set_clock_start_epoch(self):
+        self.clock_start_epoch = datetime.datetime.now().timestamp()
 
 
 EpochInstances = list[EpochInstance]

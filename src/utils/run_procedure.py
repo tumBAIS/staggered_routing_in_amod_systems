@@ -5,7 +5,7 @@ from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from utils.imports import get_instance
 from instance_module.epoch_instance import get_epoch_instances
-from solutions.status_quo import get_current_epoch_status_quo
+from solutions.status_quo import get_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution
 from instance_module.update_epoch_instance import update_next_epoch_instance
 from processing.simplify import simplify_system
@@ -28,7 +28,7 @@ def run_procedure(source: str) -> None:
     # Process each epoch instance
     for epoch_id, epoch_instance in enumerate(epoch_instances):
         # Get the status quo for the current epoch
-        epoch_status_quo = get_current_epoch_status_quo(epoch_instance, solver_params)
+        epoch_status_quo = get_epoch_status_quo(epoch_instance, solver_params)
 
         # Simplify the system for the current epoch
         # simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)

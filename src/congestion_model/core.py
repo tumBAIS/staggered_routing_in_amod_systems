@@ -21,14 +21,13 @@ def get_free_flow_schedule(instance: Instance | EpochInstance,
 
 def get_congested_schedule(instance: Instance | EpochInstance,
                            release_times: list[float], solver_params: SolverParameters) -> list[VehicleSchedule]:
-    cpp_parameters = [solver_params.algorithm_time_limit]
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,
         capacities_arcs=instance.capacities_arcs,
         list_of_slopes=instance.input_data.list_of_slopes,
         list_of_thresholds=instance.input_data.list_of_thresholds,
-        parameters=cpp_parameters,
+        parameters=[solver_params.algorithm_time_limit],
         release_times=release_times,
         lb_travel_time=instance.get_lb_travel_time()
     )

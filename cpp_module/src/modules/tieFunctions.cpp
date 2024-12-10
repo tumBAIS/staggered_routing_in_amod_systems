@@ -92,10 +92,10 @@ namespace cpp_module {
                        Solution &completeSolution) -> bool {
         Tie tie{};
         for (auto vehicleOne: instance.conflictingSet[arc]) {
-            const long positionOne = getIndex(instance.arcBasedShortestPaths[vehicleOne], arc);
+            const long positionOne = getIndex(instance.trip_routes[vehicleOne], arc);
             for (auto vehicleTwo: instance.conflictingSet[arc]) {
                 if (vehicleOne < vehicleTwo) {
-                    const long positionTwo = getIndex(instance.arcBasedShortestPaths[vehicleTwo], arc);
+                    const long positionTwo = getIndex(instance.trip_routes[vehicleTwo], arc);
                     tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
                     bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
                     if (tieOnArc) {
@@ -113,10 +113,10 @@ namespace cpp_module {
                        Scheduler &scheduler) {
         Tie tie{};
         for (auto vehicleOne: instance.conflictingSet[arc]) {
-            const long positionOne = getIndex(instance.arcBasedShortestPaths[vehicleOne], arc);
+            const long positionOne = getIndex(instance.trip_routes[vehicleOne], arc);
             for (auto vehicleTwo: instance.conflictingSet[arc]) {
                 if (vehicleOne != vehicleTwo) {
-                    const long positionTwo = getIndex(instance.arcBasedShortestPaths[vehicleTwo], arc);
+                    const long positionTwo = getIndex(instance.trip_routes[vehicleTwo], arc);
                     tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
                     _solveTie(completeSolution, tie, scheduler);
                 }
