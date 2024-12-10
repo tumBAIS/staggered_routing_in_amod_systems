@@ -10,52 +10,65 @@ from instance_module.instance import Instance, get_instance, print_total_free_fl
 from instance_module.paths import get_arc_based_paths_with_features
 from input_data import InstanceParameters
 from instance_generator.computer import InstanceComputer
-
+from dataclasses import dataclass
 import warnings
 
 WARNING = "the convert_dtype parameter is deprecated and will be removed in a future version"
 warnings.filterwarnings("ignore", message=WARNING)
 
 
+@dataclass
+class TripsData:
+    routes: list[list[int]]  # list of node-based paths for each trip
+    deadline: list[int]  # Deadlines for each trip
+    release_time: list[int]  # Release times for each trip
+
+
 def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance:
     """Constructs an instance from input data without simplification."""
-    trips_df = import_trips_df(instance_params)
+    trips_data = import_trips_data(instance_params)
     graph = import_graph(instance_params)
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
-    arc_based_shortest_paths, nominal_travel_times, nominal_capacities = get_arc_based_paths_with_features(
-        trips_df['path'].to_list(), graph)
-    instance = get_instance(instance_params, arc_based_shortest_paths, nominal_travel_times, nominal_capacities,
-                            trips_df['release_time'].tolist(), trips_df['deadline'].tolist(),
-                            trips_df['path'].tolist(), trips_df["deadline"].tolist())
-    print_total_free_flow_time(instance)
-    return instance
+    trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(
+        trips_data.routes, graph)
+    return Instance(input_data=instance_params, deadlines=trips_data.deadline,
+                    trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
+                    node_based_trip_routes=trips_data.routes, release_times_dataset=trips_data.release_time)
 
 
-def import_trips_df(instance_parameters: InstanceParameters) -> DataFrame:
-    """Imports trip data from JSON and integrates route data, raising an error if mismatched."""
-    path_to_instance = instance_parameters.path_to_instance
-    if not os.path.exists(path_to_instance):
+def import_trips_data(instance_parameters: InstanceParameters) -> TripsData:
+    """
+    Imports trip data and route data from JSON files and integrates them into a TripsData dataclass.
+    """
+    # Ensure the instance data exists; otherwise, compute it
+    if not os.path.exists(instance_parameters.path_to_instance):
         InstanceComputer(instance_parameters).run()
 
-    with open(path_to_instance, 'r') as file:
+    # Load trip data from JSON
+    with open(instance_parameters.path_to_instance, 'r') as file:
         data = json.load(file)
 
-    # Extract and normalize trip data from JSON
-    trip_data = [data.pop(key) for key in list(data.keys()) if key.startswith('trip_')]
+    trip_data = [
+        data[key] for key in data.keys() if key.startswith('trip_')
+    ]
     trips_df = pd.json_normalize(trip_data)
-    print(f"Initial number of trips: {len(trips_df)}")
+    print(f"Loaded {len(trips_df)} trips.")
 
-    path_to_routes = instance_parameters.path_to_routes
-    with open(path_to_routes, 'r') as file:
+    # Load route data from JSON
+    with open(instance_parameters.path_to_routes, 'r') as file:
         routes_data = json.load(file)
 
-    relevant_keys = ['path', 'origin', 'destination', 'origin_coords', 'destination_coords']
-    filtered_routes_data = [{key: route[key] for key in relevant_keys if key in route} for route in routes_data]
+    routes_df = pd.DataFrame([
+        {"path": route["path"]} for route in routes_data if "path" in route
+    ])
 
-    routes_df = pd.DataFrame(filtered_routes_data)
-
+    # Validate consistency between trips and routes
     if len(routes_df) != len(trips_df):
-        raise ValueError("The number of routes does not match the number of trips.")
+        raise ValueError("Mismatch: Number of routes does not match number of trips.")
 
-    combined_df = pd.concat([trips_df, routes_df], axis=1)
-    return combined_df
+    # Combine data and return as TripsData
+    return TripsData(
+        routes=routes_df["path"].tolist(),
+        deadline=trips_df["deadline"].tolist(),
+        release_time=trips_df["release_time"].tolist(),
+    )

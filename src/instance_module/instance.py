@@ -24,7 +24,6 @@ class Instance:
     input_data: InstanceParameters
     capacities_arcs: list[int]
     release_times_dataset: list[float]
-    arrival_times_dataset: list[float]
     trip_routes: list[list[int]]
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
@@ -46,13 +45,6 @@ class Instance:
 
     def get_lb_travel_time(self) -> float:
         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
-
-    def set_deadlines(self, deadlines: list[Time]):
-        if self.deadlines is None:
-            self.deadlines = deadlines
-            print(f"Deadline delta is {self.input_data.deadline_factor}% of congested travel time")
-        else:
-            raise ValueError("Attempting to override deadlines with class method!")
 
     def set_max_staggering_applicable(self):
         """
@@ -89,7 +81,7 @@ def print_total_free_flow_time(instance: Instance):
 
 def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[list[int]],
                  nominal_travel_times: list[float], nominal_capacities: list[int],
-                 release_times_dataset: list[Time], arrival_times_dataset: list[Time],
+                 release_times_dataset: list[Time],
                  node_based_trip_routes: list[list[int]], deadlines: list[float]) -> Instance:
     return Instance(
         trip_routes=arc_based_shortest_paths,
@@ -97,7 +89,6 @@ def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[
         capacities_arcs=nominal_capacities,
         input_data=input_data,
         release_times_dataset=release_times_dataset,
-        arrival_times_dataset=arrival_times_dataset,
         node_based_trip_routes=node_based_trip_routes,
         deadlines=deadlines
     )
