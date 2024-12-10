@@ -18,7 +18,7 @@ namespace cpp_module {
     auto _resetSolution(Solution &completeSolution,
                         const long &vehicleOne,
                         const CorrectSolution &correctSolution) -> void {
-        staggerVehicle(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
+        stagger_trip(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
         completeSolution.set_ties_flag(true);
         completeSolution.set_schedule(correctSolution.schedule);
         completeSolution.set_total_delay(correctSolution.totalDelay);
@@ -69,7 +69,7 @@ namespace cpp_module {
                 completeSolution.get_trip_remaining_time_slack(tie.vehicleOne));
         while (thereIsTie && slackIsEnough) {
             const CorrectSolution correctSolution = _setCorrectSolution(completeSolution);
-            staggerVehicle(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
+            stagger_trip(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
             scheduler.construct_schedule(completeSolution);
             if (!completeSolution.get_feasible_and_improving_flag()) {
                 _resetSolution(completeSolution, tie.vehicleOne, correctSolution);
