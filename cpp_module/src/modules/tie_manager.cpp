@@ -3,91 +3,98 @@
 #include "scheduler.h"
 #include <queue>
 
+
 namespace cpp_module {
 
-// Structure to store the correct solution state
     struct CorrectSolution {
         VehicleSchedule schedule;
-        double total_delay;
-        bool schedule_is_feasible_and_improving;
+        std::vector<std::vector<bool>> tableWithCapReached;
+        double totalDelay;
+        long timesCapIsReached;
+        bool scheduleIsFeasibleAndImproving;
     };
 
-// Reset a solution to a previously correct state
-    auto
-    reset_solution(Solution &complete_solution, long vehicle_one, const CorrectSolution &correct_solution) -> void {
-        stagger_trip(complete_solution, vehicle_one, -CONSTR_TOLERANCE);
-        complete_solution.set_ties_flag(true);
-        complete_solution.set_schedule(correct_solution.schedule);
-        complete_solution.set_total_delay(correct_solution.total_delay);
-        complete_solution.set_feasible_and_improving_flag(correct_solution.schedule_is_feasible_and_improving);
+
+    auto _resetSolution(Solution &completeSolution,
+                        const long &vehicleOne,
+                        const CorrectSolution &correctSolution) -> void {
+        stagger_trip(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
+        completeSolution.set_ties_flag(true);
+        completeSolution.set_schedule(correctSolution.schedule);
+        completeSolution.set_total_delay(correctSolution.totalDelay);
+        completeSolution.set_feasible_and_improving_flag(correctSolution.scheduleIsFeasibleAndImproving);
     }
 
-// Check if a vehicle has enough slack to solve a tie
-    auto check_slack_to_solve_tie(double slack_vehicle) -> bool {
-        return slack_vehicle > CONSTR_TOLERANCE;
+    auto _checkIfSlackISEnoughToSolveTie(const double slackVehicle) -> bool {
+        bool enoughSlackToSolveTie = slackVehicle > CONSTR_TOLERANCE;
+        if (!enoughSlackToSolveTie) {
+            return false;
+        }
+        return true;
     }
 
-// Create a snapshot of the current solution as the correct state
-    auto set_correct_solution(const Solution &complete_solution) -> CorrectSolution {
-        return {complete_solution.get_schedule(), complete_solution.get_total_delay(), true};
+
+    auto _setCorrectSolution(const Solution &completeSolution) -> CorrectSolution {
+        CorrectSolution correctSolution{};
+
+        correctSolution.schedule = completeSolution.get_schedule();
+        correctSolution.totalDelay = completeSolution.get_total_delay();
+        return correctSolution;
     }
 
-// Print a message when a tie is solved
-    auto print_tie_solved(const Tie &tie) -> void {
-        std::cout << "Staggering vehicle " << tie.vehicle_one << " by " << CONSTR_TOLERANCE
-                  << " [s] to solve tie with vehicle " << tie.vehicle_two << " on arc " << tie.arc << "\n";
+    auto _printTieSolved(const Tie &tie) -> void {
+        std::cout << "Staggering vehicle " << tie.vehicleOne << " of " << CONSTR_TOLERANCE << " [s] to solve";
+        std::cout << " tie with vehicle " << tie.vehicleTwo << " on arc " << tie.arc << "\n";
     }
 
-// Check if there is a tie between two vehicles
-    auto check_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool {
-        bool depart_at_same_time = std::abs(
-                congested_schedule[tie.vehicle_one][tie.position_one] -
-                congested_schedule[tie.vehicle_two][tie.position_two]) < CONSTR_TOLERANCE - 1e-6;
-
-        bool vehicle_one_arrives_at_departure = std::abs(
-                congested_schedule[tie.vehicle_two][tie.position_two] -
-                congested_schedule[tie.vehicle_one][tie.position_one + 1]) < CONSTR_TOLERANCE - 1e-6;
-
-        bool vehicle_two_arrives_at_departure = std::abs(
-                congested_schedule[tie.vehicle_one][tie.position_one] -
-                congested_schedule[tie.vehicle_two][tie.position_two + 1]) < CONSTR_TOLERANCE - 1e-6;
-
-        return depart_at_same_time || vehicle_one_arrives_at_departure || vehicle_two_arrives_at_departure;
+    auto checkIfVehiclesHaveTie(const VehicleSchedule &congestedSchedule,
+                                const Tie &tie) -> bool {
+        const bool vehiclesDepartAtSameTime = std::abs(
+                congestedSchedule[tie.vehicleOne][tie.positionOne] -
+                congestedSchedule[tie.vehicleTwo][tie.positionTwo]) < CONSTR_TOLERANCE - 1e-6;
+        const bool vehicleOneArrivesAtVehicleTwoDeparture = std::abs(
+                congestedSchedule[tie.vehicleTwo][tie.positionTwo] -
+                congestedSchedule[tie.vehicleOne][tie.positionOne + 1]) < CONSTR_TOLERANCE - 1e-6;
+        const bool vehicleTwoArrivesAtVehicleOneDeparture = std::abs(
+                congestedSchedule[tie.vehicleOne][tie.positionOne] -
+                congestedSchedule[tie.vehicleTwo][tie.positionTwo + 1]) < CONSTR_TOLERANCE - 1e-6;
+        bool thereIsTie = vehiclesDepartAtSameTime || vehicleOneArrivesAtVehicleTwoDeparture ||
+                          vehicleTwoArrivesAtVehicleOneDeparture;
+        return thereIsTie;
     }
 
-// Resolve a tie by staggering a vehicle
-    auto solve_tie(Solution &complete_solution, const Tie &tie, Scheduler &scheduler) -> void {
-        bool has_tie = check_tie(complete_solution.get_schedule(), tie);
-        bool slack_is_enough = check_slack_to_solve_tie(
-                complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
+    auto _solveTie(Solution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
+        auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
+        auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(
+                completeSolution.get_trip_remaining_time_slack(tie.vehicleOne));
+        while (thereIsTie && slackIsEnough) {
+            const CorrectSolution correctSolution = _setCorrectSolution(completeSolution);
+            stagger_trip(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
+            scheduler.construct_schedule(completeSolution);
+            if (!completeSolution.get_feasible_and_improving_flag()) {
+                _resetSolution(completeSolution, tie.vehicleOne, correctSolution);
 
-        while (has_tie && slack_is_enough) {
-            CorrectSolution correct_solution = set_correct_solution(complete_solution);
-            stagger_trip(complete_solution, tie.vehicle_one, CONSTR_TOLERANCE);
-            scheduler.construct_schedule(complete_solution);
-
-            if (!complete_solution.get_feasible_and_improving_flag()) {
-                reset_solution(complete_solution, tie.vehicle_one, correct_solution);
                 return;
             }
-
-            print_tie_solved(tie);
-            has_tie = check_tie(complete_solution.get_schedule(), tie);
-            slack_is_enough = check_slack_to_solve_tie(
-                    complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
+            _printTieSolved(tie);
+            thereIsTie = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
+            slackIsEnough = _checkIfSlackISEnoughToSolveTie(
+                    completeSolution.get_trip_remaining_time_slack(tie.vehicleOne));
         }
     }
 
-// Check if there are any ties on a given arc
-    auto check_arc_ties(const Instance &instance, ArcID arc_id, Solution &complete_solution) -> bool {
-        for (auto vehicle_one: instance.get_conflicting_set(arc_id)) {
-            long position_one = get_index(instance.get_trip_route(vehicle_one), arc_id);
-
-            for (auto vehicle_two: instance.get_conflicting_set(arc_id)) {
-                if (vehicle_one < vehicle_two) {
-                    long position_two = get_index(instance.get_trip_route(vehicle_two), arc_id);
-                    Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
-                    if (check_tie(complete_solution.get_schedule(), tie)) {
+    auto _checkArcTies(const Instance &instance,
+                       const ArcID &arc_id,
+                       Solution &completeSolution) -> bool {
+        Tie tie{};
+        for (auto first_trip: instance.get_conflicting_set(arc_id)) {
+            const long positionOne = get_index(instance.get_trip_route(first_trip), arc_id);
+            for (auto second_trip: instance.get_conflicting_set(arc_id)) {
+                if (first_trip < second_trip) {
+                    const long positionTwo = get_index(instance.get_trip_route(second_trip), arc_id);
+                    tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
+                    bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
+                    if (tieOnArc) {
                         return true;
                     }
                 }
@@ -96,48 +103,59 @@ namespace cpp_module {
         return false;
     }
 
-// Solve all ties on a specific arc
-    auto
-    solve_arc_ties(const Instance &instance, ArcID arc_id, Solution &complete_solution, Scheduler &scheduler) -> void {
-        for (auto vehicle_one: instance.get_conflicting_set(arc_id)) {
-            long position_one = get_index(instance.get_trip_route(vehicle_one), arc_id);
-
-            for (auto vehicle_two: instance.get_conflicting_set(arc_id)) {
-                if (vehicle_one != vehicle_two) {
-                    long position_two = get_index(instance.get_trip_route(vehicle_two), arc_id);
-                    Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
-                    solve_tie(complete_solution, tie, scheduler);
+    auto _solveArcTies(const Instance &instance,
+                       const long &arc_id,
+                       Solution &completeSolution,
+                       Scheduler &scheduler) {
+        Tie tie{};
+        for (auto first_trip: instance.get_conflicting_set(arc_id)) {
+            const long positionOne = get_index(instance.get_trip_route(first_trip), arc_id);
+            for (auto second_trip: instance.get_conflicting_set(arc_id)) {
+                if (first_trip != second_trip) {
+                    const long positionTwo = get_index(instance.get_trip_route(second_trip), arc_id);
+                    tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
+                    _solveTie(completeSolution, tie, scheduler);
                 }
             }
         }
     }
 
-// Check if the solution has any ties
-    auto check_solution_for_ties(const Instance &instance, Solution &complete_solution) -> void {
-        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
-            if (instance.get_conflicting_set(arc_id).empty()) {
+    auto _printIfSolutionHasTies(const Solution &currentSolution) -> void {
+#ifdef assertionsOnEvaluationFunction
+        if (currentSolution.solutionHasTies) {
+            std::cout << "Solution has ties! \n";
+        }
+#endif
+    }
+
+    auto check_if_solution_has_ties(const Instance &instance, Solution &completeSolution) -> void {
+        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
+            bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();
+            if (noTiesCanHappenOnArc) {
                 continue;
             }
-
-            if (check_arc_ties(instance, arc_id, complete_solution)) {
-                complete_solution.set_ties_flag(true);
+            bool thereIsTie = _checkArcTies(instance, arc_id, completeSolution);
+            if (thereIsTie) {
+                completeSolution.set_ties_flag(true);
+                _printIfSolutionHasTies(completeSolution);
                 return;
             }
+            completeSolution.set_ties_flag(false);
         }
-        complete_solution.set_ties_flag(false);
     }
 
-// Solve all ties in the solution
-    auto solve_solution_ties(const Instance &instance, Solution &complete_solution, Scheduler &scheduler) -> void {
-        complete_solution.set_ties_flag(false);
 
-        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
-            if (instance.get_conflicting_set(arc_id).empty()) {
+    auto solve_solution_ties(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
+        completeSolution.set_ties_flag(false); // will be set to true if a tie cannot be solved
+        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
+            bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();
+            if (noTiesCanHappenOnArc) {
                 continue;
             }
-
-            solve_arc_ties(instance, arc_id, complete_solution, scheduler);
+            _solveArcTies(instance, arc_id, completeSolution, scheduler);
         }
     }
 
-} // namespace cpp_module
+
+}
+

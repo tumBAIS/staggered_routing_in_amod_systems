@@ -31,10 +31,10 @@ namespace cpp_module {
 
 
     struct Tie {
-        long vehicle_one;
-        long vehicle_two;
-        long position_one;
-        long position_two;
+        long vehicleOne;
+        long vehicleTwo;
+        long positionOne;
+        long positionTwo;
         long arc;
     };
 
@@ -148,8 +148,7 @@ namespace cpp_module {
         moveVehicleForwardInTheQueue(double currentVehicleNewArrival);
 
         [[nodiscard]] bool
-        check_if_other_starts_before_current(const TripID other_trip_id,
-                                             const VehicleSchedule &congestedSchedule) const;
+        _checkIfOtherStartsBeforeCurrent(long other_trip_id, const VehicleSchedule &congestedSchedule) const;
 
         bool _checkIfDepartureShouldBeSkipped();
 
@@ -219,7 +218,7 @@ namespace cpp_module {
         void _printDeparturePushedToQueue() const;
 
 
-        bool check_if_tie_in_set(const VehicleSchedule &congestedSchedule);
+        bool _checkIfTieInSet(const VehicleSchedule &congestedSchedule);
 
         void _assertDepartureIsFeasible(const VehicleSchedule &congestedSchedule);
 
@@ -302,7 +301,7 @@ namespace cpp_module {
 
     auto compute_vehicles_on_arc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;
 
-    auto check_if_vehicles_have_tie(const VehicleSchedule &congestedSchedule, const Tie &tie) -> bool;
+    auto checkIfVehiclesHaveTie(const VehicleSchedule &congestedSchedule, const Tie &tie) -> bool;
 
     auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void;
 }
