@@ -199,8 +199,8 @@ namespace cpp_module {
 
     auto Scheduler::_checkIfOtherStartsBeforeCurrent(const TripID other_trip_id,
                                                      const VehicleSchedule &congestedSchedule) const -> bool {
-        auto indexArcInPathOtherVehicle = getIndex(instance.get_trip_route(other_trip_id),
-                                                   departure.arc_id);
+        auto indexArcInPathOtherVehicle = get_index(instance.get_trip_route(other_trip_id),
+                                                    departure.arc_id);
         auto otherVehicleOriginalDeparture = congestedSchedule[other_trip_id][indexArcInPathOtherVehicle];
         bool otherVehicleComesFirstAfterTheChange =
                 otherVehicleOriginalDeparture <= departure.time;

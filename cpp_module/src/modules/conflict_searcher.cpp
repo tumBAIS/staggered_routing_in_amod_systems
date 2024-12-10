@@ -28,7 +28,7 @@ namespace cpp_module {
     }
 
 
-    auto computeVehiclesOnArc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double {
+    auto compute_vehicles_on_arc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double {
         // Remove arrivals from the arc completed by departureTime time
         auto vehicleLeftArc = !arrivalsOnArc.empty() && arrivalsOnArc.top().time <= departureTime;
         while (vehicleLeftArc) {
@@ -38,9 +38,9 @@ namespace cpp_module {
         return (double) arrivalsOnArc.size() + 1.0;
     }
 
-    auto computeDelayOnArc(const double &vehiclesOnArc,
-                           const Instance &instance,
-                           const long arc) -> double {
+    auto compute_delay_on_arc(const double &vehiclesOnArc,
+                              const Instance &instance,
+                              const long arc) -> double {
         if (arc == 0) {
             return 0;
         }
@@ -138,7 +138,7 @@ namespace cpp_module {
         long vehiclesOnArc = 1;
         for (auto sortedArrival: conflictingArrivals) {
             vehiclesOnArc++;
-            double conflictDelay = computeDelayOnArc(vehiclesOnArc, instance, arc);
+            double conflictDelay = compute_delay_on_arc(vehiclesOnArc, instance, arc);
 //            if (conflictDelay > TOLERANCE)
             {
                 Conflict conflict = _createConflictNew(arc, conflictDelay, sortedArrival);
@@ -187,7 +187,7 @@ namespace cpp_module {
                         updateCurrentVehicleInfo(currentVehicle, congestedSchedule, position);
                         for (auto otherVehicle: instance.get_conflicting_set(arc)) {
                             other_info.trip_id = otherVehicle;
-                            const long otherPosition = getIndex(instance.get_trip_route(otherVehicle), arc);
+                            const long otherPosition = get_index(instance.get_trip_route(otherVehicle), arc);
                             auto instructionsConflict = getInstructionsConflict(congestedSchedule, otherPosition);
                             if (instructionsConflict == CONTINUE) {
                                 continue;

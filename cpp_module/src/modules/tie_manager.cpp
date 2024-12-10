@@ -89,10 +89,10 @@ namespace cpp_module {
                        Solution &completeSolution) -> bool {
         Tie tie;
         for (auto first_trip: instance.get_conflicting_set(arc_id)) {
-            const long positionOne = getIndex(instance.get_trip_route(first_trip), arc_id);
+            const long positionOne = get_index(instance.get_trip_route(first_trip), arc_id);
             for (auto second_trip: instance.get_conflicting_set(arc_id)) {
                 if (first_trip < second_trip) {
-                    const long positionTwo = getIndex(instance.get_trip_route(second_trip), arc_id);
+                    const long positionTwo = get_index(instance.get_trip_route(second_trip), arc_id);
                     tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
                     bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
                     if (tieOnArc) {
@@ -110,10 +110,10 @@ namespace cpp_module {
                        Scheduler &scheduler) {
         Tie tie{};
         for (auto first_trip: instance.get_conflicting_set(arc_id)) {
-            const long positionOne = getIndex(instance.get_trip_route(first_trip), arc_id);
+            const long positionOne = get_index(instance.get_trip_route(first_trip), arc_id);
             for (auto second_trip: instance.get_conflicting_set(arc_id)) {
                 if (first_trip != second_trip) {
-                    const long positionTwo = getIndex(instance.get_trip_route(second_trip), arc_id);
+                    const long positionTwo = get_index(instance.get_trip_route(second_trip), arc_id);
                     tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
                     _solveTie(completeSolution, tie, scheduler);
                 }

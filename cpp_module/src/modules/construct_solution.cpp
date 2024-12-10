@@ -1,11 +1,12 @@
 #include "scheduler.h"
 #include <queue>
-#include "algorithm"
-#include "iostream"
+#include <algorithm>
+#include <iostream>
 
 namespace cpp_module {
 
-    auto initializeConflictingSetsForConstructSchedule(Instance &instance) -> void {
+// Initialize conflicting sets for constructing the schedule
+    auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void {
         long trip_id = 0;
         for (const auto &path: instance.get_trip_routes()) {
             for (auto arc_id: path) {
@@ -15,100 +16,97 @@ namespace cpp_module {
         }
     }
 
-
-    auto getIndex(const std::vector<long> &v, long K) -> long {
-        auto it = find(v.begin(), v.end(), K);
-        long index;
-        // If element was found
-        if (it != v.end()) {   // calculating the index
-            // of K
-            index = it - v.begin();
-        } else
-            // If the element is not present in the vector
-            index = -1;
-
-        return index;
+// Find the index of an element in a vector
+    auto get_index(const std::vector<long> &vec, long value) -> long {
+        auto it = std::find(vec.begin(), vec.end(), value);
+        return (it != vec.end()) ? static_cast<long>(it - vec.begin()) : -1;
     }
 
-
-    auto _initializeCompleteSolution(Solution &completeSolution) -> void {
-        completeSolution.set_total_delay(0);
-        completeSolution.set_feasible_and_improving_flag(true);
-        completeSolution.set_ties_flag(false);
+// Initialize the solution object
+    auto initialize_complete_solution(Solution &complete_solution) -> void {
+        complete_solution.set_total_delay(0);
+        complete_solution.set_feasible_and_improving_flag(true);
+        complete_solution.set_ties_flag(false);
     }
 
-    auto
-    Scheduler::_initializeScheduler(const std::vector<double> &releaseTimes) -> void {
-        // reset priority queues, reset counter cap reached, initialize priority queue departures
-        priorityQueueDepartures = MinQueueDepartures();
-        arrivalsOnArcs = std::vector<MinQueueDepartures>(instance.get_number_of_arcs());
+// Initialize the scheduler
+    auto Scheduler::initialize_scheduler(const std::vector<double> &release_times) -> void {
+        // Reset priority queues and counters, and initialize priority queue for departures
+        pq_departures = MinQueueDepartures();
+        arrivals_on_arcs = std::vector<MinQueueDepartures>(instance.get_number_of_arcs());
         departure = Departure();
-        for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); trip_id++) {
-            departure.time = releaseTimes[trip_id];
+
+        for (long trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
+            departure.time = release_times[trip_id];
             departure.trip_id = trip_id;
             departure.position = 0;
             departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, departure.position);
-            priorityQueueDepartures.push(departure);
+            pq_departures.push(departure);
         }
     }
 
-    auto
-    Scheduler::_setNextDepartureOfVehicleAndPushToQueue(const double delay) -> void {
-        departure.time = departure.time + instance.get_arc_travel_time(departure.arc_id) + delay;
-        arrivalsOnArcs[departure.arc_id].push(departure);
+// Set the next departure of a vehicle and push it to the queue
+    auto Scheduler::set_next_departure_and_push_to_queue(double delay) -> void {
+        departure.time += instance.get_arc_travel_time(departure.arc_id) + delay;
+        arrivals_on_arcs[departure.arc_id].push(departure);
+
         if (departure.position + 1 < instance.get_trip_route(departure.trip_id).size()) {
-            departure.position = (departure.position + 1);
+            departure.position++;
             departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, departure.position);
-            priorityQueueDepartures.push(departure);
+            pq_departures.push(departure);
         }
     }
 
-    auto Scheduler::checkIfSolutionIsAdmissible(const double total_delay) const -> bool {
-
+// Check if the current solution is admissible
+    auto Scheduler::check_if_solution_is_admissible(double total_delay) const -> bool {
         if (departure.time > instance.get_trip_deadline(departure.trip_id) + TOLERANCE) {
-            std::cout << "Deadline vehicle " << departure.trip_id << " : "
-                      << instance.get_trip_deadline(departure.trip_id) <<
-                      " position :" << departure.position << " len path :"
-                      << instance.get_trip_route(departure.trip_id).size() <<
-                      " time: " << departure.time << "\n";
+            std::cout << "Deadline for vehicle " << departure.trip_id << " exceeded: "
+                      << "Deadline: " << instance.get_trip_deadline(departure.trip_id)
+                      << ", Position: " << departure.position
+                      << ", Path length: " << instance.get_trip_route(departure.trip_id).size()
+                      << ", Current time: " << departure.time << "\n";
             return false;
         }
         if (total_delay >= best_total_delay) {
             return false;
         }
-
         return true;
     }
 
-    auto Scheduler::_getNextDeparture(Solution &completeSolution) -> void {
-        departure = priorityQueueDepartures.top();
-        priorityQueueDepartures.pop();
-        completeSolution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
+// Get the next departure from the priority queue
+    auto Scheduler::get_next_departure(Solution &complete_solution) -> void {
+        departure = pq_departures.top();
+        pq_departures.pop();
+        complete_solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
     }
 
+// Construct the schedule
+    auto Scheduler::construct_schedule(Solution &complete_solution) -> void {
+        // Initialize scheduler and complete solution
+        initialize_scheduler(complete_solution.get_start_times());
+        initialize_complete_solution(complete_solution);
 
-    auto
-    Scheduler::construct_schedule(Solution &completeSolution) -> void {
-        // computes solution, value of solution, checks if solution is feasible and improving
-        // breaks early if it is not.
-        _initializeScheduler(completeSolution.get_start_times());
-        _initializeCompleteSolution(completeSolution);
-        while (!priorityQueueDepartures.empty()) {
-            _getNextDeparture(completeSolution);
+        while (!pq_departures.empty()) {
+            get_next_departure(complete_solution);
+
             if (departure.position < instance.get_trip_route_size(departure.trip_id)) {
-                const auto vehiclesOnArc = computeVehiclesOnArc(arrivalsOnArcs[departure.arc_id],
-                                                                departure.time);
-                const auto delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc_id);
-                completeSolution.set_delay_on_arc(delay, departure.trip_id, departure.position);
-                completeSolution.increase_total_delay(delay);
-                _setNextDepartureOfVehicleAndPushToQueue(delay);
-                bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(completeSolution.get_total_delay());
-                if (!scheduleIsFeasibleAndImproving) {
-                    completeSolution.set_feasible_and_improving_flag(false);
+                const auto vehicles_on_arc = compute_vehicles_on_arc(arrivals_on_arcs[departure.arc_id],
+                                                                     departure.time);
+                const auto delay = compute_delay_on_arc(vehicles_on_arc, instance, departure.arc_id);
+
+                complete_solution.set_delay_on_arc(delay, departure.trip_id, departure.position);
+                complete_solution.increase_total_delay(delay);
+
+                set_next_departure_and_push_to_queue(delay);
+
+                bool schedule_is_feasible_and_improving =
+                        check_if_solution_is_admissible(complete_solution.get_total_delay());
+
+                if (!schedule_is_feasible_and_improving) {
+                    complete_solution.set_feasible_and_improving_flag(false);
                 }
             }
         }
     }
 
-
-}
+} // namespace cpp_module

@@ -76,21 +76,21 @@ namespace cpp_module {
     class Scheduler {
         using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
     public:
-        MinQueueDepartures priorityQueueDepartures;
-        std::vector<MinQueueDepartures> arrivalsOnArcs;
+        MinQueueDepartures pq_departures;
+        std::vector<MinQueueDepartures> arrivals_on_arcs;
         std::vector<long> last_processed_position;
         std::vector<long> number_of_reinsertions;
-        std::vector<long> vehiclesToMaybeMark;
+        std::vector<long> vehicles_to_mark;
         Departure departure{};
-        Departure otherVehicleDeparture{};
+        Departure other_trip_departure{};
         Instance &instance;
         double best_total_delay;
-        VehicleSchedule originalSchedule;
-        VehicleSchedule scheduleToRestore;
-        MinQueueDepartures priorityQueueToRestore;
-        bool lazyUpdatePriorityQueue{};
-        bool tieFound{};
-        bool vehicleIsLate{};
+        VehicleSchedule original_schedule;
+        VehicleSchedule schedule_to_restore;
+        MinQueueDepartures pq_to_restore;
+        bool lazy_update_pq{};
+        bool tie_found{};
+        bool trip_is_late{};
         enum vehicleStatusType {
             INACTIVE, STAGING, ACTIVE
         };
@@ -120,8 +120,6 @@ namespace cpp_module {
             iteration = 0;
         };
 
-        [[nodiscard]] auto
-        checkIfSolutionIsAdmissible(double totalDelay) const -> bool;
 
         auto
         construct_schedule(Solution &completeSolution) -> void;
@@ -130,9 +128,6 @@ namespace cpp_module {
         updateExistingCongestedSchedule(Solution &completeSolution,
                                         const Conflict &conflict) -> void;
 
-        auto _initializeScheduler(const std::vector<double> &releaseTimes) -> void;
-
-        auto _setNextDepartureOfVehicleAndPushToQueue(double delay) -> void;
 
         auto _updateTotalValueSolution(Solution &completeSolution) -> void;
 
@@ -174,7 +169,6 @@ namespace cpp_module {
 
         void _assertEventPushedToQueueIsCorrect();
 
-        void _getNextDeparture(Solution &completeSolution);
 
         void _addDepartureToPriorityQueue(double releaseTimeVehicle, long vehicle);
 
@@ -265,6 +259,14 @@ namespace cpp_module {
 
 
         Solution construct_solution(const std::vector<double> &start_times);
+
+        [[nodiscard]] bool check_if_solution_is_admissible(double total_delay) const;
+
+        void set_next_departure_and_push_to_queue(double delay);
+
+        void initialize_scheduler(const std::vector<double> &release_times);
+
+        void get_next_departure(Solution &complete_solution);
     };
 
 
@@ -285,7 +287,7 @@ namespace cpp_module {
     auto _initializeCompleteSolution(Solution &completeSolution) -> void;
 
 
-    auto getIndex(const std::vector<long> &v, long K) -> long;
+    auto get_index(const std::vector<long> &v, long K) -> long;
 
 
     auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void;
@@ -294,7 +296,7 @@ namespace cpp_module {
 
     auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void;
 
-    auto computeDelayOnArc(const double &vehiclesOnArc, const Instance &instance, long arc) -> double;
+    auto compute_delay_on_arc(const double &vehiclesOnArc, const Instance &instance, long arc) -> double;
 
     auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void;
 
@@ -302,9 +304,9 @@ namespace cpp_module {
     improveTowardsSolutionQuality(const Instance &instance, Solution &currentSolution,
                                   Scheduler &scheduler) -> void;
 
-    auto computeVehiclesOnArc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;
+    auto compute_vehicles_on_arc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;
 
     auto checkIfVehiclesHaveTie(const VehicleSchedule &congestedSchedule, const Tie &tie) -> bool;
 
-    auto initializeConflictingSetsForConstructSchedule(Instance &instance) -> void;
+    auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void;
 }

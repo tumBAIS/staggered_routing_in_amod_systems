@@ -24,7 +24,7 @@ namespace cpp_module {
         // Function computing schedule with congestion given set of release times.
         Solution completeSolution(start_times, instance);
         construct_schedule(completeSolution);
-        initializeConflictingSetsForConstructSchedule(instance);
+        initialize_conflicting_sets_for_construct_schedule(instance);
         checkIfSolutionHasTies(instance, completeSolution);
         if (completeSolution.get_ties_flag()) {
             solveSolutionTies(instance, completeSolution, *this);

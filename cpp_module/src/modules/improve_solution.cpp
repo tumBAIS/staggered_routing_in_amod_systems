@@ -108,9 +108,9 @@ namespace cpp_module {
     auto _updateDistanceToCover(const Solution &completeSolution,
                                 Conflict &conflict,
                                 const Instance &instance) -> void {
-        auto indexArcInPathCurrentVehicle = getIndex(instance.get_trip_route(conflict.current_trip_id),
-                                                     conflict.arc);
-        auto indexArcInPathOtherVehicle = getIndex(instance.get_trip_route(conflict.other_trip_id), conflict.arc);
+        auto indexArcInPathCurrentVehicle = get_index(instance.get_trip_route(conflict.current_trip_id),
+                                                      conflict.arc);
+        auto indexArcInPathOtherVehicle = get_index(instance.get_trip_route(conflict.other_trip_id), conflict.arc);
 
         conflict.distanceToCover =
                 completeSolution.get_trip_arc_departure(conflict.other_trip_id, indexArcInPathOtherVehicle + 1) -
