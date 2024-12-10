@@ -7,10 +7,10 @@
 #include "instance.h"
 
 // Define a macro to enable or disable range checks
-#define ENABLE_RANGE_CHECKS
+#define ENABLE_RANGE_CHECKS_SOLUTION
 // Print a message during compilation if the macro is defined
-#ifdef ENABLE_RANGE_CHECKS
-#pragma message("ENABLE_RANGE_CHECKS is defined: Range checks will be included in the code.")
+#ifdef ENABLE_RANGE_CHECKS_SOLUTION
+#pragma message("ENABLE_RANGE_CHECKS_SOLUTION is defined: Range checks will be included in the code.")
 #endif
 
 
@@ -40,13 +40,13 @@ namespace cpp_module {
                   remaining_time_slack(arg_start_times.size(), std::numeric_limits<double>::max()),
                   start_times(arg_start_times),
                   total_delay(0.0),
-                  lb_travel_time(instance.lb_travel_time),
+                  lb_travel_time(instance.get_lb_travel_time()),
                   is_feasible_and_improving(true),
                   has_ties(false) {
 
-            for (size_t vehicle = 0; vehicle < arg_start_times.size(); ++vehicle) {
-                schedule[vehicle].resize(instance.trip_routes[vehicle].size());
-                delays_on_arcs[vehicle] = std::vector<double>(instance.trip_routes[vehicle].size(), 0.0);
+            for (TripID trip_id = 0; trip_id < arg_start_times.size(); ++trip_id) {
+                schedule[trip_id].resize(instance.get_trip_route(trip_id).size());
+                delays_on_arcs[trip_id] = std::vector<double>(instance.get_trip_route(trip_id).size(), 0.0);
             }
         }
 
@@ -90,7 +90,7 @@ namespace cpp_module {
         }
 
         [[nodiscard]] const std::vector<double> &get_trip_schedule(int trip_id) const {
-#ifdef ENABLE_RANGE_CHECKS
+#ifdef ENABLE_RANGE_CHECKS_SOLUTION
             if (trip_id < 0 || static_cast<size_t>(trip_id) >= schedule.size()) {
                 throw std::out_of_range("Trip ID is out of range.");
             }
@@ -108,7 +108,7 @@ namespace cpp_module {
 
         // Setters
         void set_delay_on_arc(double delay, int trip_id, int position) {
-#ifdef ENABLE_RANGE_CHECKS
+#ifdef ENABLE_RANGE_CHECKS_SOLUTION
             if (trip_id < 0 || static_cast<size_t>(trip_id) >= delays_on_arcs.size()) {
                 throw std::out_of_range("Trip ID is out of range.");
             }

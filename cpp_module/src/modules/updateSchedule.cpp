@@ -5,9 +5,9 @@
 namespace cpp_module {
 
     auto Scheduler::_initializeStatusVehicles() -> void {
-        vehicleStatus = std::vector<vehicleStatusType>(instance.number_of_trips, vehicleStatusType::INACTIVE);
-        numberOfReInsertions = std::vector<long>(instance.number_of_trips, 0);
-        lastProcessedPosition = std::vector<long>(instance.number_of_trips, -1);
+        trip_status_list = std::vector<vehicleStatusType>(instance.get_number_of_trips(), vehicleStatusType::INACTIVE);
+        number_of_reinsertions = std::vector<long>(instance.get_number_of_trips(), 0);
+        last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
     }
 
 
@@ -26,15 +26,15 @@ namespace cpp_module {
     }
 
     auto
-    Scheduler::_addDepartureToPriorityQueue(const double releaseTimeVehicle, const long vehicle) -> void {
+    Scheduler::_addDepartureToPriorityQueue(const double releaseTimeVehicle, const TripID vehicle) -> void {
         departure.trip_id = vehicle;
-        departure.arc = instance.trip_routes[departure.trip_id][0];
+        departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, 0);
         departure.position = 0;
-        lastProcessedPosition[departure.trip_id] = -1;
+        last_processed_position[departure.trip_id] = -1;
         departure.time = releaseTimeVehicle;
         departure.eventType = Departure::TRAVEL;
         departure.reinsertionNumber = 0;
-        vehicleStatus[departure.trip_id] = vehicleStatusType::ACTIVE;
+        trip_status_list[departure.trip_id] = vehicleStatusType::ACTIVE;
         priorityQueueDepartures.push(departure);
 
 
@@ -60,10 +60,10 @@ namespace cpp_module {
 
 
     auto Scheduler::_checkIfActivationDepartureShouldBeSkipped() -> bool {
-        if (vehicleStatus[departure.trip_id] == ACTIVE) {
+        if (trip_status_list[departure.trip_id] == ACTIVE) {
             // trying to activate a vehicle which is active/reinserted -> this event should be skipped
             return true;
-        } else if (vehicleStatus[departure.trip_id] == STAGING) {
+        } else if (trip_status_list[departure.trip_id] == STAGING) {
             // this event activates a staging vehicle and becomes a TRAVEL event
             return false;
         } else {
@@ -74,8 +74,8 @@ namespace cpp_module {
 
     auto Scheduler::_checkIfTravelDepartureShouldBeSkipped() -> bool {
 
-        if (departure.position == lastProcessedPosition[departure.trip_id] + 1 &&
-            departure.reinsertionNumber == numberOfReInsertions[departure.trip_id]) {
+        if (departure.position == last_processed_position[departure.trip_id] + 1 &&
+            departure.reinsertionNumber == number_of_reinsertions[departure.trip_id]) {
             return false;
         } else {
             printTravelDepartureToSkip();
@@ -84,7 +84,7 @@ namespace cpp_module {
     }
 
     auto Scheduler::_checkIfDepartureShouldBeSkipped() -> bool {
-        if (departure.arc == 0) {
+        if (departure.arc_id == 0) {
             return true; //vehicle at destination
         }
         if (departure.eventType == Departure::ACTIVATION) {
@@ -100,7 +100,7 @@ namespace cpp_module {
                                                          const long otherVehicle,
                                                          const long otherPosition) -> void {
 
-        long stepsBack = lastProcessedPosition[otherVehicle] - otherPosition;
+        long stepsBack = last_processed_position[otherVehicle] - otherPosition;
         for (auto step = 0; step < stepsBack; step++) {
             solution.set_trip_arc_departure(otherVehicle, otherPosition + step + 1,
                                             originalSchedule[otherVehicle][otherPosition +
@@ -115,147 +115,168 @@ namespace cpp_module {
                                           const long arc) -> void {
         _printReinsertionVehicle(arc, otherVehicle, otherDeparture);
         _resetOtherScheduleToReinsertionTime(solution, otherVehicle, otherPosition);
-        lastProcessedPosition[otherVehicle] = otherPosition - 1;
+        last_processed_position[otherVehicle] = otherPosition - 1;
         otherVehicleDeparture.trip_id = otherVehicle;
-        otherVehicleDeparture.arc = arc;
+        otherVehicleDeparture.arc_id = arc;
         otherVehicleDeparture.time = otherDeparture;
         otherVehicleDeparture.position = otherPosition;
         otherVehicleDeparture.eventType = Departure::TRAVEL;
-        numberOfReInsertions[otherVehicle]++;
-        otherVehicleDeparture.reinsertionNumber = numberOfReInsertions[otherVehicle];
+        number_of_reinsertions[otherVehicle]++;
+        otherVehicleDeparture.reinsertionNumber = number_of_reinsertions[otherVehicle];
         priorityQueueDepartures.push(otherVehicleDeparture);
     }
 
 
-    auto Scheduler::_checkIfTripsWithinSameConflictingSetCanHaveAConflict(const long otherVehicle,
-                                                                          const long otherPosition) -> InstructionConflictingSet {
-        //hp: the trips in the conflciting set are ordered by ascending earliest departureTime time
-        double currentEarliestDepartureTime = instance.earliestDepartureTimes[departure.trip_id][departure.position];
-        double currentLatestArrivalTime = instance.latestDepartureTimes[departure.trip_id][departure.position + 1];
+    auto Scheduler::_check_if_trips_within_conflicting_set_can_conflict(
+            const long other_trip_id,
+            const long other_position
+    ) const -> InstructionConflictingSet {
+        // Assumption: The trips in the conflicting set are ordered by ascending earliest departure time.
 
-        double otherEarliestDepartureTime = instance.earliestDepartureTimes[otherVehicle][otherPosition];
-        double otherLatestArrivalTime = instance.latestDepartureTimes[otherVehicle][otherPosition + 1];
+        // Fetch the earliest departure and latest arrival times for the current trip
+        double current_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
+                departure.trip_id, departure.position
+        );
+        double current_latest_arrival_time = instance.get_trip_arc_latest_departure_time(
+                departure.trip_id, departure.position + 1
+        );
 
-        bool otherComesBeforeAndDoesNotOverlap = otherLatestArrivalTime < currentEarliestDepartureTime;
-        bool otherComesBeforeAndOverlaps = otherEarliestDepartureTime <= currentEarliestDepartureTime &&
-                                           currentEarliestDepartureTime < otherLatestArrivalTime;
-        bool otherComesAfterAndOverlaps = currentEarliestDepartureTime <= otherEarliestDepartureTime &&
-                                          otherEarliestDepartureTime < currentLatestArrivalTime;
-        bool otherComesAfterAndDoesNotOverlap = otherEarliestDepartureTime > currentLatestArrivalTime;
-        // First case: continue -> other vehicle lastest arrival is smaller than current vehicle earliest departureTime
-        if (otherComesBeforeAndDoesNotOverlap) {
+        // Fetch the earliest departure and latest arrival times for the other trip
+        double other_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
+                other_trip_id, other_position
+        );
+        double other_latest_arrival_time = instance.get_trip_arc_latest_departure_time(
+                other_trip_id, other_position + 1
+        );
+
+        // Determine overlap conditions
+        bool other_comes_before_and_does_not_overlap =
+                other_latest_arrival_time < current_earliest_departure_time;
+
+        bool other_comes_before_and_overlaps =
+                other_earliest_departure_time <= current_earliest_departure_time &&
+                current_earliest_departure_time < other_latest_arrival_time;
+
+        bool other_comes_after_and_overlaps =
+                current_earliest_departure_time <= other_earliest_departure_time &&
+                other_earliest_departure_time < current_latest_arrival_time;
+
+        bool other_comes_after_and_does_not_overlap =
+                other_earliest_departure_time > current_latest_arrival_time;
+
+        // Determine the appropriate instruction
+        if (other_comes_before_and_does_not_overlap) {
             return InstructionConflictingSet::CONTINUE;
-        } else if (otherComesBeforeAndOverlaps || otherComesAfterAndOverlaps) {
-            // Second case: evaluate -> there is an overlap between the two intervals
+        } else if (other_comes_before_and_overlaps || other_comes_after_and_overlaps) {
             return InstructionConflictingSet::EVALUATE;
-        } else if (otherComesAfterAndDoesNotOverlap) {
-            //Third case: break -> from now on the vehicles you will consider will always meet otherComesAfterAndDoesNotOverlap condition
+        } else if (other_comes_after_and_does_not_overlap) {
             return InstructionConflictingSet::BREAK;
         } else {
-            throw std::invalid_argument("comparing vehicles bounds: undefined case!");
+            throw std::invalid_argument("Comparing vehicle bounds: undefined case!");
         }
     }
 
+
     auto Scheduler::_updateVehiclesOnArcOfConflictingSet(Solution &solution,
                                                          double &vehiclesOnArc) -> void {
-        for (auto otherVehicle: instance.conflictingSet[departure.arc]) {
-            if (otherVehicle == departure.trip_id) {
+        for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
+            if (other_trip_id == departure.trip_id) {
                 continue;
             }
-            const long otherPosition = getIndex(instance.trip_routes[otherVehicle], departure.arc);
-            const InstructionConflictingSet instruction = _checkIfTripsWithinSameConflictingSetCanHaveAConflict(
-                    otherVehicle, otherPosition);
+            const long otherPosition = getIndex(instance.get_trip_route(other_trip_id), departure.arc_id);
+            const InstructionConflictingSet instruction = _check_if_trips_within_conflicting_set_can_conflict(
+                    other_trip_id, otherPosition);
             if (instruction == InstructionConflictingSet::CONTINUE) {
                 continue;
             } else if (instruction == InstructionConflictingSet::BREAK) {
                 break;
             }
 
-            const bool otherVehicleIsActive = vehicleStatus[otherVehicle] == ACTIVE;
+            const bool otherVehicleIsActive = trip_status_list[other_trip_id] == ACTIVE;
             const bool otherVehicleIsNotActive = !otherVehicleIsActive;
-            const double otherDeparture = solution.get_trip_arc_departure(otherVehicle, otherPosition);
-            const double otherArrival = solution.get_trip_arc_departure(otherVehicle, otherPosition + 1);
-            const bool currentConflictsWithOther = _checkConflictWithOtherVehicle(otherVehicle,
+            const double otherDeparture = solution.get_trip_arc_departure(other_trip_id, otherPosition);
+            const double otherArrival = solution.get_trip_arc_departure(other_trip_id, otherPosition + 1);
+            const bool currentConflictsWithOther = _checkConflictWithOtherVehicle(other_trip_id,
                                                                                   otherDeparture,
                                                                                   otherArrival);
             if (otherVehicleIsNotActive) {
                 if (currentConflictsWithOther) { vehiclesOnArc++; }
-                vehicleShouldBeMarked shouldMark = _checkIfOtherShouldBeMarked(otherVehicle,
+                vehicleShouldBeMarked shouldMark = _checkIfOtherShouldBeMarked(other_trip_id,
                                                                                otherPosition,
                                                                                currentConflictsWithOther);
                 if (shouldMark == YES) {
-                    _markVehicle(otherVehicle, otherDeparture, otherPosition); // O(log n) -> pq.push
+                    _markVehicle(other_trip_id, otherDeparture, otherPosition); // O(log n) -> pq.push
                     lazyUpdatePriorityQueue = true; //marked vehicle starting before
                     _assertLazyUpdateIsNecessary(otherDeparture);
                     printLazyUpdatePriorityQueue();
                 } else if (shouldMark == MAYBE) {
-                    vehiclesToMaybeMark.push_back(otherVehicle);
+                    vehiclesToMaybeMark.push_back(other_trip_id);
                 }
             } else if (otherVehicleIsActive) {
-                bool otherIsProcessedOnThisArc = otherPosition <= lastProcessedPosition[otherVehicle];
-                const bool otherIsFirst = _checkIfOtherIsFirstInCurrentSchedule(otherVehicle, otherDeparture);
+                bool otherIsProcessedOnThisArc = otherPosition <= last_processed_position[other_trip_id];
+                const bool otherIsFirst = _checkIfOtherIsFirstInCurrentSchedule(other_trip_id, otherDeparture);
                 const bool otherIsNotFirst = !otherIsFirst;
                 if (otherIsProcessedOnThisArc) {
                     if (otherIsNotFirst) {
-                        _reinsertOtherInQueue(solution, otherVehicle, otherPosition, otherDeparture,
-                                              departure.arc);
+                        _reinsertOtherInQueue(solution, other_trip_id, otherPosition, otherDeparture,
+                                              departure.arc_id);
                         continue;
                     }
                     if (currentConflictsWithOther) {
                         vehiclesOnArc++;
                     }
                 }
-                _assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(otherVehicle, otherPosition, otherDeparture);
+                _assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(other_trip_id, otherPosition, otherDeparture);
             }
         }
     }
 
     auto Scheduler::_decideOnVehiclesMaybeToMark(const VehicleSchedule &congestedSchedule,
                                                  const double currentNewArrival) -> void {
-        for (long otherVehicle: vehiclesToMaybeMark) {
+        for (long other_trip_id: vehiclesToMaybeMark) {
             auto shouldMark = _checkIfShouldMarkGivenCurrentArrivalTime(
-                    otherVehicle, currentNewArrival);  // O(1)
+                    other_trip_id, currentNewArrival);  // O(1)
             if (shouldMark) {
-                const long otherPosition = getIndex(instance.trip_routes[otherVehicle], departure.arc);
-                const double otherDeparture = congestedSchedule[otherVehicle][otherPosition];
-                _markVehicle(otherVehicle, otherDeparture, otherPosition);
-                _assertNoVehiclesDepartingBeforeAreMarked(otherVehicle, congestedSchedule);
+                const long otherPosition = getIndex(instance.get_trip_route(other_trip_id), departure.arc_id);
+                const double otherDeparture = congestedSchedule[other_trip_id][otherPosition];
+                _markVehicle(other_trip_id, otherDeparture, otherPosition);
+                _assertNoVehiclesDepartingBeforeAreMarked(other_trip_id, congestedSchedule);
             }
         }
     }
 
     auto Scheduler::_updateTotalValueSolution(Solution &completeSolution) -> void {
 
-        for (auto trip_id = 0; trip_id < instance.number_of_trips; ++trip_id) {
-            if (vehicleStatus[trip_id] != ACTIVE) { continue; }
+        for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
+            if (trip_status_list[trip_id] != ACTIVE) { continue; }
 
             const double oldDelayVehicle = originalSchedule[trip_id].back() -
                                            originalSchedule[trip_id][0] -
-                                           instance.freeFlowTravelTimesVehicles[trip_id];
+                                           instance.get_trip_free_flow_time(trip_id);
             const double newDelayVehicle = completeSolution.get_trip_schedule(trip_id).back() -
                                            completeSolution.get_trip_start_time(trip_id) -
-                                           instance.freeFlowTravelTimesVehicles[trip_id];
+                                           instance.get_trip_free_flow_time(trip_id);
             completeSolution.increase_total_delay(newDelayVehicle - oldDelayVehicle);
         }
     }
 
 
     auto Scheduler::_checkIfTieInSet(const VehicleSchedule &congestedSchedule) -> bool {
-        for (auto otherVehicle: instance.conflictingSet[departure.arc]) {
-            if (departure.trip_id != otherVehicle) {
-                const long otherPosition = getIndex(instance.trip_routes[otherVehicle], departure.arc);
-                const InstructionConflictingSet instruction = _checkIfTripsWithinSameConflictingSetCanHaveAConflict(
-                        otherVehicle, otherPosition);
+        for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
+            if (departure.trip_id != other_trip_id) {
+                const long otherPosition = getIndex(instance.get_trip_route(other_trip_id), departure.arc_id);
+                const InstructionConflictingSet instruction = _check_if_trips_within_conflicting_set_can_conflict(
+                        other_trip_id, otherPosition);
                 if (instruction == InstructionConflictingSet::CONTINUE) {
                     continue;
                 } else if (instruction == InstructionConflictingSet::BREAK) {
                     break;
                 }
                 Tie tie = {departure.trip_id,
-                           otherVehicle,
+                           other_trip_id,
                            departure.position,
                            otherPosition,
-                           departure.arc};
+                           departure.arc_id};
                 bool tieOnArc = checkIfVehiclesHaveTie(congestedSchedule, tie);
                 if (tieOnArc) {
                     return true;
@@ -265,8 +286,9 @@ namespace cpp_module {
         return false;
     }
 
-    auto Scheduler::_checkIfVehicleIsLate(const double currentVehicleNewArrival) -> bool {
-        if (currentVehicleNewArrival > instance.latestDepartureTimes[departure.trip_id][departure.position + 1]) {
+    auto Scheduler::_checkIfVehicleIsLate(const double currentVehicleNewArrival) const -> bool {
+        if (currentVehicleNewArrival >
+            instance.get_trip_arc_latest_departure_time(departure.trip_id, departure.position + 1)) {
             return true;
         }
         return false;
@@ -282,9 +304,9 @@ namespace cpp_module {
         if (tieFound) {
             return;
         }
-        delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc);
+        delay = computeDelayOnArc(vehiclesOnArc, instance, departure.arc_id);
         printDelayComputed(delay);
-        currentVehicleNewArrival = departure.time + delay + instance.travel_times_arcs[departure.arc];
+        currentVehicleNewArrival = departure.time + delay + instance.get_arc_travel_time(departure.arc_id);
         vehicleIsLate = _checkIfVehicleIsLate(currentVehicleNewArrival);
         if (vehicleIsLate) {
             return;
@@ -298,10 +320,10 @@ namespace cpp_module {
     }
 
     auto Scheduler::_processVehicle(Solution &completeSolution) -> void {
-        double currentVehicleNewArrival = departure.time + instance.travel_times_arcs[departure.arc];
+        double currentVehicleNewArrival = departure.time + instance.get_arc_travel_time(departure.arc_id);
         double vehiclesOnArc = 1;
         double delay = 0;
-        const bool confSetIsEmpty = isConfSetEmpty(instance.conflictingSet[departure.arc]);
+        const bool confSetIsEmpty = isConfSetEmpty(instance.get_conflicting_set(departure.arc_id));
         if (!confSetIsEmpty) {
             _processConflictingSet(completeSolution, delay, currentVehicleNewArrival, vehiclesOnArc);
             if (lazyUpdatePriorityQueue || tieFound || vehicleIsLate) {
@@ -317,11 +339,11 @@ namespace cpp_module {
 
     auto Scheduler::_activateStagingVehicle() -> void {
         if (departure.eventType == Departure::ACTIVATION) {
-            if (vehicleStatus[departure.trip_id] == vehicleStatusType::STAGING) {
+            if (trip_status_list[departure.trip_id] == vehicleStatusType::STAGING) {
                 departure.eventType = Departure::TRAVEL;
-                vehicleStatus[departure.trip_id] = vehicleStatusType::ACTIVE;
-                lastProcessedPosition[departure.trip_id] = departure.position - 1;
-            } else if (vehicleStatus[departure.trip_id] == vehicleStatusType::INACTIVE) {
+                trip_status_list[departure.trip_id] = vehicleStatusType::ACTIVE;
+                last_processed_position[departure.trip_id] = departure.position - 1;
+            } else if (trip_status_list[departure.trip_id] == vehicleStatusType::INACTIVE) {
                 throw std::invalid_argument("#UPDATEDEPARTURE: activating an INACTIVE vehicle");
             }
         }
@@ -488,33 +510,33 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_checkIfShouldMarkGivenCurrentArrivalTime(const long otherVehicle,
+    auto Scheduler::_checkIfShouldMarkGivenCurrentArrivalTime(const TripID other_trip_id,
                                                               const double currentVehicleNewArrival) -> bool {
-        _assertOtherIsNotActive(otherVehicle);
-        auto otherPosition = getIndex(instance.trip_routes[otherVehicle],
-                                      departure.arc);
-        auto otherOriginalDeparture = originalSchedule[otherVehicle][otherPosition];
-        auto otherOriginalArrival = originalSchedule[otherVehicle][otherPosition + 1];
+        _assertOtherIsNotActive(other_trip_id);
+        auto otherPosition = getIndex(instance.get_trip_route(other_trip_id),
+                                      departure.arc_id);
+        auto otherOriginalDeparture = originalSchedule[other_trip_id][otherPosition];
+        auto otherOriginalArrival = originalSchedule[other_trip_id][otherPosition + 1];
         auto currentOriginalDeparture = originalSchedule[departure.trip_id][departure.position];
         auto currentOriginalArrival = originalSchedule[departure.trip_id][departure.position + 1];
 
-        auto currentOverlappedWithOther = _checkIfCurrentOverlappedWithOther(otherVehicle,
+        auto currentOverlappedWithOther = _checkIfCurrentOverlappedWithOther(other_trip_id,
                                                                              otherOriginalDeparture,
                                                                              currentOriginalDeparture,
                                                                              otherOriginalArrival);
-        auto otherOverlappedWithCurrent = _checkIfOtherOverlappedWithCurrent(otherVehicle, otherOriginalDeparture,
+        auto otherOverlappedWithCurrent = _checkIfOtherOverlappedWithCurrent(other_trip_id, otherOriginalDeparture,
                                                                              currentOriginalDeparture,
                                                                              currentOriginalArrival);
 
-        auto otherOverlapsNowWithCurrent = _checkIfOtherOverlapsNowWithCurrent(otherVehicle,
+        auto otherOverlapsNowWithCurrent = _checkIfOtherOverlapsNowWithCurrent(other_trip_id,
                                                                                otherOriginalDeparture,
                                                                                currentVehicleNewArrival);
 
-        bool otherIsOriginallyFirst = _checkIfOtherIsFirstInOriginalSchedule(otherVehicle,
+        bool otherIsOriginallyFirst = _checkIfOtherIsFirstInOriginalSchedule(other_trip_id,
                                                                              otherOriginalDeparture,
                                                                              currentOriginalDeparture);
 
-        bool otherIsFirstNow = _checkIfOtherIsFirstInCurrentSchedule(otherVehicle, otherOriginalDeparture);
+        bool otherIsFirstNow = _checkIfOtherIsFirstInCurrentSchedule(other_trip_id, otherOriginalDeparture);
 
         bool currentDidNotOverlapWithOther = !currentOverlappedWithOther;
         bool otherDoesNotOverlapWithCurrent = !otherOverlapsNowWithCurrent;
@@ -535,12 +557,12 @@ namespace cpp_module {
                             const long otherPosition) -> void {
         _assertOtherIsNotActive(otherVehicle);
         otherVehicleDeparture.trip_id = otherVehicle;
-        otherVehicleDeparture.arc = departure.arc;
+        otherVehicleDeparture.arc_id = departure.arc_id;
         otherVehicleDeparture.time = otherDeparture;
         otherVehicleDeparture.position = otherPosition;
         otherVehicleDeparture.reinsertionNumber = 0;
         otherVehicleDeparture.eventType = Departure::ACTIVATION;
-        vehicleStatus[otherVehicle] = vehicleStatusType::STAGING;
+        trip_status_list[otherVehicle] = vehicleStatusType::STAGING;
         priorityQueueDepartures.push(otherVehicleDeparture);
     }
 
@@ -548,9 +570,9 @@ namespace cpp_module {
     auto Scheduler::moveVehicleForwardInTheQueue(const double currentVehicleNewArrival) -> void {
         _printUpdateGreatestTimeAnalyzed();
         departure.time = currentVehicleNewArrival;
-        lastProcessedPosition[departure.trip_id] = departure.position;
+        last_processed_position[departure.trip_id] = departure.position;
         departure.position++;
-        departure.arc = instance.trip_routes[departure.trip_id][departure.position];
+        departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, departure.position);
         priorityQueueDepartures.push(departure);
         _printDeparturePushedToQueue();
     }

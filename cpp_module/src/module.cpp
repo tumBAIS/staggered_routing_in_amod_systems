@@ -33,14 +33,14 @@ namespace cpp_module {
     }
 
     auto addTotalFFTTVehicles(Instance &instance) -> void {
-        for (auto vehicle = 0; vehicle < instance.number_of_trips; vehicle++) {
-            for (auto arc: instance.trip_routes[vehicle]) {
-                instance.freeFlowTravelTimesVehicles[vehicle] += instance.travel_times_arcs[arc];
+        for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); trip_id++) {
+            for (auto arc: instance.get_trip_route(trip_id)) {
+                instance.increase_free_flow_travel_time_trip(trip_id, instance.get_arc_travel_time(arc));
             }
         }
     }
 
-    auto getInstanceForLocalSearch(const PotentiallyConflictingVehiclesSets &argConflictingSets,
+    auto getInstanceForLocalSearch(const ConflictingSetsList &argConflictingSets,
                                    const std::vector<std::vector<double>> &earliestDepartureTimes,
                                    const std::vector<std::vector<double>> &latestDepartureTimes,
                                    const std::vector<double> &nominalTravelTimesArcs,
@@ -61,11 +61,10 @@ namespace cpp_module {
                           argParameters,
                           arg_release_times,
                           arg_lb_travel_time);
-        instance.deadlines = argDeadlines;
-        instance.dueDates = argDueDates;
-        instance.conflictingSet = argConflictingSets;
-        instance.earliestDepartureTimes = earliestDepartureTimes;
-        instance.latestDepartureTimes = latestDepartureTimes;
+        instance.set_deadlines(argDeadlines);
+        instance.set_conflicting_sets(argConflictingSets);
+        instance.set_earliest_departure_times(earliestDepartureTimes);
+        instance.set_latest_departure_times(latestDepartureTimes);
         addTotalFFTTVehicles(instance);
         return instance;
     }
@@ -90,7 +89,7 @@ namespace cpp_module {
     auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
                                   const std::vector<double> &argRemainingTimeSlack,
                                   const std::vector<double> &argStaggeringApplied,
-                                  const PotentiallyConflictingVehiclesSets &argConflictingSets,
+                                  const ConflictingSetsList &argConflictingSets,
                                   const std::vector<std::vector<double>> &earliestDepartureTimes,
                                   const std::vector<std::vector<double>> &latestDepartureTimes,
                                   const std::vector<double> &argNominalTravelTimesArcs,
@@ -115,9 +114,6 @@ namespace cpp_module {
                                                       argParameters,
                                                       arg_release_times,
                                                       arg_lb_travel_time);
-        if (instance.dueDates.size() != instance.deadlines.size()) {
-            throw std::invalid_argument("due dates are invalid");
-        }
         Scheduler scheduler(instance);
         Solution currentSolution = getInitialSolutionForLocalSearch(scheduler, instance,
                                                                     arg_release_times, argRemainingTimeSlack,

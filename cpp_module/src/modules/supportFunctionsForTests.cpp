@@ -74,8 +74,8 @@ namespace cpp_module {
     struct stat info;
 
     auto _fixEmptyConflictingSets(
-            std::vector<std::vector<long>> &importedConflictingSets) -> PotentiallyConflictingVehiclesSets {
-        PotentiallyConflictingVehiclesSets conflictingSet(importedConflictingSets.size());
+            std::vector<std::vector<long>> &importedConflictingSets) -> ConflictingSetsList {
+        ConflictingSetsList conflictingSet(importedConflictingSets.size());
         for (auto i = 0; i < importedConflictingSets.size(); i++) {
             if (importedConflictingSets[i] == std::vector<long>(1, -1)) {
                 continue;

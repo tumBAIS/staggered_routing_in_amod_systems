@@ -85,15 +85,15 @@ namespace cpp_module {
     }
 
     auto _checkArcTies(const Instance &instance,
-                       const long &arc,
+                       const ArcID &arc_id,
                        Solution &completeSolution) -> bool {
-        Tie tie{};
-        for (auto vehicleOne: instance.conflictingSet[arc]) {
-            const long positionOne = getIndex(instance.trip_routes[vehicleOne], arc);
-            for (auto vehicleTwo: instance.conflictingSet[arc]) {
-                if (vehicleOne < vehicleTwo) {
-                    const long positionTwo = getIndex(instance.trip_routes[vehicleTwo], arc);
-                    tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
+        Tie tie;
+        for (auto first_trip: instance.get_conflicting_set(arc_id)) {
+            const long positionOne = getIndex(instance.get_trip_route(first_trip), arc_id);
+            for (auto second_trip: instance.get_conflicting_set(arc_id)) {
+                if (first_trip < second_trip) {
+                    const long positionTwo = getIndex(instance.get_trip_route(second_trip), arc_id);
+                    tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
                     bool tieOnArc = checkIfVehiclesHaveTie(completeSolution.get_schedule(), tie);
                     if (tieOnArc) {
                         return true;
@@ -105,16 +105,16 @@ namespace cpp_module {
     }
 
     auto _solveArcTies(const Instance &instance,
-                       const long &arc,
+                       const long &arc_id,
                        Solution &completeSolution,
                        Scheduler &scheduler) {
         Tie tie{};
-        for (auto vehicleOne: instance.conflictingSet[arc]) {
-            const long positionOne = getIndex(instance.trip_routes[vehicleOne], arc);
-            for (auto vehicleTwo: instance.conflictingSet[arc]) {
-                if (vehicleOne != vehicleTwo) {
-                    const long positionTwo = getIndex(instance.trip_routes[vehicleTwo], arc);
-                    tie = {vehicleOne, vehicleTwo, positionOne, positionTwo, arc};
+        for (auto first_trip: instance.get_conflicting_set(arc_id)) {
+            const long positionOne = getIndex(instance.get_trip_route(first_trip), arc_id);
+            for (auto second_trip: instance.get_conflicting_set(arc_id)) {
+                if (first_trip != second_trip) {
+                    const long positionTwo = getIndex(instance.get_trip_route(second_trip), arc_id);
+                    tie = {first_trip, second_trip, positionOne, positionTwo, arc_id};
                     _solveTie(completeSolution, tie, scheduler);
                 }
             }
@@ -130,12 +130,12 @@ namespace cpp_module {
     }
 
     auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void {
-        for (long arc = 1; arc < instance.numberOfArcs; arc++) {
-            bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();
+        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
+            bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();
             if (noTiesCanHappenOnArc) {
                 continue;
             }
-            bool thereIsTie = _checkArcTies(instance, arc, completeSolution);
+            bool thereIsTie = _checkArcTies(instance, arc_id, completeSolution);
             if (thereIsTie) {
                 completeSolution.set_ties_flag(true);
                 _printIfSolutionHasTies(completeSolution);
@@ -148,12 +148,12 @@ namespace cpp_module {
 
     auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
         completeSolution.set_ties_flag(false); // will be set to true if a tie cannot be solved
-        for (long arc = 1; arc < instance.numberOfArcs; arc++) {
-            bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();
+        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
+            bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();
             if (noTiesCanHappenOnArc) {
                 continue;
             }
-            _solveArcTies(instance, arc, completeSolution, scheduler);
+            _solveArcTies(instance, arc_id, completeSolution, scheduler);
         }
     }
 

@@ -16,13 +16,11 @@
 
 namespace cpp_module {
     const long ITERATION_TO_PRINT = 3; //has effect only if printsEvaluationFunction is defined
-    const double CONSTR_TOLERANCE = 1 * 1e-3;
-    const double TOLERANCE = 1e-6;
 
 
     struct Departure {
         double time;
-        long arc;
+        long arc_id;
         long trip_id;
         long position;
         enum {
@@ -46,7 +44,7 @@ namespace cpp_module {
             if (e1.time > e2.time) {
                 return e1.time > e2.time;
             } else if (e1.time == e2.time) {
-                return e1.arc > e2.arc;
+                return e1.arc_id > e2.arc_id;
             }
             return false;
 
@@ -76,7 +74,7 @@ namespace cpp_module {
         std::vector<std::vector<long>> arcBasedShortestPaths;
         std::vector<std::vector<double>> earliestDepartureTimes;
         std::vector<std::vector<double>> latestDepartureTimes;
-        PotentiallyConflictingVehiclesSets conflictingSets;
+        ConflictingSetsList conflictingSets;
         std::vector<double> parameters;
 
 
@@ -85,7 +83,7 @@ namespace cpp_module {
     auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
                                   const std::vector<double> &argRemainingTimeSlack,
                                   const std::vector<double> &argStaggeringApplied,
-                                  const PotentiallyConflictingVehiclesSets &argConflictingSets,
+                                  const ConflictingSetsList &argConflictingSets,
                                   const std::vector<std::vector<double>> &earliestDepartureTimes,
                                   const std::vector<std::vector<double>> &latestDepartureTimes,
                                   const std::vector<double> &argNominalTravelTimesArcs,
@@ -106,8 +104,8 @@ namespace cpp_module {
     public:
         MinQueueDepartures priorityQueueDepartures;
         std::vector<MinQueueDepartures> arrivalsOnArcs;
-        std::vector<long> lastProcessedPosition;
-        std::vector<long> numberOfReInsertions;
+        std::vector<long> last_processed_position;
+        std::vector<long> number_of_reinsertions;
         std::vector<long> vehiclesToMaybeMark;
         Departure departure{};
         Departure otherVehicleDeparture{};
@@ -131,7 +129,7 @@ namespace cpp_module {
             CONTINUE, EVALUATE, BREAK
         };
         double startSearchClock;
-        std::vector<vehicleStatusType> vehicleStatus;
+        std::vector<vehicleStatusType> trip_status_list;
         long iteration;
         long lateSolutions = 0;
         long worseSolutions = 0;
@@ -147,12 +145,13 @@ namespace cpp_module {
             startSearchClock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
             maxTimesCapReached = std::numeric_limits<long>::max();
-            vehicleStatus = std::vector<vehicleStatusType>(instance.number_of_trips, vehicleStatusType::INACTIVE);
+            trip_status_list = std::vector<vehicleStatusType>(instance.get_number_of_trips(),
+                                                              vehicleStatusType::INACTIVE);
             iteration = 0;
         };
 
         auto
-        checkIfSolutionIsAdmissible(double totalDelay) -> bool;
+        checkIfSolutionIsAdmissible(double totalDelay) const -> bool;
 
         auto
         construct_schedule(Solution &completeSolution) -> void;
@@ -177,14 +176,14 @@ namespace cpp_module {
         [[nodiscard]] bool
         _checkConflictWithOtherVehicle(long otherVehicle, double otherDeparture, double otherArrival) const;
 
-        bool _checkIfShouldMarkGivenCurrentArrivalTime(long otherVehicle, double currentVehicleNewArrival);
+        bool _checkIfShouldMarkGivenCurrentArrivalTime(long other_trip_id, double currentVehicleNewArrival);
 
         void _markVehicle(long otherVehicle, double otherDeparture, long otherPosition);
 
         void
         moveVehicleForwardInTheQueue(double currentVehicleNewArrival);
 
-        bool _checkIfOtherStartsBeforeCurrent(long otherVehicle, const VehicleSchedule &congestedSchedule);
+        bool _checkIfOtherStartsBeforeCurrent(long other_trip_id, const VehicleSchedule &congestedSchedule) const;
 
         bool _checkIfDepartureShouldBeSkipped();
 
@@ -285,11 +284,11 @@ namespace cpp_module {
 
         void printTravelDepartureToSkip();
 
-        bool _checkIfVehicleIsLate(double currentVehicleNewArrival);
+        bool _checkIfVehicleIsLate(double currentVehicleNewArrival) const;
 
 
         InstructionConflictingSet
-        _checkIfTripsWithinSameConflictingSetCanHaveAConflict(long otherVehicle, long otherPosition);
+        _check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position) const;
 
         void printDelayComputed(double delay) const;
 
@@ -300,7 +299,7 @@ namespace cpp_module {
     class ConflictSearcherNew {
     public:
         struct vehicleInfo {
-            long vehicle;
+            long trip_id;
             double departureTime;
             double arrivalTime;
             double earliestDepartureTime;
@@ -320,7 +319,7 @@ namespace cpp_module {
 
         const Instance &instance;
         vehicleInfo currentVehicleInfo{};
-        vehicleInfo otherVehicleInfo{};
+        vehicleInfo other_info{};
         ConflictingArrival conflictingArrival{};
         std::vector<ConflictingArrival> conflictingArrivals;
 
@@ -334,7 +333,7 @@ namespace cpp_module {
 
         void updateCurrentVehicleInfo(long currentVehicle, const VehicleSchedule &congestedSchedule, long position);
 
-        InstructionsConflict getInstructionsConflict(const VehicleSchedule &congestedSchedule, long otherPosition);
+        InstructionsConflict getInstructionsConflict(const VehicleSchedule &congestedSchedule, long other_position);
 
         Conflict _createConflictNew(long arc, double delay, ConflictingArrival &sortedArrival) const;
 

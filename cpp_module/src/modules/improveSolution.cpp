@@ -107,10 +107,9 @@ namespace cpp_module {
     auto _updateDistanceToCover(const Solution &completeSolution,
                                 Conflict &conflict,
                                 const Instance &instance) -> void {
-        auto indexArcInPathCurrentVehicle = getIndex(instance.trip_routes[conflict.current_trip_id],
+        auto indexArcInPathCurrentVehicle = getIndex(instance.get_trip_route(conflict.current_trip_id),
                                                      conflict.arc);
-        auto indexArcInPathOtherVehicle = getIndex(instance.trip_routes[conflict.other_trip_id],
-                                                   conflict.arc);
+        auto indexArcInPathOtherVehicle = getIndex(instance.get_trip_route(conflict.other_trip_id), conflict.arc);
 
         conflict.distanceToCover =
                 completeSolution.get_trip_arc_departure(conflict.other_trip_id, indexArcInPathOtherVehicle + 1) -
@@ -147,7 +146,7 @@ namespace cpp_module {
         bool conflictIsNotSolved = conflict.distanceToCover > CONSTR_TOLERANCE;
         while (conflictIsNotSolved) {
             bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock,
-                                                              instance.maxTimeOptimization);
+                                                              instance.get_max_time_optimization());
             if (timeLimitReached) {
                 break;
             }
@@ -177,7 +176,8 @@ namespace cpp_module {
                 continue;
             }
             _solveConflict(conflict, newSolution, instance, scheduler);
-            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock, instance.maxTimeOptimization);
+            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock,
+                                                              instance.get_max_time_optimization());
             if (timeLimitReached) {
                 return false;
             }
@@ -206,7 +206,8 @@ namespace cpp_module {
         ConflictSearcherNew conflictSearcher(instance);
         bool isImproved = true;
         while (isImproved) { //initially set to true
-            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock, instance.maxTimeOptimization);
+            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.startSearchClock,
+                                                              instance.get_max_time_optimization());
             if (timeLimitReached) { break; }
             scheduler.best_total_delay = currentSolution.get_total_delay();
             auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.get_schedule());

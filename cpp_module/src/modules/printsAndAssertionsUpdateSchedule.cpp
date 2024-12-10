@@ -131,25 +131,25 @@ namespace cpp_module {
 
     auto Scheduler::_assertCombinationStatusAndDepartureTypeIsPossible() -> void {
         if (departure.eventType == Departure::ACTIVATION) {
-            if (vehicleStatus[departure.trip_id] == Scheduler::vehicleStatusType::INACTIVE) {
+            if (trip_status_list[departure.trip_id] == Scheduler::vehicleStatusType::INACTIVE) {
                 // only staging vehicles can be activated
                 throw std::invalid_argument("Type of Departure Error: activating an inactive vehicle");
-            } else if (vehicleStatus[departure.trip_id] == Scheduler::vehicleStatusType::ACTIVE) {
+            } else if (trip_status_list[departure.trip_id] == Scheduler::vehicleStatusType::ACTIVE) {
                 throw std::invalid_argument("Type of Departure Error: activating an active/reinserted vehicle");
             } else {
                 throw std::invalid_argument("Staging vehicle not correctly activated");
             }
 
         } else if (departure.eventType == Departure::TRAVEL) {
-            if (vehicleStatus[departure.trip_id] == Scheduler::vehicleStatusType::STAGING) {
+            if (trip_status_list[departure.trip_id] == Scheduler::vehicleStatusType::STAGING) {
                 // wrong
                 throw std::invalid_argument("Type of Departure Error: a staging vehicle is traveling");
 
-            } else if (vehicleStatus[departure.trip_id] == Scheduler::vehicleStatusType::INACTIVE) {
+            } else if (trip_status_list[departure.trip_id] == Scheduler::vehicleStatusType::INACTIVE) {
                 // wrong
                 throw std::invalid_argument("Type of Departure Error: an inactive vehicle is traveling");
             }
-            if (departure.reinsertionNumber != numberOfReInsertions[departure.trip_id]) {
+            if (departure.reinsertionNumber != number_of_reinsertions[departure.trip_id]) {
 //                throw std::invalid_argument("Processing wrong travel event of reinserted vehicle");
             }
 
@@ -197,15 +197,15 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_checkIfOtherStartsBeforeCurrent(const long otherVehicle,
-                                                     const VehicleSchedule &congestedSchedule) -> bool {
-        auto indexArcInPathOtherVehicle = getIndex(instance.trip_routes[otherVehicle],
-                                                   departure.arc);
-        auto otherVehicleOriginalDeparture = congestedSchedule[otherVehicle][indexArcInPathOtherVehicle];
+    auto Scheduler::_checkIfOtherStartsBeforeCurrent(const TripID other_trip_id,
+                                                     const VehicleSchedule &congestedSchedule) const -> bool {
+        auto indexArcInPathOtherVehicle = getIndex(instance.get_trip_route(other_trip_id),
+                                                   departure.arc_id);
+        auto otherVehicleOriginalDeparture = congestedSchedule[other_trip_id][indexArcInPathOtherVehicle];
         bool otherVehicleComesFirstAfterTheChange =
                 otherVehicleOriginalDeparture <= departure.time;
         if (departure.time == otherVehicleOriginalDeparture) {
-            if (departure.trip_id < otherVehicle) {
+            if (departure.trip_id < other_trip_id) {
                 // current vehicle would pass first - break tie
                 otherVehicleComesFirstAfterTheChange = false;
             }
