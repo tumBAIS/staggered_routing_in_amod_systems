@@ -54,23 +54,6 @@ namespace cpp_module {
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
 
-    struct ImportedInstanceForTest {
-        std::vector<double> releaseTimes;
-        std::vector<double> deadlines;
-        std::vector<double> dueDates;
-        std::vector<double> staggeringApplied;
-        std::vector<double> remainingSlack;
-        std::vector<double> nominalTravelTimes;
-        std::vector<long> nominalCapacities;
-        std::vector<std::vector<long>> arcBasedShortestPaths;
-        std::vector<std::vector<double>> earliestDepartureTimes;
-        std::vector<std::vector<double>> latestDepartureTimes;
-        ConflictingSetsList conflictingSets;
-        std::vector<double> parameters;
-
-
-    };
-
     auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
                                   const std::vector<double> &argRemainingTimeSlack,
                                   const std::vector<double> &argStaggeringApplied,
@@ -121,12 +104,10 @@ namespace cpp_module {
         double startSearchClock;
         std::vector<vehicleStatusType> trip_status_list;
         long iteration;
-        long lateSolutions = 0;
         long worseSolutions = 0;
         long slackNotEnough = 0;
         long solutionWithTies = 0;
         long exploredSolutions = 0;
-        long noStaggeringAppliedSolutions = 0;
         bool slackIsEnough = true;
 
 
@@ -306,7 +287,6 @@ namespace cpp_module {
 
     auto getIndex(const std::vector<long> &v, long K) -> long;
 
-    auto importInstanceForLocalSearch() -> ImportedInstanceForTest;
 
     auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void;
 
