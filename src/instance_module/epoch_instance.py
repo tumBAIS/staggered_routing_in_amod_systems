@@ -3,38 +3,7 @@ from __future__ import annotations
 import copy
 import datetime
 from instance_module.instance import Instance
-from dataclasses import dataclass, field
 
-from input_data import InstanceParameters
-
-
-# @dataclass
-# class EpochInstance:
-#     epoch_id: int
-#     input_data: InstanceParameters
-#     vehicles_original_ids: list[int]
-#     release_times: list[float]
-#     trip_routes: list[list[int]]
-#     deadlines: list[float]
-#     due_dates: list[float]
-#     max_staggering_applicable: list[float]
-#     travel_times_arcs: list[float]
-#     capacities_arcs: list[float]
-#     last_position_for_reconstruction: list[int | None]
-#     start_solution_time: float
-#     clock_start_epoch: float = field(default_factory=float)
-#     clock_end_epoch: float = field(default_factory=float)
-#     undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=lambda: [])
-#     conflicting_sets: list[list[int]] = field(default_factory=list)
-#     latest_departure_times: list[list[float]] = field(default_factory=list)
-#     earliest_departure_times: list[list[float]] = field(default_factory=list)
-#     min_delay_on_arc: list[list[float]] = field(default_factory=list)
-#     max_delay_on_arc: list[list[float]] = field(default_factory=list)
-#     removed_vehicles: list[int] = field(default_factory=list)
-#
-#     def get_lb_travel_time(self) -> float:
-#         """Returns the sum of the free flow times of the routes of trips contained in the instance."""
-#         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
 
 class EpochInstance(Instance):
 
@@ -48,7 +17,6 @@ class EpochInstance(Instance):
         self.vehicles_original_ids = vehicles_original_ids
         self.last_position_for_reconstruction = last_position_for_reconstruction
         self.start_solution_time = datetime.datetime.now().timestamp()
-        self.due_dates = self.deadlines
         self.max_staggering_applicable = max_staggering_applicable  # TODO: avoid this override.
 
 

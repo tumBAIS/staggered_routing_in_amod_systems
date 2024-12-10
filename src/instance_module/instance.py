@@ -29,7 +29,6 @@ class Instance:
     travel_times_arcs: list[float]
     deadlines: list[Time]
     clock_start_epoch: int = 0
-    due_dates: list[float] = field(default_factory=list)
     undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=list)
     conflicting_sets: list[list[int]] = field(default_factory=list)
     latest_departure_times: list[list[float]] = field(default_factory=list)
