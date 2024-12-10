@@ -5,7 +5,7 @@ import os.path
 import pandas as pd
 from pandas import DataFrame
 
-from instance_module.graph import import_graph, reduce_graph, set_arcs_nominal_travel_times_and_capacities
+from instance_module.graph import import_graph, set_arcs_nominal_travel_times_and_capacities
 from instance_module.instance import Instance, get_instance, print_total_free_flow_time
 from instance_module.paths import get_arc_based_paths_with_features
 from input_data import InstanceParameters
@@ -21,18 +21,13 @@ def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance
     """Constructs an instance from input data without simplification."""
     trips_df = import_trips_df(instance_params)
     graph = import_graph(instance_params)
-    reduce_graph(graph, trips_df['path'].tolist())
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
-
     arc_based_shortest_paths, nominal_travel_times, nominal_capacities = get_arc_based_paths_with_features(
         trips_df['path'].to_list(), graph)
     instance = get_instance(instance_params, arc_based_shortest_paths, nominal_travel_times, nominal_capacities,
-                            trips_df['release_time'].tolist(), trips_df['deadline'].tolist(), trips_df['path'].tolist())
-
+                            trips_df['release_time'].tolist(), trips_df['deadline'].tolist(),
+                            trips_df['path'].tolist(), trips_df["deadline"].tolist())
     print_total_free_flow_time(instance)
-    instance.set_deadlines(trips_df['deadline'].tolist())
-    instance.set_max_staggering_applicable()
-    instance.check_optional_fields()
     return instance
 
 

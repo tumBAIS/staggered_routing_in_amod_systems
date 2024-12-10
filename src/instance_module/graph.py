@@ -2,12 +2,9 @@ import os
 import numpy as np
 import networkx as nx
 from networkx import DiGraph
-from shapely.geometry import Point
 import jsonpickle
 from networkx.readwrite import json_graph
-
 from input_data import InstanceParameters
-from instance_module.paths import pairwise
 from input_data import SPEED_KPH
 
 
@@ -29,21 +26,6 @@ def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
         # Calculate nominal capacity based on max flow allowed
         nominal_capacity = int(np.ceil(nominal_travel_time / input_data.max_flow_allowed))
         manhattan_graph[origin][destination]['nominal_capacity'] = nominal_capacity
-
-
-def reduce_graph(manhattan_graph: DiGraph, node_based_shortest_paths: list[list[int]]):
-    """
-    Prunes the Manhattan graph by removing nodes and arcs not utilized in node-based shortest paths.
-    """
-    nodes_utilized = {node for path in node_based_shortest_paths for node in path}
-    nodes_to_remove = [node for node in manhattan_graph if node not in nodes_utilized]
-    manhattan_graph.remove_nodes_from(nodes_to_remove)
-
-    arcs_utilized = {(u, v) for path in node_based_shortest_paths for u, v in pairwise(path)}
-    arcs_to_remove = [arc for arc in manhattan_graph.edges() if arc not in arcs_utilized]
-    manhattan_graph.remove_edges_from(arcs_to_remove)
-
-    print(f"Arcs remaining in network: {len(manhattan_graph.edges())}")
 
 
 def deserialize_graph(file_path: str) -> DiGraph:

@@ -28,6 +28,7 @@ class Instance:
     trip_routes: list[list[int]]
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
+    deadlines: list[Time]
     clock_start_epoch: int = 0
     due_dates: list[float] = field(default_factory=list)
     undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=list)
@@ -38,8 +39,10 @@ class Instance:
     max_delay_on_arc: list[list[float]] = field(default_factory=list)
     start_solution_time: float = 0
     removed_vehicles: list[int] = field(default_factory=list)
-    deadlines: Optional[list[Time]] = None
     max_staggering_applicable: Optional[list[Staggering]] = None
+
+    def __post_init__(self):
+        self.set_max_staggering_applicable()
 
     def get_lb_travel_time(self) -> float:
         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
@@ -52,23 +55,31 @@ class Instance:
             raise ValueError("Attempting to override deadlines with class method!")
 
     def set_max_staggering_applicable(self):
+        """
+        Calculate the maximum staggering applicable for each vehicle's trip route
+        based on input staggering cap, travel times, deadlines, and release times.
+        """
         if self.deadlines is None:
-            raise ValueError("Attempting to access empty deadlines")
+            raise ValueError("Deadlines are not set. Cannot calculate max staggering applicable.")
 
         if self.max_staggering_applicable is not None:
-            raise ValueError("Attempting to override max_staggering_applicable with class method")
+            raise ValueError("max_staggering_applicable is already set. Cannot override it.")
 
-        self.max_staggering_applicable = [
-            min(self.input_data.staggering_cap / 100 * sum(self.travel_times_arcs[arc] for arc in path),
-                self.deadlines[vehicle] - (
-                        sum(self.travel_times_arcs[arc] for arc in path) + self.release_times_dataset[vehicle])
-                )
-            for vehicle, path in enumerate(self.trip_routes)
-        ]
+        self.max_staggering_applicable = []
 
-    def check_optional_fields(self):
-        if self.deadlines is None or self.max_staggering_applicable is None:
-            raise ValueError("Deadlines or max staggering applicable are not set.")
+        for vehicle, path in enumerate(self.trip_routes):
+            # Calculate total travel time for the trip
+            travel_time = sum(self.travel_times_arcs[arc] for arc in path)
+
+            # Calculate max staggering based on staggering cap
+            staggering_cap_limit = self.input_data.staggering_cap / 100 * travel_time
+
+            # Calculate max staggering based on deadlines
+            deadline_limit = self.deadlines[vehicle] - (travel_time + self.release_times_dataset[vehicle])
+
+            # The maximum staggering applicable is the minimum of the two limits
+            max_staggering = min(staggering_cap_limit, deadline_limit)
+            self.max_staggering_applicable.append(max_staggering)
 
 
 def print_total_free_flow_time(instance: Instance):
@@ -79,7 +90,7 @@ def print_total_free_flow_time(instance: Instance):
 def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[list[int]],
                  nominal_travel_times: list[float], nominal_capacities: list[int],
                  release_times_dataset: list[Time], arrival_times_dataset: list[Time],
-                 node_based_trip_routes: list[list[int]]):
+                 node_based_trip_routes: list[list[int]], deadlines: list[float]) -> Instance:
     return Instance(
         trip_routes=arc_based_shortest_paths,
         travel_times_arcs=nominal_travel_times,
@@ -87,5 +98,6 @@ def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[
         input_data=input_data,
         release_times_dataset=release_times_dataset,
         arrival_times_dataset=arrival_times_dataset,
-        node_based_trip_routes=node_based_trip_routes
+        node_based_trip_routes=node_based_trip_routes,
+        deadlines=deadlines
     )
