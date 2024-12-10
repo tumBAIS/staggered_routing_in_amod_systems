@@ -586,8 +586,8 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::updateExistingCongestedSchedule(Solution &completeSolution,
-                                                    const Conflict &conflict) -> void {
+    auto Scheduler::update_existing_congested_schedule(Solution &completeSolution,
+                                                       const Conflict &conflict) -> void {
 
         _initializeSchedulerForUpdatingCongestedSchedule(completeSolution.get_schedule());
         _initializeStatusVehicles();

@@ -3,10 +3,6 @@
 #include <iostream>
 #include "scheduler.h"
 #include <queue>
-#include <utility>
-#include "pybind11/pybind11.h"
-#include "pybind11/stl.h"
-#include "iomanip"
 
 auto cpp_module::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(const long otherVehicle,
                                                                                    const long otherPosition,

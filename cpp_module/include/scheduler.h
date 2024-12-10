@@ -100,19 +100,19 @@ namespace cpp_module {
         enum InstructionConflictingSet {
             CONTINUE, EVALUATE, BREAK
         };
-        double startSearchClock;
+        double start_search_clock;
         std::vector<vehicleStatusType> trip_status_list;
         long iteration;
         long worseSolutions = 0;
-        long slackNotEnough = 0;
-        long solutionWithTies = 0;
-        long exploredSolutions = 0;
-        bool slackIsEnough = true;
+        long slack_not_enough = 0;
+        long solution_with_ties = 0;
+        long explored_solutions = 0;
+        bool slack_is_enough = true;
 
 
         explicit Scheduler(Instance &argInstance) :
                 instance(argInstance) {
-            startSearchClock = clock() / (double) CLOCKS_PER_SEC;
+            start_search_clock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
             trip_status_list = std::vector<vehicleStatusType>(instance.get_number_of_trips(),
                                                               vehicleStatusType::INACTIVE);
@@ -124,8 +124,8 @@ namespace cpp_module {
         construct_schedule(Solution &completeSolution) -> void;
 
         auto
-        updateExistingCongestedSchedule(Solution &completeSolution,
-                                        const Conflict &conflict) -> void;
+        update_existing_congested_schedule(Solution &completeSolution,
+                                           const Conflict &conflict) -> void;
 
 
         auto _updateTotalValueSolution(Solution &completeSolution) -> void;
@@ -271,17 +271,17 @@ namespace cpp_module {
 
 
     auto
-    _applyStaggeringToSolveConflict(Solution &completeSolution,
-                                    Conflict &conflict) -> void;
+    apply_staggering_to_solve_conflict(Solution &completeSolution,
+                                       Conflict &conflict) -> void;
 
 
-    static auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
-                                  Conflict &conflict) -> void;
+    static auto reset_new_solution(const Solution &currentSolution, Solution &newSolution,
+                                   Conflict &conflict) -> void;
 
     static auto
-    _updateCurrentSolution(Solution &currentSolution,
-                           const Solution &newSolution,
-                           Conflict &conflict) -> void;
+    update_current_solution(Solution &currentSolution,
+                            const Solution &newSolution,
+                            Conflict &conflict) -> void;
 
 
     auto get_index(const std::vector<long> &v, long K) -> long;
