@@ -3,14 +3,14 @@
 #endif
 
 #include "catch.hpp"
-#include "module.h"
+#include "scheduler.h"
 
-namespace cpp_module{
+namespace cpp_module {
 
 
-TEST_CASE("Scheduler constructs solution correctly", "[scheduler]") {
-    // Create an Instance object
-    // Assuming Instance needs some parameters, we're providing hypothetical ones
+    TEST_CASE("Scheduler constructs solution correctly", "[scheduler]") {
+        // Create an Instance object
+        // Assuming Instance needs some parameters, we're providing hypothetical ones
         // Create example data for each parameter of the Instance constructor
 
         // Example arc-based shortest paths
@@ -48,14 +48,14 @@ TEST_CASE("Scheduler constructs solution correctly", "[scheduler]") {
                 release_times
         );
 
-    // Create a Scheduler object using the Instance
-    cpp_module::Scheduler testScheduler(testInstance);
+        // Create a Scheduler object using the Instance
+        cpp_module::Scheduler testScheduler(testInstance);
 
-    // Define start times for the construct_solution method
+        // Define start times for the construct_solution method
 
-    // Run construct_solution method
-    SECTION("Testing construct_solution with valid start times") {
-        testScheduler.construct_solution(testInstance.release_times);
+        // Run construct_solution method
+        SECTION("Testing construct_solution with valid start times") {
+            testScheduler.construct_solution(testInstance.release_times);
+        }
     }
-}
 };

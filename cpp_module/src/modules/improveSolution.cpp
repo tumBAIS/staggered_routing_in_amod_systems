@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
-#include "module.h"
+#include "scheduler.h"
 #include <queue>
 #include <cassert>
 #include <chrono>

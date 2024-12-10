@@ -1,6 +1,6 @@
 #include <algorithm>
 #include <iostream>
-#include "module.h"
+#include "scheduler.h"
 #include <queue>
 #include <utility>
 #include "pybind11/pybind11.h"

@@ -1,6 +1,6 @@
 #include <numeric>
 #include <iostream>
-#include "module.h"
+#include "scheduler.h"
 #include <queue>
 #include "pybind11/pybind11.h"
 #include <fstream>

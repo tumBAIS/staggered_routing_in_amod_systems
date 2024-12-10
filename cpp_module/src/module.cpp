@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <cmath>
-#include "module.h"
+#include "scheduler.h"
 #include <queue>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
