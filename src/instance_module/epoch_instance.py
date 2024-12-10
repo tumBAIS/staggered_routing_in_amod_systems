@@ -3,14 +3,25 @@ from __future__ import annotations
 import copy
 import datetime
 from instance_module.instance import Instance
-from input_data import SolverParameters
+from input_data import SolverParameters, InstanceParameters
+from typing import Optional
 
 
 class EpochInstance(Instance):
 
-    def __init__(self, epoch_id, input_data, vehicles_original_ids, release_times, trip_routes,
-                 deadlines, max_staggering_applicable, capacities_arcs, travel_times_arcs,
-                 last_position_for_reconstruction):
+    def __init__(
+            self,
+            epoch_id: int,
+            input_data: InstanceParameters,
+            vehicles_original_ids: list[int],
+            release_times: list[float],
+            trip_routes: list[list[int]],
+            deadlines: list[float],
+            max_staggering_applicable: list[float],
+            capacities_arcs: list[int],  # Assuming capacities are keyed by arc ID
+            travel_times_arcs: list[float],
+            last_position_for_reconstruction: list[Optional[int]],  # Assuming last positions keyed by vehicle ID
+    ) -> None:
         super().__init__(input_data=input_data, deadlines=deadlines,
                          trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
                          node_based_trip_routes=None, release_times=release_times)
