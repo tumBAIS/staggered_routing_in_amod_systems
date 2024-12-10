@@ -108,6 +108,28 @@ def set_arc_to_node_mapping(results_df: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
+def assign_congestion_level(results_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Assign congestion level to the DataFrame based on the `instance_parameters_max_flow_allowed` column.
+    """
+    # Get the unique values from the column
+    unique_values = results_df['instance_parameters_max_flow_allowed'].unique()
+
+    if len(unique_values) == 2:
+        # Sort the unique values to determine the highest and lowest
+        low_value, high_value = sorted(unique_values)
+
+        # Assign congestion levels
+        results_df['congestion_level'] = results_df['instance_parameters_max_flow_allowed'].apply(
+            lambda x: "HC" if x == high_value else "LC"
+        )
+    else:
+        # Handle cases with not exactly two unique values
+        results_df['congestion_level'] = None  # or pd.NA for pandas-style missing values
+
+    return results_df
+
+
 def get_results_df(path_to_results: Path) -> pd.DataFrame:
     """
     Imports results from JSON files located in subdirectories of a given path.
@@ -128,6 +150,7 @@ def get_results_df(path_to_results: Path) -> pd.DataFrame:
 
     # Step 3: Assign instance parameter IDs
     print("\nStep 3: Assigning instance parameter IDs...")
+    results_df = assign_congestion_level(results_df)
     results_df = set_instance_parameters_id(results_df)
     print(f"Instance parameters assigned. DataFrame shape: {results_df.shape}")
 

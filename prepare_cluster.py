@@ -207,7 +207,7 @@ def get_set_of_experiments_name(
         if len(algo_mode_list) == 1:
             return algo_mode_list[0]
         else:
-            return str(algo_mode_list)
+            return str(algo_mode_list).replace(" ", "")
 
     name = (
         f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
