@@ -23,7 +23,7 @@ def save_list_of_strings_file(list_of_values: list[typing.Any], file_name: str, 
 class Instance:
     input_data: InstanceParameters
     capacities_arcs: list[int]
-    release_times_dataset: list[float]
+    release_times: list[float]
     trip_routes: list[list[int]]
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
@@ -67,7 +67,7 @@ class Instance:
             staggering_cap_limit = self.input_data.staggering_cap / 100 * travel_time
 
             # Calculate max staggering based on deadlines
-            deadline_limit = self.deadlines[vehicle] - (travel_time + self.release_times_dataset[vehicle])
+            deadline_limit = self.deadlines[vehicle] - (travel_time + self.release_times[vehicle])
 
             # The maximum staggering applicable is the minimum of the two limits
             max_staggering = min(staggering_cap_limit, deadline_limit)

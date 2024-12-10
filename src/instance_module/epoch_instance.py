@@ -43,7 +43,7 @@ class EpochInstance(Instance):
                  last_position_for_reconstruction):
         super().__init__(input_data=input_data, deadlines=deadlines,
                          trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
-                         node_based_trip_routes=None, release_times_dataset=release_times)
+                         node_based_trip_routes=None, release_times=release_times)
         self.epoch_id = epoch_id
         self.vehicles_original_ids = vehicles_original_ids
         self.last_position_for_reconstruction = last_position_for_reconstruction
@@ -76,7 +76,7 @@ def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle
         epoch_id=epoch_id,
         input_data=instance.input_data,
         vehicles_original_ids=list(range(first_vehicle_in_epoch, last_vehicle_in_epoch + 1)),
-        release_times=instance.release_times_dataset[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
+        release_times=instance.release_times[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         trip_routes=arc_based_shortest_paths,
         deadlines=instance.deadlines[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         max_staggering_applicable=instance.max_staggering_applicable[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
@@ -87,7 +87,7 @@ def _get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle
 
 def get_epoch_instances(global_instance, solver_params) -> EpochInstances:
     epoch_size = solver_params.epoch_size
-    last_vehicle_epochs = _get_last_vehicle_for_each_epoch(epoch_size, global_instance.release_times_dataset)
+    last_vehicle_epochs = _get_last_vehicle_for_each_epoch(epoch_size, global_instance.release_times)
     number_of_epochs = len(last_vehicle_epochs)
     first_vehicle_in_epoch = 0
     epoch_instances = []

@@ -27,7 +27,7 @@ def get_max_staggering_applicable_next_epoch(departure, global_instance, next_ep
     arc_is_origin = departure.arc == first_original_arc
     departure_is_in_next_epoch = departure.time / 60 > next_epoch_instance.epoch_id * solver_params.epoch_size
     if arc_is_origin and departure_is_in_next_epoch:
-        staggering_applied = max(1e-2, departure.time - global_instance.release_times_dataset[original_vehicle_id])
+        staggering_applied = max(1e-2, departure.time - global_instance.release_times[original_vehicle_id])
         max_staggering_applicable_next_epoch = global_instance.max_staggering_applicable[
                                                    original_vehicle_id] - staggering_applied
     else:
@@ -54,7 +54,7 @@ def add_departures_to_next_epoch(next_epoch_departures: list[NextEpochDeparture]
 
         next_epoch_instance.vehicles_original_ids.append(original_vehicle_id)
         next_epoch_instance.max_staggering_applicable.append(max_staggering_applicable)
-        next_epoch_instance.release_times_dataset.append(departure.time)
+        next_epoch_instance.release_times.append(departure.time)
         next_epoch_instance.deadlines.append(global_instance.deadlines[original_vehicle_id])
         next_epoch_instance.trip_routes.append(path_to_append)
         next_epoch_instance.last_position_for_reconstruction.append(None)

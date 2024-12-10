@@ -99,7 +99,7 @@ def reconstruct_solution(epochInstances: list[EpochInstance], epochStatusQuoList
     freeFlowSchedule = get_free_flow_schedule(globalInstance, congestedSchedule)
     releaseTimes = [schedule[0] for schedule in congestedSchedule]
     staggeringApplied = [schedule[0] - datasetTime for schedule, datasetTime in
-                         zip(congestedSchedule, globalInstance.release_times_dataset)]
+                         zip(congestedSchedule, globalInstance.release_times)]
     staggeringApplicable = get_staggering_applicable(globalInstance, staggeringApplied)
     totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
     totalTravelTime = get_total_travel_time(congestedSchedule)

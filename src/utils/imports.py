@@ -30,7 +30,7 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
     trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(trips_data.routes, graph)
     return Instance(input_data=instance_params, deadlines=trips_data.deadline,
                     trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
-                    node_based_trip_routes=trips_data.routes, release_times_dataset=trips_data.release_time)
+                    node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time)
 
 
 def import_trips_data(instance_parameters: InstanceParameters) -> TripsData:
