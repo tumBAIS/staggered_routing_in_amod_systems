@@ -53,15 +53,6 @@ namespace cpp_module {
 
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
-    struct Conflict {
-        long arc;
-        long current_trip_id;
-        long other_trip_id;
-        double delayConflict;
-        double distanceToCover;
-        double staggeringCurrentVehicle;
-        double destaggeringOtherVehicle;
-    };
 
     struct ImportedInstanceForTest {
         std::vector<double> releaseTimes;
@@ -111,7 +102,6 @@ namespace cpp_module {
         Departure otherVehicleDeparture{};
         Instance &instance;
         double best_total_delay;
-        long maxTimesCapReached;
         VehicleSchedule originalSchedule;
         VehicleSchedule scheduleToRestore;
         MinQueueDepartures priorityQueueToRestore;
@@ -144,13 +134,12 @@ namespace cpp_module {
                 instance(argInstance) {
             startSearchClock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
-            maxTimesCapReached = std::numeric_limits<long>::max();
             trip_status_list = std::vector<vehicleStatusType>(instance.get_number_of_trips(),
                                                               vehicleStatusType::INACTIVE);
             iteration = 0;
         };
 
-        auto
+        [[nodiscard]] auto
         checkIfSolutionIsAdmissible(double totalDelay) const -> bool;
 
         auto
@@ -183,7 +172,8 @@ namespace cpp_module {
         void
         moveVehicleForwardInTheQueue(double currentVehicleNewArrival);
 
-        bool _checkIfOtherStartsBeforeCurrent(long other_trip_id, const VehicleSchedule &congestedSchedule) const;
+        [[nodiscard]] bool
+        _checkIfOtherStartsBeforeCurrent(long other_trip_id, const VehicleSchedule &congestedSchedule) const;
 
         bool _checkIfDepartureShouldBeSkipped();
 
@@ -284,64 +274,16 @@ namespace cpp_module {
 
         void printTravelDepartureToSkip();
 
-        bool _checkIfVehicleIsLate(double currentVehicleNewArrival) const;
+        [[nodiscard]] bool _checkIfVehicleIsLate(double currentVehicleNewArrival) const;
 
 
-        InstructionConflictingSet
+        [[nodiscard]] InstructionConflictingSet
         _check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position) const;
 
         void printDelayComputed(double delay) const;
 
 
         Solution construct_solution(const std::vector<double> &start_times);
-    };
-
-    class ConflictSearcherNew {
-    public:
-        struct vehicleInfo {
-            long trip_id;
-            double departureTime;
-            double arrivalTime;
-            double earliestDepartureTime;
-            double earliestArrivalTime;
-            double latestDepartureTime;
-            double latestArrivalTime;
-        };
-
-        struct ConflictingArrival {
-            long vehicle;
-            double arrival;
-        };
-
-        enum InstructionsConflict {
-            CONTINUE, ADD_CONFLICT, BREAK
-        };
-
-        const Instance &instance;
-        vehicleInfo currentVehicleInfo{};
-        vehicleInfo other_info{};
-        ConflictingArrival conflictingArrival{};
-        std::vector<ConflictingArrival> conflictingArrivals;
-
-        explicit ConflictSearcherNew(const Instance &argInstance) :
-                instance(argInstance) {}
-
-
-        std::vector<Conflict> getConflictsListNew(const VehicleSchedule &congestedSchedule);
-
-        bool _checkIfVehicleHasDelay(const VehicleSchedule &congestedSchedule, long currentVehicle);
-
-        void updateCurrentVehicleInfo(long currentVehicle, const VehicleSchedule &congestedSchedule, long position);
-
-        InstructionsConflict getInstructionsConflict(const VehicleSchedule &congestedSchedule, long other_position);
-
-        Conflict _createConflictNew(long arc, double delay, ConflictingArrival &sortedArrival) const;
-
-        void addConflictsToConflictsList(std::vector<Conflict> &conflictsList, long arc);
-
-        static bool compareConflictingArrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
-            return a.arrival < b.arrival;
-        }
     };
 
 

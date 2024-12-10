@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include "scheduler.h"
+#include "conflict_searcher.h"
 #include <queue>
 
 namespace cpp_module {

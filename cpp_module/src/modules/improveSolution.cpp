@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cmath>
 #include "scheduler.h"
+#include "conflict_searcher.h"
 #include <queue>
 #include <cassert>
 #include <chrono>

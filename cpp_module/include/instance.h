@@ -17,6 +17,16 @@ namespace cpp_module {
     const double CONSTR_TOLERANCE = 1 * 1e-3;
     const double TOLERANCE = 1e-6;
 
+    struct Conflict {
+        long arc;
+        long current_trip_id;
+        long other_trip_id;
+        double delayConflict;
+        double distanceToCover;
+        double staggeringCurrentVehicle;
+        double destaggeringOtherVehicle;
+    };
+
 
     class Instance {
     private:
