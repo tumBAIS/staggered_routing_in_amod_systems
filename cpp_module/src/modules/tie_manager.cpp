@@ -39,7 +39,7 @@ namespace cpp_module {
     }
 
 // Check if there is a tie between two vehicles
-    auto check_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool {
+    auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool {
         bool depart_at_same_time = std::abs(
                 congested_schedule[tie.vehicle_one][tie.position_one] -
                 congested_schedule[tie.vehicle_two][tie.position_two]) < CONSTR_TOLERANCE - 1e-6;
@@ -57,7 +57,7 @@ namespace cpp_module {
 
 // Resolve a tie by staggering a vehicle
     auto solve_tie(Solution &complete_solution, const Tie &tie, Scheduler &scheduler) -> void {
-        bool has_tie = check_tie(complete_solution.get_schedule(), tie);
+        bool has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
         bool slack_is_enough = check_slack_to_solve_tie(
                 complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
 
@@ -72,7 +72,7 @@ namespace cpp_module {
             }
 
             print_tie_solved(tie);
-            has_tie = check_tie(complete_solution.get_schedule(), tie);
+            has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
             slack_is_enough = check_slack_to_solve_tie(
                     complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
         }
@@ -87,7 +87,7 @@ namespace cpp_module {
                 if (vehicle_one < vehicle_two) {
                     long position_two = get_index(instance.get_trip_route(vehicle_two), arc_id);
                     Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
-                    if (check_tie(complete_solution.get_schedule(), tie)) {
+                    if (check_if_vehicles_have_tie(complete_solution.get_schedule(), tie)) {
                         return true;
                     }
                 }
@@ -112,8 +112,9 @@ namespace cpp_module {
         }
     }
 
+
 // Check if the solution has any ties
-    auto check_solution_for_ties(const Instance &instance, Solution &complete_solution) -> void {
+    auto check_if_solution_has_ties(const Instance &instance, Solution &complete_solution) -> void {
         for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
             if (instance.get_conflicting_set(arc_id).empty()) {
                 continue;
