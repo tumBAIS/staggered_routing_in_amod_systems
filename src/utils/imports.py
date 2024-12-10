@@ -24,13 +24,12 @@ class TripsData:
     release_time: list[int]  # Release times for each trip
 
 
-def get_not_simplified_instance(instance_params: InstanceParameters) -> Instance:
+def get_instance(instance_params: InstanceParameters) -> Instance:
     """Constructs an instance from input data without simplification."""
     trips_data = import_trips_data(instance_params)
     graph = import_graph(instance_params)
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
-    trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(
-        trips_data.routes, graph)
+    trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(trips_data.routes, graph)
     return Instance(input_data=instance_params, deadlines=trips_data.deadline,
                     trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
                     node_based_trip_routes=trips_data.routes, release_times_dataset=trips_data.release_time)

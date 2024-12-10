@@ -8,7 +8,7 @@ from input_data import InstanceParameters
 from input_data import SPEED_KPH
 
 
-def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
+def set_arcs_nominal_travel_times_and_capacities(graph: nx.DiGraph, instance_params: InstanceParameters) -> None:
     """
     Assigns nominal travel times and capacities to arcs in the Manhattan graph based on
     the speed and max flow allowed specified in the input data.
@@ -16,16 +16,16 @@ def set_arcs_nominal_travel_times_and_capacities(manhattan_graph, input_data):
     print(f"Assigning nominal travel times assuming vehicles traveling at {SPEED_KPH} kph")
 
     # Set initial nominal travel time attributes to NaN
-    nx.set_edge_attributes(manhattan_graph, float('nan'), 'nominal_travel_time')
+    nx.set_edge_attributes(graph, float('nan'), 'nominal_travel_time')
 
-    for origin, destination in manhattan_graph.edges():
-        distance = manhattan_graph[origin][destination]['length']
+    for origin, destination in graph.edges():
+        distance = graph[origin][destination]['length']
         nominal_travel_time = distance * 3.6 / SPEED_KPH
-        manhattan_graph[origin][destination]['nominal_travel_time'] = nominal_travel_time
+        graph[origin][destination]['nominal_travel_time'] = nominal_travel_time
 
         # Calculate nominal capacity based on max flow allowed
-        nominal_capacity = int(np.ceil(nominal_travel_time / input_data.max_flow_allowed))
-        manhattan_graph[origin][destination]['nominal_capacity'] = nominal_capacity
+        nominal_capacity = int(np.ceil(nominal_travel_time / instance_params.max_flow_allowed))
+        graph[origin][destination]['nominal_capacity'] = nominal_capacity
 
 
 def deserialize_graph(file_path: str) -> DiGraph:

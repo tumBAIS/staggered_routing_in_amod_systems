@@ -1,7 +1,7 @@
 # Import necessary modules and functions
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
-from utils.imports import get_not_simplified_instance
+from utils.imports import get_instance
 from instance_module.epoch_instance import get_epoch_instances
 from solutions.status_quo import get_current_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution
@@ -17,8 +17,8 @@ def run_procedure(source: str) -> None:
     """
     # Load initial data and setup instances
     instance_params, solver_params = get_input_data(source)
-    global_instance = get_not_simplified_instance(instance_params)
-    epoch_instances = get_epoch_instances(global_instance, solver_params)
+    instance = get_instance(instance_params)
+    epoch_instances = get_epoch_instances(instance, solver_params)
 
     # Initialize a list to store solutions for each epoch
     epoch_solutions = []
@@ -40,14 +40,14 @@ def run_procedure(source: str) -> None:
         # Update the instance for the next epoch if not the last one
         if epoch_id < len(epoch_instances) - 1:
             next_epoch_instance = epoch_instances[epoch_id + 1]
-            update_next_epoch_instance(epoch_instance, epoch_solution, next_epoch_instance, global_instance,
+            update_next_epoch_instance(epoch_instance, epoch_solution, next_epoch_instance, instance,
                                        solver_params)
 
     # Reconstruct the complete solution from all epochs
-    complete_status_quo = get_offline_solution(global_instance, global_instance.release_times_dataset, solver_params)
-    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, global_instance)
+    complete_status_quo = get_offline_solution(instance, instance.release_times_dataset, solver_params)
+    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, instance)
 
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
-    save_experiment(global_instance, complete_status_quo, reconstructed_solution, solver_params,
+    save_experiment(instance, complete_status_quo, reconstructed_solution, solver_params,
                     optimization_measures_list)
