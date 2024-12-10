@@ -1,8 +1,4 @@
-#include "stdexcept"
-#include <utility>
-#include <algorithm>
 #include <iostream>
-#include <queue>
 #include "scheduler.h"
 
 
@@ -20,13 +16,7 @@ namespace cpp_module {
         if (e1.time < e2.time) {
             return e1.time < e2.time;
         } else if (e1.time == e2.time) {
-            if (e1.arc < e2.arc) {
-                return e1.arc < e2.arc;
-            } else if (e1.arc == e2.arc) {
-                return e1.vehicle < e2.vehicle;
-            } else {
-                return false;
-            }
+            return e1.arc < e2.arc;
         }
         return false;
     }

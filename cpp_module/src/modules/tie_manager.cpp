@@ -10,7 +10,6 @@ namespace cpp_module {
         VehicleSchedule schedule;
         std::vector<std::vector<bool>> tableWithCapReached;
         double totalDelay;
-        bool capIsReached;
         long timesCapIsReached;
         bool scheduleIsFeasibleAndImproving;
     };
@@ -32,7 +31,7 @@ namespace cpp_module {
             return false;
         }
         return true;
-    };
+    }
 
 
     auto _setCorrectSolution(const Solution &completeSolution) -> CorrectSolution {
@@ -55,10 +54,10 @@ namespace cpp_module {
                 congestedSchedule[tie.vehicleTwo][tie.positionTwo]) < CONSTR_TOLERANCE - 1e-6;
         const bool vehicleOneArrivesAtVehicleTwoDeparture = std::abs(
                 congestedSchedule[tie.vehicleTwo][tie.positionTwo] -
-                congestedSchedule[tie.vehicleOne][tie.positionOne + 1]) < CONSTR_TOLERANCE - 1e-6;;
+                congestedSchedule[tie.vehicleOne][tie.positionOne + 1]) < CONSTR_TOLERANCE - 1e-6;
         const bool vehicleTwoArrivesAtVehicleOneDeparture = std::abs(
                 congestedSchedule[tie.vehicleOne][tie.positionOne] -
-                congestedSchedule[tie.vehicleTwo][tie.positionTwo + 1]) < CONSTR_TOLERANCE - 1e-6;;
+                congestedSchedule[tie.vehicleTwo][tie.positionTwo + 1]) < CONSTR_TOLERANCE - 1e-6;
         bool thereIsTie = vehiclesDepartAtSameTime || vehicleOneArrivesAtVehicleTwoDeparture ||
                           vehicleTwoArrivesAtVehicleOneDeparture;
         return thereIsTie;
@@ -87,7 +86,7 @@ namespace cpp_module {
     auto _checkArcTies(const Instance &instance,
                        const ArcID &arc_id,
                        Solution &completeSolution) -> bool {
-        Tie tie;
+        Tie tie{};
         for (auto first_trip: instance.get_conflicting_set(arc_id)) {
             const long positionOne = get_index(instance.get_trip_route(first_trip), arc_id);
             for (auto second_trip: instance.get_conflicting_set(arc_id)) {
@@ -129,7 +128,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void {
+    auto check_if_solution_has_ties(const Instance &instance, Solution &completeSolution) -> void {
         for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
             bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();
             if (noTiesCanHappenOnArc) {
@@ -146,7 +145,7 @@ namespace cpp_module {
     }
 
 
-    auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
+    auto solve_solution_ties(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
         completeSolution.set_ties_flag(false); // will be set to true if a tie cannot be solved
         for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); arc_id++) {
             bool noTiesCanHappenOnArc = instance.get_conflicting_set(arc_id).empty();

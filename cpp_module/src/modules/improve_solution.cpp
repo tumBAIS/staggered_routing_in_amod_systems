@@ -1,4 +1,3 @@
-#include <numeric>
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -43,8 +42,7 @@ namespace cpp_module {
         newSolution.set_feasible_and_improving_flag(currentSolution.get_feasible_and_improving_flag());
     }
 
-    auto _applyStaggeringToSolveConflict(Scheduler &scheduler,
-                                         Solution &completeSolution,
+    auto _applyStaggeringToSolveConflict(Solution &completeSolution,
                                          Conflict &conflict) -> void {
         assert(conflict.distanceToCover > 0);
         bool moveVehicleOne =
@@ -128,8 +126,7 @@ namespace cpp_module {
         return false;
     }
 
-    auto _checkIfSolutionIsAdmissible(const Instance &instance,
-                                      Solution &completeSolution,
+    auto _checkIfSolutionIsAdmissible(Solution &completeSolution,
                                       Scheduler &scheduler) -> bool {
         if (!completeSolution.get_feasible_and_improving_flag()) {
             return false;
@@ -159,7 +156,7 @@ namespace cpp_module {
                 scheduler.slackNotEnough++; // printing purposes
                 break;
             }
-            _applyStaggeringToSolveConflict(scheduler, newSolution, conflict);
+            _applyStaggeringToSolveConflict(newSolution, conflict);
             scheduler.updateExistingCongestedSchedule(newSolution, conflict);
             if (!newSolution.get_feasible_and_improving_flag()) { break; }
             _updateDistanceToCover(newSolution, conflict, instance);
@@ -182,7 +179,7 @@ namespace cpp_module {
             if (timeLimitReached) {
                 return false;
             }
-            bool isAdmissible = _checkIfSolutionIsAdmissible(instance, newSolution, scheduler);
+            bool isAdmissible = _checkIfSolutionIsAdmissible(newSolution, scheduler);
             if (isAdmissible && scheduler.slackIsEnough) {
                 if (scheduler.iteration % 20 == 0) {
                     scheduler.construct_schedule(newSolution);
@@ -200,9 +197,9 @@ namespace cpp_module {
     }
 
 
-    auto improveTowardsSolutionQuality(const Instance &instance,
-                                       Solution &currentSolution,
-                                       Scheduler &scheduler) -> void {
+    auto improve_towards_solution_quality(const Instance &instance,
+                                          Solution &currentSolution,
+                                          Scheduler &scheduler) -> void {
         // improve value of solution
         ConflictSearcherNew conflictSearcher(instance);
         bool isImproved = true;

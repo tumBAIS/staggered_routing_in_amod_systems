@@ -270,7 +270,7 @@ namespace cpp_module {
 
 
     auto
-    _applyStaggeringToSolveConflict(Scheduler &scheduler, Solution &completeSolution,
+    _applyStaggeringToSolveConflict(Solution &completeSolution,
                                     Conflict &conflict) -> void;
 
 
@@ -288,17 +288,16 @@ namespace cpp_module {
 
     auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void;
 
-    auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void;
+    auto solve_solution_ties(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void;
 
-    auto checkIfSolutionHasTies(const Instance &instance, Solution &completeSolution) -> void;
+    auto check_if_solution_has_ties(const Instance &instance, Solution &completeSolution) -> void;
 
     auto compute_delay_on_arc(const double &vehiclesOnArc, const Instance &instance, long arc) -> double;
 
     auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void;
 
-    auto
-    improveTowardsSolutionQuality(const Instance &instance, Solution &currentSolution,
-                                  Scheduler &scheduler) -> void;
+    auto improve_towards_solution_quality(const Instance &instance, Solution &currentSolution,
+                                          Scheduler &scheduler) -> void;
 
     auto compute_vehicles_on_arc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;
 
