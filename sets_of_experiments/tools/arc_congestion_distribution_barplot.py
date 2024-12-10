@@ -9,21 +9,21 @@ import tikzplotlib
 def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_figures: Path,
                                             verbose: bool = False) -> None:
     """
-    Generate barplots for arc congestion distributions for UNC, OFF, and ON scenarios.
+    Generate barplots for arc congestion distributions for UNC, OFF, and ON scenarios,
+    separately for LC and HC congestion levels, with optional verbose output.
     """
 
     print("\n" + "=" * 50)
     print("Starting get_arc_congestion_distribution_barplot".center(50))
     print("=" * 50 + "\n")
 
-    # Step 1: Split DataFrame into offline and online data
-    print("Step 1: Splitting the DataFrame...".center(50))
-    offline_df = results_df[results_df["solver_parameters_epoch_size"] == 60]
-    online_df = results_df[results_df["solver_parameters_epoch_size"] != 60]
-    print(f"Offline DataFrame contains {len(offline_df)} rows.".center(50))
-    print(f"Online DataFrame contains {len(online_df)} rows.".center(50))
+    # Step 1: Split DataFrame by congestion levels
+    print("Step 1: Splitting the DataFrame by congestion levels...".center(50))
+    lc_df = results_df[results_df["congestion_level"] == "LC"]
+    hc_df = results_df[results_df["congestion_level"] == "HC"]
+    print(f"LC DataFrame contains {len(lc_df)} rows.".center(50))
+    print(f"HC DataFrame contains {len(hc_df)} rows.".center(50))
 
-    # Helper function to calculate total delays per arc
     def calculate_arc_delays(data, delay_column, arc_to_node_mapping):
         arc_delays = {}
         for _, row in data.iterrows():
@@ -38,97 +38,88 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
                         arc_delays[node_pair] += delay
         return arc_delays
 
-    # Step 2: Calculate total delays for UNC, OFF, and ON
-    print("\nStep 2: Calculating total delays for UNC, OFF, and ON...".center(50))
-    unc_delays = calculate_arc_delays(offline_df, "status_quo_delays_on_arcs", "arc_to_node_mapping")
-    off_delays = calculate_arc_delays(offline_df, "solution_delays_on_arcs", "arc_to_node_mapping")
-    on_delays = calculate_arc_delays(online_df, "solution_delays_on_arcs", "arc_to_node_mapping")
-    print("Total delays calculated.".center(50))
+    def create_barplot_for_congestion(data, label):
+        print(f"\nProcessing {label} data...".center(50))
+        offline_df = data[data["solver_parameters_epoch_size"] == 60]
+        online_df = data[data["solver_parameters_epoch_size"] != 60]
 
-    # Filter out arcs with a maximum delay of at most 1e-2 in all barplots
-    print("\nStep 3: Filtering arcs...".center(50))
-    all_arcs = set(unc_delays.keys()) | set(off_delays.keys()) | set(on_delays.keys())
-    filtered_arcs = {arc for arc in all_arcs if max(unc_delays.get(arc, 0), off_delays.get(arc, 0),
-                                                    on_delays.get(arc, 0)) > 1e-2}
+        # Calculate total delays for UNC, OFF, and ON
+        unc_delays = calculate_arc_delays(offline_df, "status_quo_delays_on_arcs", "arc_to_node_mapping")
+        off_delays = calculate_arc_delays(offline_df, "solution_delays_on_arcs", "arc_to_node_mapping")
+        on_delays = calculate_arc_delays(online_df, "solution_delays_on_arcs", "arc_to_node_mapping")
 
-    unc_delays = {arc: delay for arc, delay in unc_delays.items() if arc in filtered_arcs}
-    off_delays = {arc: delay for arc, delay in off_delays.items() if arc in filtered_arcs}
-    on_delays = {arc: delay for arc, delay in on_delays.items() if arc in filtered_arcs}
+        # Filter out arcs with a maximum delay of at most 1e-2 in all barplots
+        all_arcs = set(unc_delays.keys()) | set(off_delays.keys()) | set(on_delays.keys())
+        filtered_arcs = {arc for arc in all_arcs if max(unc_delays.get(arc, 0), off_delays.get(arc, 0),
+                                                        on_delays.get(arc, 0)) > 1e-2}
 
-    print(f"Filtered arcs to {len(filtered_arcs)} remaining.".center(50))
+        unc_delays = {arc: delay for arc, delay in unc_delays.items() if arc in filtered_arcs}
+        off_delays = {arc: delay for arc, delay in off_delays.items() if arc in filtered_arcs}
+        on_delays = {arc: delay for arc, delay in on_delays.items() if arc in filtered_arcs}
 
-    # Step 4: Create frequency bins for delays
-    print("\nStep 4: Creating frequency bins...".center(50))
-    bins = [-1e-2, 1e-2] + list(
-        np.arange(10, 310, 10))  # First bin: [-1e-2, 1e-2], subsequent bins: 10-second intervals
-    unc_values = list(unc_delays.values())
-    off_values = list(off_delays.values())
-    on_values = list(on_delays.values())
+        # Create frequency bins for delays
+        bins = [-1e-2, 1e-2] + list(np.arange(10, 310, 10))
+        unc_values = list(unc_delays.values())
+        off_values = list(off_delays.values())
+        on_values = list(on_delays.values())
 
-    unc_freq, unc_bins = np.histogram(unc_values, bins=bins)
-    off_freq, off_bins = np.histogram(off_values, bins=bins)
-    on_freq, on_bins = np.histogram(on_values, bins=bins)
+        unc_freq, _ = np.histogram(unc_values, bins=bins)
+        off_freq, _ = np.histogram(off_values, bins=bins)
+        on_freq, _ = np.histogram(on_values, bins=bins)
 
-    # Print data falling into each bin
-    def print_bin_data(bin_edges, freq, label, values):
-        print(f"\n{label} Bin Data:")
-        for i in range(len(bin_edges) - 1):
-            lower = bin_edges[i]
-            upper = bin_edges[i + 1]
-            bin_values = [v for v in values if lower <= v < upper]
-            print(f"Bin {i}: [{lower}, {upper}] - Count: {freq[i]}, Values: {bin_values}")
+        # Combine frequencies to determine which bins have data
+        combined_freq = unc_freq + off_freq + on_freq
+        valid_bins = [i for i, freq in enumerate(combined_freq) if freq > 0]
 
-    if verbose:
-        print_bin_data(unc_bins, unc_freq, "UNC", unc_values)
-        print_bin_data(off_bins, off_freq, "OFF", off_values)
-        print_bin_data(on_bins, on_freq, "ON", on_values)
+        # Filter bins and frequencies
+        filtered_bins = [bins[i] for i in valid_bins] + [bins[max(valid_bins) + 1]]
+        unc_freq = unc_freq[valid_bins]
+        off_freq = off_freq[valid_bins]
+        on_freq = on_freq[valid_bins]
 
-    # Combine frequencies to determine which bins have data
-    combined_freq = unc_freq + off_freq + on_freq
-    valid_bins = [i for i, freq in enumerate(combined_freq) if freq > 0]
+        if verbose:
+            # Print detailed information about the barplots
+            print(f"\n{label} Barplot Information:")
+            for i in range(len(filtered_bins) - 1):
+                print(f"  Bin [{filtered_bins[i]}, {filtered_bins[i + 1]}):")
+                print(f"    UNC: {unc_freq[i]}, OFF: {off_freq[i]}, ON: {on_freq[i]}")
 
-    # Filter bins and frequencies
-    filtered_bins = [bins[i] for i in valid_bins] + [bins[max(valid_bins) + 1]]
-    unc_freq = unc_freq[valid_bins]
-    off_freq = off_freq[valid_bins]
-    on_freq = on_freq[valid_bins]
+        # Create barplot
+        bar_width = 0.3
+        x = np.arange(len(filtered_bins) - 1)  # X positions for the bars
 
-    # Step 5: Create barplots
-    print("\nStep 5: Creating barplots...".center(50))
-    bar_width = 0.3
-    x = np.arange(len(filtered_bins) - 1)  # X positions for the bars
+        plt.figure(figsize=(8, 5))
+        plt.grid(axis="y", linestyle="--", color="gray", alpha=0.7, which="major", zorder=0)
+        plt.grid(axis="y", linestyle="--", color="lightgray", alpha=0.4, which="minor", zorder=0)
 
-    plt.figure(figsize=(8, 5))
-    plt.grid(axis="y", linestyle="--", color="gray", alpha=0.7, which="major", zorder=0)
-    plt.grid(axis="y", linestyle="--", color="lightgray", alpha=0.4, which="minor", zorder=0)
+        plt.bar(x - bar_width, unc_freq, width=bar_width, color="gray", edgecolor="black", label="UNC", hatch="/",
+                zorder=2)
+        plt.bar(x, off_freq, width=bar_width, color="white", edgecolor="black", label="OFF", hatch=".", zorder=2)
+        plt.bar(x + bar_width, on_freq, width=bar_width, color="lightgray", edgecolor="black", label="ON", hatch="\\",
+                zorder=2)
 
-    plt.bar(x - bar_width, unc_freq, width=bar_width, color="gray", edgecolor="black", label="UNC", hatch="/",
-            zorder=2)
-    plt.bar(x, off_freq, width=bar_width, color="white", edgecolor="black", label="OFF", hatch=".", zorder=2)
-    plt.bar(x + bar_width, on_freq, width=bar_width, color="lightgray", edgecolor="black", label="ON", hatch="\\",
-            zorder=2)
+        plt.yscale("log")
+        plt.xlabel(r"$\mathcal{E}_a$ [min]")
+        plt.ylabel("Observations")
 
-    # Step 6: Customize plot aesthetics
-    plt.yscale("log")  # Use logarithmic scale for the y-axis
-    plt.xlabel(r"$\mathcal{E}_a$ [min]")
-    plt.ylabel("Observations")
+        xticks = [f"{int(filtered_bins[i])}" for i in range(1, len(filtered_bins))]
+        plt.xticks(x, xticks, rotation=0)
+        plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black")
+        plt.tight_layout()
 
-    # Custom X-Ticks: First bin is "0", others are upper bounds (e.g., "10", "20", ...)
-    xticks = [f"{int(filtered_bins[i])}" for i in range(1, len(filtered_bins))]
-    plt.xticks(x, xticks, rotation=0)
-    plt.legend(loc="upper right", title=None, frameon=True, framealpha=1, facecolor="white", edgecolor="black")
-    plt.tight_layout()
+        # Save plot
+        output_dir = path_to_figures / "arc_congestion_distribution"
+        os.makedirs(output_dir, exist_ok=True)
+        file_name = f"arc_congestion_distribution_barplot_{label.lower()}"
+        plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
+        tikzplotlib.save(output_dir / f"{file_name}.tex")
 
-    # Step 7: Save the plot
-    output_dir = path_to_figures / "arc_congestion_distribution"
-    os.makedirs(output_dir, exist_ok=True)
-    plt.savefig(output_dir / "arc_congestion_distribution_barplot.jpeg", format="jpeg", dpi=300)
+        plt.close()
+        print(f"{label} barplot saved.".center(50))
 
-    # Save as TeX
-    tikzplotlib.save(output_dir / "arc_congestion_distribution_barplot.tex")
-
-    plt.close()
-    print("Barplot saved.".center(50))
+    # Generate plots for LC and HC
+    create_barplot_for_congestion(lc_df, "LC")
+    create_barplot_for_congestion(hc_df, "HC")
 
     print("\n" + "=" * 50)
     print("Completed get_arc_congestion_distribution_barplot".center(50))

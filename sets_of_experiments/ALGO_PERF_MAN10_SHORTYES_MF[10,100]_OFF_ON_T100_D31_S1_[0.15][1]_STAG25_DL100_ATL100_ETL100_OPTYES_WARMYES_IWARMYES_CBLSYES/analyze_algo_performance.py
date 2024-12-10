@@ -15,11 +15,10 @@ os.makedirs(PATH_TO_FIGURES, exist_ok=True)
 os.makedirs(PATH_TO_TABLES, exist_ok=True)
 
 if __name__ == "__main__":
-    # TODO: separate LC from HC
     results_df = get_results_df(PATH_TO_RESULTS)
     results_df = filter_non_comparable_experiments(results_df, n_experiments_required=2)
     get_summary_table(results_df, PATH_TO_TABLES)
-    get_algo_performance_boxplots(results_df, PATH_TO_FIGURES)
-    get_mip_bounds_boxplots(results_df, PATH_TO_FIGURES)
-    get_arc_congestion_distribution_barplot(results_df, PATH_TO_FIGURES)
+    get_algo_performance_boxplots(results_df, PATH_TO_FIGURES, verbose=True)
+    get_mip_bounds_boxplots(results_df, PATH_TO_FIGURES, verbose=True)
+    get_arc_congestion_distribution_barplot(results_df, PATH_TO_FIGURES, verbose=True)
     get_congestion_heatmap(results_df, PATH_TO_FIGURES, PATH_TO_NETWORKS)

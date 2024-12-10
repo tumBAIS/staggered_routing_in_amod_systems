@@ -6,9 +6,10 @@ import tikzplotlib
 from pathlib import Path
 
 
-def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> None:
+def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, verbose: bool = False) -> None:
     """
-    Generate and save horizontal boxplots for MIP bounds metrics.
+    Generate and save horizontal boxplots for MIP bounds metrics, separately for LC and HC experiments.
+    If verbose is True, print the values of the points being plotted for each experiment on the same line.
     """
     print("\n" + "=" * 50)
     print("Starting get_mip_bounds_boxplots function".center(50))
@@ -23,12 +24,9 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> 
     print("=" * 50)
     print("Step 2: Processing 'optimization_measures_list' column".center(50))
     print("=" * 50 + "\n")
-    # Extract the first dictionary from the list
     filtered_df['optimization_measures'] = filtered_df['optimization_measures_list'].apply(
         lambda x: x[0] if x else {}
     )
-    print("Extracting and flattening dictionaries into columns...")
-    # Flatten the dictionaries into separate columns
     measures_df = filtered_df['optimization_measures'].apply(pd.Series)
     measures_df = measures_df.add_prefix('optimization_measures_')
     filtered_df = pd.concat([filtered_df, measures_df], axis=1)
@@ -54,15 +52,23 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> 
     )
     print("Bounds difference calculated.\n")
 
-    # Step 5: Generate boxplots
+    # Split the data into LC and HC
     print("=" * 50)
-    print("Step 5: Generating boxplots".center(50))
+    print("Step 5: Splitting data by congestion level".center(50))
     print("=" * 50 + "\n")
+    lc_data = filtered_df[filtered_df['congestion_level'] == "LC"]
+    hc_data = filtered_df[filtered_df['congestion_level'] == "HC"]
 
-    def plot_horizontal_boxplot(data, x_col, xlabel, file_name):
+    def plot_horizontal_boxplot(data, x_col, xlabel, file_name, label):
         """Helper function to create horizontal boxplots."""
         print(f"Creating boxplot for '{file_name}'...")
-        plt.figure(figsize=(6.5, 4.0))  # Standard figure size
+
+        if verbose:
+            # Print all values in a single line for the current plot
+            values = data[x_col].dropna().tolist()
+            print(f"\nValues for {label} - {x_col}: {values}")
+
+        plt.figure(figsize=(6.5, 4.0))
 
         sns.boxplot(
             x=x_col,
@@ -90,12 +96,10 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> 
         plt.xlabel(xlabel)
         plt.tight_layout()
 
-        # Save the figure
         output_dir = path_to_figures / "mip_bounds_boxplots"
         os.makedirs(output_dir, exist_ok=True)
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
 
-        # Save TeX representation
         tikzplotlib.save(
             str(output_dir / f"{file_name}.tex"),
             axis_width=r"\MipBoundsWidth",
@@ -105,26 +109,52 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> 
         plt.close()
         print(f"Boxplot for '{file_name}' saved.\n")
 
-    # Generate plots for required metrics
+    # Generate boxplots for LC experiments
+    print("\nGenerating boxplots for LC experiments...")
     plot_horizontal_boxplot(
-        data=filtered_df,
+        data=lc_data,
         x_col='optimization_measures_optimality_gap_final',
-        xlabel=r"$\Delta$ [\%]",
-        file_name="optimality_gap"
+        xlabel=r"$\Delta$ [\%] (LC)",
+        file_name="optimality_gap_LC",
+        label="LC"
     )
-
     plot_horizontal_boxplot(
-        data=filtered_df,
+        data=lc_data,
         x_col='optimization_measures_lower_bound_final',
-        xlabel="LB [sec]",  # Using plain text to avoid mathtext parsing issues
-        file_name="lower_bound"
+        xlabel="LB [sec] (LC)",
+        file_name="lower_bound_LC",
+        label="LC"
+    )
+    plot_horizontal_boxplot(
+        data=lc_data,
+        x_col='optimization_measures_bounds_difference_final',
+        xlabel=r"$\Delta$ [sec] (LC)",
+        file_name="bounds_difference_LC",
+        label="LC"
     )
 
+    # Generate boxplots for HC experiments
+    print("\nGenerating boxplots for HC experiments...")
     plot_horizontal_boxplot(
-        data=filtered_df,
+        data=hc_data,
+        x_col='optimization_measures_optimality_gap_final',
+        xlabel=r"$\Delta$ [\%] (HC)",
+        file_name="optimality_gap_HC",
+        label="HC"
+    )
+    plot_horizontal_boxplot(
+        data=hc_data,
+        x_col='optimization_measures_lower_bound_final',
+        xlabel="LB [sec] (HC)",
+        file_name="lower_bound_HC",
+        label="HC"
+    )
+    plot_horizontal_boxplot(
+        data=hc_data,
         x_col='optimization_measures_bounds_difference_final',
-        xlabel=r"$\Delta$ [sec]",
-        file_name="bounds_difference"
+        xlabel=r"$\Delta$ [sec] (HC)",
+        file_name="bounds_difference_HC",
+        label="HC"
     )
 
     print("\n" + "=" * 50)

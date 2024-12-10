@@ -1,5 +1,4 @@
 import os
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from pathlib import Path
@@ -12,9 +11,11 @@ from matplotlib import MatplotlibDeprecationWarning
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
 
 
-def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Path) -> None:
+def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Path, verbose: bool = False) -> None:
     """
-    Generate and save boxplots for algorithm performance metrics as JPEG and TeX files.
+    Generate and save boxplots for algorithm performance metrics as JPEG and TeX files,
+    creating separate figures for LC and HC experiments. When verbose is True, print the
+    values being plotted for each experiment.
     """
     print("\n" + "=" * 50)
     print("Starting get_algo_performance_boxplots function".center(50))
@@ -35,8 +36,21 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
     )
     print("Labels added.")
 
-    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name):
+    # Separate data by congestion level
+    print("\nStep 3: Splitting data by congestion level...")
+    lc_data = results_df[results_df['congestion_level'] == "LC"]
+    hc_data = results_df[results_df['congestion_level'] == "HC"]
+
+    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name, label):
         print(f"\nCreating boxplot for {file_name}...")
+
+        if verbose:
+            # Print values being plotted in a tidy format
+            print(f"\nValues for {label} - {x_col}:")
+            for epoch_label in data[y_col].unique():
+                filtered_data = data[data[y_col] == epoch_label][x_col].dropna().tolist()
+                print(f"  {epoch_label}: {filtered_data}")
+
         # Set the desired figure dimensions
         marker_size = 4  # Size of markers
         box_width = 0.8  # Width of boxplots
@@ -90,25 +104,46 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         plt.close()
         print(f"Boxplot for {file_name} saved.")
 
-    # First figure: absolute delay reduction in seconds
-    print("\nStep 3: Generating plots...")
+    # Generate plots for LC experiments
+    print("\nStep 4: Generating plots for LC experiments...")
     plot_boxplot(
-        data=results_df,
+        data=lc_data,
         x_col='absolute_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [sec]",
-        file_name="absolute_delay_reduction"
+        xlabel=r"$\Theta$ [sec] (LC)",
+        file_name="absolute_delay_reduction_LC",
+        label="LC"
     )
-
-    # Second figure: relative delay reduction in percentage
     plot_boxplot(
-        data=results_df,
+        data=lc_data,
         x_col='relative_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [\%]",
-        file_name="relative_delay_reduction"
+        xlabel=r"$\Theta$ [\%] (LC)",
+        file_name="relative_delay_reduction_LC",
+        label="LC"
+    )
+
+    # Generate plots for HC experiments
+    print("\nStep 5: Generating plots for HC experiments...")
+    plot_boxplot(
+        data=hc_data,
+        x_col='absolute_delay_reduction',
+        y_col='epoch_label',
+        ylabel="",
+        xlabel=r"$\Theta$ [sec] (HC)",
+        file_name="absolute_delay_reduction_HC",
+        label="HC"
+    )
+    plot_boxplot(
+        data=hc_data,
+        x_col='relative_delay_reduction',
+        y_col='epoch_label',
+        ylabel="",
+        xlabel=r"$\Theta$ [\%] (HC)",
+        file_name="relative_delay_reduction_HC",
+        label="HC"
     )
 
     print("\n" + "=" * 50)

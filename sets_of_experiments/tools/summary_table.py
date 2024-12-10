@@ -9,40 +9,44 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
     offline_df = results_df[results_df["solver_parameters_epoch_size"] == 60]
     print(f"Retained {len(offline_df)} offline experiments.")
 
-    # Step 2: Calculate required statistics
-    print("Calculating statistics...")
+    # Step 2: Split the DataFrame into LC and HC categories
+    print("Splitting data into LC and HC...")
+    lc_df = offline_df[offline_df["congestion_level"] == "LC"]
+    hc_df = offline_df[offline_df["congestion_level"] == "HC"]
+    print(f"LC experiments: {len(lc_df)}, HC experiments: {len(hc_df)}")
 
-    # Status Quo Total Delay (\bar{Z})
-    total_delays = offline_df["status_quo_total_delay"]
+    # Helper function to calculate statistics
+    def calculate_statistics(df):
+        total_delays = df["status_quo_total_delay"]
+        num_conflicting_sets = df["instance_conflicting_sets"].apply(
+            lambda x: sum(len(sublist) > 0 for sublist in x)
+        )
+        longest_conflicting_set = df["instance_conflicting_sets"].apply(
+            lambda x: max((len(sublist) for sublist in x), default=0)
+        )
 
-    # Number of instance_conflicting_sets lists with at least one value (\vert \hat{A} \vert)
-    num_conflicting_sets = offline_df["instance_conflicting_sets"].apply(
-        lambda x: sum(len(sublist) > 0 for sublist in x)
-    )
+        return {
+            "Min": [
+                int(total_delays.min()),
+                int(num_conflicting_sets.min()),
+                int(longest_conflicting_set.min())
+            ],
+            "Max": [
+                int(total_delays.max()),
+                int(num_conflicting_sets.max()),
+                int(longest_conflicting_set.max())
+            ],
+            "Avg": [
+                int(total_delays.mean()),
+                int(num_conflicting_sets.mean()),
+                int(longest_conflicting_set.mean())
+            ],
+        }
 
-    # Length of the longest list in instance_conflicting_sets (\vert R_a \vert^{\text{MAX}})
-    longest_conflicting_set = offline_df["instance_conflicting_sets"].apply(
-        lambda x: max((len(sublist) for sublist in x), default=0)
-    )
-
-    # Summary calculations (Min, Max, Avg)
-    summary_data = {
-        "Min": [
-            int(total_delays.min()),
-            int(num_conflicting_sets.min()),
-            int(longest_conflicting_set.min())
-        ],
-        "Max": [
-            int(total_delays.max()),
-            int(num_conflicting_sets.max()),
-            int(longest_conflicting_set.max())
-        ],
-        "Avg": [
-            int(total_delays.mean()),
-            int(num_conflicting_sets.mean()),
-            int(longest_conflicting_set.mean())
-        ],
-    }
+    # Step 3: Calculate statistics for LC and HC
+    print("Calculating statistics for LC and HC...")
+    lc_summary_data = calculate_statistics(lc_df)
+    hc_summary_data = calculate_statistics(hc_df)
 
     # Metrics with LaTeX formatting
     metrics = [
@@ -51,14 +55,18 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
         r"$\vert R_a \vert^{\text{MAX}}$"  # Superscript MAX for R_a
     ]
 
-    # Step 3: Create the summary table
-    print("Creating summary table...")
-    summary_table = pd.DataFrame(
-        summary_data,
-        index=metrics
+    # Step 4: Combine LC and HC into a single table
+    print("Combining LC and HC data into a single table...")
+    lc_summary_table = pd.DataFrame(lc_summary_data, index=metrics)
+    hc_summary_table = pd.DataFrame(hc_summary_data, index=metrics)
+
+    combined_table = pd.concat(
+        [lc_summary_table, hc_summary_table],
+        keys=["LC", "HC"],
+        axis=1
     )
 
-    # Step 4: Save the table as HTML and LaTeX
+    # Step 5: Save the table as HTML and LaTeX
     print("Saving table to files...")
     output_dir = Path(path_to_tables)
     os.makedirs(output_dir, exist_ok=True)
@@ -67,12 +75,12 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
     latex_path = output_dir / "summary_table.tex"
 
     # Save as HTML
-    summary_table.to_html(html_path, border=0)
+    combined_table.to_html(html_path, border=0)
 
     # Save as LaTeX
     with open(latex_path, "w", encoding="utf-8") as latex_file:
         latex_file.write(
-            summary_table.to_latex(escape=False, column_format="lccc")
+            combined_table.to_latex(escape=False, column_format="lcccccc")
         )
 
     print("Summary table generation complete.")
