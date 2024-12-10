@@ -7,9 +7,9 @@
 namespace cpp_module {
 
     auto compare_conflicts(const Conflict &a, const Conflict &b) -> bool {
-        if (a.delayConflict > b.delayConflict) {
+        if (a.delay_conflict > b.delay_conflict) {
             return true;
-        } else if (a.delayConflict == b.delayConflict) {
+        } else if (a.delay_conflict == b.delay_conflict) {
             return a.current_trip_id > b.current_trip_id;
         }
         return false;
@@ -23,12 +23,9 @@ namespace cpp_module {
         }
     }
 
-    auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc,
-                                 const double &departure_time) -> double {
-        auto vehicle_left_arc = !arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time;
-        while (vehicle_left_arc) {
+    auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double {
+        while (!arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time) {
             arrivals_on_arc.pop();
-            vehicle_left_arc = !arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time;
         }
         return static_cast<double>(arrivals_on_arc.size()) + 1.0;
     }
@@ -39,6 +36,7 @@ namespace cpp_module {
         if (arc == 0) {
             return 0.0;
         }
+
         std::vector<double> delays_at_pieces;
         delays_at_pieces.reserve(arg_instance.get_number_of_pieces_delay_function() + 1);
 
@@ -129,10 +127,8 @@ namespace cpp_module {
         for (auto sorted_arrival: conflicting_arrivals) {
             vehicles_on_arc++;
             double conflict_delay = compute_delay_on_arc(vehicles_on_arc, instance, arc);
-            {
-                Conflict conflict = create_conflict(arc, conflict_delay, sorted_arrival);
-                conflicts_list.push_back(conflict);
-            }
+            Conflict conflict = create_conflict(arc, conflict_delay, sorted_arrival);
+            conflicts_list.push_back(conflict);
         }
     }
 
@@ -142,14 +138,14 @@ namespace cpp_module {
         current_vehicle_info.trip_id = current_vehicle;
         current_vehicle_info.departure_time = congested_schedule[current_vehicle][position];
         current_vehicle_info.arrival_time = congested_schedule[current_vehicle][position + 1];
-        current_vehicle_info.earliest_departure_time =
-                instance.get_trip_arc_earliest_departure_time(current_vehicle, position);
-        current_vehicle_info.latest_departure_time =
-                instance.get_trip_arc_latest_departure_time(current_vehicle, position);
-        current_vehicle_info.earliest_arrival_time =
-                instance.get_trip_arc_earliest_departure_time(current_vehicle, position + 1);
-        current_vehicle_info.latest_arrival_time =
-                instance.get_trip_arc_latest_departure_time(current_vehicle, position + 1);
+        current_vehicle_info.earliest_departure_time = instance.get_trip_arc_earliest_departure_time(current_vehicle,
+                                                                                                     position);
+        current_vehicle_info.latest_departure_time = instance.get_trip_arc_latest_departure_time(current_vehicle,
+                                                                                                 position);
+        current_vehicle_info.earliest_arrival_time = instance.get_trip_arc_earliest_departure_time(current_vehicle,
+                                                                                                   position + 1);
+        current_vehicle_info.latest_arrival_time = instance.get_trip_arc_latest_departure_time(current_vehicle,
+                                                                                               position + 1);
     }
 
     auto ConflictSearcherNew::check_vehicle_has_delay(const VehicleSchedule &congested_schedule,

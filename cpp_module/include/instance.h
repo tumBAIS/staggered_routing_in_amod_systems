@@ -21,7 +21,7 @@ namespace cpp_module {
         long arc;
         long current_trip_id;
         long other_trip_id;
-        double delayConflict;
+        double delay_conflict;
         double distanceToCover;
         double staggeringCurrentVehicle;
         double destaggeringOtherVehicle;

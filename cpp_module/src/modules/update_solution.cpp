@@ -261,7 +261,7 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_checkIfTieInSet(const VehicleSchedule &congestedSchedule) -> bool {
+    auto Scheduler::check_if_tie_in_set(const VehicleSchedule &congestedSchedule) -> bool {
         for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
             if (departure.trip_id != other_trip_id) {
                 const long otherPosition = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
@@ -277,7 +277,7 @@ namespace cpp_module {
                            departure.position,
                            otherPosition,
                            departure.arc_id};
-                bool tieOnArc = checkIfVehiclesHaveTie(congestedSchedule, tie);
+                bool tieOnArc = check_if_vehicles_have_tie(congestedSchedule, tie);
                 if (tieOnArc) {
                     return true;
                 }
@@ -300,7 +300,7 @@ namespace cpp_module {
                                            double &vehiclesOnArc) -> void {
         _updateVehiclesOnArcOfConflictingSet(completeSolution, vehiclesOnArc);
         if (lazy_update_pq) { return; }
-        tie_found = _checkIfTieInSet(completeSolution.get_schedule());
+        tie_found = check_if_tie_in_set(completeSolution.get_schedule());
         if (tie_found) {
             return;
         }

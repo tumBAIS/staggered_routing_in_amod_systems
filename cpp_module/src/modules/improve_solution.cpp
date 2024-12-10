@@ -9,7 +9,7 @@
 
 namespace cpp_module {
 
-    auto staggerVehicle(Solution &completeSolution, long vehicle, double staggering) -> void {
+    auto stagger_trip(Solution &completeSolution, long vehicle, double staggering) -> void {
         completeSolution.increase_trip_start_time(vehicle, staggering);
         completeSolution.increase_staggering_applied(vehicle, staggering);
         completeSolution.increase_remaining_time_slack(vehicle, -staggering); //staggering is negative
@@ -28,13 +28,13 @@ namespace cpp_module {
 
     auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
                            Conflict &conflict) -> void {
-        staggerVehicle(newSolution,
-                       conflict.current_trip_id,
-                       -conflict.staggeringCurrentVehicle);
+        stagger_trip(newSolution,
+                     conflict.current_trip_id,
+                     -conflict.staggeringCurrentVehicle);
         conflict.staggeringCurrentVehicle = 0;
-        staggerVehicle(newSolution,
-                       conflict.other_trip_id,
-                       conflict.destaggeringOtherVehicle);
+        stagger_trip(newSolution,
+                     conflict.other_trip_id,
+                     conflict.destaggeringOtherVehicle);
         conflict.destaggeringOtherVehicle = 0;
         newSolution.set_schedule(currentSolution.get_schedule());
         newSolution.set_total_delay(currentSolution.get_total_delay());
@@ -51,15 +51,15 @@ namespace cpp_module {
                 conflict.distanceToCover < completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id) +
                                            completeSolution.get_trip_staggering_applied(conflict.other_trip_id);
         if (moveVehicleOne) {
-            staggerVehicle(completeSolution, conflict.current_trip_id, conflict.distanceToCover);
+            stagger_trip(completeSolution, conflict.current_trip_id, conflict.distanceToCover);
             conflict.staggeringCurrentVehicle += conflict.distanceToCover;
             assert(conflict.distanceToCover > 0);
         } else if (moveBothVehicles) {
             // distance can be covered removing staggering to other vehicle
             auto staggering = std::max(0.0, completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id));
             auto destaggering = conflict.distanceToCover - staggering;
-            staggerVehicle(completeSolution, conflict.current_trip_id, staggering);
-            staggerVehicle(completeSolution, conflict.other_trip_id, -destaggering);
+            stagger_trip(completeSolution, conflict.current_trip_id, staggering);
+            stagger_trip(completeSolution, conflict.other_trip_id, -destaggering);
             conflict.staggeringCurrentVehicle += staggering;
             conflict.destaggeringOtherVehicle += destaggering;
             assert(staggering > 0 || destaggering > 0);
@@ -72,8 +72,8 @@ namespace cpp_module {
                                 const Solution &newSolution,
                                 Conflict &conflict) -> void {
         // update current vehicle
-        staggerVehicle(currentSolution, conflict.current_trip_id, conflict.staggeringCurrentVehicle);
-        staggerVehicle(currentSolution, conflict.other_trip_id, -conflict.destaggeringOtherVehicle);
+        stagger_trip(currentSolution, conflict.current_trip_id, conflict.staggeringCurrentVehicle);
+        stagger_trip(currentSolution, conflict.other_trip_id, -conflict.destaggeringOtherVehicle);
         currentSolution.set_schedule(newSolution.get_schedule());
         currentSolution.set_total_delay(newSolution.get_total_delay());
         currentSolution.set_ties_flag(newSolution.get_ties_flag());
