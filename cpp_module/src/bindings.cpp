@@ -9,18 +9,7 @@
 
 namespace cpp_module {
 
-    auto _printIfAssertionsAreActive() -> void {
-#ifdef assertionsOnEvaluationFunction
-        std::cout << "Assertions on evaluation function activated \n";
-#endif
-#ifdef assertionsOnMoveOperator
-        std::cout << "Assertions on move operator activated \n";
-#endif
-    }
-
-
     auto Scheduler::construct_solution(const std::vector<double> &start_times) -> Solution {
-        _printIfAssertionsAreActive();
         // Function computing schedule with congestion given set of release times.
         Solution completeSolution(start_times, instance);
         construct_schedule(completeSolution);
@@ -40,19 +29,18 @@ namespace cpp_module {
         }
     }
 
-    auto getInstanceForLocalSearch(const ConflictingSetsList &argConflictingSets,
-                                   const std::vector<std::vector<double>> &earliestDepartureTimes,
-                                   const std::vector<std::vector<double>> &latestDepartureTimes,
-                                   const std::vector<double> &nominalTravelTimesArcs,
-                                   const std::vector<long> &nominalCapacitiesArcsUtilized,
-                                   const std::vector<std::vector<long>> &arcBasedShortestPaths,
-                                   const std::vector<double> &argDeadlines,
-                                   const std::vector<double> &argDueDates,
-                                   const std::vector<double> &arg_list_of_slopes,
-                                   const std::vector<double> &arg_list_of_thresholds,
-                                   const std::vector<double> &argParameters,
-                                   const std::vector<double> &arg_release_times,
-                                   const double &arg_lb_travel_time) -> Instance {
+    auto get_instance_for_local_search(const ConflictingSetsList &argConflictingSets,
+                                       const std::vector<std::vector<double>> &earliestDepartureTimes,
+                                       const std::vector<std::vector<double>> &latestDepartureTimes,
+                                       const std::vector<double> &nominalTravelTimesArcs,
+                                       const std::vector<long> &nominalCapacitiesArcsUtilized,
+                                       const std::vector<std::vector<long>> &arcBasedShortestPaths,
+                                       const std::vector<double> &argDeadlines,
+                                       const std::vector<double> &arg_list_of_slopes,
+                                       const std::vector<double> &arg_list_of_thresholds,
+                                       const std::vector<double> &argParameters,
+                                       const std::vector<double> &arg_release_times,
+                                       const double &arg_lb_travel_time) -> Instance {
         Instance instance(arcBasedShortestPaths,
                           nominalTravelTimesArcs,
                           nominalCapacitiesArcsUtilized,
@@ -86,34 +74,32 @@ namespace cpp_module {
         return currentSolution;
     }
 
-    auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
-                                  const std::vector<double> &argRemainingTimeSlack,
-                                  const std::vector<double> &argStaggeringApplied,
-                                  const ConflictingSetsList &argConflictingSets,
-                                  const std::vector<std::vector<double>> &earliestDepartureTimes,
-                                  const std::vector<std::vector<double>> &latestDepartureTimes,
-                                  const std::vector<double> &argNominalTravelTimesArcs,
-                                  const std::vector<long> &argNominalCapacitiesArcsUtilized,
-                                  const std::vector<std::vector<long>> &arcBasedShortestPaths,
-                                  const std::vector<double> &argDeadlines,
-                                  const std::vector<double> &argDueDates,
-                                  const std::vector<double> &arg_list_of_slopes,
-                                  const std::vector<double> &arg_list_of_thresholds,
-                                  const std::vector<double> &argParameters,
-                                  const double &arg_lb_travel_time) -> VehicleSchedule {
-        Instance instance = getInstanceForLocalSearch(argConflictingSets,
-                                                      earliestDepartureTimes,
-                                                      latestDepartureTimes,
-                                                      argNominalTravelTimesArcs,
-                                                      argNominalCapacitiesArcsUtilized,
-                                                      arcBasedShortestPaths,
-                                                      argDeadlines,
-                                                      argDueDates,
-                                                      arg_list_of_slopes,
-                                                      arg_list_of_thresholds,
-                                                      argParameters,
-                                                      arg_release_times,
-                                                      arg_lb_travel_time);
+    auto cpp_local_search(const std::vector<double> &arg_release_times,
+                          const std::vector<double> &argRemainingTimeSlack,
+                          const std::vector<double> &argStaggeringApplied,
+                          const ConflictingSetsList &argConflictingSets,
+                          const std::vector<std::vector<double>> &earliestDepartureTimes,
+                          const std::vector<std::vector<double>> &latestDepartureTimes,
+                          const std::vector<double> &argNominalTravelTimesArcs,
+                          const std::vector<long> &argNominalCapacitiesArcsUtilized,
+                          const std::vector<std::vector<long>> &arcBasedShortestPaths,
+                          const std::vector<double> &argDeadlines,
+                          const std::vector<double> &arg_list_of_slopes,
+                          const std::vector<double> &arg_list_of_thresholds,
+                          const std::vector<double> &argParameters,
+                          const double &arg_lb_travel_time) -> VehicleSchedule {
+        Instance instance = get_instance_for_local_search(argConflictingSets,
+                                                          earliestDepartureTimes,
+                                                          latestDepartureTimes,
+                                                          argNominalTravelTimesArcs,
+                                                          argNominalCapacitiesArcsUtilized,
+                                                          arcBasedShortestPaths,
+                                                          argDeadlines,
+                                                          arg_list_of_slopes,
+                                                          arg_list_of_thresholds,
+                                                          argParameters,
+                                                          arg_release_times,
+                                                          arg_lb_travel_time);
         Scheduler scheduler(instance);
         Solution currentSolution = getInitialSolutionForLocalSearch(scheduler, instance,
                                                                     arg_release_times, argRemainingTimeSlack,
@@ -182,7 +168,7 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("construct_solution", &cpp_module::Scheduler::construct_solution,
                  py::arg("start_times"));
 
-    m.def("cppSchedulingLocalSearch", &cpp_module::cppSchedulingLocalSearch,
+    m.def("cpp_local_search", &cpp_module::cpp_local_search,
           py::arg("release_times"),
           py::arg("remaining_time_slack"),
           py::arg("staggering_applied"),
@@ -193,7 +179,6 @@ PYBIND11_MODULE(cpp_module, m) {
           py::arg("capacities_arcs"),
           py::arg("trip_routes"),
           py::arg("deadlines"),
-          py::arg("due_dates"),
           py::arg("list_of_slopes"),
           py::arg("list_of_thresholds"),
           py::arg("parameters"),

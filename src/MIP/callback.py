@@ -80,8 +80,7 @@ def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_o
 def get_heuristic_solution(model: Model, instance: Instance, solver_params: SolverParameters) -> HeuristicSolution:
     model._flagUpdate = False
     cpp_parameters = [solver_params.algorithm_time_limit]
-    instance.due_dates = instance.deadlines
-    congested_schedule = cpp.cppSchedulingLocalSearch(
+    congested_schedule = cpp.cpp_local_search(
         release_times=model._cbReleaseTimes,
         remaining_time_slack=model._cbRemainingTimeSlack,
         staggering_applied=model._cbStaggeringApplied,
@@ -92,7 +91,6 @@ def get_heuristic_solution(model: Model, instance: Instance, solver_params: Solv
         capacities_arcs=instance.capacities_arcs,
         trip_routes=instance.trip_routes,
         deadlines=instance.deadlines,
-        due_dates=instance.due_dates,
         list_of_slopes=instance.input_data.list_of_slopes,
         list_of_thresholds=instance.input_data.list_of_thresholds,
         parameters=cpp_parameters,

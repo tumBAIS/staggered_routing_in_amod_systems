@@ -22,7 +22,7 @@ def _run_local_search(solution: EpochSolution, instance: EpochInstance, solver_p
     cppParameters = [
         timeRemaining,
     ]
-    congestedSchedule = cpp.cppSchedulingLocalSearch(
+    congestedSchedule = cpp.cpp_local_search(
         release_times=solution.release_times,
         remaining_time_slack=solution.staggering_applicable,
         staggering_applied=solution.staggering_applied,
@@ -33,7 +33,6 @@ def _run_local_search(solution: EpochSolution, instance: EpochInstance, solver_p
         capacities_arcs=instance.capacities_arcs,
         trip_routes=instance.trip_routes,
         deadlines=instance.deadlines,
-        due_dates=instance.due_dates,
         list_of_slopes=instance.input_data.list_of_slopes,
         list_of_thresholds=instance.input_data.list_of_thresholds,
         parameters=cppParameters,

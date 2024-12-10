@@ -54,21 +54,20 @@ namespace cpp_module {
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
 
-    auto cppSchedulingLocalSearch(const std::vector<double> &arg_release_times,
-                                  const std::vector<double> &argRemainingTimeSlack,
-                                  const std::vector<double> &argStaggeringApplied,
-                                  const ConflictingSetsList &argConflictingSets,
-                                  const std::vector<std::vector<double>> &earliestDepartureTimes,
-                                  const std::vector<std::vector<double>> &latestDepartureTimes,
-                                  const std::vector<double> &argNominalTravelTimesArcs,
-                                  const std::vector<long> &argNominalCapacitiesArcsUtilized,
-                                  const std::vector<std::vector<long>> &arcBasedShortestPaths,
-                                  const std::vector<double> &argDeadlines,
-                                  const std::vector<double> &argDueDates,
-                                  const std::vector<double> &arg_list_of_slopes,
-                                  const std::vector<double> &arg_list_of_thresholds,
-                                  const std::vector<double> &argParameters,
-                                  const double &lb_travel_time) -> VehicleSchedule;
+    auto cpp_local_search(const std::vector<double> &arg_release_times,
+                          const std::vector<double> &argRemainingTimeSlack,
+                          const std::vector<double> &argStaggeringApplied,
+                          const ConflictingSetsList &argConflictingSets,
+                          const std::vector<std::vector<double>> &earliestDepartureTimes,
+                          const std::vector<std::vector<double>> &latestDepartureTimes,
+                          const std::vector<double> &argNominalTravelTimesArcs,
+                          const std::vector<long> &argNominalCapacitiesArcsUtilized,
+                          const std::vector<std::vector<long>> &arcBasedShortestPaths,
+                          const std::vector<double> &argDeadlines,
+                          const std::vector<double> &arg_list_of_slopes,
+                          const std::vector<double> &arg_list_of_thresholds,
+                          const std::vector<double> &argParameters,
+                          const double &lb_travel_time) -> VehicleSchedule;
 
     auto _sortConflicts(std::vector<Conflict> &conflictsInSchedule) -> void;
 
@@ -282,9 +281,6 @@ namespace cpp_module {
     _updateCurrentSolution(Solution &currentSolution,
                            const Solution &newSolution,
                            Conflict &conflict) -> void;
-
-
-    auto _initializeCompleteSolution(Solution &completeSolution) -> void;
 
 
     auto get_index(const std::vector<long> &v, long K) -> long;
