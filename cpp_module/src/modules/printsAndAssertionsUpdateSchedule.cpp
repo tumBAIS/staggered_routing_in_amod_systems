@@ -31,14 +31,6 @@ auto cpp_module::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNe
 #endif
 }
 
-auto cpp_module::Scheduler::assertTotalTardinessIsNotNegative(const double totalTardiness) -> void {
-#ifdef assertionsOnEvaluationFunction
-    if (totalTardiness < -1e-6) {
-        std::cout << "Total tardiness: " << totalTardiness << "is negative!";
-        throw std::invalid_argument("NegativeTardinessError");
-    }
-#endif
-}
 
 auto cpp_module::Scheduler::printDelayComputed(const double delay) const -> void {
 #ifdef printsEvaluationFunction

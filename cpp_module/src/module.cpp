@@ -26,7 +26,7 @@ namespace cpp_module {
         construct_schedule(completeSolution);
         initializeConflictingSetsForConstructSchedule(instance);
         checkIfSolutionHasTies(instance, completeSolution);
-        if (completeSolution.solutionHasTies) {
+        if (completeSolution.has_ties) {
             solveSolutionTies(instance, completeSolution, *this);
         }
         return completeSolution;
@@ -78,12 +78,12 @@ namespace cpp_module {
                                           const std::vector<double> &argStaggeringApplied) -> Solution {
         Solution currentSolution(argReleaseTimes, instance);
         scheduler.construct_schedule(currentSolution);
-        if (!currentSolution.scheduleIsFeasibleAndImproving) {
+        if (!currentSolution.is_feasible_and_improving) {
             std::cout << "Initial solution is infeasible - local search stopped \n";
             return currentSolution;
         }
-        currentSolution.remainingTimeSlack = argRemainingTimeSlack;
-        currentSolution.staggeringApplied = argStaggeringApplied;
+        currentSolution.remaining_time_slack = argRemainingTimeSlack;
+        currentSolution.staggering_applied = argStaggeringApplied;
         return currentSolution;
     }
 
@@ -124,11 +124,11 @@ namespace cpp_module {
                                                                     argStaggeringApplied);
         std::cout << "Local search received a solution with " << std::round(currentSolution.total_delay)
                   << " sec. of delay \n";
-        if (!currentSolution.scheduleIsFeasibleAndImproving) {
+        if (!currentSolution.is_feasible_and_improving) {
             return currentSolution.schedule;
         }
         checkIfSolutionHasTies(instance, currentSolution);
-        if (currentSolution.solutionHasTies) {
+        if (currentSolution.has_ties) {
             solveSolutionTies(instance, currentSolution, scheduler);
         }
         improveTowardsSolutionQuality(instance, currentSolution, scheduler);

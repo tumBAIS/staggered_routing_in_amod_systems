@@ -33,16 +33,8 @@ namespace cpp_module {
 
     auto _initializeCompleteSolution(Solution &completeSolution) -> void {
         completeSolution.total_delay = 0;
-        completeSolution.totalTardiness = 0;
-        completeSolution.solutionValue = 0;
-        completeSolution.timesCapIsReached = 0;
-        completeSolution.scheduleIsFeasibleAndImproving = true;
-        completeSolution.solutionHasTies = false;
-        completeSolution.capReached = false;
-        for (auto vehicle = 0; vehicle < completeSolution.schedule.size(); vehicle++) {
-            std::size_t sz = completeSolution.tableWithCapReached[vehicle].size();
-            completeSolution.tableWithCapReached[vehicle].assign(sz, false);
-        }
+        completeSolution.is_feasible_and_improving = true;
+        completeSolution.has_ties = false;
     }
 
     auto
@@ -71,8 +63,7 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::checkIfSolutionIsAdmissible(const double solutionValue,
-                                                const double timesCapIsReached) -> bool {
+    auto Scheduler::checkIfSolutionIsAdmissible(const double total_delay) -> bool {
 
         if (departure.time > instance.deadlines[departure.trip_id] + TOLERANCE) {
             std::cout << "Deadline vehicle " << departure.trip_id << " : " << instance.deadlines[departure.trip_id] <<
@@ -81,12 +72,10 @@ namespace cpp_module {
                       " time: " << departure.time << "\n";
             return false;
         }
-        if (solutionValue >= bestSolutionValue) {
+        if (total_delay >= best_total_delay) {
             return false;
         }
-        if (timesCapIsReached > maxTimesCapReached) {
-            return false;
-        }
+
         return true;
     }
 
@@ -96,15 +85,6 @@ namespace cpp_module {
         completeSolution.schedule[departure.trip_id][departure.position] = departure.time;
     }
 
-    auto Scheduler::_computeSolutionTardiness(Solution &completeSolution) -> void {
-        for (auto vehicle = 0; vehicle < completeSolution.schedule.size(); vehicle++) {
-            double vehicleTardiness = std::max(0.0, completeSolution.schedule[vehicle].back() -
-                                                    instance.dueDates[vehicle]);
-            completeSolution.totalTardiness += vehicleTardiness;
-            assertTotalTardinessIsNotNegative(completeSolution.totalTardiness);
-        }
-
-    }
 
     auto
     Scheduler::construct_schedule(Solution &completeSolution) -> void {
@@ -121,15 +101,12 @@ namespace cpp_module {
                 completeSolution.set_delay_on_arc(delay, departure.trip_id, departure.position);
                 completeSolution.total_delay += delay;
                 _setNextDepartureOfVehicleAndPushToQueue(delay);
-                bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(
-                        completeSolution.solutionValue, completeSolution.timesCapIsReached);
+                bool scheduleIsFeasibleAndImproving = checkIfSolutionIsAdmissible(completeSolution.total_delay);
                 if (!scheduleIsFeasibleAndImproving) {
-                    completeSolution.scheduleIsFeasibleAndImproving = false;
+                    completeSolution.is_feasible_and_improving = false;
                 }
             }
         }
-        _computeSolutionTardiness(completeSolution);
-        completeSolution.solutionValue = completeSolution.total_delay;
     }
 
 

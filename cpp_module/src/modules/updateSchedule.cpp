@@ -241,11 +241,8 @@ namespace cpp_module {
             const double newTardinessOnArc = std::max(0.0,
                                                       completeSolution.schedule[vehicle].back() -
                                                       instance.dueDates[vehicle]);
-            completeSolution.totalTardiness += (newTardinessOnArc - OldTardinessVehicle);
 
         }
-        assertTotalTardinessIsNotNegative(completeSolution.totalTardiness);
-        completeSolution.solutionValue = completeSolution.total_delay;
     }
 
 
@@ -595,7 +592,7 @@ namespace cpp_module {
             _assertAnalyzingSmallestDeparture(completeSolution.schedule);
             _processVehicle(completeSolution);
             if (tieFound || vehicleIsLate) {
-                completeSolution.scheduleIsFeasibleAndImproving = false;
+                completeSolution.is_feasible_and_improving = false;
                 return;
             }
             if (lazyUpdatePriorityQueue) {
@@ -604,12 +601,9 @@ namespace cpp_module {
             }
         }
         _updateTotalValueSolution(completeSolution);
-        if (completeSolution.solutionValue >= bestSolutionValue) {
+        if (completeSolution.total_delay >= best_total_delay) {
             worseSolutions++;
-            completeSolution.scheduleIsFeasibleAndImproving = false;
-        }
-        if (completeSolution.timesCapIsReached > maxTimesCapReached) {
-            completeSolution.scheduleIsFeasibleAndImproving = false;
+            completeSolution.is_feasible_and_improving = false;
         }
         _assertNoVehiclesAreLate(completeSolution);
     }

@@ -112,7 +112,7 @@ namespace cpp_module {
         Departure departure{};
         Departure otherVehicleDeparture{};
         Instance &instance;
-        double bestSolutionValue;
+        double best_total_delay;
         long maxTimesCapReached;
         VehicleSchedule originalSchedule;
         VehicleSchedule scheduleToRestore;
@@ -145,14 +145,14 @@ namespace cpp_module {
         explicit Scheduler(Instance &argInstance) :
                 instance(argInstance) {
             startSearchClock = clock() / (double) CLOCKS_PER_SEC;
-            bestSolutionValue = std::numeric_limits<double>::max();
+            best_total_delay = std::numeric_limits<double>::max();
             maxTimesCapReached = std::numeric_limits<long>::max();
             vehicleStatus = std::vector<vehicleStatusType>(instance.numberOfVehicles, vehicleStatusType::INACTIVE);
             iteration = 0;
         };
 
         auto
-        checkIfSolutionIsAdmissible(double totalDelay, double timesCapIsReached) -> bool;
+        checkIfSolutionIsAdmissible(double totalDelay) -> bool;
 
         auto
         construct_schedule(Solution &completeSolution) -> void;
@@ -288,9 +288,6 @@ namespace cpp_module {
 
         bool _checkIfVehicleIsLate(double currentVehicleNewArrival);
 
-        static void assertTotalTardinessIsNotNegative(double totalTardiness);
-
-        void _computeSolutionTardiness(Solution &completeSolution);
 
         InstructionConflictingSet
         _checkIfTripsWithinSameConflictingSetCanHaveAConflict(long otherVehicle, long otherPosition);

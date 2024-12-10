@@ -15,39 +15,29 @@ namespace cpp_module {
     public:
         VehicleSchedule schedule;
         VehicleSchedule delays_on_arcs;
-        std::vector<std::vector<bool>> tableWithCapReached;
         std::vector<double> start_times;
-        std::vector<double> remainingTimeSlack;
-        std::vector<double> staggeringApplied;
+        std::vector<double> remaining_time_slack;
+        std::vector<double> staggering_applied;
         double total_delay;
         double lb_travel_time;
-        double totalTardiness;
-        double solutionValue;
-        bool scheduleIsFeasibleAndImproving;
-        bool solutionHasTies;
-        bool capReached;
-        long timesCapIsReached{};
+        bool is_feasible_and_improving;
+        bool has_ties;
 
-        explicit Solution(const std::vector<double> &argReleaseTimes, Instance &instance)
-                : schedule(argReleaseTimes.size()), staggeringApplied(argReleaseTimes.size()),
-                  delays_on_arcs(argReleaseTimes.size()),
-                  remainingTimeSlack(argReleaseTimes.size()),
-                  tableWithCapReached(argReleaseTimes.size()) {
-            start_times = argReleaseTimes;
+        explicit Solution(const std::vector<double> &arg_start_times, Instance &instance)
+                : schedule(arg_start_times.size()), staggering_applied(arg_start_times.size()),
+                  delays_on_arcs(arg_start_times.size()),
+                  remaining_time_slack(arg_start_times.size()) {
+            start_times = arg_start_times;
             total_delay = 0;
-            totalTardiness = 0;
-            solutionValue = 0;
             lb_travel_time = instance.lb_travel_time;
-            scheduleIsFeasibleAndImproving = true;
-            solutionHasTies = false;
-            capReached = false;
-            for (auto vehicle = 0; vehicle < size(argReleaseTimes); vehicle++) {
+            is_feasible_and_improving = true;
+            has_ties = false;
+            for (auto vehicle = 0; vehicle < size(arg_start_times); vehicle++) {
                 schedule[vehicle].resize(instance.trip_routes[vehicle].size());
                 delays_on_arcs[vehicle] = delays_on_arcs[vehicle] = std::vector<double>(
                         instance.trip_routes[vehicle].size(), 0.0);
-                staggeringApplied[vehicle] = 0.0;
-                remainingTimeSlack[vehicle] = std::numeric_limits<double>::max();
-                tableWithCapReached[vehicle].resize(instance.trip_routes[vehicle].size());
+                staggering_applied[vehicle] = 0.0;
+                remaining_time_slack[vehicle] = std::numeric_limits<double>::max();
             }
         };
 
@@ -85,8 +75,6 @@ namespace cpp_module {
         void set_delay_on_arc(double delay, int trip_id, int position) {
             delays_on_arcs[trip_id][position] = delay;
         }
-
-
     };
 
 }

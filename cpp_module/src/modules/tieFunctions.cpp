@@ -20,12 +20,10 @@ namespace cpp_module {
                         const long &vehicleOne,
                         const CorrectSolution &correctSolution) -> void {
         staggerVehicle(completeSolution, vehicleOne, -CONSTR_TOLERANCE);
-        completeSolution.solutionHasTies = true;
+        completeSolution.has_ties = true;
         completeSolution.schedule = correctSolution.schedule;
         completeSolution.total_delay = correctSolution.totalDelay;
-        completeSolution.scheduleIsFeasibleAndImproving = correctSolution.scheduleIsFeasibleAndImproving;
-        completeSolution.capReached = correctSolution.capIsReached;
-        completeSolution.timesCapIsReached = correctSolution.timesCapIsReached;
+        completeSolution.is_feasible_and_improving = correctSolution.scheduleIsFeasibleAndImproving;
     }
 
     auto _checkIfSlackISEnoughToSolveTie(const double slackVehicle) -> bool {
@@ -41,10 +39,7 @@ namespace cpp_module {
         CorrectSolution correctSolution{};
 
         correctSolution.schedule = completeSolution.schedule;
-        correctSolution.tableWithCapReached = completeSolution.tableWithCapReached;
         correctSolution.totalDelay = completeSolution.total_delay;
-        correctSolution.capIsReached = completeSolution.capReached;
-        correctSolution.timesCapIsReached = completeSolution.timesCapIsReached;
         return correctSolution;
     }
 
@@ -71,19 +66,19 @@ namespace cpp_module {
 
     auto _solveTie(Solution &completeSolution, const Tie &tie, Scheduler &scheduler) -> void {
         auto thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
-        auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remainingTimeSlack[tie.vehicleOne]);
+        auto slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remaining_time_slack[tie.vehicleOne]);
         while (thereIsTie && slackIsEnough) {
             const CorrectSolution correctSolution = _setCorrectSolution(completeSolution);
             staggerVehicle(completeSolution, tie.vehicleOne, CONSTR_TOLERANCE);
             scheduler.construct_schedule(completeSolution);
-            if (!completeSolution.scheduleIsFeasibleAndImproving) {
+            if (!completeSolution.is_feasible_and_improving) {
                 _resetSolution(completeSolution, tie.vehicleOne, correctSolution);
 
                 return;
             }
             _printTieSolved(tie);
             thereIsTie = checkIfVehiclesHaveTie(completeSolution.schedule, tie);
-            slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remainingTimeSlack[tie.vehicleOne]);
+            slackIsEnough = _checkIfSlackISEnoughToSolveTie(completeSolution.remaining_time_slack[tie.vehicleOne]);
         }
     }
 
@@ -140,17 +135,17 @@ namespace cpp_module {
             }
             bool thereIsTie = _checkArcTies(instance, arc, completeSolution);
             if (thereIsTie) {
-                completeSolution.solutionHasTies = true;
+                completeSolution.has_ties = true;
                 _printIfSolutionHasTies(completeSolution);
                 return;
             }
-            completeSolution.solutionHasTies = false;
+            completeSolution.has_ties = false;
         }
     }
 
 
     auto solveSolutionTies(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void {
-        completeSolution.solutionHasTies = false; // will be set to true if a tie cannot be solved
+        completeSolution.has_ties = false; // will be set to true if a tie cannot be solved
         for (long arc = 1; arc < instance.numberOfArcs; arc++) {
             bool noTiesCanHappenOnArc = instance.conflictingSet[arc].empty();
             if (noTiesCanHappenOnArc) {
