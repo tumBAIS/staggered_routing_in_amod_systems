@@ -40,7 +40,10 @@ def add_departures_to_next_epoch(next_epoch_departures: list[NextEpochDeparture]
                                  global_instance: instance_module.instance.Instance,
                                  solver_params: SolverParameters) -> None:
     for departure in next_epoch_departures:
-        original_vehicle_id = current_epoch_instance.vehicles_original_ids[departure.vehicle]
+        try:
+            original_vehicle_id = current_epoch_instance.vehicles_original_ids[departure.vehicle]
+        except:
+            raise RuntimeError
         max_staggering_applicable = get_max_staggering_applicable_next_epoch(departure, global_instance,
                                                                              next_epoch_instance, original_vehicle_id,
                                                                              solver_params)
@@ -51,7 +54,7 @@ def add_departures_to_next_epoch(next_epoch_departures: list[NextEpochDeparture]
 
         next_epoch_instance.vehicles_original_ids.append(original_vehicle_id)
         next_epoch_instance.max_staggering_applicable.append(max_staggering_applicable)
-        next_epoch_instance.release_times.append(departure.time)
+        next_epoch_instance.release_times_dataset.append(departure.time)
         next_epoch_instance.deadlines.append(global_instance.deadlines[original_vehicle_id])
         next_epoch_instance.trip_routes.append(path_to_append)
         next_epoch_instance.last_position_for_reconstruction.append(None)

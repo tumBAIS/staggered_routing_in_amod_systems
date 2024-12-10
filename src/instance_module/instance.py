@@ -77,18 +77,3 @@ class Instance:
 def print_total_free_flow_time(instance: Instance):
     total_free_flow_time = sum(instance.travel_times_arcs[arc] for path in instance.trip_routes for arc in path)
     print(f"Total free flow time for the instance: {total_free_flow_time / 3600:.2f} hours")
-
-
-def get_instance(input_data: InstanceParameters, arc_based_shortest_paths: list[list[int]],
-                 nominal_travel_times: list[float], nominal_capacities: list[int],
-                 release_times_dataset: list[Time],
-                 node_based_trip_routes: list[list[int]], deadlines: list[float]) -> Instance:
-    return Instance(
-        trip_routes=arc_based_shortest_paths,
-        travel_times_arcs=nominal_travel_times,
-        capacities_arcs=nominal_capacities,
-        input_data=input_data,
-        release_times_dataset=release_times_dataset,
-        node_based_trip_routes=node_based_trip_routes,
-        deadlines=deadlines
-    )

@@ -1,4 +1,6 @@
 # Import necessary modules and functions
+import copy
+
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from utils.imports import get_instance
@@ -29,8 +31,8 @@ def run_procedure(source: str) -> None:
         epoch_status_quo = get_current_epoch_status_quo(epoch_instance, solver_params)
 
         # Simplify the system for the current epoch
-        simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
-
+        # simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
+        simplified_instance, simplified_status_quo = copy.deepcopy(epoch_instance), copy.deepcopy(epoch_status_quo)
         # Solve for the current epoch
         epoch_solution, optimization_measures = get_epoch_solution(simplified_instance, simplified_status_quo,
                                                                    epoch_instance,

@@ -77,7 +77,7 @@ def get_current_epoch_status_quo(epochInstance: EpochInstance, solver_params: So
 
     epochInstance.clock_start_epoch = datetime.datetime.now().timestamp()
     print_header_current_epoch_status_quo(epochInstance, epoch_size=solver_params.epoch_size)
-    statusQuoMetrics = compute_solution_metrics(epochInstance, epochInstance.release_times, solver_params)
+    statusQuoMetrics = compute_solution_metrics(epochInstance, epochInstance.release_times_dataset, solver_params)
     add_conflicting_sets_to_instance(epochInstance, statusQuoMetrics.free_flow_schedule)
     binaries = get_conflict_binaries(epochInstance.conflicting_sets,
                                      epochInstance.trip_routes,

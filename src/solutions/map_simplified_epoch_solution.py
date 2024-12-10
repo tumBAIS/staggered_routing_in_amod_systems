@@ -9,7 +9,7 @@ from utils.classes import EpochSolution
 def map_simplified_epoch_solution(epochInstance: EpochInstance,
                                   simplifiedEpochSolution: EpochSolution,
                                   solver_params: SolverParameters) -> EpochSolution:
-    releaseTimesEpoch = epochInstance.release_times
+    releaseTimesEpoch = epochInstance.release_times_dataset
     removedVehicles = epochInstance.removed_vehicles  # to map back
     staggeringAppliedInEpoch = simplifiedEpochSolution.staggering_applied[:]
     staggeringApplicable = simplifiedEpochSolution.staggering_applicable[:]
