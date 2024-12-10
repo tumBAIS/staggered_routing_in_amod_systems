@@ -208,8 +208,8 @@ namespace cpp_module {
                                                               instance.get_max_time_optimization());
             if (timeLimitReached) { break; }
             scheduler.best_total_delay = currentSolution.get_total_delay();
-            auto conflictsList = conflictSearcher.getConflictsListNew(currentSolution.get_schedule());
-            _sortConflicts(conflictsList);
+            auto conflictsList = conflictSearcher.get_conflicts_list(currentSolution.get_schedule());
+            sort_conflicts(conflictsList);
             if (conflictsList.empty()) { break; }
             isImproved = _improveSolution(instance, conflictsList, scheduler, currentSolution);
         }

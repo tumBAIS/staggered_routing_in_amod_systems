@@ -12,12 +12,11 @@ namespace cpp_module {
     public:
         struct vehicleInfo {
             long trip_id;
-            double departureTime;
-            double arrivalTime;
-            double earliestDepartureTime;
-            double earliestArrivalTime;
-            double latestDepartureTime;
-            double latestArrivalTime;
+            double departure_time;
+            double arrival_time;
+            double earliest_departure_time;
+            double latest_departure_time;
+            double latest_arrival_time;
         };
 
         struct ConflictingArrival {
@@ -30,29 +29,31 @@ namespace cpp_module {
         };
 
         const Instance &instance;
-        vehicleInfo currentVehicleInfo{};
+        vehicleInfo current_vehicle_info{};
         vehicleInfo other_info{};
-        ConflictingArrival conflictingArrival{};
-        std::vector<ConflictingArrival> conflictingArrivals;
+        std::vector<ConflictingArrival> conflicting_arrivals;
 
         explicit ConflictSearcherNew(const Instance &argInstance) :
                 instance(argInstance) {}
 
 
-        std::vector<Conflict> getConflictsListNew(const VehicleSchedule &congestedSchedule);
-
-        bool _checkIfVehicleHasDelay(const VehicleSchedule &congestedSchedule, long currentVehicle);
-
-        void updateCurrentVehicleInfo(long currentVehicle, const VehicleSchedule &congestedSchedule, long position);
-
-        InstructionsConflict getInstructionsConflict(const VehicleSchedule &congestedSchedule, long other_position);
-
-        Conflict _createConflictNew(long arc, double delay, ConflictingArrival &sortedArrival) const;
-
-        void addConflictsToConflictsList(std::vector<Conflict> &conflictsList, long arc);
-
-        static bool compareConflictingArrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
+        static bool compare_conflicting_arrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
             return a.arrival < b.arrival;
         }
+
+
+        std::vector<Conflict> get_conflicts_list(const VehicleSchedule &congested_schedule);
+
+        bool check_vehicle_delay(const VehicleSchedule &congested_schedule, long current_vehicle);
+
+        void
+        update_current_vehicle_info(long current_vehicle, const VehicleSchedule &congested_schedule, long position);
+
+        void add_conflicts_to_list(std::vector<Conflict> &conflicts_list, long arc);
+
+        InstructionsConflict get_conflict_instructions(const VehicleSchedule &congested_schedule, long other_position);
+
+
+        [[nodiscard]] Conflict create_conflict(long arc, double delay, const ConflictingArrival &sorted_arrival) const;
     };
 }
