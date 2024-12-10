@@ -69,7 +69,7 @@ namespace cpp_module {
                           const std::vector<double> &argParameters,
                           const double &lb_travel_time) -> VehicleSchedule;
 
-    auto _sortConflicts(std::vector<Conflict> &conflictsInSchedule) -> void;
+    auto sort_conflicts(std::vector<Conflict> &conflictsInSchedule) -> void;
 
 
     class Scheduler {
