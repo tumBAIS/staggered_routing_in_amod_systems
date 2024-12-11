@@ -41,6 +41,13 @@ namespace cpp_module {
         }
     };
 
+    enum VehicleShouldBeMarked {
+        YES, NO, MAYBE
+    };
+    enum CounterName {
+        WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS
+    };
+
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
     auto cpp_local_search(const std::vector<double> &arg_release_times,
@@ -62,7 +69,7 @@ namespace cpp_module {
 
     class Scheduler {
         using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
-    public:
+    private:
         MinQueueDepartures pq_departures;
         std::vector<MinQueueDepartures> arrivals_on_arcs;
         std::vector<long> last_processed_position;
@@ -81,9 +88,7 @@ namespace cpp_module {
         enum VehicleStatusType {
             INACTIVE, STAGING, ACTIVE
         };
-        enum VehicleShouldBeMarked {
-            YES, NO, MAYBE
-        };
+
 
         enum InstructionConflictingSet {
             CONTINUE, EVALUATE, BREAK
@@ -97,6 +102,7 @@ namespace cpp_module {
         long explored_solutions = 0;
         bool slack_is_enough = true;
 
+    public:
         explicit Scheduler(Instance &arg_instance) :
                 instance(arg_instance) {
             start_search_clock = clock() / (double) CLOCKS_PER_SEC;
@@ -244,6 +250,44 @@ namespace cpp_module {
         void initialize_scheduler(const std::vector<double> &release_times);
 
         void get_next_departure(Solution &complete_solution);
+
+        void increase_counter(CounterName counter_name) {
+            switch (counter_name) {
+                case EXPLORED_SOLUTIONS:
+                    explored_solutions++;
+                case SLACK_NOT_ENOUGH:
+                    slack_not_enough++;
+                case SOLUTION_WITH_TIES:
+                    solution_with_ties++;
+                case WORSE_SOLUTIONS:
+                    worse_solutions++;
+            }
+        }
+
+        [[nodiscard]] double get_start_search_clock() const {
+            return start_search_clock;
+        }
+
+        [[nodiscard]] bool get_slack_is_enough_flag() const {
+            return slack_is_enough;
+        }
+
+        void set_slack_is_enough_flag(bool arg_flag) {
+            slack_is_enough = arg_flag;
+        }
+
+        [[nodiscard]] long get_iteration() const {
+            return iteration;
+        }
+
+        [[nodiscard]] double get_best_total_delay() const {
+            return best_total_delay;
+        }
+
+        void set_best_total_delay(double arg_delay) {
+            best_total_delay = arg_delay;
+        }
+
     };
 
     auto apply_staggering_to_solve_conflict(Solution &complete_solution,

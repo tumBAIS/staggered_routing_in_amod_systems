@@ -43,17 +43,17 @@ namespace cpp_module {
                             const bool switch_current_with_other_order,
                             const bool current_always_first,
                             const bool current_conflicts_with_other,
-                            const bool other_overlapped_with_current) -> Scheduler::VehicleShouldBeMarked {
+                            const bool other_overlapped_with_current) -> VehicleShouldBeMarked {
         if (other_always_first) {
-            return Scheduler::NO;
+            return VehicleShouldBeMarked::NO;
         } else if (switch_other_with_current_order) {
             if (!other_overlapped_with_current && !current_conflicts_with_other) {
-                return Scheduler::NO;
+                return VehicleShouldBeMarked::NO;
             } else {
-                return Scheduler::YES;
+                return VehicleShouldBeMarked::YES;
             }
         } else if (switch_current_with_other_order || current_always_first) {
-            return Scheduler::MAYBE;
+            return VehicleShouldBeMarked::MAYBE;
         } else {
             throw std::invalid_argument("Check if other should be marked: undefined case");
         }

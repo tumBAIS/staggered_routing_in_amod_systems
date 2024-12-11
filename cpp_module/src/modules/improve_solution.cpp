@@ -130,7 +130,7 @@ namespace cpp_module {
             return false;
         }
         if (complete_solution.get_ties_flag()) {
-            scheduler.solution_with_ties++;
+            scheduler.increase_counter(SOLUTION_WITH_TIES);
             return false;
         }
         return true;
@@ -138,22 +138,23 @@ namespace cpp_module {
 
     auto solve_conflict(Conflict &conflict, Solution &new_solution,
                         const Instance &instance, Scheduler &scheduler) {
-        scheduler.explored_solutions++;
+        scheduler.increase_counter(EXPLORED_SOLUTIONS);
         bool conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
         while (conflict_is_not_solved) {
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) {
                 break;
             }
-            scheduler.slack_is_enough =
-                    check_if_possible_to_solve_conflict(conflict.distance_to_cover,
-                                                        new_solution.get_trip_remaining_time_slack(
-                                                                conflict.current_trip_id),
-                                                        new_solution.get_trip_staggering_applied(
-                                                                conflict.other_trip_id));
-            if (!scheduler.slack_is_enough) {
-                scheduler.slack_not_enough++; // Printing purposes
+            auto slack_is_enough = check_if_possible_to_solve_conflict(conflict.distance_to_cover,
+                                                                       new_solution.get_trip_remaining_time_slack(
+                                                                               conflict.current_trip_id),
+                                                                       new_solution.get_trip_staggering_applied(
+                                                                               conflict.other_trip_id));
+            scheduler.set_slack_is_enough_flag(slack_is_enough);
+
+            if (!scheduler.get_slack_is_enough_flag()) {
+                scheduler.increase_counter(SLACK_NOT_ENOUGH); // Printing purposes
                 break;
             }
             apply_staggering_to_solve_conflict(new_solution, conflict);
@@ -174,14 +175,14 @@ namespace cpp_module {
                 continue;
             }
             solve_conflict(conflict, new_solution, instance, scheduler);
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) {
                 return false;
             }
             bool is_admissible = check_if_solution_is_admissible(new_solution, scheduler);
-            if (is_admissible && scheduler.slack_is_enough) {
-                if (scheduler.iteration % 20 == 0) {
+            if (is_admissible && scheduler.get_slack_is_enough_flag()) {
+                if (scheduler.get_iteration() % 20 == 0) {
                     scheduler.construct_schedule(new_solution);
                 }
                 print_move(current_solution, new_solution, conflict);
@@ -203,10 +204,10 @@ namespace cpp_module {
         ConflictSearcherNew conflict_searcher(instance);
         bool is_improved = true;
         while (is_improved) { // Initially set to true
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) { break; }
-            scheduler.best_total_delay = current_solution.get_total_delay();
+            scheduler.set_best_total_delay(current_solution.get_total_delay());
             auto conflicts_list = conflict_searcher.get_conflict_list(current_solution.get_schedule());
             sort_conflicts(conflicts_list);
             if (conflicts_list.empty()) { break; }
