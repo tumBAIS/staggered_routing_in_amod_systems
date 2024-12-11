@@ -8,7 +8,8 @@ namespace cpp_module {
 
     auto Scheduler::check_if_trips_within_conflicting_set_can_conflict(
             const long other_trip_id,
-            const long other_position
+            const long other_position,
+            const Departure &departure
     ) const -> InstructionConflictingSet {
         // Assumption: The trips in the conflicting set are ordered by ascending earliest departure time.
 
@@ -56,14 +57,15 @@ namespace cpp_module {
     }
 
     auto Scheduler::update_vehicles_on_arc_of_conflicting_set(Solution &solution,
-                                                              double &vehicles_on_arc) -> void {
+                                                              double &vehicles_on_arc,
+                                                              const Departure &departure) -> void {
         for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
             if (other_trip_id == departure.trip_id) {
                 continue;
             }
             const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
             const InstructionConflictingSet instruction = check_if_trips_within_conflicting_set_can_conflict(
-                    other_trip_id, other_position);
+                    other_trip_id, other_position, departure);
             if (instruction == CONTINUE) {
                 continue;
             } else if (instruction == BREAK) {
@@ -76,14 +78,15 @@ namespace cpp_module {
             const double other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
             const bool current_conflicts_with_other = check_conflict_with_other_vehicle(other_trip_id,
                                                                                         other_departure,
-                                                                                        other_arrival);
+                                                                                        other_arrival, departure);
             if (other_vehicle_is_not_active) {
                 if (current_conflicts_with_other) { vehicles_on_arc++; }
                 VehicleShouldBeMarked should_mark = check_if_other_should_be_marked(other_trip_id,
                                                                                     other_position,
-                                                                                    current_conflicts_with_other);
+                                                                                    current_conflicts_with_other,
+                                                                                    departure);
                 if (should_mark == YES) {
-                    mark_vehicle(other_trip_id, other_departure, other_position); // O(log n) -> pq.push
+                    mark_vehicle(other_trip_id, other_departure, other_position, departure); // O(log n) -> pq.push
                     set_lazy_update_pq_flag(true); //marked vehicle starting before
                     assert_lazy_update_is_necessary(other_departure);
                     print_lazy_update_priority_queue();
@@ -92,7 +95,8 @@ namespace cpp_module {
                 }
             } else if (other_vehicle_is_active) {
                 bool other_is_processed_on_this_arc = other_position <= get_trip_last_processed_position(other_trip_id);
-                const bool other_is_first = check_if_other_is_first_in_current_schedule(other_trip_id, other_departure);
+                const bool other_is_first = check_if_other_is_first_in_current_schedule(other_trip_id, other_departure,
+                                                                                        departure);
                 const bool other_is_not_first = !other_is_first;
                 if (other_is_processed_on_this_arc) {
                     if (other_is_not_first) {
@@ -110,12 +114,12 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::check_if_tie_in_set(const VehicleSchedule &congested_schedule) -> bool {
+    auto Scheduler::check_if_tie_in_set(const VehicleSchedule &congested_schedule, const Departure &departure) -> bool {
         for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
             if (departure.trip_id != other_trip_id) {
                 const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
                 const InstructionConflictingSet instruction = check_if_trips_within_conflicting_set_can_conflict(
-                        other_trip_id, other_position);
+                        other_trip_id, other_position, departure);
                 if (instruction == CONTINUE) {
                     continue;
                 } else if (instruction == BREAK) {
@@ -135,7 +139,8 @@ namespace cpp_module {
         return false;
     }
 
-    auto Scheduler::check_if_vehicle_is_late(const double current_vehicle_new_arrival) const -> bool {
+    auto Scheduler::check_if_vehicle_is_late(const double current_vehicle_new_arrival,
+                                             const Departure &departure) const -> bool {
         if (current_vehicle_new_arrival >
             instance.get_trip_arc_latest_departure_time(departure.trip_id, departure.position + 1)) {
             return true;
@@ -145,7 +150,8 @@ namespace cpp_module {
 
     auto Scheduler::check_conflict_with_other_vehicle(const long other_vehicle,
                                                       const double other_departure,
-                                                      const double other_arrival) const -> bool {
+                                                      const double other_arrival,
+                                                      const Departure &departure) -> bool {
         // Given the change, check if vehicle conflict
         bool current_conflicts_with_other = other_departure <= departure.time && departure.time < other_arrival;
         if (other_departure == departure.time) {

@@ -34,7 +34,7 @@ namespace cpp_module {
         // Reset priority queues and counters, and initialize priority queue for departures
         clear_departures_pq();
         clear_arrivals_on_arcs();
-        departure = Departure();
+        Departure departure{};
 
         for (long trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
             departure.time = release_times[trip_id];
@@ -46,7 +46,7 @@ namespace cpp_module {
     }
 
 // Set the next departure of a vehicle and push it to the queue
-    auto Scheduler::set_next_departure_and_push_to_queue(double delay) -> void {
+    auto Scheduler::set_next_departure_and_push_to_queue(double delay, Departure &departure) -> void {
         departure.time += instance.get_arc_travel_time(departure.arc_id) + delay;
         insert_departure_in_arc_arrivals(departure.arc_id, departure);
 
@@ -58,7 +58,7 @@ namespace cpp_module {
     }
 
 // Check if the current solution is admissible
-    auto Scheduler::check_if_solution_is_admissible(double total_delay) const -> bool {
+    auto Scheduler::check_if_solution_is_admissible(double total_delay, const Departure &departure) const -> bool {
         if (departure.time > instance.get_trip_deadline(departure.trip_id) + TOLERANCE) {
             std::cout << "Deadline for vehicle " << departure.trip_id << " exceeded: "
                       << "Deadline: " << instance.get_trip_deadline(departure.trip_id)
@@ -74,9 +74,10 @@ namespace cpp_module {
     }
 
 // Get the next departure from the priority queue
-    auto Scheduler::get_next_departure(Solution &complete_solution) -> void {
-        departure = get_and_pop_departure_from_pq();
+    auto Scheduler::get_next_departure(Solution &complete_solution) -> Departure {
+        auto departure = get_and_pop_departure_from_pq();
         complete_solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
+        return departure;
     }
 
 // Construct the schedule
@@ -86,7 +87,7 @@ namespace cpp_module {
         initialize_complete_solution(complete_solution);
 
         while (!is_pq_empty()) {
-            get_next_departure(complete_solution);
+            auto departure = get_next_departure(complete_solution);
 
             if (departure.position < instance.get_trip_route_size(departure.trip_id)) {
                 const auto vehicles_on_arc = compute_vehicles_on_arc(get_arrivals_on_arc(departure.arc_id),
@@ -96,10 +97,10 @@ namespace cpp_module {
                 complete_solution.set_delay_on_arc(delay, departure.trip_id, departure.position);
                 complete_solution.increase_total_delay(delay);
 
-                set_next_departure_and_push_to_queue(delay);
+                set_next_departure_and_push_to_queue(delay, departure);
 
                 bool schedule_is_feasible_and_improving =
-                        check_if_solution_is_admissible(complete_solution.get_total_delay());
+                        check_if_solution_is_admissible(complete_solution.get_total_delay(), departure);
 
                 if (!schedule_is_feasible_and_improving) {
                     complete_solution.set_feasible_and_improving_flag(false);

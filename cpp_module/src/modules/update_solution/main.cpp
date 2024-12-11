@@ -22,7 +22,8 @@ namespace cpp_module {
     }
 
     auto Scheduler::update_vehicle_schedule(Solution &solution,
-                                            const double current_new_arrival) const -> void {
+                                            const double current_new_arrival,
+                                            const Departure &departure) const -> void {
         // Update departure time and arrival in new schedule
         solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
         solution.set_trip_arc_departure(departure.trip_id, departure.position + 1, current_new_arrival);
@@ -35,15 +36,15 @@ namespace cpp_module {
         initialize_status_vehicles();
         initialize_priority_queue(conflict, complete_solution);
         while (!is_pq_empty()) {
-            departure = get_and_pop_departure_from_pq();
-            const auto skip_departure = check_if_departure_should_be_skipped();
+            auto departure = get_and_pop_departure_from_pq();
+            const auto skip_departure = check_if_departure_should_be_skipped(departure);
             if (skip_departure) { continue; }
             print_departure();
-            activate_staging_vehicle();
+            activate_staging_vehicle(departure);
             complete_solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
             clear_vehicles_to_mark();
             set_lazy_update_pq_flag(false);
-            process_vehicle(complete_solution);
+            process_vehicle(complete_solution, departure);
             if (get_tie_found_flag() || get_trip_is_late_flag()) {
                 complete_solution.set_feasible_and_improving_flag(false);
                 return;
