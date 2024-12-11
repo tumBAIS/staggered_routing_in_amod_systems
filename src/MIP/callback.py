@@ -15,35 +15,31 @@ from MIP.support import save_solution_in_external_file
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
+from MIP import StaggeredRoutingModel
 
 
-def get_current_bounds(model: Model, start_solution_time: float) -> None:
+def get_current_bounds(model: StaggeredRoutingModel, start_solution_time: float) -> None:
     """Update the current bounds (lower and upper) for the optimization problem."""
-    lower_bound_improved = model.cbGet(grb.GRB.Callback.MIP_OBJBND) >= model._lowerBound[-1]
-    upper_bound_improved = model.cbGet(grb.GRB.Callback.MIP_OBJBST) <= model._upperBound[-1]
+    new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
+    new_upper_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBST)
+    lower_bound_improved = new_lower_bound >= model.get_last_lower_bound()
+    upper_bound_improved = new_upper_bound <= model.get_last_upper_bound()
 
     if lower_bound_improved and upper_bound_improved:
-        lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
-        upper_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBST)
-
-        model._lowerBound.append(round(lower_bound, 2))
-        model._upperBound.append(round(upper_bound, 2))
-
-        time_spent = datetime.datetime.now().timestamp() - start_solution_time
-        model._optimizationTime.append(time_spent)
-
-        optimality_gap = (upper_bound - lower_bound) / upper_bound * 100 if upper_bound > TOLERANCE else 0
-        model._optimalityGap.append(round(optimality_gap, 2))
+        model.store_lower_bound(new_lower_bound)
+        model.store_upper_bound(new_upper_bound)
+        model.store_optimization_time(start_solution_time)
+        optimality_gap = (
+                                 new_upper_bound - new_lower_bound) / new_upper_bound * 100 if new_upper_bound > TOLERANCE else 0
+        model.store_optimality_gap(optimality_gap)
 
 
-def update_remaining_time_for_optimization(model: Model, instance: Instance, solver_params: SolverParameters) -> None:
+def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instance: Instance,
+                                           solver_params: SolverParameters) -> None:
     """Update the remaining time for optimization in the callback."""
-    total_optimization_time = solver_params.algorithm_time_limit
-    elapsed_time = datetime.datetime.now().timestamp() - instance.start_solution_time
 
-    model._remainingTimeForOptimization = total_optimization_time - elapsed_time
-
-    if model._remainingTimeForOptimization < 0:
+    model.set_remaining_time_for_optimization(solver_params, instance.start_solution_time)
+    if model.get_remaining_time_for_optimization() < 0:
         print("Terminating model from callback - Time limit reached.")
         model.terminate()
 

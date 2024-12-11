@@ -34,7 +34,7 @@ def construct_model(
         solver_params: SolverParameters,
 ) -> StaggeredRoutingModel:
     """Constructs and initializes the optimization model."""
-    model = StaggeredRoutingModel(status_quo.total_delay, instance.start_solution_time)
+    model = StaggeredRoutingModel(status_quo.total_delay, solver_params, instance.start_solution_time)
 
     if not solver_params.optimize or not is_there_remaining_time(instance, solver_params):
         model.set_optimize_flag(False)

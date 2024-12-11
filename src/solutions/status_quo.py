@@ -11,6 +11,7 @@ from utils.prints import (
 )
 from utils.classes import EpochSolution
 from instance_module.epoch_instance import EpochInstance
+from instance_module.instance import Instance
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import (
     get_total_travel_time,
@@ -58,7 +59,7 @@ class StatusQuoMetrics:
     total_delay: float
 
 
-def compute_solution_metrics(instance: EpochInstance, release_times: List[float],
+def compute_solution_metrics(instance: Instance, release_times: List[float],
                              solver_params: SolverParameters) -> StatusQuoMetrics:
     """Compute metrics for a solution, including schedules and delays."""
     congested_schedule = get_congested_schedule(instance, release_times, solver_params)

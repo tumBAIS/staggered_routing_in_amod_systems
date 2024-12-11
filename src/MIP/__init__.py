@@ -1,5 +1,6 @@
 from __future__ import annotations
-
+from typing import Optional
+from input_data import SolverParameters
 import datetime
 
 import gurobipy as grb
@@ -7,24 +8,34 @@ import gurobipy as grb
 
 class StaggeredRoutingModel(grb.Model):
 
-    def __init__(self, initial_total_delay, start_solution_time):
+    def __init__(self, initial_total_delay, solver_params, start_solution_time):
         super().__init__("staggered_routing")
         # Optimization Metrics
         self._optimize_flag = True
-        self._optimalityGap = [100]
-        self._lowerBound = [0]
+        self._optimalityGap = [100.0]
+        self._lowerBound = [0.0]
         self._upperBound = [initial_total_delay]
-        self._optimizationTime = [self.get_optimization_time(start_solution_time)]
+        self._optimizationTime = [self.get_elapsed_time(start_solution_time)]
         self._flagUpdate = False
         self._bestLowerBound = 0
         self._bestUpperBound = float("inf")
         self._improvementClock = datetime.datetime.now().timestamp()
+        self._remainingTimeForOptimization = None
+        self.set_remaining_time_for_optimization(solver_params, start_solution_time)
         # Info on constraints
         self._numBigMConstraints = 0
         # Variables
         self._alpha = {}
         self._beta = {}
         self._gamma = {}
+
+    def set_remaining_time_for_optimization(self, solver_params: SolverParameters, start_solution_time) -> None:
+        total_optimization_time = solver_params.algorithm_time_limit
+        elapsed_time = datetime.datetime.now().timestamp() - start_solution_time
+        self._remainingTimeForOptimization = total_optimization_time - elapsed_time
+
+    def get_remaining_time_for_optimization(self) -> float:
+        return self._remainingTimeForOptimization
 
     def add_conflict_pair_var(self, arc, first_vehicle, second_vehicle, name, lb, ub, var_name):
         conflict_var = {
@@ -35,6 +46,9 @@ class StaggeredRoutingModel(grb.Model):
         conflict_var[var_name][arc][first_vehicle][second_vehicle] = (
             self.addVar(vtype=grb.GRB.BINARY, name=name, lb=lb, ub=ub, obj=0, column=None)
             if lb != ub else lb)
+        if isinstance(conflict_var[var_name][arc][first_vehicle][second_vehicle], grb.Var):
+            conflict_var[var_name][arc][first_vehicle][second_vehicle]._lb = lb
+            conflict_var[var_name][arc][first_vehicle][second_vehicle]._ub = ub
 
     def add_arc_conflict_vars(self, arc):
         self._alpha[arc] = {}
@@ -50,7 +64,7 @@ class StaggeredRoutingModel(grb.Model):
         return trip in self._alpha[arc]
 
     @staticmethod
-    def get_optimization_time(start_solution_time: float) -> float:
+    def get_elapsed_time(start_solution_time: float) -> float:
         return datetime.datetime.now().timestamp() - start_solution_time
 
     def set_optimize_flag(self, arg_flag: bool):
@@ -63,16 +77,37 @@ class StaggeredRoutingModel(grb.Model):
         if self._optimalityGap:
             return self._optimalityGap[-1]
         else:
-            raise IndexError("no values in self._optimalityGap")
+            raise IndexError("no gap values")
 
-    def store_lower_bound(self):
-        self._lowerBound.append(round(self.ObjBound, 2))
+    def get_last_lower_bound(self):
+        if self._lowerBound:
+            return self._lowerBound[-1]
+        else:
+            raise IndexError("no lb values")
 
-    def store_upper_bound(self):
-        self._upperBound.append(round(self.getObjective().getValue(), 2))
+    def get_last_upper_bound(self):
+        if self._upperBound:
+            return self._upperBound[-1]
+        else:
+            raise IndexError("no ub values")
 
-    def store_optimality_gap(self):
-        self._optimalityGap.append(round(self.MIPGap * 100, 2))
+    def store_lower_bound(self, arg_value: Optional[float] = None):
+        if arg_value:
+            self._lowerBound.append(round(arg_value, 2))
+        else:
+            self._lowerBound.append(round(self.ObjBound, 2))
+
+    def store_upper_bound(self, arg_value: Optional[float] = None):
+        if arg_value:
+            self._upperBound.append(round(arg_value, 2))
+        else:
+            self._upperBound.append(round(self.getObjective().getValue(), 2))
+
+    def store_optimality_gap(self, arg_value: Optional[float] = None):
+        if arg_value:
+            self._optimalityGap.append(round(arg_value, 2))
+        else:
+            self._optimalityGap.append(round(self.MIPGap * 100, 2))
 
     def store_optimization_time(self, start_time: float):
         self._optimizationTime.append(datetime.datetime.now().timestamp() - start_time)

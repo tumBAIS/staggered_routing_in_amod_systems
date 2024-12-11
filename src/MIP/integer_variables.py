@@ -44,20 +44,6 @@ def _get_bounds_for_binaries(first_vehicle: int, second_vehicle: int, arc: int, 
     return BinariesBounds(lb_alpha, ub_alpha, lb_beta, ub_beta, lb_gamma, ub_gamma)
 
 
-def _store_bounds_in_variables(model: Model, arc: int, first_vehicle: int, second_vehicle: int,
-                               bounds: BinariesBounds) -> None:
-    """Store calculated bounds into binary variables."""
-    if isinstance(model._alpha[arc][first_vehicle][second_vehicle], grb.Var):
-        model._alpha[arc][first_vehicle][second_vehicle]._lb = bounds.lb_alpha
-        model._alpha[arc][first_vehicle][second_vehicle]._ub = bounds.ub_alpha
-    if isinstance(model._beta[arc][first_vehicle][second_vehicle], grb.Var):
-        model._beta[arc][first_vehicle][second_vehicle]._lb = bounds.lb_beta
-        model._beta[arc][first_vehicle][second_vehicle]._ub = bounds.ub_beta
-    if isinstance(model._gamma[arc][first_vehicle][second_vehicle], grb.Var):
-        model._gamma[arc][first_vehicle][second_vehicle]._lb = bounds.lb_gamma
-        model._gamma[arc][first_vehicle][second_vehicle]._ub = bounds.ub_gamma
-
-
 def _add_conflict_variables_between_two_vehicles(model: StaggeredRoutingModel, arc: int, first_vehicle: int,
                                                  second_vehicle: int,
                                                  instance: Instance) -> None:
@@ -77,8 +63,6 @@ def _add_conflict_variables_between_two_vehicles(model: StaggeredRoutingModel, a
     gamma_name = f"gamma_arc_{arc}_vehicles_{first_vehicle}_{second_vehicle}"
     model.add_conflict_pair_var(arc, first_vehicle, second_vehicle, gamma_name, bounds.lb_gamma, bounds.ub_gamma,
                                 "gamma")
-
-    _store_bounds_in_variables(model, arc, first_vehicle, second_vehicle, bounds)
 
 
 def _add_conflict_variables_among_vehicles_in_conflicting_set(
