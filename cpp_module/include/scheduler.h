@@ -93,7 +93,7 @@ namespace cpp_module {
         enum vehicleStatusType {
             INACTIVE, STAGING, ACTIVE
         };
-        enum vehicleShouldBeMarked {
+        enum VehicleShouldBeMarked {
             YES, NO, MAYBE
         };
 
@@ -135,7 +135,7 @@ namespace cpp_module {
         void initialize_priority_queue(const Conflict &conflict, Solution &solution);
 
         auto check_if_other_should_be_marked(long otherVehicle, long otherPosition,
-                                             bool currentConflictsWithOther) -> vehicleShouldBeMarked;
+                                             bool currentConflictsWithOther) -> VehicleShouldBeMarked;
 
         [[nodiscard]] bool
         check_conflict_with_other_vehicle(long otherVehicle, double otherDeparture, double otherArrival) const;

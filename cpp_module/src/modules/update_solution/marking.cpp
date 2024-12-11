@@ -44,7 +44,7 @@ namespace cpp_module {
                             const bool switchCurrentWithOtherOrder,
                             const bool currentAlwaysFirst,
                             const bool currentConflictsWithOther,
-                            const bool otherOverlappedWithCurrent) -> Scheduler::vehicleShouldBeMarked {
+                            const bool otherOverlappedWithCurrent) -> Scheduler::VehicleShouldBeMarked {
         if (otherAlwaysFirst) {
             return Scheduler::NO;
         } else if (switchOtherWithCurrentOrder) {
@@ -62,7 +62,7 @@ namespace cpp_module {
 
     auto Scheduler::check_if_other_should_be_marked(const long otherVehicle,
                                                     const long otherPosition,
-                                                    const bool currentConflictsWithOther) -> vehicleShouldBeMarked {
+                                                    const bool currentConflictsWithOther) -> VehicleShouldBeMarked {
         assert_other_is_not_active(otherVehicle);
         // read info of other vehicle in original schedule (makes sense: it's not marked)
         auto otherOriginalDeparture = original_schedule[otherVehicle][otherPosition];
