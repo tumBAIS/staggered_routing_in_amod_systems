@@ -1,53 +1,52 @@
-//
 // Created by anton on 11/12/2024.
-//
+
 #include <queue>
 #include "scheduler.h"
 #include "stdexcept"
 
 namespace cpp_module {
 
-    auto Scheduler::update_total_value_solution(Solution &completeSolution) -> void {
+    auto Scheduler::update_total_value_solution(Solution &complete_solution) -> void {
 
         for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
             if (trip_status_list[trip_id] != ACTIVE) { continue; }
 
-            const double oldDelayVehicle = original_schedule[trip_id].back() -
-                                           original_schedule[trip_id][0] -
-                                           instance.get_trip_free_flow_time(trip_id);
-            const double newDelayVehicle = completeSolution.get_trip_schedule(trip_id).back() -
-                                           completeSolution.get_trip_start_time(trip_id) -
-                                           instance.get_trip_free_flow_time(trip_id);
-            completeSolution.increase_total_delay(newDelayVehicle - oldDelayVehicle);
+            const double old_delay_vehicle = original_schedule[trip_id].back() -
+                                             original_schedule[trip_id][0] -
+                                             instance.get_trip_free_flow_time(trip_id);
+            const double new_delay_vehicle = complete_solution.get_trip_schedule(trip_id).back() -
+                                             complete_solution.get_trip_start_time(trip_id) -
+                                             instance.get_trip_free_flow_time(trip_id);
+            complete_solution.increase_total_delay(new_delay_vehicle - old_delay_vehicle);
         }
     }
 
     auto Scheduler::update_vehicle_schedule(Solution &solution,
-                                            const double currentNewArrival) const -> void {
-        // update departureTime and arrival in new schedule
+                                            const double current_new_arrival) const -> void {
+        // Update departure time and arrival in new schedule
         solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
-        solution.set_trip_arc_departure(departure.trip_id, departure.position + 1, currentNewArrival);
+        solution.set_trip_arc_departure(departure.trip_id, departure.position + 1, current_new_arrival);
     }
 
-    auto Scheduler::update_existing_congested_schedule(Solution &completeSolution,
+    auto Scheduler::update_existing_congested_schedule(Solution &complete_solution,
                                                        const Conflict &conflict) -> void {
 
-        initialize_scheduler_for_update_solution(completeSolution.get_schedule());
+        initialize_scheduler_for_update_solution(complete_solution.get_schedule());
         initialize_status_vehicles();
-        initialize_priority_queue(conflict, completeSolution);
+        initialize_priority_queue(conflict, complete_solution);
         while (!pq_departures.empty()) {
             departure = pq_departures.top();
             pq_departures.pop();
-            const auto skipDeparture = check_if_departure_should_be_skipped();
-            if (skipDeparture) { continue; }
+            const auto skip_departure = check_if_departure_should_be_skipped();
+            if (skip_departure) { continue; }
             print_departure();
             activate_staging_vehicle();
-            completeSolution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
+            complete_solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
             vehicles_to_mark.clear();
             lazy_update_pq = false;
-            process_vehicle(completeSolution);
+            process_vehicle(complete_solution);
             if (tie_found || trip_is_late) {
-                completeSolution.set_feasible_and_improving_flag(false);
+                complete_solution.set_feasible_and_improving_flag(false);
                 return;
             }
             if (lazy_update_pq) {
@@ -55,11 +54,11 @@ namespace cpp_module {
                 continue;
             }
         }
-        update_total_value_solution(completeSolution);
-        if (completeSolution.get_total_delay() >= best_total_delay) {
-            worseSolutions++;
-            completeSolution.set_feasible_and_improving_flag(false);
+        update_total_value_solution(complete_solution);
+        if (complete_solution.get_total_delay() >= best_total_delay) {
+            worse_solutions++;
+            complete_solution.set_feasible_and_improving_flag(false);
         }
-        assert_no_vehicles_are_late(completeSolution);
+        assert_no_vehicles_are_late(complete_solution);
     }
 }

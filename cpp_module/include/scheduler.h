@@ -8,15 +8,8 @@
 #include <stdexcept>  // Include for std::out_of_range
 #include "solution.h"
 
-//#define printsEvaluationFunction
-//#define printInfoNeighborhood
-//#define assertionsOnEvaluationFunction
-//#define assertionsOnMoveOperator
-//#define printNotEnoughSlack
-
 namespace cpp_module {
-    const long ITERATION_TO_PRINT = 3; //has effect only if printsEvaluationFunction is defined
-
+    const long ITERATION_TO_PRINT = 3; // Has effect only if printsEvaluationFunction is defined
 
     struct Departure {
         double time;
@@ -29,7 +22,6 @@ namespace cpp_module {
         long reinsertion_number;
     };
 
-
     struct Tie {
         long vehicle_one;
         long vehicle_two;
@@ -37,7 +29,6 @@ namespace cpp_module {
         long position_two;
         long arc;
     };
-
 
     struct CompareDepartures {
         bool operator()(Departure const &e1, Departure const &e2) {
@@ -47,30 +38,27 @@ namespace cpp_module {
                 return e1.arc_id > e2.arc_id;
             }
             return false;
-
         }
     };
 
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
-
     auto cpp_local_search(const std::vector<double> &arg_release_times,
-                          const std::vector<double> &argRemainingTimeSlack,
-                          const std::vector<double> &argStaggeringApplied,
-                          const ConflictingSetsList &argConflictingSets,
-                          const std::vector<std::vector<double>> &earliestDepartureTimes,
-                          const std::vector<std::vector<double>> &latestDepartureTimes,
-                          const std::vector<double> &argNominalTravelTimesArcs,
-                          const std::vector<long> &argNominalCapacitiesArcsUtilized,
-                          const std::vector<std::vector<long>> &arcBasedShortestPaths,
-                          const std::vector<double> &argDeadlines,
+                          const std::vector<double> &arg_remaining_time_slack,
+                          const std::vector<double> &arg_staggering_applied,
+                          const ConflictingSetsList &arg_conflicting_sets,
+                          const std::vector<std::vector<double>> &earliest_departure_times,
+                          const std::vector<std::vector<double>> &latest_departure_times,
+                          const std::vector<double> &arg_nominal_travel_times_arcs,
+                          const std::vector<long> &arg_nominal_capacities_arcs_utilized,
+                          const std::vector<std::vector<long>> &arc_based_shortest_paths,
+                          const std::vector<double> &arg_deadlines,
                           const std::vector<double> &arg_list_of_slopes,
                           const std::vector<double> &arg_list_of_thresholds,
-                          const std::vector<double> &argParameters,
+                          const std::vector<double> &arg_parameters,
                           const double &lb_travel_time) -> VehicleSchedule;
 
-    auto sort_conflicts(std::vector<Conflict> &conflictsInSchedule) -> void;
-
+    auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 
     class Scheduler {
         using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
@@ -90,7 +78,7 @@ namespace cpp_module {
         bool lazy_update_pq{};
         bool tie_found{};
         bool trip_is_late{};
-        enum vehicleStatusType {
+        enum VehicleStatusType {
             INACTIVE, STAGING, ACTIVE
         };
         enum VehicleShouldBeMarked {
@@ -101,56 +89,50 @@ namespace cpp_module {
             CONTINUE, EVALUATE, BREAK
         };
         double start_search_clock;
-        std::vector<vehicleStatusType> trip_status_list;
+        std::vector<VehicleStatusType> trip_status_list;
         long iteration;
-        long worseSolutions = 0;
+        long worse_solutions = 0;
         long slack_not_enough = 0;
         long solution_with_ties = 0;
         long explored_solutions = 0;
         bool slack_is_enough = true;
 
-
-        explicit Scheduler(Instance &argInstance) :
-                instance(argInstance) {
+        explicit Scheduler(Instance &arg_instance) :
+                instance(arg_instance) {
             start_search_clock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
-            trip_status_list = std::vector<vehicleStatusType>(instance.get_number_of_trips(),
-                                                              vehicleStatusType::INACTIVE);
+            trip_status_list = std::vector<VehicleStatusType>(instance.get_number_of_trips(),
+                                                              VehicleStatusType::INACTIVE);
             iteration = 0;
         };
 
+        auto construct_schedule(Solution &complete_solution) -> void;
 
-        auto
-        construct_schedule(Solution &completeSolution) -> void;
+        auto update_existing_congested_schedule(Solution &complete_solution,
+                                                const Conflict &conflict) -> void;
 
-        auto
-        update_existing_congested_schedule(Solution &completeSolution,
-                                           const Conflict &conflict) -> void;
+        auto update_total_value_solution(Solution &complete_solution) -> void;
 
-
-        auto update_total_value_solution(Solution &completeSolution) -> void;
-
-        void initialize_scheduler_for_update_solution(const VehicleSchedule &congestedSchedule);
+        void initialize_scheduler_for_update_solution(const VehicleSchedule &congested_schedule);
 
         void initialize_priority_queue(const Conflict &conflict, Solution &solution);
 
-        auto check_if_other_should_be_marked(long otherVehicle, long otherPosition,
-                                             bool currentConflictsWithOther) -> VehicleShouldBeMarked;
+        auto check_if_other_should_be_marked(long other_vehicle, long other_position,
+                                             bool current_conflicts_with_other) -> VehicleShouldBeMarked;
 
         [[nodiscard]] bool
-        check_conflict_with_other_vehicle(long otherVehicle, double otherDeparture, double otherArrival) const;
+        check_conflict_with_other_vehicle(long other_vehicle, double other_departure, double other_arrival) const;
 
         bool check_if_should_mark_given_current_arrival_time(TripID other_trip_id,
-                                                             double currentVehicleNewArrival);
+                                                             double current_vehicle_new_arrival);
 
-        void mark_vehicle(long otherVehicle, double otherDeparture, long otherPosition);
+        void mark_vehicle(long other_vehicle, double other_departure, long other_position);
 
-        void
-        move_vehicle_forward_in_the_queue(double currentVehicleNewArrival);
+        void move_vehicle_forward_in_the_queue(double current_vehicle_new_arrival);
 
         [[nodiscard]] bool
         check_if_other_starts_before_current(TripID other_trip_id,
-                                             const VehicleSchedule &congestedSchedule) const;
+                                             const VehicleSchedule &congested_schedule) const;
 
         bool check_if_departure_should_be_skipped();
 
@@ -158,90 +140,85 @@ namespace cpp_module {
 
         auto check_if_travel_departure_should_be_skipped() -> bool;
 
-        void update_vehicle_schedule(Solution &solution, double currentNewArrival) const;
+        void update_vehicle_schedule(Solution &solution, double current_new_arrival) const;
 
         void activate_staging_vehicle();
 
         void reinsert_other_in_queue(Solution &solution,
-                                     long otherVehicle,
-                                     long otherPosition,
-                                     double otherDeparture,
+                                     long other_vehicle,
+                                     long other_position,
+                                     double other_departure,
                                      long arc);
 
         void assert_event_pushed_to_queue_is_correct();
 
+        void add_departure_to_priority_queue(double release_time_vehicle, TripID vehicle);
 
-        void add_departure_to_priority_queue(double releaseTimeVehicle, TripID vehicle);
+        void update_vehicles_on_arc_of_conflicting_set(Solution &solution, double &vehicles_on_arc);
 
-        void update_vehicles_on_arc_of_conflicting_set(Solution &solution, double &vehiclesOnArc);
+        void decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congested_schedule, double current_new_arrival);
 
-        void
-        decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congestedSchedule, double currentNewArrival);
-
-        void
-        assert_no_vehicles_departing_before_are_marked(const long otherVehicle,
-                                                       const VehicleSchedule &congestedSchedule);
+        void assert_no_vehicles_departing_before_are_marked(long other_vehicle,
+                                                            const VehicleSchedule &congested_schedule);
 
         void initialize_status_vehicles();
 
-        void process_conflicting_set(Solution &completeSolution,
+        void process_conflicting_set(Solution &complete_solution,
                                      double &delay,
-                                     double &currentVehicleNewArrival,
-                                     double &vehiclesOnArc);
+                                     double &current_vehicle_new_arrival,
+                                     double &vehicles_on_arc);
 
-        void process_vehicle(Solution &completeSolution);
+        void process_vehicle(Solution &complete_solution);
 
-
-        void assert_other_is_not_active(long otherVehicle);
-
-        [[nodiscard]] bool
-        check_if_other_is_first_in_original_schedule(long otherVehicle, double otherOriginalDeparture,
-                                                     double currentOriginalDeparture) const;
+        void assert_other_is_not_active(long other_vehicle);
 
         [[nodiscard]] bool
-        check_if_other_is_first_in_current_schedule(long otherVehicle, double otherOriginalDeparture) const;
+        check_if_other_is_first_in_original_schedule(long other_vehicle, double other_original_departure,
+                                                     double current_original_departure) const;
 
-        [[nodiscard]] bool check_if_current_overlapped_with_other(long otherVehicle,
-                                                                  double otherOriginalDeparture,
-                                                                  double currentOriginalDeparture,
-                                                                  double otherOriginalArrival) const;
+        [[nodiscard]] bool
+        check_if_other_is_first_in_current_schedule(long other_vehicle, double other_original_departure) const;
 
-        [[nodiscard]] bool check_if_other_overlapped_with_current(long otherVehicle, double otherOriginalDeparture,
-                                                                  double currentOriginalDeparture,
-                                                                  double currentOriginalArrival) const;
+        [[nodiscard]] bool check_if_current_overlapped_with_other(long other_vehicle,
+                                                                  double other_original_departure,
+                                                                  double current_original_departure,
+                                                                  double other_original_arrival) const;
 
-        [[nodiscard]] bool check_if_other_overlaps_now_with_current(long otherVehicle, double otherOriginalDeparture,
-                                                                    double currentVehicleNewArrival) const;
+        [[nodiscard]] bool check_if_other_overlapped_with_current(long other_vehicle, double other_original_departure,
+                                                                  double current_original_departure,
+                                                                  double current_original_arrival) const;
 
-        static bool check_conditions_to_mark(bool switchCurrentWithOtherOrder, bool vehiclesNeverOverlapped,
-                                             bool currentAlwaysFirst, bool otherAlwaysOverlaps);
+        [[nodiscard]] bool check_if_other_overlaps_now_with_current(long other_vehicle, double other_original_departure,
+                                                                    double current_vehicle_new_arrival) const;
+
+        static bool check_conditions_to_mark(bool switch_current_with_other_order, bool vehicles_never_overlapped,
+                                             bool current_always_first, bool other_always_overlaps);
 
         void print_update_greatest_time_analyzed() const;
 
         void print_departure_pushed_to_queue() const;
 
+        bool check_if_tie_in_set(const VehicleSchedule &congested_schedule);
 
-        bool check_if_tie_in_set(const VehicleSchedule &congestedSchedule);
+        void assert_departure_is_feasible(const VehicleSchedule &congested_schedule);
 
-        void assert_departure_is_feasible(const VehicleSchedule &congestedSchedule);
+        void assert_lazy_update_is_necessary(double other_departure) const;
 
-        void assert_lazy_update_is_necessary(double otherDeparture) const;
+        void assert_no_vehicles_are_late(Solution &complete_solution);
 
-        void assert_no_vehicles_are_late(Solution &completeSolution);
+        void assert_vehicles_on_arc_is_correct(double vehicles_on_arc, const VehicleSchedule &congested_schedule);
 
-        void assert_vehicles_on_arc_is_correct(const double vehiclesOnArc, const VehicleSchedule &congestedSchedule);
+        void reset_other_schedule_to_reinsertion_time(Solution &solution, long other_vehicle,
+                                                      long other_position);
 
-        void reset_other_schedule_to_reinsertion_time(Solution &solution, long otherVehicle,
-                                                      long otherPosition);
+        void assert_analyzing_smallest_departure(VehicleSchedule &congested_schedule);
 
-        void assert_analyzing_smallest_departure(VehicleSchedule &congestedSchedule);
-
-        void assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(long otherVehicle, long otherPosition,
-                                                                               double otherDeparture);
+        void assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(long other_vehicle, long other_position,
+                                                                               double other_departure);
 
         void assert_combination_status_and_departure_type_is_possible();
 
-        void print_reinsertion_vehicle(const long &arc, const long &vehicle, const double &departureTime) const;
+        void print_reinsertion_vehicle(const long &arc, const long &vehicle, const double &departure_time) const;
 
         void print_departure() const;
 
@@ -251,14 +228,12 @@ namespace cpp_module {
 
         void print_travel_departure_to_skip();
 
-        [[nodiscard]] bool check_if_vehicle_is_late(double currentVehicleNewArrival) const;
-
+        [[nodiscard]] bool check_if_vehicle_is_late(double current_vehicle_new_arrival) const;
 
         [[nodiscard]] InstructionConflictingSet
         check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position) const;
 
         void print_delay_computed(double delay) const;
-
 
         Solution construct_solution(const std::vector<double> &start_times);
 
@@ -271,40 +246,34 @@ namespace cpp_module {
         void get_next_departure(Solution &complete_solution);
     };
 
+    auto apply_staggering_to_solve_conflict(Solution &complete_solution,
+                                            Conflict &conflict) -> void;
 
-    auto
-    apply_staggering_to_solve_conflict(Solution &completeSolution,
-                                       Conflict &conflict) -> void;
-
-
-    static auto reset_new_solution(const Solution &currentSolution, Solution &newSolution,
+    static auto reset_new_solution(const Solution &current_solution, Solution &new_solution,
                                    Conflict &conflict) -> void;
 
-    static auto
-    update_current_solution(Solution &currentSolution,
-                            const Solution &newSolution,
-                            Conflict &conflict) -> void;
+    static auto update_current_solution(Solution &current_solution,
+                                        const Solution &new_solution,
+                                        Conflict &conflict) -> void;
 
+    auto get_index(const std::vector<long> &v, long k) -> long;
 
-    auto get_index(const std::vector<long> &v, long K) -> long;
+    auto stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void;
 
+    auto solve_solution_ties(const Instance &instance, Solution &complete_solution, Scheduler &scheduler) -> void;
 
-    auto stagger_trip(Solution &completeSolution, long vehicle, double staggering) -> void;
+    auto check_if_solution_has_ties(const Instance &instance, Solution &complete_solution) -> void;
 
-    auto solve_solution_ties(const Instance &instance, Solution &completeSolution, Scheduler &scheduler) -> void;
+    auto compute_delay_on_arc(const double &vehicles_on_arc, const Instance &instance, long arc) -> double;
 
-    auto check_if_solution_has_ties(const Instance &instance, Solution &completeSolution) -> void;
+    auto _assert_solution_is_correct(Solution &new_solution, Scheduler &scheduler) -> void;
 
-    auto compute_delay_on_arc(const double &vehiclesOnArc, const Instance &instance, long arc) -> double;
-
-    auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void;
-
-    auto improve_towards_solution_quality(const Instance &instance, Solution &currentSolution,
+    auto improve_towards_solution_quality(const Instance &instance, Solution &current_solution,
                                           Scheduler &scheduler) -> void;
 
-    auto compute_vehicles_on_arc(MinQueueDepartures &arrivalsOnArc, const double &departureTime) -> double;
+    auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double;
 
-    auto check_if_vehicles_have_tie(const VehicleSchedule &congestedSchedule, const Tie &tie) -> bool;
+    auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool;
 
     auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void;
 }

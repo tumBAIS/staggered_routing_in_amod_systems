@@ -22,9 +22,9 @@ namespace cpp_module {
         long current_trip_id;
         long other_trip_id;
         double delay_conflict;
-        double distanceToCover;
-        double staggeringCurrentVehicle;
-        double destaggeringOtherVehicle;
+        double distance_to_cover;
+        double staggering_current_vehicle;
+        double destaggering_other_vehicle;
     };
 
 

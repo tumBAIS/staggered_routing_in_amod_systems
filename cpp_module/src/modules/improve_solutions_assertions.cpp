@@ -22,7 +22,7 @@ namespace cpp_module {
     }
 
 
-    auto _assertSolutionIsCorrect(Solution &newSolution, Scheduler &scheduler) -> void {
+    auto _assert_solution_is_correct(Solution &newSolution, Scheduler &scheduler) -> void {
 #ifdef assertionsOnMoveOperator
         // check with old function if outputs coincide
         cppModule::CompleteSolution testSolution(newSolution);

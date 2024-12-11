@@ -9,212 +9,210 @@
 
 namespace cpp_module {
 
-    auto stagger_trip(Solution &completeSolution, long vehicle, double staggering) -> void {
-        completeSolution.increase_trip_start_time(vehicle, staggering);
-        completeSolution.increase_staggering_applied(vehicle, staggering);
-        completeSolution.increase_remaining_time_slack(vehicle, -staggering); //staggering is negative
+    auto stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void {
+        complete_solution.increase_trip_start_time(vehicle, staggering);
+        complete_solution.increase_staggering_applied(vehicle, staggering);
+        complete_solution.increase_remaining_time_slack(vehicle, -staggering); // Staggering is negative
     }
 
-    auto checkIfTimeLimitIsReached(const double startSearchClock, double maxTimeOptimization) -> bool {
-        auto timeNow = clock() / (double) CLOCKS_PER_SEC;
-        auto duration = (timeNow - startSearchClock);
-        if (duration > maxTimeOptimization) {
+    auto check_if_time_limit_is_reached(const double start_search_clock, double max_time_optimization) -> bool {
+        auto time_now = clock() / (double) CLOCKS_PER_SEC;
+        auto duration = (time_now - start_search_clock);
+        if (duration > max_time_optimization) {
             std::cout << "STOPPING LOCAL SEARCH - MAX TIME LIMIT REACHED \n";
             return true;
         }
         return false;
     }
 
-
-    auto _resetNewSolution(const Solution &currentSolution, Solution &newSolution,
-                           Conflict &conflict) -> void {
-        stagger_trip(newSolution,
+    auto reset_new_solution(const Solution &current_solution, Solution &new_solution,
+                            Conflict &conflict) -> void {
+        stagger_trip(new_solution,
                      conflict.current_trip_id,
-                     -conflict.staggeringCurrentVehicle);
-        conflict.staggeringCurrentVehicle = 0;
-        stagger_trip(newSolution,
+                     -conflict.staggering_current_vehicle);
+        conflict.staggering_current_vehicle = 0;
+        stagger_trip(new_solution,
                      conflict.other_trip_id,
-                     conflict.destaggeringOtherVehicle);
-        conflict.destaggeringOtherVehicle = 0;
-        newSolution.set_schedule(currentSolution.get_schedule());
-        newSolution.set_total_delay(currentSolution.get_total_delay());
-        newSolution.set_ties_flag(currentSolution.get_ties_flag());
-        newSolution.set_feasible_and_improving_flag(currentSolution.get_feasible_and_improving_flag());
+                     conflict.destaggering_other_vehicle);
+        conflict.destaggering_other_vehicle = 0;
+        new_solution.set_schedule(current_solution.get_schedule());
+        new_solution.set_total_delay(current_solution.get_total_delay());
+        new_solution.set_ties_flag(current_solution.get_ties_flag());
+        new_solution.set_feasible_and_improving_flag(current_solution.get_feasible_and_improving_flag());
     }
 
-    auto _applyStaggeringToSolveConflict(Solution &completeSolution,
-                                         Conflict &conflict) -> void {
-        assert(conflict.distanceToCover > 0);
-        bool moveVehicleOne =
-                conflict.distanceToCover < completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id);
-        bool moveBothVehicles =
-                conflict.distanceToCover < completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id) +
-                                           completeSolution.get_trip_staggering_applied(conflict.other_trip_id);
-        if (moveVehicleOne) {
-            stagger_trip(completeSolution, conflict.current_trip_id, conflict.distanceToCover);
-            conflict.staggeringCurrentVehicle += conflict.distanceToCover;
-            assert(conflict.distanceToCover > 0);
-        } else if (moveBothVehicles) {
-            // distance can be covered removing staggering to other vehicle
-            auto staggering = std::max(0.0, completeSolution.get_trip_remaining_time_slack(conflict.current_trip_id));
-            auto destaggering = conflict.distanceToCover - staggering;
-            stagger_trip(completeSolution, conflict.current_trip_id, staggering);
-            stagger_trip(completeSolution, conflict.other_trip_id, -destaggering);
-            conflict.staggeringCurrentVehicle += staggering;
-            conflict.destaggeringOtherVehicle += destaggering;
+    auto apply_staggering_to_solve_conflict(Solution &complete_solution,
+                                            Conflict &conflict) -> void {
+        assert(conflict.distance_to_cover > 0);
+        bool move_vehicle_one =
+                conflict.distance_to_cover < complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id);
+        bool move_both_vehicles =
+                conflict.distance_to_cover < complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id) +
+                                             complete_solution.get_trip_staggering_applied(conflict.other_trip_id);
+        if (move_vehicle_one) {
+            stagger_trip(complete_solution, conflict.current_trip_id, conflict.distance_to_cover);
+            conflict.staggering_current_vehicle += conflict.distance_to_cover;
+            assert(conflict.distance_to_cover > 0);
+        } else if (move_both_vehicles) {
+            // Distance can be covered removing staggering to other vehicle
+            auto staggering = std::max(0.0, complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id));
+            auto destaggering = conflict.distance_to_cover - staggering;
+            stagger_trip(complete_solution, conflict.current_trip_id, staggering);
+            stagger_trip(complete_solution, conflict.other_trip_id, -destaggering);
+            conflict.staggering_current_vehicle += staggering;
+            conflict.destaggering_other_vehicle += destaggering;
             assert(staggering > 0 || destaggering > 0);
         } else {
             throw std::invalid_argument("Applying staggering to solve conflict - undefined case");
         }
     }
 
-    auto _updateCurrentSolution(Solution &currentSolution,
-                                const Solution &newSolution,
-                                Conflict &conflict) -> void {
-        // update current vehicle
-        stagger_trip(currentSolution, conflict.current_trip_id, conflict.staggeringCurrentVehicle);
-        stagger_trip(currentSolution, conflict.other_trip_id, -conflict.destaggeringOtherVehicle);
-        currentSolution.set_schedule(newSolution.get_schedule());
-        currentSolution.set_total_delay(newSolution.get_total_delay());
-        currentSolution.set_ties_flag(newSolution.get_ties_flag());
-        currentSolution.set_feasible_and_improving_flag(newSolution.get_feasible_and_improving_flag());
+    auto update_current_solution(Solution &current_solution,
+                                 const Solution &new_solution,
+                                 Conflict &conflict) -> void {
+        // Update current vehicle
+        stagger_trip(current_solution, conflict.current_trip_id, conflict.staggering_current_vehicle);
+        stagger_trip(current_solution, conflict.other_trip_id, -conflict.destaggering_other_vehicle);
+        current_solution.set_schedule(new_solution.get_schedule());
+        current_solution.set_total_delay(new_solution.get_total_delay());
+        current_solution.set_ties_flag(new_solution.get_ties_flag());
+        current_solution.set_feasible_and_improving_flag(new_solution.get_feasible_and_improving_flag());
     }
 
-    auto _printMove(const Solution &oldSolution,
-                    const Solution &newSolution,
+    auto print_move(const Solution &old_solution,
+                    const Solution &new_solution,
                     const Conflict &conflict) -> void {
-        if (std::abs(oldSolution.get_total_delay() - newSolution.get_total_delay()) > TOLERANCE) {
-            if (conflict.staggeringCurrentVehicle > 0) {
+        if (std::abs(old_solution.get_total_delay() - new_solution.get_total_delay()) > TOLERANCE) {
+            if (conflict.staggering_current_vehicle > 0) {
                 std::cout << std::fixed << std::setprecision(2) << " - staggering " << conflict.current_trip_id
                           << " by "
-                          << conflict.staggeringCurrentVehicle;
+                          << conflict.staggering_current_vehicle;
             }
-            if (conflict.destaggeringOtherVehicle > 0) {
+            if (conflict.destaggering_other_vehicle > 0) {
                 std::cout << std::fixed << std::setprecision(2) << " - destaggering " << conflict.other_trip_id
                           << " by "
-                          << conflict.destaggeringOtherVehicle;
+                          << conflict.destaggering_other_vehicle;
             }
             std::cout << std::fixed << std::setprecision(2) << " - DELnew: "
-                      << newSolution.get_total_delay() << " -> DELold - DELnew = "
-                      << oldSolution.get_total_delay() - newSolution.get_total_delay();
+                      << new_solution.get_total_delay() << " -> DELold - DELnew = "
+                      << old_solution.get_total_delay() - new_solution.get_total_delay();
             std::cout << std::endl;
         }
 
     }
 
+    auto update_distance_to_cover(const Solution &complete_solution,
+                                  Conflict &conflict,
+                                  const Instance &instance) -> void {
+        auto index_arc_in_path_current_vehicle = get_index(instance.get_trip_route(conflict.current_trip_id),
+                                                           conflict.arc);
+        auto index_arc_in_path_other_vehicle = get_index(instance.get_trip_route(conflict.other_trip_id), conflict.arc);
 
-    auto _updateDistanceToCover(const Solution &completeSolution,
-                                Conflict &conflict,
-                                const Instance &instance) -> void {
-        auto indexArcInPathCurrentVehicle = get_index(instance.get_trip_route(conflict.current_trip_id),
-                                                      conflict.arc);
-        auto indexArcInPathOtherVehicle = get_index(instance.get_trip_route(conflict.other_trip_id), conflict.arc);
-
-        conflict.distanceToCover =
-                completeSolution.get_trip_arc_departure(conflict.other_trip_id, indexArcInPathOtherVehicle + 1) -
-                completeSolution.get_trip_arc_departure(conflict.current_trip_id, indexArcInPathCurrentVehicle) -
+        conflict.distance_to_cover =
+                complete_solution.get_trip_arc_departure(conflict.other_trip_id, index_arc_in_path_other_vehicle + 1) -
+                complete_solution.get_trip_arc_departure(conflict.current_trip_id, index_arc_in_path_current_vehicle) -
                 CONSTR_TOLERANCE;
     }
 
-    auto _checkIfPossibleToSolveConflict(const double &distanceToCover,
-                                         const double &slackVehicleOne,
-                                         const double &staggeringAppliedVehicleTwo) {
-        if (slackVehicleOne + staggeringAppliedVehicleTwo > distanceToCover) {
+    auto check_if_possible_to_solve_conflict(const double &distance_to_cover,
+                                             const double &slack_vehicle_one,
+                                             const double &staggering_applied_vehicle_two) {
+        if (slack_vehicle_one + staggering_applied_vehicle_two > distance_to_cover) {
             return true;
         }
 
         return false;
     }
 
-    auto _checkIfSolutionIsAdmissible(Solution &completeSolution,
-                                      Scheduler &scheduler) -> bool {
-        if (!completeSolution.get_feasible_and_improving_flag()) {
+    auto check_if_solution_is_admissible(Solution &complete_solution,
+                                         Scheduler &scheduler) -> bool {
+        if (!complete_solution.get_feasible_and_improving_flag()) {
             return false;
         }
-        if (completeSolution.get_ties_flag()) {
+        if (complete_solution.get_ties_flag()) {
             scheduler.solution_with_ties++;
             return false;
         }
         return true;
     }
 
-    auto _solveConflict(Conflict &conflict, Solution &newSolution,
+    auto solve_conflict(Conflict &conflict, Solution &new_solution,
                         const Instance &instance, Scheduler &scheduler) {
         scheduler.explored_solutions++;
-        bool conflictIsNotSolved = conflict.distanceToCover > CONSTR_TOLERANCE;
-        while (conflictIsNotSolved) {
-            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.start_search_clock,
-                                                              instance.get_max_time_optimization());
-            if (timeLimitReached) {
+        bool conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
+        while (conflict_is_not_solved) {
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+                                                                     instance.get_max_time_optimization());
+            if (time_limit_reached) {
                 break;
             }
             scheduler.slack_is_enough =
-                    _checkIfPossibleToSolveConflict(conflict.distanceToCover,
-                                                    newSolution.get_trip_remaining_time_slack(conflict.current_trip_id),
-                                                    newSolution.get_trip_staggering_applied(conflict.other_trip_id));
+                    check_if_possible_to_solve_conflict(conflict.distance_to_cover,
+                                                        new_solution.get_trip_remaining_time_slack(
+                                                                conflict.current_trip_id),
+                                                        new_solution.get_trip_staggering_applied(
+                                                                conflict.other_trip_id));
             if (!scheduler.slack_is_enough) {
-                scheduler.slack_not_enough++; // printing purposes
+                scheduler.slack_not_enough++; // Printing purposes
                 break;
             }
-            _applyStaggeringToSolveConflict(newSolution, conflict);
-            scheduler.update_existing_congested_schedule(newSolution, conflict);
-            if (!newSolution.get_feasible_and_improving_flag()) { break; }
-            _updateDistanceToCover(newSolution, conflict, instance);
-            conflictIsNotSolved = conflict.distanceToCover > CONSTR_TOLERANCE;
+            apply_staggering_to_solve_conflict(new_solution, conflict);
+            scheduler.update_existing_congested_schedule(new_solution, conflict);
+            if (!new_solution.get_feasible_and_improving_flag()) { break; }
+            update_distance_to_cover(new_solution, conflict, instance);
+            conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
         }
     }
 
-    auto _improveSolution(const Instance &instance,
-                          const std::vector<Conflict> &conflictsList,
+    auto improve_solution(const Instance &instance,
+                          const std::vector<Conflict> &conflicts_list,
                           Scheduler &scheduler,
-                          Solution &currentSolution) -> bool {
-        Solution newSolution(currentSolution);
-        for (auto conflict: conflictsList) {
-            if (std::abs(conflict.distanceToCover) < 1e-6) {
+                          Solution &current_solution) -> bool {
+        Solution new_solution(current_solution);
+        for (auto conflict: conflicts_list) {
+            if (std::abs(conflict.distance_to_cover) < 1e-6) {
                 continue;
             }
-            _solveConflict(conflict, newSolution, instance, scheduler);
-            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.start_search_clock,
-                                                              instance.get_max_time_optimization());
-            if (timeLimitReached) {
+            solve_conflict(conflict, new_solution, instance, scheduler);
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+                                                                     instance.get_max_time_optimization());
+            if (time_limit_reached) {
                 return false;
             }
-            bool isAdmissible = _checkIfSolutionIsAdmissible(newSolution, scheduler);
-            if (isAdmissible && scheduler.slack_is_enough) {
+            bool is_admissible = check_if_solution_is_admissible(new_solution, scheduler);
+            if (is_admissible && scheduler.slack_is_enough) {
                 if (scheduler.iteration % 20 == 0) {
-                    scheduler.construct_schedule(newSolution);
+                    scheduler.construct_schedule(new_solution);
                 }
-                _printMove(currentSolution, newSolution, conflict);
-                _updateCurrentSolution(currentSolution, newSolution, conflict);
-                _assertSolutionIsCorrect(newSolution, scheduler);
+                print_move(current_solution, new_solution, conflict);
+                update_current_solution(current_solution, new_solution, conflict);
+                _assert_solution_is_correct(new_solution, scheduler);
                 return true;
             } else {
-                _resetNewSolution(currentSolution, newSolution, conflict);
+                reset_new_solution(current_solution, new_solution, conflict);
                 continue;
             }
         }
         return false;
     }
 
-
     auto improve_towards_solution_quality(const Instance &instance,
-                                          Solution &currentSolution,
+                                          Solution &current_solution,
                                           Scheduler &scheduler) -> void {
-        // improve value of solution
-        ConflictSearcherNew conflictSearcher(instance);
-        bool isImproved = true;
-        while (isImproved) { //initially set to true
-            bool timeLimitReached = checkIfTimeLimitIsReached(scheduler.start_search_clock,
-                                                              instance.get_max_time_optimization());
-            if (timeLimitReached) { break; }
-            scheduler.best_total_delay = currentSolution.get_total_delay();
-            auto conflictsList = conflictSearcher.get_conflict_list(currentSolution.get_schedule());
-            sort_conflicts(conflictsList);
-            if (conflictsList.empty()) { break; }
-            isImproved = _improveSolution(instance, conflictsList, scheduler, currentSolution);
+        // Improve value of solution
+        ConflictSearcherNew conflict_searcher(instance);
+        bool is_improved = true;
+        while (is_improved) { // Initially set to true
+            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.start_search_clock,
+                                                                     instance.get_max_time_optimization());
+            if (time_limit_reached) { break; }
+            scheduler.best_total_delay = current_solution.get_total_delay();
+            auto conflicts_list = conflict_searcher.get_conflict_list(current_solution.get_schedule());
+            sort_conflicts(conflicts_list);
+            if (conflicts_list.empty()) { break; }
+            is_improved = improve_solution(instance, conflicts_list, scheduler, current_solution);
         }
-        scheduler.construct_schedule(currentSolution);
+        scheduler.construct_schedule(current_solution);
     }
-
 
 }
