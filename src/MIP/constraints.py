@@ -3,7 +3,6 @@ import numpy as np
 from gurobipy import Model
 from input_data import CONSTR_TOLERANCE, USE_GUROBI_INDICATORS, TOLERANCE
 from instance_module.instance import Instance
-from utils.aliases import *
 
 
 def _add_load_constraint(model: Model, vehicle: int, arc: int) -> None:

@@ -17,6 +17,7 @@ class StaggeredRoutingModel(grb.Model):
         self._upperBound = [initial_total_delay]
         self._optimizationTime = [self.get_elapsed_time(start_solution_time)]
         self._flagUpdate = False
+        self._cbTotalDelay = None
         self._bestLowerBound = 0
         self._bestUpperBound = float("inf")
         self._improvementClock = datetime.datetime.now().timestamp()
@@ -28,6 +29,33 @@ class StaggeredRoutingModel(grb.Model):
         self._alpha = {}
         self._beta = {}
         self._gamma = {}
+        self._totalDelay = self.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay")
+        self._departure = {}
+        self._delay = {}
+        self._load = {}
+
+    def add_trip_continuous_variables(self, trip):
+        self._departure[trip] = {}
+        self._delay[trip] = {}
+        self._load[trip] = {}
+
+    def set_best_lower_bound(self, value: float):
+        self._bestLowerBound = value
+
+    def set_best_upper_bound(self, value: float):
+        self._bestUpperBound = value
+
+    def get_best_lower_bound(self):
+        return self._bestLowerBound
+
+    def get_best_upper_bound(self):
+        return self._bestUpperBound
+
+    def get_cb_total_delay(self):
+        return self._cbTotalDelay
+
+    def set_cb_total_delay(self, arg_value):
+        self._cbTotalDelay = arg_value
 
     def set_remaining_time_for_optimization(self, solver_params: SolverParameters, start_solution_time) -> None:
         total_optimization_time = solver_params.algorithm_time_limit

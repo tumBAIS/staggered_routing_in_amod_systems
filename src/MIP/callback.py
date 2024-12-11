@@ -10,7 +10,7 @@ from gurobipy import Model
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
 from utils.aliases import VehicleSchedules
-from instance_module.instance import Instance
+from instance_module.epoch_instance import EpochInstance
 from MIP.support import save_solution_in_external_file
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from congestion_model.conflict_binaries import get_conflict_binaries
@@ -34,7 +34,7 @@ def get_current_bounds(model: StaggeredRoutingModel, start_solution_time: float)
         model.store_optimality_gap(optimality_gap)
 
 
-def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instance: Instance,
+def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instance: EpochInstance,
                                            solver_params: SolverParameters) -> None:
     """Update the remaining time for optimization in the callback."""
 
@@ -44,17 +44,17 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
         model.terminate()
 
 
-def get_callback_solution(model: Model, instance: Instance, status_quo: CompleteSolution) -> None:
+def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: CompleteSolution) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
     model._cbReleaseTimes = [
         model.cbGetSolution(model._departure[vehicle][path[0]])
         for vehicle, path in enumerate(instance.trip_routes)
     ]
-    model._cbTotalDelay = sum(
+    model.set_cb_total_delay(sum(
         sum(model.cbGetSolution(model._delay[vehicle][arc]) if isinstance(model._delay[vehicle][arc], grb.Var) else 0
             for arc in model._delay[vehicle])
         for vehicle in range(len(model._cbReleaseTimes))
-    )
+    ))
     model._cbStaggeringApplied = [
         model._cbReleaseTimes[vehicle] - status_quo.congested_schedule[vehicle][0]
         for vehicle in range(len(model._cbReleaseTimes))
@@ -64,7 +64,7 @@ def get_callback_solution(model: Model, instance: Instance, status_quo: Complete
 
 
 def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_on_arcs: VehicleSchedules,
-                    instance: Instance) -> None:
+                    instance: EpochInstance) -> None:
     """Validate the current schedule and delays."""
     if ACTIVATE_ASSERTIONS:
         for vehicle, (schedule, delays) in enumerate(zip(congested_schedule, delays_on_arcs)):
@@ -82,7 +82,7 @@ def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_o
                     f"Invalid delay for arc {arc} of vehicle {vehicle}."
 
 
-def get_heuristic_solution(model: Model, instance: Instance, solver_params: SolverParameters) -> HeuristicSolution:
+def get_heuristic_solution(model: Model, instance: EpochInstance, solver_params: SolverParameters) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
     model._flagUpdate = False
     cpp_parameters = [solver_params.algorithm_time_limit]
@@ -148,17 +148,20 @@ def set_heuristic_binary_variables(model: Model, heuristic_solution: HeuristicSo
                     )
 
 
-def suspend_procedure(heuristic_solution: HeuristicSolution, model: Model, instance: Instance) -> None:
+def suspend_procedure(heuristic_solution: HeuristicSolution, model: StaggeredRoutingModel,
+                      instance: EpochInstance) -> None:
     """Save the heuristic solution and terminate the model if needed."""
     save_solution_in_external_file(heuristic_solution, instance)
-    if model.cbGet(grb.GRB.Callback.MIP_OBJBND) > model._bestLowerBound:
-        model._bestLowerBound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
+    new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
+    if new_lower_bound > model.get_best_lower_bound():
+        model.set_best_lower_bound(new_lower_bound)
     model.terminate()
 
 
-def set_heuristic_solution(model: Model, heuristic_solution: HeuristicSolution, instance: Instance) -> None:
+def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution,
+                           instance: EpochInstance) -> None:
     """Apply the heuristic solution to the model if it improves the current solution."""
-    solution_is_improving = model._cbTotalDelay - heuristic_solution.total_delay > TOLERANCE
+    solution_is_improving = model.get_cb_total_delay() - heuristic_solution.total_delay > TOLERANCE
     if solution_is_improving:
         print("Setting heuristic solution in callback...", end=" ")
         set_heuristic_binary_variables(model, heuristic_solution)
@@ -171,10 +174,10 @@ def set_heuristic_solution(model: Model, heuristic_solution: HeuristicSolution, 
             suspend_procedure(heuristic_solution, model, instance)
 
 
-def callback(instance: Instance, status_quo: CompleteSolution, solver_params: SolverParameters) -> Callable:
+def callback(instance: EpochInstance, status_quo: CompleteSolution, solver_params: SolverParameters) -> Callable:
     """Define the callback function for Gurobi."""
 
-    def call_local_search(model: Model, where: int) -> None:
+    def call_local_search(model: StaggeredRoutingModel, where: int) -> None:
         if where == grb.GRB.Callback.MIP:
             get_current_bounds(model, instance.start_solution_time)
             update_remaining_time_for_optimization(model, instance, solver_params)
@@ -182,7 +185,7 @@ def callback(instance: Instance, status_quo: CompleteSolution, solver_params: So
         if where == grb.GRB.Callback.MIPSOL:
             get_callback_solution(model, instance, status_quo)
             model._improvementClock = datetime.datetime.now().timestamp()
-            model._bestUpperBound = model._cbTotalDelay
+            model._bestUpperBound = model.get_cb_total_delay()
 
         if where == grb.GRB.Callback.MIPNODE and model._flagUpdate:
             heuristic_solution = get_heuristic_solution(model, instance, solver_params)

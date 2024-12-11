@@ -3,6 +3,7 @@ from gurobipy import Model
 from utils.classes import EpochSolution
 from instance_module.instance import Instance
 from input_data import FIX_MODEL
+from MIP import StaggeredRoutingModel
 
 
 def _add_departure_variable(
@@ -21,6 +22,8 @@ def _add_departure_variable(
             name=f"departure_vehicle_{vehicle}_arc_{arc}",
             lb=fixed_departure,
             ub=fixed_departure,
+            obj=0,
+            column=None
         )
     else:
         model._departure[vehicle][arc] = model.addVar(
@@ -28,6 +31,8 @@ def _add_departure_variable(
             name=f"departure_vehicle_{vehicle}_arc_{arc}",
             lb=earliest_departure,
             ub=latest_departure,
+            obj=0,
+            column=None
         )
 
     model._departure[vehicle][arc]._lb = earliest_departure
@@ -94,22 +99,14 @@ def _add_continuous_variables_vehicle_on_arc(
 
 
 def add_continuous_variables(
-        model: Model, instance: Instance, status_quo: EpochSolution, epoch_warm_start
+        model: StaggeredRoutingModel, instance: Instance, status_quo: EpochSolution, epoch_warm_start
 ) -> None:
     """Create all continuous variables for the optimization model."""
     print("Creating continuous variables... ", end="")
 
-    model._totalDelay = model.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay")
-    model._departure = {}
-    model._delay = {}
-    model._load = {}
-
-    for vehicle, path in enumerate(instance.trip_routes):
-        model._departure[vehicle] = {}
-        model._delay[vehicle] = {}
-        model._load[vehicle] = {}
-
+    for trip_id, path in enumerate(instance.trip_routes):
+        model.add_trip_continuous_variables(trip_id)
         for arc in path:
-            _add_continuous_variables_vehicle_on_arc(model, instance, status_quo, vehicle, arc, epoch_warm_start)
+            _add_continuous_variables_vehicle_on_arc(model, instance, status_quo, trip_id, arc, epoch_warm_start)
 
     print("done!")
