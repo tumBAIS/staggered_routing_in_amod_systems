@@ -10,181 +10,224 @@ from utils.classes import EpochSolution
 
 
 class NextEpochDeparturesComputer:
-    change_made = True
-    departures_to_modify: list[NextEpochDeparture] = []
-    departures_to_add: list[NextEpochDeparture] = []
-    vehicles_to_check: set[int] = []
-    indices_departures_to_modify: list[int] = []
+    """
+    Class responsible for computing and updating departures for the next epoch
+    based on current epoch conditions and conflicts.
+    """
 
-    def run(self, nextEpochDepartures: list[NextEpochDeparture],
-            currentEpochInstance: EpochInstance,
-            currentEpochStatusQuo: EpochSolution,
-            vehicleStatusList: list[VehicleStatus],
+    def __init__(self):
+        self.change_made = True
+        self.departures_to_modify: list[NextEpochDeparture] = []
+        self.departures_to_add: list[NextEpochDeparture] = []
+        self.vehicles_to_check: set[int] = set()
+        self.indices_departures_to_modify: list[int] = []
+
+    def run(self, next_epoch_departures: list[NextEpochDeparture],
+            current_epoch_instance: EpochInstance,
+            current_epoch_status_quo: EpochSolution,
+            vehicle_status_list: list[VehicleStatus],
             solver_params: SolverParameters) -> list[NextEpochDeparture]:
+        """
+        Main method to update departures for the next epoch.
+        """
         self._reset_attributes()
-        for firstNextEpochDepartureVehicle in nextEpochDepartures:
-            if firstNextEpochDepartureVehicle.vehicle not in self.vehicles_to_check:
+        for first_departure in next_epoch_departures:
+            if first_departure.vehicle not in self.vehicles_to_check:
                 continue
-            else:
-                self.vehicles_to_check.remove(firstNextEpochDepartureVehicle.vehicle)
-            followingNextEpochDeparture = copy.deepcopy(firstNextEpochDepartureVehicle)
-            while _is_time_in_current_epoch(followingNextEpochDeparture, currentEpochInstance, solver_params):
-                self._activate_other_conflicting_vehicles(currentEpochStatusQuo, followingNextEpochDeparture,
-                                                          currentEpochInstance, vehicleStatusList, nextEpochDepartures)
-                if _is_current_vehicle_in_system(followingNextEpochDeparture, currentEpochInstance):
-                    followingNextEpochDeparture = _get_following_next_epoch_departure(currentEpochStatusQuo,
-                                                                                      currentEpochInstance,
-                                                                                      followingNextEpochDeparture)
+            self.vehicles_to_check.remove(first_departure.vehicle)
+            following_departure = copy.deepcopy(first_departure)
+
+            while _is_time_in_current_epoch(following_departure, current_epoch_instance, solver_params):
+                self._activate_other_conflicting_vehicles(
+                    current_epoch_status_quo,
+                    following_departure,
+                    current_epoch_instance,
+                    vehicle_status_list,
+                    next_epoch_departures
+                )
+                if _is_current_vehicle_in_system(following_departure, current_epoch_instance):
+                    following_departure = _get_following_next_epoch_departure(
+                        current_epoch_status_quo, current_epoch_instance, following_departure
+                    )
                 else:
-                    break  # vehicle left the system
-        self._apply_changes_to_next_epoch_departures(vehicleStatusList, nextEpochDepartures)
-        return nextEpochDepartures
+                    break  # Vehicle has left the system
 
-    def _apply_changes_to_next_epoch_departures(self, vehicleStatusList, nextEpochDepartures):
-        for index, departureToModify in zip(self.indices_departures_to_modify, self.departures_to_modify):
-            nextEpochDepartures[index] = departureToModify
+        self._apply_changes_to_next_epoch_departures(vehicle_status_list, next_epoch_departures)
+        return next_epoch_departures
 
-        nextEpochDepartures += self.departures_to_add
-        for departureToAdd in self.departures_to_add:
-            vehicleStatusList[departureToAdd.vehicle] = VehicleStatus.ACTIVE
+    def _apply_changes_to_next_epoch_departures(self, vehicle_status_list, next_epoch_departures):
+        """
+        Apply all modifications and additions to the list of next epoch departures.
+        """
+        for index, departure_to_modify in zip(self.indices_departures_to_modify, self.departures_to_modify):
+            next_epoch_departures[index] = departure_to_modify
 
-    def _update_next_epoch_departure_to_add(self, otherVehicleInfo: OtherVehicleInfo, currentVehicle) -> None:
-        indexDeparture, nextStoredEpochDeparture = _get_stored_next_epoch_departure(self.departures_to_add,
-                                                                                    otherVehicleInfo.vehicle)
-        if indexDeparture is None:
-            # we are not adding the departure yet
-            self.departures_to_add.append(NextEpochDeparture(vehicle=otherVehicleInfo.vehicle,
-                                                             position=otherVehicleInfo.position,
-                                                             time=otherVehicleInfo.departureTime,
-                                                             arc=otherVehicleInfo.arc))
+        next_epoch_departures.extend(self.departures_to_add)
+        for departure_to_add in self.departures_to_add:
+            vehicle_status_list[departure_to_add.vehicle] = VehicleStatus.ACTIVE
+
+    def _update_next_epoch_departure_to_add(self, other_vehicle_info: OtherVehicleInfo, current_vehicle) -> None:
+        """
+        Add or update a departure for the next epoch.
+        """
+        index_departure, stored_departure = _get_stored_next_epoch_departure(
+            self.departures_to_add, other_vehicle_info.vehicle
+        )
+        if index_departure is None:
+            # Add a new departure
+            self.departures_to_add.append(
+                NextEpochDeparture(
+                    vehicle=other_vehicle_info.vehicle,
+                    position=other_vehicle_info.position,
+                    time=other_vehicle_info.departure_time,
+                    arc=other_vehicle_info.arc
+                )
+            )
             self.change_made = True
-            self.vehicles_to_check.add(otherVehicleInfo.vehicle)
-            self.vehicles_to_check.add(currentVehicle)
+            self.vehicles_to_check.update({other_vehicle_info.vehicle, current_vehicle})
         else:
-            # we are adding it already: let's check if we need to update it
-            newDepartureIsEarlier = otherVehicleInfo.departureTime < nextStoredEpochDeparture.time
-            if newDepartureIsEarlier:
-                self.departures_to_add[indexDeparture] = NextEpochDeparture(vehicle=otherVehicleInfo.vehicle,
-                                                                            position=otherVehicleInfo.position,
-                                                                            time=otherVehicleInfo.departureTime,
-                                                                            arc=otherVehicleInfo.arc)
+            # Update existing departure if the new one is earlier
+            if other_vehicle_info.departure_time < stored_departure.time:
+                self.departures_to_add[index_departure] = NextEpochDeparture(
+                    vehicle=other_vehicle_info.vehicle,
+                    position=other_vehicle_info.position,
+                    time=other_vehicle_info.departure_time,
+                    arc=other_vehicle_info.arc
+                )
                 self.change_made = True
-                self.vehicles_to_check.add(otherVehicleInfo.vehicle)
-                self.vehicles_to_check.add(currentVehicle)
+                self.vehicles_to_check.update({other_vehicle_info.vehicle, current_vehicle})
 
-    def _update_next_epoch_departure_to_modify(self, activeNextEpochDepartures: list[NextEpochDeparture],
-                                               otherVehicleInfo: OtherVehicleInfo, currentVehicle: int):
-        indexDeparture, nextStoredEpochDeparture = _get_stored_next_epoch_departure(activeNextEpochDepartures,
-                                                                                    otherVehicleInfo.vehicle)
+    def _update_next_epoch_departure_to_modify(self, active_departures: list[NextEpochDeparture],
+                                               other_vehicle_info: OtherVehicleInfo, current_vehicle: int):
+        """
+        Modify an existing departure for the next epoch.
+        """
+        index_departure, stored_departure = _get_stored_next_epoch_departure(
+            active_departures, other_vehicle_info.vehicle
+        )
 
-        newDepartureIsEarlier = otherVehicleInfo.departureTime < nextStoredEpochDeparture.time
-        if newDepartureIsEarlier:
-            if indexDeparture in self.indices_departures_to_modify:
-                alreadyInsertedDeparture = self.departures_to_modify[
-                    self.indices_departures_to_modify.index(indexDeparture)]
-                newDepartureIsEarlier2 = otherVehicleInfo.departureTime < alreadyInsertedDeparture.time
-                if newDepartureIsEarlier2:
+        if other_vehicle_info.departure_time < stored_departure.time:
+            if index_departure in self.indices_departures_to_modify:
+                current_departure = self.departures_to_modify[
+                    self.indices_departures_to_modify.index(index_departure)
+                ]
+                if other_vehicle_info.departure_time < current_departure.time:
                     self.departures_to_modify[
-                        self.indices_departures_to_modify.index(indexDeparture)] = \
-                        NextEpochDeparture(vehicle=otherVehicleInfo.vehicle,
-                                           position=otherVehicleInfo.position,
-                                           time=otherVehicleInfo.departureTime,
-                                           arc=otherVehicleInfo.arc)
+                        self.indices_departures_to_modify.index(index_departure)
+                    ] = NextEpochDeparture(
+                        vehicle=other_vehicle_info.vehicle,
+                        position=other_vehicle_info.position,
+                        time=other_vehicle_info.departure_time,
+                        arc=other_vehicle_info.arc
+                    )
                     self.change_made = True
-                    self.vehicles_to_check.add(otherVehicleInfo.vehicle)
-                    self.vehicles_to_check.add(currentVehicle)
-
+                    self.vehicles_to_check.update({other_vehicle_info.vehicle, current_vehicle})
             else:
-                self.indices_departures_to_modify.append(indexDeparture)
-                self.departures_to_modify.append(NextEpochDeparture(vehicle=otherVehicleInfo.vehicle,
-                                                                    position=otherVehicleInfo.position,
-                                                                    time=otherVehicleInfo.departureTime,
-                                                                    arc=otherVehicleInfo.arc))
+                self.indices_departures_to_modify.append(index_departure)
+                self.departures_to_modify.append(
+                    NextEpochDeparture(
+                        vehicle=other_vehicle_info.vehicle,
+                        position=other_vehicle_info.position,
+                        time=other_vehicle_info.departure_time,
+                        arc=other_vehicle_info.arc
+                    )
+                )
                 self.change_made = True
-                self.vehicles_to_check.add(otherVehicleInfo.vehicle)
-                self.vehicles_to_check.add(currentVehicle)
+                self.vehicles_to_check.update({other_vehicle_info.vehicle, current_vehicle})
 
     def _reset_attributes(self):
+        """Reset all attributes to their initial state."""
         self.departures_to_modify = []
         self.departures_to_add = []
         self.indices_departures_to_modify = []
         self.change_made = False
 
-    def initialize_vehicles_to_check(self, nextEpochDepartures: list[NextEpochDeparture]):
-        self.vehicles_to_check = {departure.vehicle for departure in nextEpochDepartures}
+    def initialize_vehicles_to_check(self, next_epoch_departures: list[NextEpochDeparture]):
+        """Initialize the set of vehicles to check for conflicts."""
+        self.vehicles_to_check = {departure.vehicle for departure in next_epoch_departures}
 
-    def _activate_other_conflicting_vehicles(self, currentEpochStatusQuo, followingNextEpochDeparture,
-                                             currentEpochInstance, vehicleStatusList, nextEpochDepartures):
-        otherVehiclesOnArc = [vehicle for vehicle in
-                              currentEpochStatusQuo.vehicles_utilizing_arcs[followingNextEpochDeparture.arc] if
-                              vehicle != followingNextEpochDeparture.vehicle]
-        for otherVehicle in otherVehiclesOnArc:
-            otherVehicleInfo = _get_other_vehicle_info(currentEpochInstance,
-                                                       currentEpochStatusQuo,
-                                                       otherVehicle,
-                                                       followingNextEpochDeparture.arc)
-            if _is_other_conflicting(otherVehicleInfo, followingNextEpochDeparture):
-                if vehicleStatusList[otherVehicle] == VehicleStatus.INACTIVE:
-                    self._update_next_epoch_departure_to_add(otherVehicleInfo, followingNextEpochDeparture.vehicle)
+    def _activate_other_conflicting_vehicles(self, current_epoch_status_quo, following_departure,
+                                             current_epoch_instance, vehicle_status_list, next_epoch_departures):
+        """
+        Activate other vehicles that are conflicting with the given departure.
+        """
+        other_vehicles_on_arc = [
+            vehicle for vehicle in current_epoch_status_quo.vehicles_utilizing_arcs[following_departure.arc]
+            if vehicle != following_departure.vehicle
+        ]
+        for other_vehicle in other_vehicles_on_arc:
+            other_vehicle_info = _get_other_vehicle_info(
+                current_epoch_instance, current_epoch_status_quo, other_vehicle, following_departure.arc
+            )
+            if _is_other_conflicting(other_vehicle_info, following_departure):
+                if vehicle_status_list[other_vehicle] == VehicleStatus.INACTIVE:
+                    self._update_next_epoch_departure_to_add(other_vehicle_info, following_departure.vehicle)
+                elif vehicle_status_list[other_vehicle] == VehicleStatus.ACTIVE:
+                    self._update_next_epoch_departure_to_modify(next_epoch_departures, other_vehicle_info,
+                                                                following_departure.vehicle)
 
-                elif vehicleStatusList[otherVehicle] == VehicleStatus.ACTIVE:
-                    self._update_next_epoch_departure_to_modify(nextEpochDepartures, otherVehicleInfo,
-                                                                followingNextEpochDeparture.vehicle)
 
+# Supporting namedtuples and helper functions
 
 NextEpochDeparture = namedtuple("NextEpochDeparture", ["vehicle", "position", "time", "arc"])
+OtherVehicleInfo = namedtuple("OtherVehicleInfo", ["departure_time", "arrival_time", "position", "vehicle", "arc"])
 
 
-def _get_stored_next_epoch_departure(departuresInNextEpoch, otherVehicle) -> tuple[int, NextEpochDeparture]:
+def _get_stored_next_epoch_departure(departures, vehicle) -> tuple[int, NextEpochDeparture]:
+    """Retrieve an existing departure for a specific vehicle."""
     return next(
-        ((i, departure) for i, departure in enumerate(departuresInNextEpoch) if
-         _is_same_vehicle_departure(departure, otherVehicle)), (None, None))
+        ((i, departure) for i, departure in enumerate(departures) if _is_same_vehicle_departure(departure, vehicle)),
+        (None, None)
+    )
 
 
-OtherVehicleInfo = namedtuple("OtherVehicleInfo", ["departureTime", "arrivalTime", "position", "vehicle", "arc"])
+def _get_other_vehicle_info(current_epoch_instance: EpochInstance, current_epoch_status_quo: EpochSolution,
+                            other_vehicle: int, arc: int) -> OtherVehicleInfo:
+    """Get detailed information about another vehicle."""
+    position = current_epoch_instance.trip_routes[other_vehicle].index(arc)
+    departure_time = current_epoch_status_quo.congested_schedule[other_vehicle][position]
+    arrival_time = current_epoch_status_quo.congested_schedule[other_vehicle][position + 1]
+    return OtherVehicleInfo(
+        departure_time=departure_time,
+        arrival_time=arrival_time,
+        position=position,
+        vehicle=other_vehicle,
+        arc=arc
+    )
 
 
-def _get_other_vehicle_info(currentEpochInstance: EpochInstance, currentEpochStatusQuo: EpochSolution,
-                            otherVehicle: int,
-                            arc: int) -> OtherVehicleInfo:
-    otherPosition = currentEpochInstance.trip_routes[otherVehicle].index(arc)
-    otherDepartureTime = currentEpochStatusQuo.congested_schedule[otherVehicle][otherPosition]
-    otherArrivalTime = currentEpochStatusQuo.congested_schedule[otherVehicle][otherPosition + 1]
-    return OtherVehicleInfo(departureTime=otherDepartureTime, arrivalTime=otherArrivalTime, position=otherPosition,
-                            vehicle=otherVehicle, arc=arc)
+def _is_other_conflicting(other_vehicle_info, next_epoch_departure):
+    """Check if another vehicle conflicts with the given departure."""
+    return other_vehicle_info.departure_time <= next_epoch_departure.time < other_vehicle_info.arrival_time
 
 
-def _is_other_conflicting(otherVehicleInfo, nextEpochDeparture):
-    return otherVehicleInfo.departureTime <= nextEpochDeparture.time < otherVehicleInfo.arrivalTime
+def _is_time_in_current_epoch(next_epoch_departure, current_epoch_instance, solver_params: SolverParameters):
+    """Check if a departure time falls within the current epoch."""
+    return next_epoch_departure.time / 60 < (current_epoch_instance.epoch_id + 1) * solver_params.epoch_size
 
 
-def _is_time_in_current_epoch(nextEpochDeparture, currentEpochInstance, solver_params: SolverParameters):
-    return nextEpochDeparture.time / 60 < (
-            currentEpochInstance.epoch_id + 1) * solver_params.epoch_size
+def _is_current_vehicle_in_system(next_epoch_departure, current_epoch_instance) -> bool:
+    """Check if a vehicle is still in the system."""
+    return next_epoch_departure.position < len(current_epoch_instance.trip_routes[next_epoch_departure.vehicle]) - 1
 
 
-def _is_current_vehicle_in_system(nextEpochDeparture, currentEpochInstance) -> bool:
-    return nextEpochDeparture.position < len(
-        currentEpochInstance.trip_routes[nextEpochDeparture.vehicle]) - 1
+def _get_following_next_epoch_departure(current_epoch_status_quo, current_epoch_instance,
+                                        next_epoch_departure) -> NextEpochDeparture:
+    """Get the next departure for a vehicle in the current epoch."""
+    next_time = current_epoch_status_quo.congested_schedule[next_epoch_departure.vehicle][
+        next_epoch_departure.position + 1]
+    next_arc = current_epoch_instance.trip_routes[next_epoch_departure.vehicle][next_epoch_departure.position + 1]
+    return NextEpochDeparture(
+        vehicle=next_epoch_departure.vehicle,
+        position=next_epoch_departure.position + 1,
+        time=next_time,
+        arc=next_arc
+    )
 
 
-def _get_following_next_epoch_departure(currentEpochStatusQuo, currentEpochInstance,
-                                        nextEpochDeparture) -> NextEpochDeparture:
-    nextTime = currentEpochStatusQuo.congested_schedule[nextEpochDeparture.vehicle][
-        nextEpochDeparture.position + 1]
-    nextArc = currentEpochInstance.trip_routes[nextEpochDeparture.vehicle][
-        nextEpochDeparture.position + 1]
-    return NextEpochDeparture(vehicle=nextEpochDeparture.vehicle,
-                              position=nextEpochDeparture.position + 1,
-                              time=nextTime,
-                              arc=nextArc)
-
-
-def _is_same_vehicle_departure(departureInNextEpoch: NextEpochDeparture, influentialVehicle: int) -> bool:
-    return departureInNextEpoch.vehicle == influentialVehicle
-
-
-DepartureInNextEpochDefaultValues = {"vehicle": -1, "position": -1, "time": -1, "arc": -1}
+def _is_same_vehicle_departure(departure: NextEpochDeparture, vehicle: int) -> bool:
+    """Check if a departure belongs to the given vehicle."""
+    return departure.vehicle == vehicle
 
 
 class VehicleStatus(Enum):
