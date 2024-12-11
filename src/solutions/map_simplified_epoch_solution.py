@@ -1,42 +1,67 @@
 import datetime
 from input_data import SolverParameters
-from congestion_model.core import get_congested_schedule, get_free_flow_schedule, \
-    get_total_travel_time, get_total_delay, get_delays_on_arcs
+from congestion_model.core import (
+    get_congested_schedule,
+    get_free_flow_schedule,
+    get_total_travel_time,
+    get_total_delay,
+    get_delays_on_arcs,
+)
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 
 
-def map_simplified_epoch_solution(epochInstance: EpochInstance,
-                                  simplifiedEpochSolution: EpochSolution,
-                                  solver_params: SolverParameters) -> EpochSolution:
-    releaseTimesEpoch = epochInstance.release_times
-    removedVehicles = epochInstance.removed_vehicles  # to map back
-    staggeringAppliedInEpoch = simplifiedEpochSolution.staggering_applied[:]
-    staggeringApplicable = simplifiedEpochSolution.staggering_applicable[:]
+def map_simplified_epoch_solution(
+        epoch_instance: EpochInstance,
+        simplified_epoch_solution: EpochSolution,
+        solver_params: SolverParameters,
+) -> EpochSolution:
+    """
+    Maps the simplified epoch solution back to the full instance, including removed vehicles.
 
-    # reinsert vehicles in schedule
-    for vehicle in sorted(removedVehicles):
-        staggeringAppliedInEpoch.insert(vehicle, 0)
-        staggeringApplicable.insert(vehicle, 0)
-    staggeredReleaseTimes = [releaseTime + staggering for releaseTime, staggering in
-                             zip(releaseTimesEpoch, staggeringAppliedInEpoch)]
+    This function reinserts removed vehicles into the schedule, adjusts release times,
+    computes the updated schedules and delays, and returns the full epoch solution.
+    """
+    # Extract initial release times and removed vehicles for mapping
+    release_times_epoch = epoch_instance.release_times
+    removed_vehicles = epoch_instance.removed_vehicles
 
-    congestedSchedule = get_congested_schedule(epochInstance, staggeredReleaseTimes, solver_params)
-    freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
-    totalDelay = get_total_delay(freeFlowSchedule, congestedSchedule)
-    totalTravelTime = get_total_travel_time(congestedSchedule)
-    delaysOnArcs = get_delays_on_arcs(epochInstance, congestedSchedule)
-    epochInstance.clock_end_epoch = datetime.datetime.now().timestamp()
-    print(
-        f"Time to complete the epoch: {epochInstance.clock_end_epoch - epochInstance.clock_start_epoch:.2f} [s]")
-    print(f"total delay mapped solution: {totalDelay / 60:.2f} [min]")
-    epochSolution = EpochSolution(total_delay=totalDelay,
-                                  congested_schedule=congestedSchedule,
-                                  delays_on_arcs=delaysOnArcs,
-                                  release_times=staggeredReleaseTimes,
-                                  staggering_applicable=staggeringApplicable,
-                                  free_flow_schedule=freeFlowSchedule,
-                                  staggering_applied=staggeringAppliedInEpoch,
-                                  total_travel_time=totalTravelTime,
-                                  vehicles_utilizing_arcs=simplifiedEpochSolution.vehicles_utilizing_arcs)
-    return epochSolution
+    # Reinsert removed vehicles into the schedule
+    staggering_applied = simplified_epoch_solution.staggering_applied[:]
+    staggering_applicable = simplified_epoch_solution.staggering_applicable[:]
+    for vehicle in sorted(removed_vehicles):
+        staggering_applied.insert(vehicle, 0)
+        staggering_applicable.insert(vehicle, 0)
+
+    # Calculate staggered release times for all vehicles
+    staggered_release_times = [
+        release_time + staggering
+        for release_time, staggering in zip(release_times_epoch, staggering_applied)
+    ]
+
+    # Compute the full congested schedule
+    congested_schedule = get_congested_schedule(epoch_instance, staggered_release_times, solver_params)
+
+    # Compute additional metrics
+    free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
+    total_delay = get_total_delay(free_flow_schedule, congested_schedule)
+    total_travel_time = get_total_travel_time(congested_schedule)
+    delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
+
+    # Update epoch timing and print summary
+    epoch_instance.clock_end_epoch = datetime.datetime.now().timestamp()
+    print(f"Time to complete the epoch: {epoch_instance.clock_end_epoch - epoch_instance.clock_start_epoch:.2f} [s]")
+    print(f"Total delay mapped solution: {total_delay / 60:.2f} [min]")
+
+    # Create and return the mapped epoch solution
+    return EpochSolution(
+        total_delay=total_delay,
+        congested_schedule=congested_schedule,
+        delays_on_arcs=delays_on_arcs,
+        release_times=staggered_release_times,
+        staggering_applicable=staggering_applicable,
+        free_flow_schedule=free_flow_schedule,
+        staggering_applied=staggering_applied,
+        total_travel_time=total_travel_time,
+        vehicles_utilizing_arcs=simplified_epoch_solution.vehicles_utilizing_arcs,
+    )

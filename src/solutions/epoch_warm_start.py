@@ -1,28 +1,32 @@
 import datetime
-
 from input_data import SolverParameters
 from utils.aliases import VehicleSchedules
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
-from congestion_model.core import get_free_flow_schedule, \
-    get_total_travel_time, get_delays_on_arcs, get_staggering_applicable
+from congestion_model.core import (
+    get_free_flow_schedule,
+    get_total_travel_time,
+    get_delays_on_arcs,
+    get_staggering_applicable,
+)
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
 
-def _run_local_search(solution: EpochSolution, instance: EpochInstance, solver_params) -> VehicleSchedules:
+def _run_local_search(
+        solution: EpochSolution, instance: EpochInstance, solver_params: SolverParameters
+) -> VehicleSchedules:
+    """
+    Performs local search optimization to compute a warm start solution.
+    """
     print("Computing warm start solution")
     instance.due_dates = instance.deadlines[:]
-    totalTimeRemaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time)
-    epochTimeRemaining = solver_params.epoch_time_limit - (
-            datetime.datetime.now().timestamp() - instance.clock_start_epoch)
-    timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
-    startSearchClock = datetime.datetime.now().timestamp()
-    cppParameters = [
-        timeRemaining,
-    ]
-    congestedSchedule = cpp.cpp_local_search(
+    time_remaining = _compute_remaining_time(instance, solver_params)
+
+    start_time = datetime.datetime.now().timestamp()
+    cpp_parameters = [time_remaining]
+
+    congested_schedule = cpp.cpp_local_search(
         release_times=solution.release_times,
         remaining_time_slack=solution.staggering_applicable,
         staggering_applied=solution.staggering_applied,
@@ -35,57 +39,77 @@ def _run_local_search(solution: EpochSolution, instance: EpochInstance, solver_p
         deadlines=instance.deadlines,
         list_of_slopes=instance.input_data.list_of_slopes,
         list_of_thresholds=instance.input_data.list_of_thresholds,
-        parameters=cppParameters,
-        lb_travel_time=instance.get_lb_travel_time()
+        parameters=cpp_parameters,
+        lb_travel_time=instance.get_lb_travel_time(),
     )
-    endSearchClock = datetime.datetime.now().timestamp()
-    print("Time necessary to compute warm start solution: ", endSearchClock - startSearchClock)
-    return congestedSchedule
+
+    elapsed_time = datetime.datetime.now().timestamp() - start_time
+    print("Time required to compute warm start solution: ", elapsed_time)
+    return congested_schedule
 
 
-def _check_if_there_time_left_for_optimization(epochInstance: EpochInstance, solver_params: SolverParameters):
-    algorithmRuntime = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - epochInstance.start_solution_time)
+def _compute_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> float:
+    """
+    Calculates the remaining time for optimization based on algorithm and epoch limits.
+    """
+    algorithm_time_remaining = solver_params.algorithm_time_limit - (
+            datetime.datetime.now().timestamp() - instance.start_solution_time
+    )
+    epoch_time_remaining = solver_params.epoch_time_limit - (
+            datetime.datetime.now().timestamp() - instance.clock_start_epoch
+    )
+    return max(0.0, min(algorithm_time_remaining, epoch_time_remaining))
 
-    epochRuntime = solver_params.epoch_time_limit - (
-            datetime.datetime.now().timestamp() - epochInstance.clock_start_epoch)
 
-    timeLeft = min(algorithmRuntime, epochRuntime)
-    return timeLeft > 1e-6
+def _is_time_left_for_optimization(instance: EpochInstance, solver_params: SolverParameters) -> bool:
+    """
+    Checks whether there is sufficient time left for optimization.
+    """
+    return _compute_remaining_time(instance, solver_params) > 1e-6
 
 
-def get_epoch_warm_start(epochInstance: EpochInstance, epochStatusQuo: EpochSolution,
-                         solver_params: SolverParameters) -> EpochSolution:
-    isThereTimeLeftForOptimization = _check_if_there_time_left_for_optimization(epochInstance, solver_params)
-    if solver_params.improve_warm_start and isThereTimeLeftForOptimization:
-        congestedSchedule = _run_local_search(epochStatusQuo, epochInstance, solver_params)
+def get_epoch_warm_start(
+        epoch_instance: EpochInstance, epoch_status_quo: EpochSolution, solver_params: SolverParameters
+) -> EpochSolution:
+    """
+    Computes the warm start solution for the given epoch.
+
+    If the solver parameters allow improving the warm start and there is time left for optimization,
+    performs a local search. Otherwise, returns the status quo.
+    """
+    if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
+        congested_schedule = _run_local_search(epoch_status_quo, epoch_instance, solver_params)
     else:
-        if not isThereTimeLeftForOptimization:
-            print("no remaining time for optimization - ", end="")
-        print("not improving status quo")
-        return epochStatusQuo
+        if not _is_time_left_for_optimization(epoch_instance, solver_params):
+            print("No remaining time for optimization - ", end="")
+        print("Using status quo as warm start")
+        return epoch_status_quo
 
-    releaseTimes = [schedule[0] for schedule in congestedSchedule]
-    freeFlowSchedule = get_free_flow_schedule(epochInstance, congestedSchedule)
-    staggeringApplied = [congestedSchedule[vehicle][0] - releaseTime for vehicle, releaseTime in
-                         enumerate(epochStatusQuo.release_times)]
-    staggeringApplicable = get_staggering_applicable(epochInstance, staggeringApplied)
-    delaysOnArcs = get_delays_on_arcs(epochInstance, congestedSchedule)
-    totalDelay = sum(sum(delays) for delays in delaysOnArcs)
-    binaries = get_conflict_binaries(epochInstance.conflicting_sets, epochInstance.trip_routes,
-                                     congestedSchedule)
-    totalTravelTime = get_total_travel_time(congestedSchedule)
+    # Compute necessary metrics for the warm start solution
+    release_times = [schedule[0] for schedule in congested_schedule]
+    free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
+    staggering_applied = [
+        congested_schedule[vehicle][0] - release_time
+        for vehicle, release_time in enumerate(epoch_status_quo.release_times)
+    ]
+    staggering_applicable = get_staggering_applicable(epoch_instance, staggering_applied)
+    delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
+    total_delay = sum(sum(delays) for delays in delays_on_arcs)
+    binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
+    total_travel_time = get_total_travel_time(congested_schedule)
 
-    warmStart: EpochSolution = EpochSolution(total_delay=totalDelay,
-                                             congested_schedule=congestedSchedule,
-                                             delays_on_arcs=delaysOnArcs,
-                                             release_times=releaseTimes,
-                                             staggering_applicable=staggeringApplicable,
-                                             binaries=binaries,
-                                             free_flow_schedule=freeFlowSchedule,
-                                             staggering_applied=staggeringApplied,
-                                             total_travel_time=totalTravelTime,
-                                             vehicles_utilizing_arcs=epochStatusQuo.vehicles_utilizing_arcs
-                                             )
-    print(f"The delay of the warm start is {totalDelay / totalTravelTime:.2%} of the travel time")
-    return warmStart
+    warm_start = EpochSolution(
+        total_delay=total_delay,
+        congested_schedule=congested_schedule,
+        delays_on_arcs=delays_on_arcs,
+        release_times=release_times,
+        staggering_applicable=staggering_applicable,
+        binaries=binaries,
+        free_flow_schedule=free_flow_schedule,
+        staggering_applied=staggering_applied,
+        total_travel_time=total_travel_time,
+        vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
+    )
+
+    print(f"The delay of the warm start is {total_delay / total_travel_time:.2%} of the travel time")
+    return warm_start
