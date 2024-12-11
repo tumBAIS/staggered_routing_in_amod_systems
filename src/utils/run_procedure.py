@@ -34,8 +34,7 @@ def run_procedure(source: str) -> None:
         simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
         # Solve for the current epoch
         epoch_solution, optimization_measures = get_epoch_solution(simplified_instance, simplified_status_quo,
-                                                                   epoch_instance,
-                                                                   epoch_status_quo, solver_params)
+                                                                   epoch_instance, epoch_status_quo, solver_params)
         epoch_solutions.append(epoch_solution)
         optimization_measures_list.append(optimization_measures)
         # Update the instance for the next epoch if not the last one

@@ -1,18 +1,16 @@
 from __future__ import annotations
 import datetime
 from pathlib import Path
-
-from gurobipy import Model
 import gurobipy as grb
+from typing import Optional
 
+from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
 from instance_module.instance import Instance
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
 from MIP.support import (
-    add_optimization_measures_to_model,
     set_gurobi_parameters,
-    initialize_optimization_measures_model,
     compute_iis_if_not_solved,
     load_initial_solution,
     get_final_optimization_measures,
@@ -34,19 +32,15 @@ def construct_model(
         status_quo: CompleteSolution | EpochSolution,
         epoch_warm_start,
         solver_params: SolverParameters,
-) -> Model:
+) -> StaggeredRoutingModel:
     """Constructs and initializes the optimization model."""
-    model = grb.Model("staggered_routing")
-    model._optimize = True
+    model = StaggeredRoutingModel(status_quo.total_delay, instance.start_solution_time)
 
     if not solver_params.optimize or not is_there_remaining_time(instance, solver_params):
-        model._optimize = False
+        model.set_optimize_flag(False)
         if not is_there_remaining_time(instance, solver_params):
             print("No remaining time for optimization - model will not be constructed.")
         return model
-
-    add_optimization_measures_to_model(model)
-    initialize_optimization_measures_model(model, status_quo, instance)
     add_conflict_variables(model, instance)
     add_continuous_variables(model, instance, status_quo, epoch_warm_start)
     add_conflict_constraints(model, instance)
@@ -56,9 +50,9 @@ def construct_model(
     return model
 
 
-def _continue_solving(model: Model, instance: Instance, solver_params: SolverParameters) -> bool:
+def _continue_solving(model: StaggeredRoutingModel, instance: EpochInstance, solver_params: SolverParameters) -> bool:
     """Determines whether the optimization should continue."""
-    has_significant_gap = model._optimalityGap[-1] > GUROBI_OPTIMALITY_GAP + TOLERANCE
+    has_significant_gap = model.get_last_optimality_gap() > GUROBI_OPTIMALITY_GAP + TOLERANCE
     model_is_feasible = model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED,
                                              grb.GRB.Status.INTERRUPTED]
     model_time_limit_not_reached = model.status != grb.GRB.Status.TIME_LIMIT
@@ -71,7 +65,7 @@ def _continue_solving(model: Model, instance: Instance, solver_params: SolverPar
     )
 
 
-def is_there_remaining_time(instance, solver_params: SolverParameters) -> bool:
+def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> bool:
     """Checks if there is enough remaining time to continue optimization."""
     total_remaining_time = solver_params.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.start_solution_time
@@ -83,15 +77,15 @@ def is_there_remaining_time(instance, solver_params: SolverParameters) -> bool:
 
 
 def run_model(
-        model: Model,
-        instance: Instance | EpochInstance,
+        model: StaggeredRoutingModel,
+        instance: EpochInstance,
         warm_start: CompleteSolution | HeuristicSolution | EpochSolution,
         status_quo: CompleteSolution | EpochSolution,
         solver_params: SolverParameters,
-) -> OptimizationMeasures:
+) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
-    if not model._optimize or not is_there_remaining_time(instance,
-                                                          solver_params) or instance.input_data.staggering_cap == 0:
+    if not model.get_optimize_flag() or not is_there_remaining_time(instance,
+                                                                    solver_params) or instance.input_data.staggering_cap == 0:
         return None
 
     # Save the initial solution for reference
@@ -101,7 +95,7 @@ def run_model(
     while _continue_solving(model, instance, solver_params):
         try:
             initial_solution = load_initial_solution(instance)
-        except Exception as e:
+        except FileNotFoundError:
             print("No solution to start the model - terminating procedure.")
             return None
 
@@ -118,11 +112,8 @@ def run_model(
         else:
             model.optimize()
 
-        # Try to fetch final optimization measures
-        try:
-            return get_final_optimization_measures(model, instance)
-        except Exception as e:
-            print("Unable to obtain final optimization measures.")
+        # fetch final optimization measures
+        return get_final_optimization_measures(model, instance)
 
     # Compute IIS if the model was not solved successfully
     compute_iis_if_not_solved(model)

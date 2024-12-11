@@ -50,7 +50,7 @@ def get_epoch_model_solution(
     Compute the epoch model solution from the optimized model.
     """
     # If optimization is disabled, return the warm start or status quo
-    if not solver_params.optimize or not model._optimize or epoch_instance.input_data.staggering_cap == 0:
+    if not solver_params.optimize or not model._optimize_flag or epoch_instance.input_data.staggering_cap == 0:
         return epoch_warm_start if solver_params.warm_start else epoch_status_quo
 
     # Retrieve results from the model

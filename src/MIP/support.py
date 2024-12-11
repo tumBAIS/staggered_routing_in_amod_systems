@@ -7,11 +7,10 @@ import dataclasses
 import gurobipy as grb
 from typing import Optional
 
-from gurobipy import Model
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP
 from instance_module.epoch_instance import EpochInstance
-from instance_module.instance import Instance
 from utils.classes import CompleteSolution, HeuristicSolution
+from MIP import StaggeredRoutingModel
 
 # Define the path for results
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
@@ -24,19 +23,8 @@ class OptimizationMeasures:
     optimality_gap_list: list[float]
 
 
-def add_optimization_measures_to_model(model: Model) -> None:
-    """Add containers for optimization metrics to the model."""
-    model._optimalityGap = []
-    model._lowerBound = []
-    model._upperBound = []
-    model._optimizationTime = []
-    model._flagUpdate = False
-    model._bestLowerBound = 0
-    model._bestUpperBound = float("inf")
-    model._improvementClock = datetime.datetime.now().timestamp()
-
-
-def set_gurobi_parameters(model: Model, instance: Instance | EpochInstance, solver_params: SolverParameters) -> None:
+def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
+                          solver_params: SolverParameters) -> None:
     """Set Gurobi solver parameters based on time and optimization settings."""
     total_time_remaining = solver_params.algorithm_time_limit - (
             datetime.datetime.now().timestamp() - instance.start_solution_time
@@ -57,17 +45,7 @@ def set_gurobi_parameters(model: Model, instance: Instance | EpochInstance, solv
     model.setParam("IntFeasTol", 1e-7)
 
 
-def initialize_optimization_measures_model(model: Model, status_quo: CompleteSolution,
-                                           instance: Instance | EpochInstance) -> None:
-    """Initialize model with default optimization measures."""
-    model._lowerBound.append(0)
-    model._upperBound.append(status_quo.total_delay)
-    model._optimizationTime.append(datetime.datetime.now().timestamp() - instance.start_solution_time)
-    model._optimalityGap.append(100)
-    model._numBigMConstraints = 0
-
-
-def compute_iis_if_not_solved(model: Model) -> None:
+def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:
     """Compute IIS if the model is infeasible, unbounded, or otherwise not solved."""
     if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
         model.computeIIS()
@@ -75,14 +53,14 @@ def compute_iis_if_not_solved(model: Model) -> None:
         raise RuntimeError("Model could not be solved.")
 
 
-def _delete_solution_external_file(instance: Instance | EpochInstance) -> None:
+def _delete_solution_external_file(instance: EpochInstance) -> None:
     """Delete the external file storing the initial solution."""
     file_to_delete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
     if os.path.isfile(file_to_delete):
         os.remove(file_to_delete)
 
 
-def load_initial_solution(instance: Instance | EpochInstance) -> HeuristicSolution:
+def load_initial_solution(instance: EpochInstance) -> HeuristicSolution:
     """Load the initial solution from an external file."""
     file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
     with open(file_path, "rb") as infile:
@@ -91,24 +69,25 @@ def load_initial_solution(instance: Instance | EpochInstance) -> HeuristicSoluti
     return initial_solution
 
 
-def get_final_optimization_measures(model: Model, instance: Instance | EpochInstance) -> Optional[OptimizationMeasures]:
+def get_final_optimization_measures(model: StaggeredRoutingModel, instance: EpochInstance) -> (
+        Optional)[OptimizationMeasures]:
     """Retrieve final optimization measures if the model was successfully solved."""
     if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
-        model._lowerBound.append(round(model.ObjBound, 2))
-        model._upperBound.append(round(model.getObjective().getValue(), 2))
-        model._optimizationTime.append(datetime.datetime.now().timestamp() - instance.start_solution_time)
-        model._optimalityGap.append(round(model.MIPGap * 100, 2))
+        model.store_lower_bound()
+        model.store_upper_bound()
+        model.store_optimality_gap()
+        model.store_optimization_time(instance.start_solution_time)
 
         return OptimizationMeasures(
-            lower_bound_list=model._lowerBound,
-            upper_bound_list=model._upperBound,
-            optimality_gap_list=model._optimalityGap,
+            lower_bound_list=model.get_lower_bound_list(),
+            upper_bound_list=model.get_upper_bound_list(),
+            optimality_gap_list=model.get_optimality_gap_list(),
         )
     return None
 
 
 def save_solution_in_external_file(solution: HeuristicSolution | CompleteSolution,
-                                   instance: Instance | EpochInstance) -> None:
+                                   instance: EpochInstance) -> None:
     """Save the heuristic solution to an external file."""
     os.makedirs(path_to_results, exist_ok=True)
     file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"

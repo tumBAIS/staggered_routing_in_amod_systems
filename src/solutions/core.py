@@ -9,6 +9,8 @@ from solutions.map_simplified_epoch_solution import map_simplified_epoch_solutio
 from solutions.epoch_warm_start import get_epoch_warm_start
 from solutions.model_solution import get_epoch_model_solution
 from utils.classes import EpochSolution, CompleteSolution
+from typing import Optional
+from instance_module.epoch_instance import EpochInstance
 
 
 def print_header_offline_solution() -> None:
@@ -77,12 +79,12 @@ def print_info_epoch_solution(epoch_status_quo: EpochSolution, epoch_solution: E
 
 
 def get_epoch_solution(
-        simplified_instance: Instance,
-        simplified_status_quo: CompleteSolution,
-        epoch_instance: Instance,
+        simplified_instance: EpochInstance,
+        simplified_status_quo: EpochSolution,
+        epoch_instance: EpochInstance,
         epoch_status_quo: EpochSolution,
         solver_params: SolverParameters,
-) -> tuple[EpochSolution, MIP.support.OptimizationMeasures]:
+) -> tuple[EpochSolution, Optional[MIP.support.OptimizationMeasures]]:
     """
     Computes the solution for a single epoch, mapping it back to the full system.
 

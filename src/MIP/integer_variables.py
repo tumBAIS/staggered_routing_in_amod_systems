@@ -1,4 +1,6 @@
 from gurobipy import Model
+
+from MIP import StaggeredRoutingModel
 from instance_module.instance import Instance
 import gurobipy as grb
 from collections import namedtuple
@@ -56,70 +58,57 @@ def _store_bounds_in_variables(model: Model, arc: int, first_vehicle: int, secon
         model._gamma[arc][first_vehicle][second_vehicle]._ub = bounds.ub_gamma
 
 
-def _add_conflict_variables_between_two_vehicles(model: Model, arc: int, first_vehicle: int, second_vehicle: int,
+def _add_conflict_variables_between_two_vehicles(model: StaggeredRoutingModel, arc: int, first_vehicle: int,
+                                                 second_vehicle: int,
                                                  instance: Instance) -> None:
     """Add binary variables (alpha, beta, gamma) for a vehicle pair on a specific arc."""
     bounds = _get_bounds_for_binaries(first_vehicle, second_vehicle, arc, instance)
 
     # Alpha variable
     alpha_name = f"alpha_arc_{arc}_vehicles_{first_vehicle}_{second_vehicle}"
-    model._alpha[arc][first_vehicle][second_vehicle] = (
-        model.addVar(vtype=grb.GRB.BINARY, name=alpha_name, lb=bounds.lb_alpha, ub=bounds.ub_alpha)
-        if bounds.lb_alpha != bounds.ub_alpha else bounds.lb_alpha
-    )
+    model.add_conflict_pair_var(arc, first_vehicle, second_vehicle, alpha_name, bounds.lb_alpha, bounds.ub_alpha,
+                                "alpha")
 
     # Beta variable
     beta_name = f"beta_arc_{arc}_vehicles_{first_vehicle}_{second_vehicle}"
-    model._beta[arc][first_vehicle][second_vehicle] = (
-        model.addVar(vtype=grb.GRB.BINARY, name=beta_name, lb=bounds.lb_beta, ub=bounds.ub_beta)
-        if bounds.lb_beta != bounds.ub_beta else bounds.lb_beta
-    )
+    model.add_conflict_pair_var(arc, first_vehicle, second_vehicle, beta_name, bounds.lb_beta, bounds.ub_beta, "beta")
 
     # Gamma variable
     gamma_name = f"gamma_arc_{arc}_vehicles_{first_vehicle}_{second_vehicle}"
-    model._gamma[arc][first_vehicle][second_vehicle] = (
-        model.addVar(vtype=grb.GRB.BINARY, name=gamma_name, lb=bounds.lb_gamma, ub=bounds.ub_gamma)
-        if bounds.lb_gamma != bounds.ub_gamma else bounds.lb_gamma
-    )
+    model.add_conflict_pair_var(arc, first_vehicle, second_vehicle, gamma_name, bounds.lb_gamma, bounds.ub_gamma,
+                                "gamma")
 
     _store_bounds_in_variables(model, arc, first_vehicle, second_vehicle, bounds)
 
 
 def _add_conflict_variables_among_vehicles_in_conflicting_set(
-        model: Model, arc: int, conflicting_set: list[int], instance: Instance
+        model: StaggeredRoutingModel, arc: int, conflicting_set: list[int], instance: Instance
 ) -> None:
     """Add conflict variables for all pairs of vehicles in a conflicting set."""
-    model._alpha[arc] = {}
-    model._beta[arc] = {}
-    model._gamma[arc] = {}
+    model.add_arc_conflict_vars(arc)
 
-    for first_vehicle in conflicting_set:
+    for first_trip in conflicting_set:
         # Initialize dictionaries for the first vehicle if not already present
-        if first_vehicle not in model._alpha[arc]:
-            model._alpha[arc][first_vehicle] = {}
-            model._beta[arc][first_vehicle] = {}
-            model._gamma[arc][first_vehicle] = {}
+        if not model.has_trip_conflict_vars_on_arc(arc, first_trip):
+            model.add_trip_to_arc_conflict_vars(arc, first_trip)
 
-        for second_vehicle in conflicting_set:
-            if first_vehicle == second_vehicle:
+        for second_trip in conflicting_set:
+            if first_trip == second_trip:
                 continue
 
             # Initialize dictionaries for the second vehicle if not already present
-            if second_vehicle not in model._alpha[arc]:
-                model._alpha[arc][second_vehicle] = {}
-                model._beta[arc][second_vehicle] = {}
-                model._gamma[arc][second_vehicle] = {}
+            if not model.has_trip_conflict_vars_on_arc(arc, second_trip):
+                model.add_trip_to_arc_conflict_vars(arc, second_trip)
 
             # Add conflict variables between the two vehicles
-            if first_vehicle < second_vehicle:
-                _add_conflict_variables_between_two_vehicles(model, arc, first_vehicle, second_vehicle, instance)
-                _add_conflict_variables_between_two_vehicles(model, arc, second_vehicle, first_vehicle, instance)
+            if first_trip < second_trip:
+                _add_conflict_variables_between_two_vehicles(model, arc, first_trip, second_trip, instance)
+                _add_conflict_variables_between_two_vehicles(model, arc, second_trip, first_trip, instance)
 
 
-def add_conflict_variables(model: Model, instance: Instance) -> None:
+def add_conflict_variables(model: StaggeredRoutingModel, instance: Instance) -> None:
     """Add all conflict variables for each arc and its conflicting set."""
     print("Creating conflict variables ...", end=" ")
-    model._alpha, model._beta, model._gamma = {}, {}, {}
 
     for arc, conflicting_set in enumerate(instance.conflicting_sets):
         if conflicting_set:
