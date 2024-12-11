@@ -2,7 +2,7 @@ import dataclasses
 import datetime
 from typing import List
 
-from input_data import SolverParameters
+from input_data import SolverParameters, ACTIVATE_ASSERTIONS
 from congestion_model.conflict_binaries import get_conflict_binaries
 from utils.prints import (
     print_info_conflicting_sets_sizes,
@@ -19,20 +19,11 @@ from congestion_model.core import (
     get_delays_on_arcs,
     get_total_delay,
 )
-from input_data import ACTIVATE_ASSERTIONS
 import cpp_module as cpp
 
 
 def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> List[List[int]]:
-    """
-    Identify vehicles utilizing each arc.
-
-    Args:
-        arc_based_shortest_paths (List[List[int]]): Shortest paths for all vehicles.
-
-    Returns:
-        List[List[int]]: Vehicles using each arc.
-    """
+    """Identify vehicles utilizing each arc."""
     max_arc = max(max(path) for path in arc_based_shortest_paths)
     vehicles_utilizing_arcs = [[] for _ in range(max_arc + 1)]
 
@@ -43,10 +34,8 @@ def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> Li
     return vehicles_utilizing_arcs
 
 
-def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_utilizing_arcs: List[List[int]]):
-    """
-    Validate that trips and conflicting sets do not have duplicates.
-    """
+def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_utilizing_arcs: List[List[int]]) -> None:
+    """Validate that trips and conflicting sets do not have duplicates."""
     if ACTIVATE_ASSERTIONS:
         assert sorted(set(epoch_instance.vehicles_original_ids)) == sorted(epoch_instance.vehicles_original_ids), \
             "Duplicate vehicle IDs found in epoch."
@@ -61,6 +50,7 @@ def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_util
 
 @dataclasses.dataclass
 class StatusQuoMetrics:
+    """Metrics related to the status quo solution."""
     congested_schedule: List[List[float]]
     free_flow_schedule: List[List[float]]
     delays_on_arcs: List[List[float]]
@@ -70,9 +60,7 @@ class StatusQuoMetrics:
 
 def compute_solution_metrics(instance: EpochInstance, release_times: List[float],
                              solver_params: SolverParameters) -> StatusQuoMetrics:
-    """
-    Compute various metrics for a solution, including schedules and delays.
-    """
+    """Compute metrics for a solution, including schedules and delays."""
     congested_schedule = get_congested_schedule(instance, release_times, solver_params)
     free_flow_schedule = get_free_flow_schedule(instance, congested_schedule)
     delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
@@ -87,10 +75,8 @@ def compute_solution_metrics(instance: EpochInstance, release_times: List[float]
     )
 
 
-def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int):
-    """
-    Print a header for the current epoch's status quo computation.
-    """
+def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int) -> None:
+    """Print header for the current epoch's status quo computation."""
     print("#" * 20)
     print(f"COMPUTING STATUS QUO FOR EPOCH {epoch_instance.epoch_id} - "
           f"START TIME {epoch_instance.epoch_id * epoch_size * 60} seconds")
@@ -98,6 +84,7 @@ def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int):
 
 
 def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:
+    """Create a CPP instance for the given epoch."""
     return cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,
@@ -111,14 +98,13 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
 
 
 def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
-    """
-    Compute the schedule for the current epoch under the status quo scenario.
-    """
+    """Compute the status quo solution for the current epoch."""
     epoch_instance.set_clock_start_epoch()
     print_epoch_status_header(epoch_instance, epoch_size=solver_params.epoch_size)
     cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)
+
     delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
     free_flow_schedule = cpp_epoch_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
     add_conflicting_sets_to_instance(epoch_instance, free_flow_schedule)
@@ -129,6 +115,7 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
         cpp_status_quo.get_schedule(),
     )
 
+    # Print additional details about the status quo
     print_info_arcs_utilized(epoch_instance)
     print_info_length_trips(
         epoch_instance,

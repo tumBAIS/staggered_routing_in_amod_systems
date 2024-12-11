@@ -3,7 +3,7 @@ import copy
 
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
-from utils.imports import get_instance
+from instance_module.instance import get_instance
 from instance_module.epoch_instance import get_epoch_instances
 from solutions.status_quo import get_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution

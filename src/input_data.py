@@ -11,7 +11,6 @@ from typing import Optional
 # Global configuration parameters
 ACTIVATE_ASSERTIONS = False
 FIX_MODEL = False
-SAVE_CPP_INSTANCE = False
 USE_GUROBI_INDICATORS = False
 SPEED_KPH = 20  # kph
 TOLERANCE = 1e-6
