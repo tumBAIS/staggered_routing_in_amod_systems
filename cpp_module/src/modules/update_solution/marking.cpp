@@ -19,9 +19,9 @@ namespace cpp_module {
         other_trip_departure.arc_id = arc;
         other_trip_departure.time = otherDeparture;
         other_trip_departure.position = otherPosition;
-        other_trip_departure.eventType = Departure::TRAVEL;
+        other_trip_departure.event_type = Departure::TRAVEL;
         number_of_reinsertions[otherVehicle]++;
-        other_trip_departure.reinsertionNumber = number_of_reinsertions[otherVehicle];
+        other_trip_departure.reinsertion_number = number_of_reinsertions[otherVehicle];
         pq_departures.push(other_trip_departure);
     }
 
@@ -137,8 +137,8 @@ namespace cpp_module {
         other_trip_departure.arc_id = departure.arc_id;
         other_trip_departure.time = otherDeparture;
         other_trip_departure.position = otherPosition;
-        other_trip_departure.reinsertionNumber = 0;
-        other_trip_departure.eventType = Departure::ACTIVATION;
+        other_trip_departure.reinsertion_number = 0;
+        other_trip_departure.event_type = Departure::ACTIVATION;
         trip_status_list[otherVehicle] = STAGING;
         pq_departures.push(other_trip_departure);
     }

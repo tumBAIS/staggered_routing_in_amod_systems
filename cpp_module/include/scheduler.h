@@ -25,8 +25,8 @@ namespace cpp_module {
         long position;
         enum {
             TRAVEL, ACTIVATION
-        } eventType;
-        long reinsertionNumber;
+        } event_type;
+        long reinsertion_number;
     };
 
 
