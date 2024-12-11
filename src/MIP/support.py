@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import dataclasses
-import datetime
 import os
 import pickle
-
-from gurobipy import Model
-
-from input_data import SolverParameters
-from instance_module.epoch_instance import EpochInstance
-from input_data import GUROBI_OPTIMALITY_GAP
-from utils.classes import CompleteSolution, HeuristicSolution
-from instance_module.instance import Instance
+import datetime
+import dataclasses
+import gurobipy as grb
 from typing import Optional
 
+from gurobipy import Model
+from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP
+from instance_module.epoch_instance import EpochInstance
+from instance_module.instance import Instance
+from utils.classes import CompleteSolution, HeuristicSolution
+
+# Define the path for results
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
 
 
@@ -24,8 +24,8 @@ class OptimizationMeasures:
     optimality_gap_list: list[float]
 
 
-def add_optimization_measures_to_model(model: Model):
-    """Save local search heuristic solution info"""
+def add_optimization_measures_to_model(model: Model) -> None:
+    """Add containers for optimization metrics to the model."""
     model._optimalityGap = []
     model._lowerBound = []
     model._upperBound = []
@@ -35,74 +35,83 @@ def add_optimization_measures_to_model(model: Model):
     model._bestUpperBound = float("inf")
     model._improvementClock = datetime.datetime.now().timestamp()
 
-    return
 
+def set_gurobi_parameters(model: Model, instance: Instance | EpochInstance, solver_params: SolverParameters) -> None:
+    """Set Gurobi solver parameters based on time and optimization settings."""
+    total_time_remaining = solver_params.algorithm_time_limit - (
+            datetime.datetime.now().timestamp() - instance.start_solution_time
+    )
+    epoch_time_remaining = solver_params.epoch_time_limit - (
+            datetime.datetime.now().timestamp() - instance.clock_start_epoch
+    )
+    time_remaining = max(0.0, round(min(total_time_remaining, epoch_time_remaining), 2))
 
-def set_gurobi_parameters(model, instance, solver_params: SolverParameters):
-    totalTimeRemaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time)
-    epochTimeRemaining = solver_params.epoch_time_limit - (
-            datetime.datetime.now().timestamp() - instance.clock_start_epoch)
-    timeRemaining = min(totalTimeRemaining, epochTimeRemaining)
-    model.setParam("timeLimit", max(0.0, round(timeRemaining, 2)))
-    model.setParam("MIPGap", (GUROBI_OPTIMALITY_GAP * 0.01))
-    model.setParam("NodeFileStart", 0.5)  # helps to solve larger instances
-    model.setParam("Threads", 1)  # helps to solve larger instances
+    model.setParam("timeLimit", time_remaining)
+    model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
+    model.setParam("NodeFileStart", 0.5)
+    model.setParam("Threads", 1)
     model.setParam("MIPFocus", 2)
     model.setParam("Disconnected", 0)
     model.setParam("NumericFocus", 2)
     model.setParam("FeasibilityTol", 1e-8)
     model.setParam("IntFeasTol", 1e-7)
-    return
 
 
-def initialize_optimization_measures_model(model, statusQuo: CompleteSolution, instance):
+def initialize_optimization_measures_model(model: Model, status_quo: CompleteSolution,
+                                           instance: Instance | EpochInstance) -> None:
+    """Initialize model with default optimization measures."""
     model._lowerBound.append(0)
-    model._upperBound.append(statusQuo.total_delay)
-    timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.start_solution_time
-    model._optimizationTime.append(timeSpentInOptimization)
+    model._upperBound.append(status_quo.total_delay)
+    model._optimizationTime.append(datetime.datetime.now().timestamp() - instance.start_solution_time)
     model._optimalityGap.append(100)
     model._numBigMConstraints = 0
 
 
-def compute_iis_if_not_solved(model: Model):
-    if model.status in [3, 4, 5]:
+def compute_iis_if_not_solved(model: Model) -> None:
+    """Compute IIS if the model is infeasible, unbounded, or otherwise not solved."""
+    if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
         model.computeIIS()
         model.write(f"{path_to_results}/unsolvedModel.ilp")
         raise RuntimeError("Model could not be solved.")
 
 
 def _delete_solution_external_file(instance: Instance | EpochInstance) -> None:
-    fileToDelete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
-    if os.path.isfile(fileToDelete):
-        os.remove(fileToDelete)
-    return
+    """Delete the external file storing the initial solution."""
+    file_to_delete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
+    if os.path.isfile(file_to_delete):
+        os.remove(file_to_delete)
 
 
 def load_initial_solution(instance: Instance | EpochInstance) -> HeuristicSolution:
-    with open(f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p", "rb") as infile:
-        initialSolution: HeuristicSolution = pickle.load(infile)
+    """Load the initial solution from an external file."""
+    file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
+    with open(file_path, "rb") as infile:
+        initial_solution: HeuristicSolution = pickle.load(infile)
     _delete_solution_external_file(instance)
-    return initialSolution
+    return initial_solution
 
 
-def get_final_optimization_measures(model, instance: Instance) -> Optional[OptimizationMeasures]:
-    if model.status not in [3, 4, 5]:
+def get_final_optimization_measures(model: Model, instance: Instance | EpochInstance) -> Optional[OptimizationMeasures]:
+    """Retrieve final optimization measures if the model was successfully solved."""
+    if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
         model._lowerBound.append(round(model.ObjBound, 2))
         model._upperBound.append(round(model.getObjective().getValue(), 2))
-        timeSpentInOptimization = datetime.datetime.now().timestamp() - instance.start_solution_time
-        model._optimizationTime.append(timeSpentInOptimization)
+        model._optimizationTime.append(datetime.datetime.now().timestamp() - instance.start_solution_time)
         model._optimalityGap.append(round(model.MIPGap * 100, 2))
-        return OptimizationMeasures(lower_bound_list=model._lowerBound,
-                                    upper_bound_list=model._upperBound,
-                                    optimality_gap_list=model._optimalityGap)
+
+        return OptimizationMeasures(
+            lower_bound_list=model._lowerBound,
+            upper_bound_list=model._upperBound,
+            optimality_gap_list=model._optimalityGap,
+        )
+    return None
 
 
-def save_solution_in_external_file(heuristicSolution: HeuristicSolution | CompleteSolution,
-                                   instance: Instance | EpochInstance):
-    pathToResults = os.path.join(os.path.dirname(__file__), "../../results")
-    if not os.path.exists(pathToResults):
-        os.makedirs(pathToResults, exist_ok=True)
-    with open(f"{pathToResults}/initialSolution_{instance.clock_start_epoch}.p", "wb") as outfile:
-        pickle.dump(heuristicSolution, outfile)
-        print("saved heuristic solution in external file")
+def save_solution_in_external_file(solution: HeuristicSolution | CompleteSolution,
+                                   instance: Instance | EpochInstance) -> None:
+    """Save the heuristic solution to an external file."""
+    os.makedirs(path_to_results, exist_ok=True)
+    file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
+    with open(file_path, "wb") as outfile:
+        pickle.dump(solution, outfile)
+        print("Saved heuristic solution in external file.")
