@@ -7,7 +7,8 @@ from MIP import StaggeredRoutingModel
 
 
 def _add_departure_variable(
-        model: Model, vehicle: int, arc: int, instance: Instance, status_quo: EpochSolution, epoch_warm_start
+        model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance, status_quo: EpochSolution,
+        epoch_warm_start
 ) -> None:
     """Add departure variable for a specific vehicle and arc."""
     arc_index = instance.trip_routes[vehicle].index(arc)
@@ -17,26 +18,10 @@ def _add_departure_variable(
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
-        model._departure[vehicle][arc] = model.addVar(
-            vtype=grb.GRB.CONTINUOUS,
-            name=f"departure_vehicle_{vehicle}_arc_{arc}",
-            lb=fixed_departure,
-            ub=fixed_departure,
-            obj=0,
-            column=None
-        )
-    else:
-        model._departure[vehicle][arc] = model.addVar(
-            vtype=grb.GRB.CONTINUOUS,
-            name=f"departure_vehicle_{vehicle}_arc_{arc}",
-            lb=earliest_departure,
-            ub=latest_departure,
-            obj=0,
-            column=None
-        )
+        model.add_departure_var(vehicle, arc, fixed_departure, fixed_departure)
 
-    model._departure[vehicle][arc]._lb = earliest_departure
-    model._departure[vehicle][arc]._ub = latest_departure
+    else:
+        model.add_departure_var(vehicle, arc, earliest_departure, latest_departure)
 
     assert (
             earliest_departure - 1e-4 <= departure <= latest_departure + 1e-6

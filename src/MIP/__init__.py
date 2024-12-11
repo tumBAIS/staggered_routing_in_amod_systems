@@ -39,6 +39,13 @@ class StaggeredRoutingModel(grb.Model):
         self._delay[trip] = {}
         self._load[trip] = {}
 
+    def add_departure_var(self, vehicle, arc, lb, ub):
+        self._departure[vehicle][arc] = self.addVar(vtype=grb.GRB.CONTINUOUS,
+                                                    name=f"departure_vehicle_{vehicle}_arc_{arc}",
+                                                    lb=lb, ub=ub, obj=0, column=None)
+        self._departure[vehicle][arc]._lb = lb
+        self._departure[vehicle][arc]._ub = ub
+
     def set_best_lower_bound(self, value: float):
         self._bestLowerBound = value
 
