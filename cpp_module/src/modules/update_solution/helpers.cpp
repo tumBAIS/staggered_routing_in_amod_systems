@@ -9,11 +9,11 @@ namespace cpp_module {
     auto Scheduler::reset_other_schedule_to_reinsertion_time(Solution &solution,
                                                              const long other_vehicle,
                                                              const long other_position) -> void {
-        long steps_back = last_processed_position[other_vehicle] - other_position;
+        long steps_back = get_trip_last_processed_position(other_vehicle) - other_position;
         for (auto step = 0; step < steps_back; step++) {
             solution.set_trip_arc_departure(other_vehicle, other_position + step + 1,
-                                            original_schedule[other_vehicle][other_position +
-                                                                             step + 1]);
+                                            get_original_trip_departure_at_position(other_vehicle, other_position +
+                                                                                                   step + 1));
         }
     }
 
@@ -22,16 +22,16 @@ namespace cpp_module {
                                             double &current_vehicle_new_arrival,
                                             double &vehicles_on_arc) -> void {
         update_vehicles_on_arc_of_conflicting_set(complete_solution, vehicles_on_arc);
-        if (lazy_update_pq) { return; }
-        tie_found = check_if_tie_in_set(complete_solution.get_schedule());
-        if (tie_found) {
+        if (get_lazy_update_pq_flag()) { return; }
+        set_tie_found_flag(check_if_tie_in_set(complete_solution.get_schedule()));
+        if (get_tie_found_flag()) {
             return;
         }
         delay = compute_delay_on_arc(vehicles_on_arc, instance, departure.arc_id);
         print_delay_computed(delay);
         current_vehicle_new_arrival = departure.time + delay + instance.get_arc_travel_time(departure.arc_id);
-        trip_is_late = check_if_vehicle_is_late(current_vehicle_new_arrival);
-        if (trip_is_late) {
+        set_trip_is_late_flag(check_if_vehicle_is_late(current_vehicle_new_arrival));
+        if (get_trip_is_late_flag()) {
             return;
         }
         decide_on_vehicles_maybe_to_mark(complete_solution.get_schedule(), current_vehicle_new_arrival);
@@ -48,7 +48,7 @@ namespace cpp_module {
         const bool conf_set_is_empty = is_conf_set_empty(instance.get_conflicting_set(departure.arc_id));
         if (!conf_set_is_empty) {
             process_conflicting_set(complete_solution, delay, current_vehicle_new_arrival, vehicles_on_arc);
-            if (lazy_update_pq || tie_found || trip_is_late) {
+            if (get_lazy_update_pq_flag() || get_tie_found_flag() || get_trip_is_late_flag()) {
                 return;
             }
         }
@@ -156,28 +156,23 @@ namespace cpp_module {
     auto Scheduler::move_vehicle_forward_in_the_queue(const double current_vehicle_new_arrival) -> void {
         print_update_greatest_time_analyzed();
         departure.time = current_vehicle_new_arrival;
-        last_processed_position[departure.trip_id] = departure.position;
+        set_trip_last_processed_position(departure.trip_id, departure.position);
         departure.position++;
         departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, departure.position);
-        pq_departures.push(departure);
+        insert_departure_in_pq(departure);
         print_departure_pushed_to_queue();
     }
 
-    auto Scheduler::initialize_status_vehicles() -> void {
-        trip_status_list = std::vector<VehicleStatusType>(instance.get_number_of_trips(), INACTIVE);
-        number_of_reinsertions = std::vector<long>(instance.get_number_of_trips(), 0);
-        last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
-    }
 
     auto Scheduler::initialize_scheduler_for_update_solution(const VehicleSchedule &congested_schedule) -> void {
-        original_schedule = congested_schedule;
-        pq_departures = MinQueueDepartures();
+        set_original_schedule(congested_schedule);
+        clear_departures_pq();
         departure = Departure();
         other_trip_departure = Departure();
-        tie_found = false;
-        lazy_update_pq = false;
-        trip_is_late = false;
-        iteration++;
+        set_tie_found_flag(false);
+        set_lazy_update_pq_flag(false);
+        set_trip_is_late_flag(false);
+        increase_counter(ITERATION);
         print_iteration_number();
     }
 

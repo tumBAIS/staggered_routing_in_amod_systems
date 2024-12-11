@@ -70,7 +70,7 @@ namespace cpp_module {
                 break;
             }
 
-            const bool other_vehicle_is_active = trip_status_list[other_trip_id] == ACTIVE;
+            const bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
             const bool other_vehicle_is_not_active = !other_vehicle_is_active;
             const double other_departure = solution.get_trip_arc_departure(other_trip_id, other_position);
             const double other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
@@ -84,14 +84,14 @@ namespace cpp_module {
                                                                                     current_conflicts_with_other);
                 if (should_mark == YES) {
                     mark_vehicle(other_trip_id, other_departure, other_position); // O(log n) -> pq.push
-                    lazy_update_pq = true; //marked vehicle starting before
+                    set_lazy_update_pq_flag(true); //marked vehicle starting before
                     assert_lazy_update_is_necessary(other_departure);
                     print_lazy_update_priority_queue();
                 } else if (should_mark == MAYBE) {
-                    vehicles_to_mark.push_back(other_trip_id);
+                    insert_trip_to_mark(other_trip_id);
                 }
             } else if (other_vehicle_is_active) {
-                bool other_is_processed_on_this_arc = other_position <= last_processed_position[other_trip_id];
+                bool other_is_processed_on_this_arc = other_position <= get_trip_last_processed_position(other_trip_id);
                 const bool other_is_first = check_if_other_is_first_in_current_schedule(other_trip_id, other_departure);
                 const bool other_is_not_first = !other_is_first;
                 if (other_is_processed_on_this_arc) {

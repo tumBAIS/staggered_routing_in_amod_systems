@@ -126,32 +126,32 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::assert_combination_status_and_departure_type_is_possible() -> void {
-        if (departure.event_type == Departure::ACTIVATION) {
-            if (trip_status_list[departure.trip_id] == Scheduler::VehicleStatusType::INACTIVE) {
-                // only staging vehicles can be activated
-                throw std::invalid_argument("Type of Departure Error: activating an inactive vehicle");
-            } else if (trip_status_list[departure.trip_id] == Scheduler::VehicleStatusType::ACTIVE) {
-                throw std::invalid_argument("Type of Departure Error: activating an active/reinserted vehicle");
-            } else {
-                throw std::invalid_argument("Staging vehicle not correctly activated");
-            }
-
-        } else if (departure.event_type == Departure::TRAVEL) {
-            if (trip_status_list[departure.trip_id] == Scheduler::VehicleStatusType::STAGING) {
-                // wrong
-                throw std::invalid_argument("Type of Departure Error: a staging vehicle is traveling");
-
-            } else if (trip_status_list[departure.trip_id] == Scheduler::VehicleStatusType::INACTIVE) {
-                // wrong
-                throw std::invalid_argument("Type of Departure Error: an inactive vehicle is traveling");
-            }
-            if (departure.reinsertion_number != number_of_reinsertions[departure.trip_id]) {
-//                throw std::invalid_argument("Processing wrong travel event of reinserted vehicle");
-            }
-
-        }
-    }
+//    auto Scheduler::assert_combination_status_and_departure_type_is_possible() -> void {
+//        if (departure.event_type == Departure::ACTIVATION) {
+//            if (trip_status_list[departure.trip_id] == Scheduler::TripStatus::INACTIVE) {
+//                // only staging vehicles can be activated
+//                throw std::invalid_argument("Type of Departure Error: activating an inactive vehicle");
+//            } else if (trip_status_list[departure.trip_id] == Scheduler::TripStatus::ACTIVE) {
+//                throw std::invalid_argument("Type of Departure Error: activating an active/reinserted vehicle");
+//            } else {
+//                throw std::invalid_argument("Staging vehicle not correctly activated");
+//            }
+//
+//        } else if (departure.event_type == Departure::TRAVEL) {
+//            if (trip_status_list[departure.trip_id] == Scheduler::TripStatus::STAGING) {
+//                // wrong
+//                throw std::invalid_argument("Type of Departure Error: a staging vehicle is traveling");
+//
+//            } else if (trip_status_list[departure.trip_id] == Scheduler::TripStatus::INACTIVE) {
+//                // wrong
+//                throw std::invalid_argument("Type of Departure Error: an inactive vehicle is traveling");
+//            }
+//            if (departure.reinsertion_number != number_of_reinsertions[departure.trip_id]) {
+////                throw std::invalid_argument("Processing wrong travel event of reinserted vehicle");
+//            }
+//
+//        }
+//    }
 
     auto Scheduler::assert_departure_is_feasible(const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction

@@ -9,6 +9,8 @@
 #include "solution.h"
 
 namespace cpp_module {
+
+
     const long ITERATION_TO_PRINT = 3; // Has effect only if printsEvaluationFunction is defined
 
     struct Departure {
@@ -45,7 +47,7 @@ namespace cpp_module {
         YES, NO, MAYBE
     };
     enum CounterName {
-        WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS
+        WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS, ITERATION
     };
 
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
@@ -67,17 +69,25 @@ namespace cpp_module {
 
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 
-    class Scheduler {
+    class SchedulerFields {
+    public:
         using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
+        enum TripStatus {
+            INACTIVE, STAGING, ACTIVE
+        };
+        enum InstructionConflictingSet {
+            CONTINUE, EVALUATE, BREAK
+        };
+        Departure departure{}; //TODO: this must be removed
+        Departure other_trip_departure{};
+
+
     private:
         MinQueueDepartures pq_departures;
         std::vector<MinQueueDepartures> arrivals_on_arcs;
         std::vector<long> last_processed_position;
         std::vector<long> number_of_reinsertions;
-        std::vector<long> vehicles_to_mark;
-        Departure departure{};
-        Departure other_trip_departure{};
-        Instance &instance;
+        std::vector<TripID> trips_to_mark;
         double best_total_delay;
         VehicleSchedule original_schedule;
         VehicleSchedule schedule_to_restore;
@@ -85,32 +95,191 @@ namespace cpp_module {
         bool lazy_update_pq{};
         bool tie_found{};
         bool trip_is_late{};
-        enum VehicleStatusType {
-            INACTIVE, STAGING, ACTIVE
-        };
-
-
-        enum InstructionConflictingSet {
-            CONTINUE, EVALUATE, BREAK
-        };
         double start_search_clock;
-        std::vector<VehicleStatusType> trip_status_list;
-        long iteration;
+        std::vector<TripStatus> trip_status_list;
+        long iteration = 0;
         long worse_solutions = 0;
         long slack_not_enough = 0;
         long solution_with_ties = 0;
         long explored_solutions = 0;
         bool slack_is_enough = true;
+    protected:
+        Instance &instance;
+
 
     public:
-        explicit Scheduler(Instance &arg_instance) :
-                instance(arg_instance) {
+        explicit SchedulerFields(Instance &arg_instance) : instance(arg_instance) {
             start_search_clock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
-            trip_status_list = std::vector<VehicleStatusType>(instance.get_number_of_trips(),
-                                                              VehicleStatusType::INACTIVE);
-            iteration = 0;
-        };
+            trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
+            last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
+        }
+
+        void increase_counter(CounterName counter_name) {
+            switch (counter_name) {
+                case EXPLORED_SOLUTIONS:
+                    explored_solutions++;
+                case SLACK_NOT_ENOUGH:
+                    slack_not_enough++;
+                case SOLUTION_WITH_TIES:
+                    solution_with_ties++;
+                case WORSE_SOLUTIONS:
+                    worse_solutions++;
+                case ITERATION:
+                    iteration++;
+            }
+        }
+
+        [[nodiscard]] bool get_slack_is_enough_flag() const {
+            return slack_is_enough;
+        }
+
+        void set_slack_is_enough_flag(bool arg_flag) {
+            slack_is_enough = arg_flag;
+        }
+
+        [[nodiscard]] long get_iteration() const {
+            return iteration;
+        }
+
+        [[nodiscard]] double get_best_total_delay() const {
+            return best_total_delay;
+        }
+
+        void set_best_total_delay(double arg_delay) {
+            best_total_delay = arg_delay;
+        }
+
+        [[nodiscard]] double get_start_search_clock() const {
+            return start_search_clock;
+        }
+
+
+    protected:
+
+
+        [[nodiscard]]   MinQueueDepartures &get_arrivals_on_arc(ArcID arc_id) {
+            return arrivals_on_arcs[arc_id];
+        }
+
+
+        void insert_departure_in_arc_arrivals(ArcID arc_id, Departure &arg_departure) {
+            arrivals_on_arcs[arc_id].push(arg_departure);
+        }
+
+        void set_original_schedule(const VehicleSchedule &schedule) {
+            original_schedule = schedule;
+        }
+
+        void initialize_status_vehicles() {
+            trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
+            number_of_reinsertions = std::vector<long>(instance.get_number_of_trips(), 0);
+            last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
+        }
+
+        [[nodiscard]]Time get_original_trip_departure_at_position(TripID trip_id, Position position) {
+            return original_schedule[trip_id][position];
+        }
+
+
+        [[nodiscard]]Time get_last_original_trip_departure(TripID trip_id) {
+            return original_schedule[trip_id].back();
+        }
+
+        void insert_trip_to_mark(TripID trip_id) {
+            trips_to_mark.push_back(trip_id);
+        }
+
+        std::vector<TripID> get_trips_to_mark() {
+            return trips_to_mark;
+        }
+
+
+        void insert_departure_in_pq(const Departure &arg_departure) {
+            pq_departures.push(arg_departure);
+        }
+
+        Departure get_and_pop_departure_from_pq() {
+            auto arg_departure = pq_departures.top();
+            pq_departures.pop();
+            return arg_departure;
+        }
+
+
+        [[nodiscard]] bool get_tie_found_flag() const {
+            return tie_found;
+        }
+
+        [[nodiscard]] bool get_trip_is_late_flag() const {
+            return trip_is_late;
+        }
+
+        void set_tie_found_flag(bool arg_flag) {
+            tie_found = arg_flag;
+        }
+
+        void set_trip_is_late_flag(bool arg_flag) {
+            trip_is_late = arg_flag;
+        }
+
+        void clear_vehicles_to_mark() {
+            trips_to_mark.clear();
+        }
+
+        bool is_pq_empty() {
+            return pq_departures.empty();
+        }
+
+        void clear_departures_pq() {
+            pq_departures = MinQueueDepartures();
+        }
+
+        void clear_arrivals_on_arcs() {
+            arrivals_on_arcs = std::vector<MinQueueDepartures>(instance.get_number_of_arcs());
+        }
+
+        void set_lazy_update_pq_flag(bool arg_flag) {
+            lazy_update_pq = arg_flag;
+        }
+
+
+        [[nodiscard]]bool get_lazy_update_pq_flag() const {
+            return lazy_update_pq;
+        }
+
+        void set_trip_status(TripID trip_id, TripStatus arg_trip_status) {
+            trip_status_list[trip_id] = arg_trip_status;
+        }
+
+        [[nodiscard]] Position get_trip_last_processed_position(TripID trip_id) {
+            return last_processed_position[trip_id];
+        }
+
+        [[nodiscard]] long get_trip_reinsertions(TripID trip_id) {
+            return number_of_reinsertions[trip_id];
+        }
+
+        void increase_trip_reinsertions(TripID trip_id) {
+            number_of_reinsertions[trip_id]++;
+        }
+
+
+        void set_trip_last_processed_position(TripID trip_id, Position position) {
+            last_processed_position[trip_id] = position;
+        }
+
+
+        [[nodiscard]] TripStatus get_trip_status(TripID trip_id) {
+            return trip_status_list[trip_id];
+        }
+
+
+    };
+
+    class Scheduler : public SchedulerFields {
+
+    public:
+        explicit Scheduler(Instance &arg_instance) : SchedulerFields(arg_instance) {}
 
         auto construct_schedule(Solution &complete_solution) -> void;
 
@@ -151,7 +320,7 @@ namespace cpp_module {
         void activate_staging_vehicle();
 
         void reinsert_other_in_queue(Solution &solution,
-                                     long other_vehicle,
+                                     long other_trip_id,
                                      long other_position,
                                      double other_departure,
                                      long arc);
@@ -166,8 +335,6 @@ namespace cpp_module {
 
         void assert_no_vehicles_departing_before_are_marked(long other_vehicle,
                                                             const VehicleSchedule &congested_schedule);
-
-        void initialize_status_vehicles();
 
         void process_conflicting_set(Solution &complete_solution,
                                      double &delay,
@@ -222,7 +389,7 @@ namespace cpp_module {
         void assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(long other_vehicle, long other_position,
                                                                                double other_departure);
 
-        void assert_combination_status_and_departure_type_is_possible();
+//        void assert_combination_status_and_departure_type_is_possible();
 
         void print_reinsertion_vehicle(const long &arc, const long &vehicle, const double &departure_time) const;
 
@@ -250,44 +417,6 @@ namespace cpp_module {
         void initialize_scheduler(const std::vector<double> &release_times);
 
         void get_next_departure(Solution &complete_solution);
-
-        void increase_counter(CounterName counter_name) {
-            switch (counter_name) {
-                case EXPLORED_SOLUTIONS:
-                    explored_solutions++;
-                case SLACK_NOT_ENOUGH:
-                    slack_not_enough++;
-                case SOLUTION_WITH_TIES:
-                    solution_with_ties++;
-                case WORSE_SOLUTIONS:
-                    worse_solutions++;
-            }
-        }
-
-        [[nodiscard]] double get_start_search_clock() const {
-            return start_search_clock;
-        }
-
-        [[nodiscard]] bool get_slack_is_enough_flag() const {
-            return slack_is_enough;
-        }
-
-        void set_slack_is_enough_flag(bool arg_flag) {
-            slack_is_enough = arg_flag;
-        }
-
-        [[nodiscard]] long get_iteration() const {
-            return iteration;
-        }
-
-        [[nodiscard]] double get_best_total_delay() const {
-            return best_total_delay;
-        }
-
-        void set_best_total_delay(double arg_delay) {
-            best_total_delay = arg_delay;
-        }
-
     };
 
     auto apply_staggering_to_solve_conflict(Solution &complete_solution,

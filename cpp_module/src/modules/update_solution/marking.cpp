@@ -7,26 +7,26 @@
 namespace cpp_module {
 
     auto Scheduler::reinsert_other_in_queue(Solution &solution,
-                                            const long other_vehicle,
+                                            const long other_trip_id,
                                             const long other_position,
                                             const double other_departure,
                                             const long arc) -> void {
-        print_reinsertion_vehicle(arc, other_vehicle, other_departure);
-        reset_other_schedule_to_reinsertion_time(solution, other_vehicle, other_position);
-        last_processed_position[other_vehicle] = other_position - 1;
-        other_trip_departure.trip_id = other_vehicle;
+        print_reinsertion_vehicle(arc, other_trip_id, other_departure);
+        reset_other_schedule_to_reinsertion_time(solution, other_trip_id, other_position);
+        set_trip_last_processed_position(other_trip_id, other_position - 1);
+        other_trip_departure.trip_id = other_trip_id;
         other_trip_departure.arc_id = arc;
         other_trip_departure.time = other_departure;
         other_trip_departure.position = other_position;
         other_trip_departure.event_type = Departure::TRAVEL;
-        number_of_reinsertions[other_vehicle]++;
-        other_trip_departure.reinsertion_number = number_of_reinsertions[other_vehicle];
-        pq_departures.push(other_trip_departure);
+        increase_trip_reinsertions(other_trip_id);
+        other_trip_departure.reinsertion_number = get_trip_reinsertions(other_trip_id);
+        insert_departure_in_pq(other_trip_departure);
     }
 
     auto Scheduler::decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congested_schedule,
                                                      const double current_new_arrival) -> void {
-        for (long other_trip_id: vehicles_to_mark) {
+        for (long other_trip_id: get_trips_to_mark()) {
             auto should_mark = check_if_should_mark_given_current_arrival_time(
                     other_trip_id, current_new_arrival);  // O(1)
             if (should_mark) {
@@ -64,9 +64,11 @@ namespace cpp_module {
                                                     const bool current_conflicts_with_other) -> VehicleShouldBeMarked {
         assert_other_is_not_active(other_vehicle);
         // Read info of other vehicle in original schedule (makes sense: it's not marked)
-        auto other_original_departure = original_schedule[other_vehicle][other_position];
-        auto current_original_departure = original_schedule[departure.trip_id][departure.position];
-        auto current_original_arrival = original_schedule[departure.trip_id][departure.position + 1];
+        auto other_original_departure = get_original_trip_departure_at_position(other_vehicle, other_position);
+        auto current_original_departure = get_original_trip_departure_at_position(departure.trip_id,
+                                                                                  departure.position);
+        auto current_original_arrival = get_original_trip_departure_at_position(departure.trip_id,
+                                                                                departure.position + 1);
         auto other_was_originally_first = check_if_other_is_first_in_original_schedule(other_vehicle,
                                                                                        other_original_departure,
                                                                                        current_original_departure);
@@ -92,10 +94,12 @@ namespace cpp_module {
         assert_other_is_not_active(other_trip_id);
         auto other_position = get_index(instance.get_trip_route(other_trip_id),
                                         departure.arc_id);
-        auto other_original_departure = original_schedule[other_trip_id][other_position];
-        auto other_original_arrival = original_schedule[other_trip_id][other_position + 1];
-        auto current_original_departure = original_schedule[departure.trip_id][departure.position];
-        auto current_original_arrival = original_schedule[departure.trip_id][departure.position + 1];
+        auto other_original_departure = get_original_trip_departure_at_position(other_trip_id, other_position);
+        auto other_original_arrival = get_original_trip_departure_at_position(other_trip_id, other_position + 1);
+        auto current_original_departure = get_original_trip_departure_at_position(departure.trip_id,
+                                                                                  departure.position);
+        auto current_original_arrival = get_original_trip_departure_at_position(departure.trip_id,
+                                                                                departure.position + 1);
 
         auto current_overlapped_with_other = check_if_current_overlapped_with_other(other_trip_id,
                                                                                     other_original_departure,
@@ -139,7 +143,7 @@ namespace cpp_module {
         other_trip_departure.position = other_position;
         other_trip_departure.reinsertion_number = 0;
         other_trip_departure.event_type = Departure::ACTIVATION;
-        trip_status_list[other_vehicle] = STAGING;
-        pq_departures.push(other_trip_departure);
+        set_trip_status(other_vehicle, STAGING);
+        insert_departure_in_pq(other_trip_departure);
     }
 }

@@ -10,19 +10,19 @@ namespace cpp_module {
         departure.trip_id = vehicle;
         departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, 0);
         departure.position = 0;
-        last_processed_position[departure.trip_id] = -1;
+        set_trip_last_processed_position(departure.trip_id, -1);
         departure.time = release_time_vehicle;
         departure.event_type = Departure::TRAVEL;
         departure.reinsertion_number = 0;
-        trip_status_list[departure.trip_id] = ACTIVE;
-        pq_departures.push(departure);
+        set_trip_status(departure.trip_id, ACTIVE);
+        insert_departure_in_pq(departure);
     }
 
     auto Scheduler::check_if_activation_departure_should_be_skipped() -> bool {
-        if (trip_status_list[departure.trip_id] == ACTIVE) {
+        if (get_trip_status(departure.trip_id) == ACTIVE) {
             // Trying to activate a vehicle which is active/reinserted -> this event should be skipped
             return true;
-        } else if (trip_status_list[departure.trip_id] == STAGING) {
+        } else if (get_trip_status(departure.trip_id) == STAGING) {
             // This event activates a staging vehicle and becomes a TRAVEL event
             return false;
         } else {
@@ -31,8 +31,8 @@ namespace cpp_module {
     }
 
     auto Scheduler::check_if_travel_departure_should_be_skipped() -> bool {
-        if (departure.position == last_processed_position[departure.trip_id] + 1 &&
-            departure.reinsertion_number == number_of_reinsertions[departure.trip_id]) {
+        if (departure.position == get_trip_last_processed_position(departure.trip_id) + 1 &&
+            departure.reinsertion_number == get_trip_reinsertions(departure.trip_id)) {
             return false;
         } else {
             print_travel_departure_to_skip();
@@ -55,11 +55,11 @@ namespace cpp_module {
 
     auto Scheduler::activate_staging_vehicle() -> void {
         if (departure.event_type == Departure::ACTIVATION) {
-            if (trip_status_list[departure.trip_id] == STAGING) {
+            if (get_trip_status(departure.trip_id) == STAGING) {
                 departure.event_type = Departure::TRAVEL;
-                trip_status_list[departure.trip_id] = ACTIVE;
-                last_processed_position[departure.trip_id] = departure.position - 1;
-            } else if (trip_status_list[departure.trip_id] == INACTIVE) {
+                set_trip_status(departure.trip_id, ACTIVE);
+                set_trip_last_processed_position(departure.trip_id, departure.position - 1);
+            } else if (get_trip_status(departure.trip_id) == INACTIVE) {
                 throw std::invalid_argument("#UPDATEDEPARTURE: activating an INACTIVE vehicle");
             }
         }
