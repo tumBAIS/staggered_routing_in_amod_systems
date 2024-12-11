@@ -1,5 +1,4 @@
 import json
-import utils.timer
 from problem.trip import Trips
 import cpp_module as cpp
 from problem.network import Network
@@ -19,14 +18,12 @@ class Scheduler:
         if save_cpp_instance:
             self.save_cpp_instance_for_debugging()
 
-    @utils.timer.timeit
     def py_construct_solution(self, start_times: list[float]) -> cpp.cpp_solution:
         """Cpp function that constructs a new solution from scratch"""
         solution = self.cpp_scheduler.construct_solution(start_times=start_times)
         # solution.print_solution_info(self.trips.get_number_of_trips_controlled(), name="Status quo")
         return solution
 
-    @utils.timer.timeit
     def py_estimate_move_quality(self, solution: cpp.cpp_solution,
                                  route_id: int,
                                  new_departure_time: float,
