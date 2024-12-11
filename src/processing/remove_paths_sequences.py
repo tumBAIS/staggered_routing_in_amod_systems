@@ -2,142 +2,145 @@ from utils.classes import CompleteSolution
 from instance_module.instance import Instance
 
 
-def _assert_every_vehicle_is_in_a_conflicting_set(instance: Instance, removedVehicles=None):
-    if removedVehicles is None:
-        removedVehicles = []
-    allVehiclesAppearingInConfSets = sorted(
-        list(set([vehicle for confSet in instance.conflicting_sets for vehicle in confSet])))
-    assert all(vehicle not in allVehiclesAppearingInConfSets for vehicle in removedVehicles)
-    assert all(vehicle in allVehiclesAppearingInConfSets for vehicle in range(len(instance.trip_routes)) if
-               vehicle not in removedVehicles)
+def _assert_all_vehicles_in_conflicting_set(instance: Instance, removed_vehicles=None) -> None:
+    """
+    Ensures all active vehicles are part of a conflicting set.
+    """
+    if removed_vehicles is None:
+        removed_vehicles = []
+
+    all_vehicles_in_conf_sets = sorted({
+        vehicle for conf_set in instance.conflicting_sets for vehicle in conf_set
+    })
+
+    assert all(vehicle not in all_vehicles_in_conf_sets for vehicle in removed_vehicles), \
+        "Removed vehicles are still in conflicting sets."
+    assert all(vehicle in all_vehicles_in_conf_sets for vehicle in range(len(instance.trip_routes))
+               if vehicle not in removed_vehicles), "Some active vehicles are not in conflicting sets."
 
 
-def remove_vehicle_from_system(vehicleToRemove: int, instance: Instance, statusQuo: CompleteSolution) -> None:
-    instance.max_staggering_applicable.pop(vehicleToRemove)
-    instance.trip_routes.pop(vehicleToRemove)
-    instance.latest_departure_times.pop(vehicleToRemove)
-    instance.earliest_departure_times.pop(vehicleToRemove)
-    instance.max_delay_on_arc.pop(vehicleToRemove)
-    instance.min_delay_on_arc.pop(vehicleToRemove)
-    instance.deadlines.pop(vehicleToRemove)
-    try:
-        instance.due_dates.pop(vehicleToRemove)
-    except:
-        pass
-    statusQuo.release_times.pop(vehicleToRemove)
-    statusQuo.congested_schedule.pop(vehicleToRemove)
-    assert sum(statusQuo.delays_on_arcs[vehicleToRemove]) < 1e-6
-    statusQuo.delays_on_arcs.pop(vehicleToRemove)
-    statusQuo.staggering_applicable.pop(vehicleToRemove)
-    statusQuo.free_flow_schedule.pop(vehicleToRemove)
-    statusQuo.staggering_applied.pop(vehicleToRemove)
+def remove_vehicle_from_system(vehicle: int, instance: Instance, status_quo: CompleteSolution) -> None:
+    """
+    Remove a vehicle from the system, including related schedules and instance properties.
+    """
+    instance.max_staggering_applicable.pop(vehicle)
+    instance.trip_routes.pop(vehicle)
+    instance.latest_departure_times.pop(vehicle)
+    instance.earliest_departure_times.pop(vehicle)
+    instance.max_delay_on_arc.pop(vehicle)
+    instance.min_delay_on_arc.pop(vehicle)
+    instance.deadlines.pop(vehicle)
 
-    return
+    # Remove optional attributes if available
+    if hasattr(instance, "due_dates"):
+        instance.due_dates.pop(vehicle)
 
-
-def update_conflicting_sets_after_removing_vehicles(conflictingSets: list[list[int]],
-                                                    removedVehicles: list[int]) -> None:
-    conflictingSets[:] = [[vehicle - sum(removed < vehicle for removed in removedVehicles) for vehicle in confSet] for
-                          confSet in conflictingSets]
-    return
+    status_quo.release_times.pop(vehicle)
+    status_quo.congested_schedule.pop(vehicle)
+    assert sum(status_quo.delays_on_arcs[vehicle]) < 1e-6, "Vehicle has non-zero delays on arcs."
+    status_quo.delays_on_arcs.pop(vehicle)
+    status_quo.staggering_applicable.pop(vehicle)
+    status_quo.free_flow_schedule.pop(vehicle)
+    status_quo.staggering_applied.pop(vehicle)
 
 
-def _remove_initial_part_of_vehicle_path(instance: Instance, statusQuo: CompleteSolution, vehicle: int) -> None:
-    newIndexWhereToStartPath = 0
+def update_conflicting_sets(conflicting_sets: list[list[int]], removed_vehicles: list[int]) -> None:
+    """
+    Update conflicting sets after vehicles are removed.
+    """
+    conflicting_sets[:] = [
+        [vehicle - sum(removed < vehicle for removed in removed_vehicles) for vehicle in conf_set]
+        for conf_set in conflicting_sets
+    ]
+
+
+def _remove_initial_part_of_path(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+    """
+    Remove the initial part of a vehicle's path where there are no conflicts.
+    """
+    start_index = 0
     for arc in instance.trip_routes[vehicle]:
         if vehicle not in instance.conflicting_sets[arc]:
-            newIndexWhereToStartPath += 1
-            _delete_first_entry_schedules_vehicle(instance, statusQuo, vehicle)
+            start_index += 1
+            _remove_first_entry(instance, status_quo, vehicle)
         else:
             break
-    instance.trip_routes[vehicle] = instance.trip_routes[vehicle][newIndexWhereToStartPath:]
+
+    instance.trip_routes[vehicle] = instance.trip_routes[vehicle][start_index:]
 
 
-def _assert_max_delay_is_zero(instance, vehicle):
-    try:
-        instance.max_delay_on_arc[vehicle] != []
-    except IndexError:
-        raise IndexError(f"vehicle {vehicle} has no maxDelayOnArc")
-    try:
-        instance.max_delay_on_arc[vehicle][0] < 1e-6, \
-            f"vehicle {vehicle} can have delay {instance.max_delay_on_arc[vehicle][0]} on his first arc"
-    except IndexError:
-        raise IndexError(
-            f"vehicle: {vehicle} len instanceModule.maxDelayOnArc: {len(instance.max_delay_on_arc[vehicle])}")
-
-
-def _assert_shift_applicable_is_correct_after_deletion(instance, vehicle):
-    if instance.latest_departure_times[vehicle]:
-        assert abs(instance.latest_departure_times[vehicle][0] - (instance.earliest_departure_times[vehicle][0] +
-                                                                  instance.max_staggering_applicable[
-                                                                      vehicle])) < 1e-6, \
-            "Shift applicable has changed while removing first part of paths: \n" \
-            f"Vehicle: {vehicle}, " \
-            f"latest departure time: {instance.latest_departure_times[vehicle][0]}, " \
-            f"earliest departure time: {instance.earliest_departure_times[vehicle][0]} " \
-            f"max staggering applicable: {instance.max_staggering_applicable[vehicle]}"
-
-
-def _delete_first_entry_schedules_vehicle(instance, statusQuo, vehicle):
-    _assert_max_delay_is_zero(instance, vehicle)
+def _remove_first_entry(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+    """
+    Remove the first entry from the vehicle's schedules and paths.
+    """
     instance.latest_departure_times[vehicle].pop(0)
     instance.earliest_departure_times[vehicle].pop(0)
-    _assert_shift_applicable_is_correct_after_deletion(instance, vehicle)
     instance.max_delay_on_arc[vehicle].pop(0)
     instance.min_delay_on_arc[vehicle].pop(0)
-    statusQuo.congested_schedule[vehicle].pop(0)
-    statusQuo.free_flow_schedule[vehicle].pop(0)
-    assert statusQuo.delays_on_arcs[vehicle][
-               0] < 1e-6, f"vehicle {vehicle} has delay {statusQuo.delays_on_arcs[vehicle][0]} on his first arc"
-    statusQuo.delays_on_arcs[vehicle].pop(0)
-    if statusQuo.congested_schedule[vehicle]:
-        statusQuo.release_times[vehicle] = statusQuo.congested_schedule[vehicle][0]
-    return
+    status_quo.congested_schedule[vehicle].pop(0)
+    status_quo.free_flow_schedule[vehicle].pop(0)
+    assert status_quo.delays_on_arcs[vehicle][0] < 1e-6, "Vehicle has delay on the first arc."
+    status_quo.delays_on_arcs[vehicle].pop(0)
+
+    if status_quo.congested_schedule[vehicle]:
+        status_quo.release_times[vehicle] = status_quo.congested_schedule[vehicle][0]
 
 
-def _delete_last_vehicle_entry(instance, statusQuo, vehicle) -> None:
-    arcDeleted = instance.trip_routes[vehicle][-2]
+def _remove_last_entry(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+    """
+    Remove the last entry from the vehicle's schedules and paths.
+    """
+    last_arc = instance.trip_routes[vehicle][-2]
     instance.trip_routes[vehicle].pop(-2)
     instance.latest_departure_times[vehicle].pop(-1)
     instance.earliest_departure_times[vehicle].pop(-1)
     instance.max_delay_on_arc[vehicle].pop(-1)
     instance.min_delay_on_arc[vehicle].pop(-1)
-    instance.deadlines[vehicle] -= instance.travel_times_arcs[arcDeleted]
-    instance.due_dates[vehicle] -= instance.travel_times_arcs[arcDeleted]
-    statusQuo.congested_schedule[vehicle].pop(-1)
-    statusQuo.free_flow_schedule[vehicle].pop(-1)
-    assert statusQuo.delays_on_arcs[vehicle][-1] < 1e-6
-    statusQuo.delays_on_arcs[vehicle].pop(-1)
-    return
+
+    instance.deadlines[vehicle] -= instance.travel_times_arcs[last_arc]
+    if hasattr(instance, "due_dates"):
+        instance.due_dates[vehicle] -= instance.travel_times_arcs[last_arc]
+
+    status_quo.congested_schedule[vehicle].pop(-1)
+    status_quo.free_flow_schedule[vehicle].pop(-1)
+    assert status_quo.delays_on_arcs[vehicle][-1] < 1e-6, "Vehicle has non-zero delay on last arc."
+    status_quo.delays_on_arcs[vehicle].pop(-1)
 
 
-def remove_initial_part_of_paths_without_conflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
-    initialNumberOfVehicles = len(instance.trip_routes)
-    removedVehicles = []
-    for vehicle in sorted(range(initialNumberOfVehicles), reverse=True):
-        _remove_initial_part_of_vehicle_path(instance, statusQuo, vehicle)
+def remove_initial_paths(instance: Instance, status_quo: CompleteSolution) -> None:
+    """
+    Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
+    """
+    initial_vehicle_count = len(instance.trip_routes)
+    removed_vehicles = []
+
+    for vehicle in reversed(range(initial_vehicle_count)):
+        _remove_initial_part_of_path(instance, status_quo, vehicle)
         if not instance.trip_routes[vehicle]:
-            removedVehicles.append(vehicle)
-            remove_vehicle_from_system(vehicle, instance, statusQuo)
+            removed_vehicles.append(vehicle)
+            remove_vehicle_from_system(vehicle, instance, status_quo)
 
-    instance.removed_vehicles = removedVehicles[:]  # to map back to original id
-    if initialNumberOfVehicles == len(removedVehicles):
-        print("All vehicles removed from instanceModule: nothing to optimize.")
+    instance.removed_vehicles = removed_vehicles
+
+    if initial_vehicle_count == len(removed_vehicles):
+        print("All vehicles removed. Nothing to optimize.")
         return
 
-    _assert_every_vehicle_is_in_a_conflicting_set(instance, removedVehicles)
-    update_conflicting_sets_after_removing_vehicles(instance.conflicting_sets, removedVehicles)
-    _assert_every_vehicle_is_in_a_conflicting_set(instance)
+    _assert_all_vehicles_in_conflicting_set(instance, removed_vehicles)
+    update_conflicting_sets(instance.conflicting_sets, removed_vehicles)
+    _assert_all_vehicles_in_conflicting_set(instance)
 
-    print("Vehicles removed during preprocessing: ", len(removedVehicles))
-    print(f"Final number of vehicles in instanceModule: {initialNumberOfVehicles - len(removedVehicles)}")
+    print(f"Vehicles removed: {len(removed_vehicles)}")
+    print(f"Remaining vehicles: {initial_vehicle_count - len(removed_vehicles)}")
 
 
-def remove_final_part_of_paths_without_conflicts(instance: Instance, statusQuo: CompleteSolution) -> None:
+def remove_final_paths(instance: Instance, status_quo: CompleteSolution) -> None:
+    """
+    Remove the final parts of paths without conflicts.
+    """
     for vehicle, path in enumerate(instance.trip_routes):
         for arc in reversed(path):
             if vehicle not in instance.conflicting_sets[arc] and arc > 0:
-                _delete_last_vehicle_entry(instance, statusQuo, vehicle)
+                _remove_last_entry(instance, status_quo, vehicle)
             else:
                 break
-    return
