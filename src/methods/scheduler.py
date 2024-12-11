@@ -74,7 +74,7 @@ class Scheduler:
     def save_cpp_instance_to_json(self, filename):
         # Construct a dictionary from the cpp_instance data using getter methods
         instance_data = {
-            "set_of_vehicle_paths": self.cpp_instance.get_set_of_vehicle_paths(),
+            "set_of_vehicle_paths": self.cpp_instance.get_trip_routes(),
             "travel_times_arcs": self.cpp_instance.get_travel_times_arcs(),
             "capacities_arcs": self.cpp_instance.get_capacities_arcs(),
             "list_of_slopes": self.cpp_instance.get_list_of_slopes(),
