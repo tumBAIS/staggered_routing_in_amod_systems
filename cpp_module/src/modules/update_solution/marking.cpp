@@ -12,7 +12,7 @@ namespace cpp_module {
                                             const long otherPosition,
                                             const double otherDeparture,
                                             const long arc) -> void {
-        _printReinsertionVehicle(arc, otherVehicle, otherDeparture);
+        print_reinsertion_vehicle(arc, otherVehicle, otherDeparture);
         reset_other_schedule_to_reinsertion_time(solution, otherVehicle, otherPosition);
         last_processed_position[otherVehicle] = otherPosition - 1;
         other_trip_departure.trip_id = otherVehicle;
@@ -34,7 +34,7 @@ namespace cpp_module {
                 const long otherPosition = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
                 const double otherDeparture = congestedSchedule[other_trip_id][otherPosition];
                 mark_vehicle(other_trip_id, otherDeparture, otherPosition);
-                _assertNoVehiclesDepartingBeforeAreMarked(other_trip_id, congestedSchedule);
+                assert_no_vehicles_departing_before_are_marked(other_trip_id, congestedSchedule);
             }
         }
     }
@@ -63,7 +63,7 @@ namespace cpp_module {
     auto Scheduler::check_if_other_should_be_marked(const long otherVehicle,
                                                     const long otherPosition,
                                                     const bool currentConflictsWithOther) -> vehicleShouldBeMarked {
-        _assertOtherIsNotActive(otherVehicle);
+        assert_other_is_not_active(otherVehicle);
         // read info of other vehicle in original schedule (makes sense: it's not marked)
         auto otherOriginalDeparture = original_schedule[otherVehicle][otherPosition];
         auto currentOriginalDeparture = original_schedule[departure.trip_id][departure.position];
@@ -89,7 +89,7 @@ namespace cpp_module {
 
     auto Scheduler::check_if_should_mark_given_current_arrival_time(const TripID other_trip_id,
                                                                     const double currentVehicleNewArrival) -> bool {
-        _assertOtherIsNotActive(other_trip_id);
+        assert_other_is_not_active(other_trip_id);
         auto otherPosition = get_index(instance.get_trip_route(other_trip_id),
                                        departure.arc_id);
         auto otherOriginalDeparture = original_schedule[other_trip_id][otherPosition];
@@ -132,7 +132,7 @@ namespace cpp_module {
     Scheduler::mark_vehicle(const long otherVehicle,
                             const double otherDeparture,
                             const long otherPosition) -> void {
-        _assertOtherIsNotActive(otherVehicle);
+        assert_other_is_not_active(otherVehicle);
         other_trip_departure.trip_id = otherVehicle;
         other_trip_departure.arc_id = departure.arc_id;
         other_trip_departure.time = otherDeparture;

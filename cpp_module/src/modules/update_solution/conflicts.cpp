@@ -88,8 +88,8 @@ namespace cpp_module {
                 if (shouldMark == YES) {
                     mark_vehicle(other_trip_id, otherDeparture, otherPosition); // O(log n) -> pq.push
                     lazy_update_pq = true; //marked vehicle starting before
-                    _assertLazyUpdateIsNecessary(otherDeparture);
-                    printLazyUpdatePriorityQueue();
+                    assert_lazy_update_is_necessary(otherDeparture);
+                    print_lazy_update_priority_queue();
                 } else if (shouldMark == MAYBE) {
                     vehicles_to_mark.push_back(other_trip_id);
                 }
@@ -107,7 +107,8 @@ namespace cpp_module {
                         vehiclesOnArc++;
                     }
                 }
-                _assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(other_trip_id, otherPosition, otherDeparture);
+                assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(other_trip_id, otherPosition,
+                                                                                  otherDeparture);
             }
         }
     }

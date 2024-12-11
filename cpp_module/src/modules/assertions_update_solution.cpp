@@ -4,11 +4,14 @@
 #include "scheduler.h"
 #include <queue>
 
-auto cpp_module::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(const long otherVehicle,
-                                                                                   const long otherPosition,
-                                                                                   const double otherDeparture) -> void {
+
+namespace cpp_module {
+
+    auto Scheduler::assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(const long otherVehicle,
+                                                                                      const long otherPosition,
+                                                                                      const double otherDeparture) -> void {
 #ifdef assertionsOnEvaluationFunction
-    if (lastProcessedPosition[otherVehicle] == otherPosition - 1 & lastProcessedPosition[otherVehicle] != -1) {
+        if (lastProcessedPosition[otherVehicle] == otherPosition - 1 & lastProcessedPosition[otherVehicle] != -1) {
         auto otherLastPositionProcessed = lastProcessedPosition[otherVehicle];
         auto otherLastArc = instance.arcBasedShortestPaths[otherVehicle][lastProcessedPosition[otherVehicle]];
         bool otherIsBefore = _checkIfOtherIsFirstInCurrentSchedule(otherVehicle, otherDeparture);
@@ -25,20 +28,18 @@ auto cpp_module::Scheduler::_assertOtherStartsAfterIfHasToBeProcessedOnThisArcNe
         }
     }
 #endif
-}
+    }
 
 
-auto cpp_module::Scheduler::printDelayComputed(const double delay) const -> void {
+    auto Scheduler::print_delay_computed(const double delay) const -> void {
 #ifdef printsEvaluationFunction
-    if (iteration == ITERATION_TO_PRINT) {
+        if (iteration == ITERATION_TO_PRINT) {
         std::cout << "delay computed is : " << delay << " \n";
     }
 #endif
-}
+    }
 
-namespace cpp_module {
-
-    auto Scheduler::_printDeparture() const -> void {
+    auto Scheduler::print_departure() const -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout << " Popped departureTime of vehicle " << departure.vehicle << " on arc " << departure.arc
@@ -48,13 +49,13 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::printIterationNumber() const -> void {
+    auto Scheduler::print_iteration_number() const -> void {
 #ifdef printsEvaluationFunction
         std::cout << "+++++ CALL EVALUATION FUNCTION: ITERATION " << iteration << "+++++++ \n";
 #endif
     }
 
-    auto Scheduler::printTravelDepartureToSkip() -> void {
+    auto Scheduler::print_travel_departure_to_skip() -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout
@@ -69,7 +70,7 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_printDeparturePushedToQueue() const -> void {
+    auto Scheduler::print_departure_pushed_to_queue() const -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout << " Pushing forward departureTime of vehicle " << departure.vehicle << " on arc "
@@ -81,8 +82,8 @@ namespace cpp_module {
 
 
     auto
-    Scheduler::_printReinsertionVehicle(const long &arc, const long &vehicle,
-                                        const double &departureTime) const -> void {
+    Scheduler::print_reinsertion_vehicle(const long &arc, const long &vehicle,
+                                         const double &departureTime) const -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout << "#REINSERTION: vehicle " << vehicle << " on arc " << arc << " time: " << departureTime << "\n";
@@ -90,7 +91,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_assertAnalyzingSmallestDeparture(VehicleSchedule &congestedSchedule) -> void {
+    auto Scheduler::assert_analyzing_smallest_departure(VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         auto minActiveDeparture = std::numeric_limits<double>::max();
         long vehicleToPull;
@@ -125,7 +126,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_assertCombinationStatusAndDepartureTypeIsPossible() -> void {
+    auto Scheduler::assert_combination_status_and_departure_type_is_possible() -> void {
         if (departure.eventType == Departure::ACTIVATION) {
             if (trip_status_list[departure.trip_id] == Scheduler::vehicleStatusType::INACTIVE) {
                 // only staging vehicles can be activated
@@ -152,7 +153,7 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::_assertDepartureIsFeasible(const VehicleSchedule &congestedSchedule) -> void {
+    auto Scheduler::assert_departure_is_feasible(const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         if (departure.reinsertionNumber > numberOfReInsertions[departure.vehicle]) {
             throw std::invalid_argument("Departure reinsertion number > number of reinsertions vehicle");
@@ -180,7 +181,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_assertNoVehiclesAreLate(Solution &completeSolution) -> void {
+    auto Scheduler::assert_no_vehicles_are_late(Solution &completeSolution) -> void {
 #ifdef assertionsOnEvaluationFunction
         for (auto vehicle = 0; vehicle < instance.numberOfVehicles; ++vehicle) {
             if (completeSolution.congestedSchedule[vehicle].back() > instance.deadlines[vehicle] + TOLERANCE) {
@@ -211,8 +212,8 @@ namespace cpp_module {
 
 
     auto
-    Scheduler::_assertVehiclesOnArcIsCorrect(const double vehiclesOnArc,
-                                             const VehicleSchedule &congestedSchedule) -> void {
+    Scheduler::assert_vehicles_on_arc_is_correct(const double vehiclesOnArc,
+                                                 const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         double testVehiclesOnArc = 1;
         for (auto otherVehicle: instance.conflictingSet[departure.arc]) {
@@ -255,8 +256,8 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_assertNoVehiclesDepartingBeforeAreMarked(const long otherVehicle,
-                                                              const VehicleSchedule &congestedSchedule) -> void {
+    auto Scheduler::assert_no_vehicles_departing_before_are_marked(const long otherVehicle,
+                                                                   const VehicleSchedule &congestedSchedule) -> void {
 #ifdef assertionsOnEvaluationFunction
         auto markedVehicleWithSmallerDepartureAfterPopping = _checkIfOtherStartsBeforeCurrent(
                 otherVehicle, congestedSchedule);
@@ -271,7 +272,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::_assertOtherIsNotActive(const long otherVehicle) -> void {
+    auto Scheduler::assert_other_is_not_active(const long otherVehicle) -> void {
 #ifdef assertionsOnEvaluationFunction
         if (vehicleStatus[otherVehicle] == vehicleStatusType::ACTIVE) {
             throw std::invalid_argument("Error when checking if vehicle should be staged: staging an active vehicle");
@@ -280,7 +281,7 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_assertLazyUpdateIsNecessary(const double otherDeparture) const -> void {
+    auto Scheduler::assert_lazy_update_is_necessary(const double otherDeparture) const -> void {
 #ifdef assertionsOnEvaluationFunction
         if (otherDeparture > departure.time) {
             throw std::invalid_argument("Lazy update is not necessary");
@@ -289,7 +290,7 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_assertEventPushedToQueueIsCorrect() -> void {
+    auto Scheduler::assert_event_pushed_to_queue_is_correct() -> void {
 #ifdef assertionsOnEvaluationFunction
         if (departure.eventType != Departure::TRAVEL) {
             if (departure.eventType == Departure::ACTIVATION) {
@@ -313,7 +314,7 @@ namespace cpp_module {
 #endif
     }
 
-    auto Scheduler::printLazyUpdatePriorityQueue() const -> void {
+    auto Scheduler::print_lazy_update_priority_queue() const -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout << "lazy update priority queue #1\n";
@@ -322,7 +323,7 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::_printUpdateGreatestTimeAnalyzed() const -> void {
+    auto Scheduler::print_update_greatest_time_analyzed() const -> void {
 #ifdef printsEvaluationFunction
         if (iteration == ITERATION_TO_PRINT) {
             std::cout << "updating greatest time analyzed ON ARC" << departure.arc << ":"

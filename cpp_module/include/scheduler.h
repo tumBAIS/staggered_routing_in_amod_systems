@@ -168,7 +168,7 @@ namespace cpp_module {
                                      double otherDeparture,
                                      long arc);
 
-        void _assertEventPushedToQueueIsCorrect();
+        void assert_event_pushed_to_queue_is_correct();
 
 
         void add_departure_to_priority_queue(double releaseTimeVehicle, TripID vehicle);
@@ -179,7 +179,8 @@ namespace cpp_module {
         decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congestedSchedule, double currentNewArrival);
 
         void
-        _assertNoVehiclesDepartingBeforeAreMarked(long otherVehicle, const VehicleSchedule &congestedSchedule);
+        assert_no_vehicles_departing_before_are_marked(const long otherVehicle,
+                                                       const VehicleSchedule &congestedSchedule);
 
         void initialize_status_vehicles();
 
@@ -191,7 +192,7 @@ namespace cpp_module {
         void process_vehicle(Solution &completeSolution);
 
 
-        void _assertOtherIsNotActive(long otherVehicle);
+        void assert_other_is_not_active(long otherVehicle);
 
         [[nodiscard]] bool
         check_if_other_is_first_in_original_schedule(long otherVehicle, double otherOriginalDeparture,
@@ -215,40 +216,40 @@ namespace cpp_module {
         static bool check_conditions_to_mark(bool switchCurrentWithOtherOrder, bool vehiclesNeverOverlapped,
                                              bool currentAlwaysFirst, bool otherAlwaysOverlaps);
 
-        void _printUpdateGreatestTimeAnalyzed() const;
+        void print_update_greatest_time_analyzed() const;
 
-        void _printDeparturePushedToQueue() const;
+        void print_departure_pushed_to_queue() const;
 
 
         bool check_if_tie_in_set(const VehicleSchedule &congestedSchedule);
 
-        void _assertDepartureIsFeasible(const VehicleSchedule &congestedSchedule);
+        void assert_departure_is_feasible(const VehicleSchedule &congestedSchedule);
 
-        void _assertLazyUpdateIsNecessary(double otherDeparture) const;
+        void assert_lazy_update_is_necessary(double otherDeparture) const;
 
-        void _assertNoVehiclesAreLate(Solution &completeSolution);
+        void assert_no_vehicles_are_late(Solution &completeSolution);
 
-        void _assertVehiclesOnArcIsCorrect(double vehiclesOnArc, const VehicleSchedule &congestedSchedule);
+        void assert_vehicles_on_arc_is_correct(const double vehiclesOnArc, const VehicleSchedule &congestedSchedule);
 
         void reset_other_schedule_to_reinsertion_time(Solution &solution, long otherVehicle,
                                                       long otherPosition);
 
-        void _assertAnalyzingSmallestDeparture(VehicleSchedule &congestedSchedule);
+        void assert_analyzing_smallest_departure(VehicleSchedule &congestedSchedule);
 
-        void _assertOtherStartsAfterIfHasToBeProcessedOnThisArcNext(long otherVehicle, long otherPosition,
-                                                                    double otherDeparture);
+        void assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(long otherVehicle, long otherPosition,
+                                                                               double otherDeparture);
 
-        void _assertCombinationStatusAndDepartureTypeIsPossible();
+        void assert_combination_status_and_departure_type_is_possible();
 
-        void _printReinsertionVehicle(const long &arc, const long &vehicle, const double &departureTime) const;
+        void print_reinsertion_vehicle(const long &arc, const long &vehicle, const double &departureTime) const;
 
-        void _printDeparture() const;
+        void print_departure() const;
 
-        void printLazyUpdatePriorityQueue() const;
+        void print_lazy_update_priority_queue() const;
 
-        void printIterationNumber() const;
+        void print_iteration_number() const;
 
-        void printTravelDepartureToSkip();
+        void print_travel_departure_to_skip();
 
         [[nodiscard]] bool check_if_vehicle_is_late(double currentVehicleNewArrival) const;
 
@@ -256,7 +257,7 @@ namespace cpp_module {
         [[nodiscard]] InstructionConflictingSet
         check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position) const;
 
-        void printDelayComputed(double delay) const;
+        void print_delay_computed(double delay) const;
 
 
         Solution construct_solution(const std::vector<double> &start_times);

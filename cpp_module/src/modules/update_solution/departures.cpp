@@ -38,7 +38,7 @@ auto cpp_module::Scheduler::check_if_travel_departure_should_be_skipped() -> boo
         departure.reinsertionNumber == number_of_reinsertions[departure.trip_id]) {
         return false;
     } else {
-        printTravelDepartureToSkip();
+        print_travel_departure_to_skip();
         return true;
     }
 }

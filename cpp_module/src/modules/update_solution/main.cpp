@@ -40,7 +40,7 @@ namespace cpp_module {
             pq_departures.pop();
             const auto skipDeparture = check_if_departure_should_be_skipped();
             if (skipDeparture) { continue; }
-            _printDeparture();
+            print_departure();
             activate_staging_vehicle();
             completeSolution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
             vehicles_to_mark.clear();
@@ -60,6 +60,6 @@ namespace cpp_module {
             worseSolutions++;
             completeSolution.set_feasible_and_improving_flag(false);
         }
-        _assertNoVehiclesAreLate(completeSolution);
+        assert_no_vehicles_are_late(completeSolution);
     }
 }

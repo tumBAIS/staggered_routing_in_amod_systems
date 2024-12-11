@@ -25,7 +25,7 @@ namespace cpp_module {
         lazy_update_pq = false;
         trip_is_late = false;
         iteration++;
-        printIterationNumber();
+        print_iteration_number();
     }
 
     auto

@@ -29,7 +29,7 @@ namespace cpp_module {
             return;
         }
         delay = compute_delay_on_arc(vehiclesOnArc, instance, departure.arc_id);
-        printDelayComputed(delay);
+        print_delay_computed(delay);
         currentVehicleNewArrival = departure.time + delay + instance.get_arc_travel_time(departure.arc_id);
         trip_is_late = check_if_vehicle_is_late(currentVehicleNewArrival);
         if (trip_is_late) {
@@ -54,9 +54,9 @@ namespace cpp_module {
                 return;
             }
         }
-        _assertVehiclesOnArcIsCorrect(vehiclesOnArc, completeSolution.get_schedule());
+        assert_vehicles_on_arc_is_correct(vehiclesOnArc, completeSolution.get_schedule());
         update_vehicle_schedule(completeSolution, currentVehicleNewArrival);
-        _assertEventPushedToQueueIsCorrect();
+        assert_event_pushed_to_queue_is_correct();
         move_vehicle_forward_in_the_queue(currentVehicleNewArrival); // O(2 * log n) - pq.push
     }
 
@@ -160,13 +160,13 @@ namespace cpp_module {
 
 
     auto Scheduler::move_vehicle_forward_in_the_queue(const double currentVehicleNewArrival) -> void {
-        _printUpdateGreatestTimeAnalyzed();
+        print_update_greatest_time_analyzed();
         departure.time = currentVehicleNewArrival;
         last_processed_position[departure.trip_id] = departure.position;
         departure.position++;
         departure.arc_id = instance.get_arc_at_position_in_trip_route(departure.trip_id, departure.position);
         pq_departures.push(departure);
-        _printDeparturePushedToQueue();
+        print_departure_pushed_to_queue();
     }
 
 
