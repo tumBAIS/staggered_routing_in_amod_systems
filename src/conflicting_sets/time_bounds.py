@@ -284,7 +284,7 @@ def get_latest_departure(
     if earliest_departure.position == 0:
         # First arc
         return earliest_departure.earliest_departure + instance.max_staggering_applicable[
-            earliest_departure.vehicle]
+            earliest_departure.vehicle] + TOLERANCE
     else:
         previous_arc = instance.trip_routes[earliest_departure.vehicle][earliest_departure.position - 1]
         previous_bound = next(
@@ -292,7 +292,7 @@ def get_latest_departure(
              if bound.vehicle == earliest_departure.vehicle),
             None
         )
-        return previous_bound
+        return previous_bound + TOLERANCE
 
 
 def get_earliest_arrival_time(
