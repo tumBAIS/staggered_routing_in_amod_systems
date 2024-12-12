@@ -5,27 +5,40 @@ from collections import namedtuple
 BinariesBounds = namedtuple("BinariesBounds", ["lb_alpha", "ub_alpha", "lb_beta", "ub_beta", "lb_gamma", "ub_gamma"])
 
 
-def _get_bounds_for_binaries(first_vehicle: int, second_vehicle: int, arc: int, instance: Instance) -> BinariesBounds:
+def _get_bounds_for_binaries(
+        first_vehicle: int, second_vehicle: int, arc: int, instance: Instance
+) -> BinariesBounds:
     """Calculate bounds for binary variables (alpha, beta, gamma) between two vehicles on a specific arc."""
+    TOLERANCE = 1e-4  # Define tolerance for comparisons
     lb_alpha = lb_beta = lb_gamma = 0
     ub_alpha = ub_beta = ub_gamma = 1
 
+    # Get positions and timing bounds for the vehicles on the arc
     pos_1 = instance.trip_routes[first_vehicle].index(arc)
     pos_2 = instance.trip_routes[second_vehicle].index(arc)
-    e_e_1, e_l_1 = instance.earliest_departure_times[first_vehicle][pos_1], \
-        instance.latest_departure_times[first_vehicle][pos_1]
-    e_e_2, e_l_2 = instance.earliest_departure_times[second_vehicle][pos_2], \
-        instance.latest_departure_times[second_vehicle][pos_2]
-    l_e_2, l_l_2 = instance.earliest_departure_times[second_vehicle][pos_2 + 1], \
-        instance.latest_departure_times[second_vehicle][pos_2 + 1]
 
-    alpha_must_be_one = e_l_2 < e_e_1
-    beta_must_be_one = e_l_1 < l_e_2
+    e_e_1, e_l_1 = (
+        instance.earliest_departure_times[first_vehicle][pos_1],
+        instance.latest_departure_times[first_vehicle][pos_1],
+    )
+    e_e_2, e_l_2 = (
+        instance.earliest_departure_times[second_vehicle][pos_2],
+        instance.latest_departure_times[second_vehicle][pos_2],
+    )
+    l_e_2, l_l_2 = (
+        instance.earliest_departure_times[second_vehicle][pos_2 + 1],
+        instance.latest_departure_times[second_vehicle][pos_2 + 1],
+    )
+
+    # Use tolerances in comparisons
+    alpha_must_be_one = e_l_2 < e_e_1 - TOLERANCE
+    beta_must_be_one = e_l_1 < l_e_2 - TOLERANCE
     gamma_must_be_one = alpha_must_be_one and beta_must_be_one
 
-    alpha_must_be_zero = e_l_1 < e_e_2
-    beta_must_be_zero = l_l_2 < e_e_1
+    alpha_must_be_zero = e_l_1 < e_e_2 - TOLERANCE
+    beta_must_be_zero = l_l_2 < e_e_1 - TOLERANCE
 
+    # Adjust bounds based on conditions
     if alpha_must_be_one:
         assert not alpha_must_be_zero, "Conflicting bounds for alpha."
         lb_alpha = ub_alpha = 1
