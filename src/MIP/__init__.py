@@ -114,22 +114,26 @@ class StaggeredRoutingModel(grb.Model):
             conflict_var[var_name][arc][first_vehicle][second_vehicle]._lb = lb
             conflict_var[var_name][arc][first_vehicle][second_vehicle]._ub = ub
 
-    def get_conflict_pair_var_bound(self, bound: str, arc, first_vehicle, second_vehicle, var_name):
+    def get_conflict_pair_var_bound(self, bound: str, arc, first_trip, second_trip, var_name):
         conflict_var = {
             "alpha": self._alpha,
             "beta": self._beta,
             "gamma": self._gamma,
         }
-        if isinstance(conflict_var[var_name][arc][first_vehicle][second_vehicle], grb.Var):
+        if isinstance(conflict_var[var_name][arc][first_trip][second_trip], grb.Var):
             if bound == "lb":
-                return conflict_var[var_name][arc][first_vehicle][second_vehicle]._lb
+                return conflict_var[var_name][arc][first_trip][second_trip]._lb
             elif bound == "ub":
-                return conflict_var[var_name][arc][first_vehicle][second_vehicle]._ub
+                return conflict_var[var_name][arc][first_trip][second_trip]._ub
             else:
                 raise ValueError("undefined case")
         else:
             # variable is constant
-            return conflict_var[var_name][arc][first_vehicle][second_vehicle]
+            return conflict_var[var_name][arc][first_trip][second_trip]
+
+    def get_conflicting_trips(self, arc, trip) -> list[int]:
+        """Return a list of conflicting trips for a given arc and trip."""
+        return list(self._gamma.get(arc, {}).get(trip, {}).keys())
 
     def add_arc_conflict_vars(self, arc):
         self._alpha[arc] = {}

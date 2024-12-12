@@ -37,25 +37,22 @@ def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, in
         model.add_continuous_var(vehicle, arc, 0, 0, "delay", True)
 
 
-def _add_load_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, conflicting_set: list[int]) -> None:
+def _add_load_variable(model: StaggeredRoutingModel, trip: int, arc: int, conflicting_set: list[int]) -> None:
     """Add load variable for a specific vehicle and arc."""
-    if vehicle in conflicting_set:
-        lb = (
-                sum(model.get_conflict_pair_var_bound(bound="lb", var_name="gamma", arc=arc,
-                                                      second_vehicle=second_vehicle,
-                                                      first_vehicle=vehicle) for second_vehicle in
-                    model._gamma[arc][vehicle]) + 1)
+    if trip in conflicting_set:
+        
+        lb = (sum(model.get_conflict_pair_var_bound(
+            bound="lb", var_name="gamma", arc=arc, first_trip=trip, second_trip=conflicting_trip) for conflicting_trip
+                  in model.get_conflicting_trips(arc, trip)) + 1)
 
-        ub = (
-                sum(model.get_conflict_pair_var_bound(bound="ub", var_name="gamma", arc=arc,
-                                                      second_vehicle=second_vehicle,
-                                                      first_vehicle=vehicle) for second_vehicle in
-                    model._gamma[arc][vehicle]) + 1)
+        ub = (sum(model.get_conflict_pair_var_bound(
+            bound="ub", var_name="gamma", arc=arc, first_trip=trip, second_trip=conflicting_trip) for conflicting_trip
+                  in model.get_conflicting_trips(arc, trip)) + 1)
 
-        model.add_continuous_var(vehicle, arc, lb, ub, "load")
+        model.add_continuous_var(trip, arc, lb, ub, "load")
 
     else:
-        model.add_continuous_var(vehicle, arc, 1, 1, "load", True)
+        model.add_continuous_var(trip, arc, 1, 1, "load", True)
 
 
 def _add_continuous_variables_vehicle_on_arc(
