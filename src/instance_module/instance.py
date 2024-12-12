@@ -32,7 +32,6 @@ class Instance:
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
     deadlines: list[Time]
-    undivided_conflicting_sets: list[list[list[int]]] = field(default_factory=list)
     conflicting_sets: list[list[int]] = field(default_factory=list)
     latest_departure_times: list[list[float]] = field(default_factory=list)
     earliest_departure_times: list[list[float]] = field(default_factory=list)
