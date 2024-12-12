@@ -311,7 +311,7 @@ def get_earliest_arrival_time(
     min_vehicles_on_arc = sum(
         1 for arrival in conflicting_arrivals
         if
-        arrival.latest_departure + TOLERANCE < earliest_departure.earliest_departure and current_latest_departure < arrival.earliest_arrival - TOLERANCE
+        arrival.latest_departure + 10 * TOLERANCE < earliest_departure.earliest_departure and current_latest_departure < arrival.earliest_arrival - 10 * TOLERANCE
     ) + 1
 
     min_delay = compute_delay_on_arc(
@@ -330,12 +330,10 @@ def get_latest_arrival_time(
         earliest_departure: TimeBound,
         latest_departure_time: float,
         instance: Instance,
-        known_latest_arrival_times: list[list[float]]
 ) -> tuple[float, float]:
     """
     Calculate the latest possible arrival time for a given departure event.
     """
-    known_latest_arrival = known_latest_arrival_times[earliest_departure.vehicle][earliest_departure.position]
     nominal_travel_time = instance.travel_times_arcs[earliest_departure.arc]
     max_delay = 0.0
 
@@ -402,7 +400,6 @@ def get_arc_based_time_bounds(
             earliest_departure,
             latest_departure,
             instance,
-            known_latest_arrival_times,
         )
 
         # Create and validate a new time bound
