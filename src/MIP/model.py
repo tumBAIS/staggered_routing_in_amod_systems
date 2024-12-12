@@ -19,7 +19,7 @@ from MIP.support import (
 )
 from MIP.integer_variables import add_conflict_variables
 from MIP.continuous_variables import add_continuous_variables
-from MIP.constraints import add_conflict_constraints, add_travel_continuity_constraints, add_objective_function
+from MIP.constraints import add_conflict_constraints
 from MIP.callback import callback
 from MIP.warm_start import set_warm_start_model
 
@@ -44,8 +44,8 @@ def construct_model(
     add_conflict_variables(model, instance)
     add_continuous_variables(model, instance, status_quo, epoch_warm_start)
     add_conflict_constraints(model, instance)
-    add_travel_continuity_constraints(model, instance)
-    add_objective_function(model)
+    model.add_travel_continuity_constraints(instance)
+    model.add_objective_function()
 
     return model
 

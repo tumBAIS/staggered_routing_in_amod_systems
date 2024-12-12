@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import datetime
-import itertools
 from typing import Callable
 
 import gurobipy as grb
@@ -65,23 +64,25 @@ def assert_schedule(model: StaggeredRoutingModel, congested_schedule: VehicleSch
     if ACTIVATE_ASSERTIONS:
         for vehicle, (schedule, delays) in enumerate(zip(congested_schedule, delays_on_arcs)):
             first_arc = instance.trip_routes[vehicle][0]
-            assert schedule[0] - model._departure[vehicle][first_arc]._lb <= \
-                   instance.max_staggering_applicable[vehicle] + 1e-6, \
-                f"Invalid departure time for the first arc of vehicle {vehicle}."
+            assert schedule[0] - model.get_continuous_var_bound("lb", first_arc, vehicle, "departure") <= \
+                   instance.max_staggering_applicable[
+                       vehicle] + 1e-6, f"Invalid departure time for the first arc of vehicle {vehicle}."
 
             for position, arc in enumerate(instance.trip_routes[vehicle]):
-                assert model._departure[vehicle][arc]._lb - 1e-6 <= schedule[position] <= model._departure[vehicle][
-                    arc]._ub + 1e-6, \
-                    f"Invalid departure time for arc {arc} of vehicle {vehicle}."
-                assert model._delay[vehicle][arc]._lb - 1e-6 <= delays[position] <= model._delay[vehicle][
-                    arc]._ub + 1e-6, \
-                    f"Invalid delay for arc {arc} of vehicle {vehicle}."
+                assert model.get_continuous_var_bound("lb", arc, vehicle, "departure") - 1e-6 <= schedule[position] <= \
+                       model.get_continuous_var_bound("ub", arc, vehicle,
+                                                      "departure") + 1e-6, (f"Invalid departure time "
+                                                                            f"for arc {arc} of vehicle {vehicle}.")
+                assert model.get_continuous_var_bound("lb", arc, vehicle, "delay") - 1e-6 <= delays[position] <= \
+                       model.get_continuous_var_bound("ub", arc, vehicle,
+                                                      "delay") + 1e-6, (f"Invalid delay for arc {arc} "
+                                                                        f"of vehicle {vehicle}.")
 
 
 def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
                            solver_params: SolverParameters) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
-    model._flagUpdate = False
+    model.set_flag_update(False)
     cpp_parameters = [solver_params.algorithm_time_limit]
     congested_schedule = cpp.cpp_local_search(
         release_times=model.get_cb_release_times(),
@@ -113,36 +114,27 @@ def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
     )
 
 
-def set_heuristic_continuous_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:
+def set_heuristic_continuous_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution,
+                                       instance: EpochInstance) -> None:
     """Set continuous variables in the model based on the heuristic solution."""
-    for vehicle in model._departure:
-        for position, arc in enumerate(model._departure[vehicle]):
-            model.cbSetSolution(model._departure[vehicle][arc],
-                                heuristic_solution.congested_schedule[vehicle][position])
-            if isinstance(model._delay[vehicle][arc], grb.Var):
-                model.cbSetSolution(model._delay[vehicle][arc], heuristic_solution.delays_on_arcs[vehicle][position])
+    for vehicle, route in enumerate(instance.trip_routes):
+        for position, arc in enumerate(route):
+            model.set_continuous_var_cb(vehicle, arc, "departure",
+                                        heuristic_solution.congested_schedule[vehicle][position])
+            model.set_continuous_var_cb(vehicle, arc, "delay", heuristic_solution.delays_on_arcs[vehicle][position])
 
 
 def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:
     """Set binary variables in the model based on the heuristic solution."""
-    for arc in model._gamma:
-        for first_vehicle, second_vehicle in itertools.combinations(model._gamma[arc], 2):
+    for arc in model.get_list_conflicting_arcs():
+        for first_vehicle, second_vehicle in model.get_arc_conflicting_pairs(arc):
             if heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle] != -1:
-                if isinstance(model._alpha[arc][first_vehicle][second_vehicle], grb.Var):
-                    model.cbSetSolution(
-                        model._alpha[arc][first_vehicle][second_vehicle],
-                        heuristic_solution.binaries.alpha[arc][first_vehicle][second_vehicle]
-                    )
-                if isinstance(model._beta[arc][first_vehicle][second_vehicle], grb.Var):
-                    model.cbSetSolution(
-                        model._beta[arc][first_vehicle][second_vehicle],
-                        heuristic_solution.binaries.beta[arc][first_vehicle][second_vehicle]
-                    )
-                if isinstance(model._gamma[arc][first_vehicle][second_vehicle], grb.Var):
-                    model.cbSetSolution(
-                        model._gamma[arc][first_vehicle][second_vehicle],
-                        heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle]
-                    )
+                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "alpha",
+                                             heuristic_solution.binaries.alpha[arc][first_vehicle][second_vehicle])
+                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "beta",
+                                             heuristic_solution.binaries.beta[arc][first_vehicle][second_vehicle])
+                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "gamma",
+                                             heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle])
 
 
 def suspend_procedure(heuristic_solution: HeuristicSolution, model: StaggeredRoutingModel,
@@ -162,7 +154,7 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
     if solution_is_improving:
         print("Setting heuristic solution in callback...", end=" ")
         set_heuristic_binary_variables(model, heuristic_solution)
-        set_heuristic_continuous_variables(model, heuristic_solution)
+        set_heuristic_continuous_variables(model, heuristic_solution, instance)
         solution_status = model.cbUseSolution()
         print(f"Model.cbUseSolution() returned {solution_status}")
         model.update()
