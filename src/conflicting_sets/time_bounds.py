@@ -283,7 +283,8 @@ def get_latest_departure(
     """
     if earliest_departure.position == 0:
         # First arc
-        return earliest_departure.earliest_departure + instance.max_staggering_applicable[earliest_departure.vehicle]
+        return earliest_departure.earliest_departure + instance.max_staggering_applicable[
+            earliest_departure.vehicle]
     else:
         previous_arc = instance.trip_routes[earliest_departure.vehicle][earliest_departure.position - 1]
         previous_bound = next(
@@ -459,8 +460,8 @@ def get_initial_latest_arrival_times(instance: Instance, ff_schedule: TripSchedu
         deadline + 1e-4 >= schedule[-1] for deadline, schedule in zip(instance.deadlines, ff_schedule)
     ), "Deadlines are inconsistent with schedules."
 
-    return [[schedule[position] + instance.deadlines[vehicle] - schedule[-1] for position, _ in enumerate(schedule[:])
-             ] for vehicle, schedule in enumerate(ff_schedule)]
+    return [[schedule[position] + instance.deadlines[vehicle] - schedule[-1] + TOLERANCE for position, _ in
+             enumerate(schedule[:])] for vehicle, schedule in enumerate(ff_schedule)]
 
 
 def get_undivided_conflicting_sets(
