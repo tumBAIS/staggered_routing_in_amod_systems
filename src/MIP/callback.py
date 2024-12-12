@@ -5,7 +5,6 @@ import itertools
 from typing import Callable
 
 import gurobipy as grb
-from gurobipy import Model
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
@@ -46,20 +45,21 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
 
 def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: CompleteSolution) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
-    model._cbReleaseTimes = [model.get_continuous_var_cb(vehicle, path[0], "departure")
-                             for vehicle, path in enumerate(instance.trip_routes)]
+    model.set_cb_release_times([model.get_continuous_var_cb(vehicle, path[0], "departure")
+                                for vehicle, path in enumerate(instance.trip_routes)])
     model.set_cb_total_delay(sum(model.get_continuous_var_cb(vehicle, arc, "delay")
                                  for vehicle, path in enumerate(instance.trip_routes) for arc in path)
                              )
-    model._cbStaggeringApplied = [
+    model.set_cb_staggering_applied([
         release_time - status_quo.congested_schedule[vehicle][0]
         for vehicle, release_time in enumerate(model.get_cb_release_times())
-    ]
-    model._cbRemainingTimeSlack = get_staggering_applicable(instance, model._cbStaggeringApplied)
+    ])
+    model.set_cb_remaining_time_slack(get_staggering_applicable(instance, model.get_cb_staggering_applied()))
     model.set_flag_update(True)
 
 
-def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_on_arcs: VehicleSchedules,
+def assert_schedule(model: StaggeredRoutingModel, congested_schedule: VehicleSchedules,
+                    delays_on_arcs: VehicleSchedules,
                     instance: EpochInstance) -> None:
     """Validate the current schedule and delays."""
     if ACTIVATE_ASSERTIONS:
@@ -78,14 +78,15 @@ def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_o
                     f"Invalid delay for arc {arc} of vehicle {vehicle}."
 
 
-def get_heuristic_solution(model: Model, instance: EpochInstance, solver_params: SolverParameters) -> HeuristicSolution:
+def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
+                           solver_params: SolverParameters) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
     model._flagUpdate = False
     cpp_parameters = [solver_params.algorithm_time_limit]
     congested_schedule = cpp.cpp_local_search(
-        release_times=model._cbReleaseTimes,
-        remaining_time_slack=model._cbRemainingTimeSlack,
-        staggering_applied=model._cbStaggeringApplied,
+        release_times=model.get_cb_release_times(),
+        remaining_time_slack=model.get_cb_remaining_time_slack(),
+        staggering_applied=model.get_cb_staggering_applied(),
         conflicting_sets=instance.conflicting_sets,
         earliest_departure_times=instance.earliest_departure_times,
         latest_departure_times=instance.latest_departure_times,
@@ -112,7 +113,7 @@ def get_heuristic_solution(model: Model, instance: EpochInstance, solver_params:
     )
 
 
-def set_heuristic_continuous_variables(model: Model, heuristic_solution: HeuristicSolution) -> None:
+def set_heuristic_continuous_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:
     """Set continuous variables in the model based on the heuristic solution."""
     for vehicle in model._departure:
         for position, arc in enumerate(model._departure[vehicle]):
@@ -122,7 +123,7 @@ def set_heuristic_continuous_variables(model: Model, heuristic_solution: Heurist
                 model.cbSetSolution(model._delay[vehicle][arc], heuristic_solution.delays_on_arcs[vehicle][position])
 
 
-def set_heuristic_binary_variables(model: Model, heuristic_solution: HeuristicSolution) -> None:
+def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:
     """Set binary variables in the model based on the heuristic solution."""
     for arc in model._gamma:
         for first_vehicle, second_vehicle in itertools.combinations(model._gamma[arc], 2):

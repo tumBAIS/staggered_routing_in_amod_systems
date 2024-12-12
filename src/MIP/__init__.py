@@ -40,8 +40,23 @@ class StaggeredRoutingModel(grb.Model):
         self._cbStaggeringApplied = []
         self._cbRemainingTimeSlack = []
 
+    def get_cb_remaining_time_slack(self):
+        return self._cbRemainingTimeSlack
+
+    def set_cb_remaining_time_slack(self, remaining_time_slack):
+        self._cbRemainingTimeSlack = remaining_time_slack
+
+    def get_cb_staggering_applied(self):
+        return self._cbStaggeringApplied
+
+    def set_cb_staggering_applied(self, cb_staggering_applied):
+        self._cbStaggeringApplied = cb_staggering_applied
+
     def get_cb_release_times(self):
         return self._cbReleaseTimes
+
+    def set_cb_release_times(self, release_times: list[float]):
+        self._cbReleaseTimes = release_times
 
     def get_continuous_var_cb(self, vehicle, arc, var_type) -> float:
         # Mapping for variable types
