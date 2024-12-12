@@ -2,7 +2,7 @@ from input_data import ACTIVATE_ASSERTIONS
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution
 from instance_module.instance import Instance
-from utils.aliases import VehicleSchedules
+from utils.aliases import *
 from congestion_model.core import (
     get_delays_on_arcs,
     get_free_flow_schedule,
@@ -33,7 +33,7 @@ def _reconstruct_schedule(
         epoch_instances: list[EpochInstance],
         epoch_status_quo_list: list[EpochSolution],
         global_instance: Instance,
-) -> VehicleSchedules:
+) -> TripSchedules:
     """Reconstruct the global schedule from epoch solutions."""
     reconstructed_schedule = [[] for _ in range(len(global_instance.trip_routes))]
 
@@ -47,7 +47,7 @@ def _reconstruct_schedule(
     return reconstructed_schedule
 
 
-def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: VehicleSchedules) -> None:
+def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: TripSchedules) -> None:
     """Ensure the reconstructed schedule matches the expected congested schedule."""
     if ACTIVATE_ASSERTIONS:
         release_times = [schedule[0] for schedule in reconstructed_schedule]
@@ -61,8 +61,8 @@ def _assert_congested_schedule_is_correct(global_instance: Instance, reconstruct
 
 def _print_not_matching_schedules(
         global_instance: Instance,
-        reconstructed_schedule: VehicleSchedules,
-        cpp_schedule: VehicleSchedules,
+        reconstructed_schedule: TripSchedules,
+        cpp_schedule: TripSchedules,
         vehicle: int,
 ) -> None:
     """Print details for mismatched schedules."""

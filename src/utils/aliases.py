@@ -11,7 +11,7 @@ NodesPath = list[NodeID]
 RelabeledNodesArcID = (NodeID, NodeID)
 OsmInfo = dict[str, Any]
 VehicleSchedule = list[Time]
-VehicleSchedules = list[list[float]]
+TripSchedules = list[list[float]]
 UndividedConflictingSets = list[list[list[int]]]
 ConflictingSetsAfterPreprocessing = list[list[int]]
 

@@ -5,7 +5,7 @@ from conflicting_sets.time_bounds import TimeBound, get_initial_latest_arrival_t
     split_time_bounds_on_arcs, arrange_bounds_by_vehicle, get_undivided_conflicting_sets
 from instance_module.epoch_instance import EpochInstance
 from instance_module.instance import Instance
-from utils.aliases import VehicleSchedules
+from utils.aliases import *
 
 
 def get_max_delay_on_arcs(vehicle_based_time_bounds: list[list[TimeBound]]) -> list[list[float]]:
@@ -38,7 +38,7 @@ def get_latest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]])
 
 def add_conflicting_sets_to_instance(
         instance: Instance | EpochInstance,
-        ff_schedule: VehicleSchedules) -> None:
+        ff_schedule: TripSchedules) -> None:
     print("Adding undivided conflicting sets to instance...", end=" ")
     clock_start = datetime.datetime.now().timestamp()
     known_latest_arrival_times = get_initial_latest_arrival_times(instance, ff_schedule)

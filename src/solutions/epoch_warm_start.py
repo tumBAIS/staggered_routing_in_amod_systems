@@ -1,6 +1,6 @@
 import datetime
 from input_data import SolverParameters
-from utils.aliases import VehicleSchedules
+from utils.aliases import *
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
 from congestion_model.core import (
@@ -15,7 +15,7 @@ import cpp_module as cpp
 
 def _run_local_search(
         solution: EpochSolution, instance: EpochInstance, solver_params: SolverParameters
-) -> VehicleSchedules:
+) -> TripSchedules:
     """
     Performs local search optimization to compute a warm start solution.
     """

@@ -1,13 +1,11 @@
 from __future__ import annotations
-
-import datetime
 from typing import Callable
 
 import gurobipy as grb
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.classes import CompleteSolution, HeuristicSolution
-from utils.aliases import VehicleSchedules
+from utils.aliases import TripSchedules
 from instance_module.epoch_instance import EpochInstance
 from MIP.support import save_solution_in_external_file
 from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
@@ -57,8 +55,8 @@ def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance,
     model.set_flag_update(True)
 
 
-def assert_schedule(model: StaggeredRoutingModel, congested_schedule: VehicleSchedules,
-                    delays_on_arcs: VehicleSchedules,
+def assert_schedule(model: StaggeredRoutingModel, congested_schedule: TripSchedules,
+                    delays_on_arcs: TripSchedules,
                     instance: EpochInstance) -> None:
     """Validate the current schedule and delays."""
     if ACTIVATE_ASSERTIONS:

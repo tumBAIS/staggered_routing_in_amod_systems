@@ -16,10 +16,11 @@ from utils.aliases import Time, Staggering
 from typing import Optional
 
 
-def save_list_of_strings_file(list_of_values: list[typing.Any], file_name: str, path: str):
-    with open(f"{path}/{file_name}.txt", "w") as outfile:
-        for i, value in enumerate(list_of_values):
-            outfile.write(str(value) + ("\n" if i < len(list_of_values) - 1 else ""))
+@dataclass
+class TripsData:
+    routes: list[list[int]]  # list of node-based paths for each trip
+    deadline: list[int]  # Deadlines for each trip
+    release_time: list[int]  # Release times for each trip
 
 
 @dataclass
@@ -73,21 +74,6 @@ class Instance:
             # The maximum staggering applicable is the minimum of the two limits
             max_staggering = min(staggering_cap_limit, deadline_limit)
             self.max_staggering_applicable.append(max_staggering)
-
-
-def print_total_free_flow_time(instance: Instance):
-    total_free_flow_time = sum(instance.travel_times_arcs[arc] for path in instance.trip_routes for arc in path)
-    print(f"Total free flow time for the instance: {total_free_flow_time / 3600:.2f} hours")
-
-
-WARNING = "the convert_dtype parameter is deprecated and will be removed in a future version"
-
-
-@dataclass
-class TripsData:
-    routes: list[list[int]]  # list of node-based paths for each trip
-    deadline: list[int]  # Deadlines for each trip
-    release_time: list[int]  # Release times for each trip
 
 
 def get_instance(instance_params: InstanceParameters) -> Instance:

@@ -2,7 +2,7 @@ import itertools
 from dataclasses import dataclass
 
 from utils.classes import Binaries
-from utils.aliases import VehicleSchedules
+from utils.aliases import *
 from input_data import CONSTR_TOLERANCE, TOLERANCE
 
 
@@ -35,7 +35,7 @@ def set_alpha_pair(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
 def set_beta_vehicle_one(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
     beta_tie_one = abs(vehicle_pair.departure_one - vehicle_pair.arrival_two) < CONSTR_TOLERANCE - TOLERANCE
     departure_one_after_arrival_two = vehicle_pair.departure_one >= vehicle_pair.arrival_two + (
-                CONSTR_TOLERANCE - TOLERANCE)
+            CONSTR_TOLERANCE - TOLERANCE)
 
     if beta_tie_one:
         binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_one][vehicle_pair.vehicle_two] = -1
@@ -48,7 +48,7 @@ def set_beta_vehicle_one(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
 def set_beta_vehicle_two(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
     beta_tie_two = abs(vehicle_pair.departure_two - vehicle_pair.arrival_one) < CONSTR_TOLERANCE - TOLERANCE
     departure_two_after_arrival_one = vehicle_pair.departure_two >= vehicle_pair.arrival_one + (
-                CONSTR_TOLERANCE - TOLERANCE)
+            CONSTR_TOLERANCE - TOLERANCE)
 
     if beta_tie_two:
         binaries.beta[vehicle_pair.arc][vehicle_pair.vehicle_two][vehicle_pair.vehicle_one] = -1
@@ -123,7 +123,7 @@ def set_binaries_between_pair(binaries: Binaries, vehicle_pair: VehiclePair):
 
 
 def get_conflict_binaries(conflicting_sets: list[list[int]], shortest_paths: list[list[int]],
-                          congested_schedule: VehicleSchedules, print_variables=False) -> Binaries:
+                          congested_schedule: TripSchedules, print_variables=False) -> Binaries:
     if print_variables:
         print("Computing conflicting binaries ... ", end="")
     binaries = Binaries({}, {}, {})

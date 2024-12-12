@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from gurobipy import Model
 from typing import Optional
-from utils.aliases import VehicleSchedules
+from utils.aliases import *
 
 
 class Binaries:
@@ -35,12 +35,12 @@ class EpochSolution:
 class CompleteSolution:
     delays_on_arcs: list[list[float]]
     free_flow_schedule: list[list[float]]
+    congested_schedule: list[list[float]]
     release_times: list[float]
     staggering_applicable: list[float]
     staggering_applied: list[float]
     total_delay: float
     total_travel_time: float
-    congested_schedule: list[list[float]]
     binaries: Optional[Binaries]  # type: ignore
     nothing_to_optimize: bool = False
 
@@ -66,7 +66,7 @@ class OptimizationMeasures:
 
 @dataclass
 class HeuristicSolution:
-    congested_schedule: VehicleSchedules
+    congested_schedule: TripSchedules
     binaries: Binaries
-    delays_on_arcs: VehicleSchedules
+    delays_on_arcs: TripSchedules
     total_delay: float

@@ -1,7 +1,6 @@
 import dataclasses
 import datetime
 from typing import List
-
 from input_data import SolverParameters, ACTIVATE_ASSERTIONS
 from congestion_model.conflict_binaries import get_conflict_binaries
 from utils.prints import (
@@ -9,18 +8,16 @@ from utils.prints import (
     print_info_arcs_utilized,
     print_info_length_trips,
 )
+import cpp_module as cpp
 from utils.classes import EpochSolution
 from instance_module.epoch_instance import EpochInstance
 from instance_module.instance import Instance
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
-from congestion_model.core import (
-    get_total_travel_time,
-    get_congested_schedule,
-    get_free_flow_schedule,
-    get_delays_on_arcs,
-    get_total_delay,
-)
-import cpp_module as cpp
+from congestion_model.core import (get_congested_schedule,
+                                   get_free_flow_schedule,
+                                   get_delays_on_arcs,
+                                   get_total_delay,
+                                   )
 
 
 def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> List[List[int]]:
@@ -78,10 +75,10 @@ def compute_solution_metrics(instance: Instance, release_times: List[float],
 
 def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int) -> None:
     """Print header for the current epoch's status quo computation."""
-    print("#" * 20)
-    print(f"COMPUTING STATUS QUO FOR EPOCH {epoch_instance.epoch_id} - "
-          f"START TIME {epoch_instance.epoch_id * epoch_size * 60} seconds")
-    print("#" * 20)
+    print("=" * 60)
+    print(f"Computing status quo for epoch {epoch_instance.epoch_id} - "
+          f"Epoch start time: {epoch_instance.epoch_id * epoch_size * 60} [sec]".center(60))
+    print("=" * 60)
 
 
 def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:

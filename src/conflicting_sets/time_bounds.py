@@ -3,11 +3,9 @@ from __future__ import annotations
 import copy
 from collections import namedtuple
 from queue import PriorityQueue
-from typing import Callable
-
 from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
 from instance_module.instance import Instance
-from utils.aliases import VehicleSchedules, UndividedConflictingSets
+from utils.aliases import *
 
 # Named tuples for structured data handling
 TimeBound = namedtuple(
@@ -87,7 +85,7 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehicles_on_arc: int) -> 
     return max(delay_at_pieces)
 
 
-def get_earliest_departures_list_and_pq(free_flow_schedule: VehicleSchedules, instance: Instance) -> tuple[
+def get_earliest_departures_list_and_pq(free_flow_schedule: TripSchedules, instance: Instance) -> tuple[
     list[list[EarliestDeparture]], PriorityQueue]:
     """
     Generates a list of earliest departures per arc and initializes a priority queue for processing.
@@ -202,7 +200,7 @@ def get_conflicting_departures(
     return conflicting_departures
 
 
-def assert_time_bound(time_bound: TimeBound, instance: Instance, earliest_departure: EarliestDeparture) -> None:
+def assert_time_bound(time_bound: TimeBound) -> None:
     """
     Assert that a given time bound is valid based on arrival and departure times.
     """
@@ -308,7 +306,7 @@ def get_latest_arrival_time(
 def get_arc_based_time_bounds(
         instance: Instance,
         known_latest_arrival_times: list[list[float]],
-        free_flow_schedule: VehicleSchedules
+        free_flow_schedule: TripSchedules
 ) -> list[list[TimeBound]]:
     """
     Computes time bounds for all arcs in the network based on earliest and latest departures and arrivals.
@@ -369,7 +367,7 @@ def get_arc_based_time_bounds(
             min_delay_on_arc=min_delay_on_arc,
             max_delay_on_arc=max_delay_on_arc,
         )
-        assert_time_bound(time_bound, instance, earliest_departure)
+        assert_time_bound(time_bound)
 
         # Append the time bound to the arc's list
         arc_based_time_bounds[earliest_departure.arc].append(time_bound)
@@ -395,7 +393,7 @@ def get_arc_based_time_bounds(
     return arc_based_time_bounds
 
 
-def get_initial_latest_arrival_times(instance: Instance, ff_schedule: VehicleSchedules) -> list[list[float]]:
+def get_initial_latest_arrival_times(instance: Instance, ff_schedule: TripSchedules) -> list[list[float]]:
     """
     Computes initial latest arrival times for all vehicles based on their free-flow schedules.
     """
