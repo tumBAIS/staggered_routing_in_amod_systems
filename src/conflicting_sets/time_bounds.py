@@ -437,9 +437,12 @@ def get_arc_based_time_bounds(
             )
             edpq.put(next_earliest_departure)
 
-    # Sort time bounds on each arc by earliest departure time
+    # Sort time bounds on each arc by earliest departure time and vehicle ID
     arc_based_time_bounds = [
-        sorted(time_bounds_on_arc, key=lambda x: x.earliest_departure)
+        sorted(
+            time_bounds_on_arc,
+            key=lambda x: (round(x.earliest_departure / TOLERANCE), x.vehicle)
+        )
         for time_bounds_on_arc in arc_based_time_bounds
     ]
 
