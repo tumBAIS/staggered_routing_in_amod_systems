@@ -1,6 +1,4 @@
 # Import necessary modules and functions
-import copy
-
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from instance_module.instance import get_instance
@@ -27,6 +25,9 @@ def run_procedure(source: str) -> None:
     optimization_measures_list = []
     # Process each epoch instance
     for epoch_id, epoch_instance in enumerate(epoch_instances):
+        # Start processing instance
+        epoch_instance.set_clock_start_epoch()
+
         # Get the status quo for the current epoch
         epoch_status_quo = get_epoch_status_quo(epoch_instance, solver_params)
 

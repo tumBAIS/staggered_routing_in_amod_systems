@@ -97,7 +97,6 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
 
 def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
     """Compute the status quo solution for the current epoch."""
-    epoch_instance.set_clock_start_epoch()
     print_epoch_status_header(epoch_instance, epoch_size=solver_params.epoch_size)
     cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
