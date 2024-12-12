@@ -1,19 +1,70 @@
 from __future__ import annotations
-
 import copy
 from collections import namedtuple
 from queue import PriorityQueue
-from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY
+from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY, TOLERANCE
 from instance_module.instance import Instance
 from utils.aliases import *
+from functools import total_ordering
 
-# Named tuples for structured data handling
-TimeBound = namedtuple(
-    "TimeBound",
-    ["arc", "earliest_departure", "latest_departure", "earliest_arrival", "latest_arrival", "min_delay_on_arc",
-     "max_delay_on_arc", "vehicle"]
-)
-EarliestDeparture = namedtuple("EarliestDeparture", ["time", "arc", "vehicle", "position"])
+
+@total_ordering
+class TimeBound:
+    def __init__(self, arc, vehicle, position, earliest_departure):
+        self.arc = arc
+        self.vehicle = vehicle
+        self.position = position
+        self.earliest_departure = earliest_departure
+        self.latest_departure = None
+        self.earliest_arrival = None
+        self.latest_arrival = None
+        self.min_delay_on_arc = None
+        self.max_delay_on_arc = None
+
+    @classmethod
+    def complete(
+            cls,
+            arc,
+            vehicle,
+            position,
+            earliest_departure,
+            latest_departure,
+            earliest_arrival,
+            latest_arrival,
+            min_delay_on_arc,
+            max_delay_on_arc,
+    ):
+        """Create a TimeBound instance with all fields initialized."""
+        instance = cls(arc, vehicle, position, earliest_departure)
+        instance.latest_departure = latest_departure
+        instance.earliest_arrival = earliest_arrival
+        instance.latest_arrival = latest_arrival
+        instance.min_delay_on_arc = min_delay_on_arc
+        instance.max_delay_on_arc = max_delay_on_arc
+        return instance
+
+    def update_earliest_departure(self, new_value):
+        self.earliest_departure = new_value
+
+    def __eq__(self, other):
+        if not isinstance(other, TimeBound):
+            return NotImplemented
+        # Two instances are equal if their earliest_departure is within TOLERANCE and vehicles are the same
+        return (
+                abs(self.earliest_departure - other.earliest_departure) < TOLERANCE
+                and self.vehicle == other.vehicle
+        )
+
+    def __lt__(self, other):
+        if not isinstance(other, TimeBound):
+            return NotImplemented
+        # Compare earliest_departure with TOLERANCE, then compare vehicles
+        if abs(self.earliest_departure - other.earliest_departure) < TOLERANCE:
+            return self.vehicle < other.vehicle
+        return self.earliest_departure < other.earliest_departure
+
+
+# EarliestDeparture = namedtuple("EarliestDeparture", ["earliest_departure", "arc", "vehicle", "position"])
 Arrival = namedtuple("Arrival", ["latest", "earliest", "latest_departure"])
 KnownBoundDeparture = namedtuple("KnownBoundDeparture", ["latest", "earliest", "latest_arrival"])
 
@@ -48,7 +99,7 @@ def arrange_bounds_by_vehicle(arc_based_time_bounds: list[list[TimeBound]], path
     """
     Rearranges time bounds from arc-based to vehicle-based grouping.
     """
-    vehicle_based_time_bounds = [[] for _ in paths]
+    vehicle_based_time_bounds: list[list[TimeBound]] = [[] for _ in paths]
 
     for arc, arc_time_bounds in enumerate(arc_based_time_bounds):
         for bound in arc_time_bounds:
@@ -87,7 +138,7 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehicles_on_arc: int) -> 
 
 
 def get_earliest_departures_list_and_pq(free_flow_schedule: TripSchedules, instance: Instance) -> tuple[
-    list[list[EarliestDeparture]], PriorityQueue]:
+    list[list[TimeBound]], PriorityQueue]:
     """
     Generates a list of earliest departures per arc and initializes a priority queue for processing.
     """
@@ -97,19 +148,19 @@ def get_earliest_departures_list_and_pq(free_flow_schedule: TripSchedules, insta
     for vehicle, schedule in enumerate(free_flow_schedule):
         for position, time in enumerate(schedule):
             arc = instance.trip_routes[vehicle][position]
-            departure = EarliestDeparture(time=time, arc=arc, vehicle=vehicle, position=position)
+            departure = TimeBound(earliest_departure=time, arc=arc, vehicle=vehicle, position=position)
             arc_based_earliest_departures[arc].append(departure)
             if position == 0:
                 earliest_departures_priority_queue.put(departure)
 
     for arc in arc_based_earliest_departures:
-        arc.sort(key=lambda x: x.time)
+        arc.sort(key=lambda x: x.earliest_departure)
 
     return arc_based_earliest_departures, earliest_departures_priority_queue
 
 
-def propagate_min_delay(earliest_departures: list[list[EarliestDeparture]], min_delay_on_this_arc: float,
-                        departure: EarliestDeparture, instance: Instance) -> None:
+def propagate_min_delay(earliest_departures: list[list[TimeBound]], min_delay_on_this_arc: float,
+                        departure: TimeBound, instance: Instance) -> None:
     """
     Propagates a minimum delay along the vehicle's route for subsequent arcs.
     """
@@ -131,8 +182,8 @@ def propagate_min_delay(earliest_departures: list[list[EarliestDeparture]], min_
     }
 
     for arc, index in indices_departures_next_arcs.items():
-        new_time = earliest_departures[arc][index].time + min_delay_on_this_arc
-        earliest_departures[arc][index] = earliest_departures[arc][index]._replace(time=new_time)
+        new_time = earliest_departures[arc][index].earliest_departure + min_delay_on_this_arc
+        earliest_departures[arc][index].update_earliest_departure(new_time)
 
 
 def combine_conflicts(conflicting_arrivals: list[Arrival], conflicting_departures: list[KnownBoundDeparture]) -> list[
@@ -149,7 +200,7 @@ def combine_conflicts(conflicting_arrivals: list[Arrival], conflicting_departure
 
 
 def get_conflicting_latest_arrivals(
-        arc_based_arrivals: list[list[Arrival]], earliest_departure: EarliestDeparture
+        arc_based_arrivals: list[list[Arrival]], earliest_departure: TimeBound
 ) -> list[Arrival]:
     """
     Get conflicting latest arrivals for a given earliest departure.
@@ -157,13 +208,13 @@ def get_conflicting_latest_arrivals(
     return [
         arrival
         for arrival in arc_based_arrivals[earliest_departure.arc]
-        if arrival.latest > earliest_departure.time
+        if arrival.latest > earliest_departure.earliest_departure
     ]
 
 
 def get_conflicting_departures(
-        all_earliest_departures: list[list[EarliestDeparture]],
-        current_earliest_departure: EarliestDeparture,
+        all_earliest_departures: list[list[TimeBound]],
+        current_earliest_departure: TimeBound,
         current_latest_departure: float,
         instance: Instance,
         arc_based_time_bounds: list[list[TimeBound]],
@@ -177,7 +228,7 @@ def get_conflicting_departures(
     for other_departure in all_earliest_departures[current_earliest_departure.arc]:
         if (
                 other_departure.vehicle != current_earliest_departure.vehicle
-                and current_earliest_departure.time <= other_departure.time <= current_latest_departure
+                and current_earliest_departure.earliest_departure <= other_departure.earliest_departure <= current_latest_departure
         ):
             other_position = instance.trip_routes[other_departure.vehicle].index(other_departure.arc)
             other_previous_arc = instance.trip_routes[other_departure.vehicle][other_position - 1]
@@ -192,7 +243,7 @@ def get_conflicting_departures(
             other_latest_arrival = known_latest_arrival_times[other_departure.vehicle][other_position]
             conflicting_departures.append(
                 KnownBoundDeparture(
-                    earliest=other_departure.time,
+                    earliest=other_departure.earliest_departure,
                     latest=other_latest_departure_time,
                     latest_arrival=other_latest_arrival,
                 )
@@ -215,7 +266,7 @@ def assert_time_bound(time_bound: TimeBound) -> None:
 
 
 def get_latest_departure(
-        earliest_departure: EarliestDeparture,
+        earliest_departure: TimeBound,
         instance: Instance,
         arc_based_time_bounds: list[list[TimeBound]]
 ) -> float:
@@ -224,7 +275,7 @@ def get_latest_departure(
     """
     if earliest_departure.position == 0:
         # First arc
-        return earliest_departure.time + instance.max_staggering_applicable[earliest_departure.vehicle]
+        return earliest_departure.earliest_departure + instance.max_staggering_applicable[earliest_departure.vehicle]
     else:
         previous_arc = instance.trip_routes[earliest_departure.vehicle][earliest_departure.position - 1]
         previous_bound = next(
@@ -239,7 +290,7 @@ def get_earliest_arrival_time(
         conflicting_arrivals: list[Arrival],
         current_latest_departure: float,
         instance: Instance,
-        earliest_departure: EarliestDeparture
+        earliest_departure: TimeBound
 ) -> tuple[float, float]:
     """
     Calculate the earliest possible arrival time for a given departure.
@@ -250,7 +301,8 @@ def get_earliest_arrival_time(
     )
     min_vehicles_on_arc = sum(
         1 for arrival in conflicting_arrivals
-        if arrival.latest_departure < earliest_departure.time and current_latest_departure < arrival.earliest
+        if
+        arrival.latest_departure < earliest_departure.earliest_departure and current_latest_departure < arrival.earliest
     ) + 1
 
     min_delay = compute_delay_on_arc(
@@ -258,7 +310,7 @@ def get_earliest_arrival_time(
     ) if min_vehicles_on_arc > arc_capacity_threshold else 0
 
     earliest_arrival_time = (
-            earliest_departure.time + min_delay + instance.travel_times_arcs[earliest_departure.arc]
+            earliest_departure.earliest_departure + min_delay + instance.travel_times_arcs[earliest_departure.arc]
     )
     return earliest_arrival_time, min_delay
 
@@ -266,7 +318,7 @@ def get_earliest_arrival_time(
 def get_latest_arrival_time(
         conflicting_arrivals: list[Arrival],
         conflicting_departures: list[KnownBoundDeparture],
-        earliest_departure: EarliestDeparture,
+        earliest_departure: TimeBound,
         latest_departure_time: float,
         instance: Instance,
         known_latest_arrival_times: list[list[float]]
@@ -358,10 +410,11 @@ def get_arc_based_time_bounds(
         )
 
         # Create and validate a new time bound
-        time_bound = TimeBound(
+        time_bound = TimeBound.complete(
             arc=earliest_departure.arc,
+            position=earliest_departure.position,
             vehicle=earliest_departure.vehicle,
-            earliest_departure=earliest_departure.time,
+            earliest_departure=earliest_departure.earliest_departure,
             latest_departure=latest_departure,
             earliest_arrival=earliest_arrival,
             latest_arrival=latest_arrival,
@@ -377,8 +430,8 @@ def get_arc_based_time_bounds(
         vehicle_is_traveling = instance.trip_routes[earliest_departure.vehicle][earliest_departure.position] != 0
         if vehicle_is_traveling:
             next_arc = instance.trip_routes[earliest_departure.vehicle][earliest_departure.position + 1]
-            next_earliest_departure = EarliestDeparture(
-                time=earliest_arrival,
+            next_earliest_departure = TimeBound(
+                earliest_departure=earliest_arrival,
                 arc=next_arc,
                 vehicle=earliest_departure.vehicle,
                 position=earliest_departure.position + 1,
