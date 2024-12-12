@@ -136,7 +136,7 @@ class InstanceComputer:
         # Step 2: Get the southern percentage of the network
         G_percentage = real_world_graphs.get_southern_percentage_of_network(G_manhattan, percentage, path_to_G)
         if self.instance_params.add_shortcuts:
-            instance_generator.shortcuts_instance.add_shortcuts_to_graph(G_percentage)
+            instance_generator.shortcuts.add_shortcuts_to_graph(G_percentage)
         G_percentage = nx.MultiDiGraph(G_percentage)
         instance_generator.real_world_graphs.plot_real_world_G(G_percentage,
                                                                path_to_G)  # Make sure this function can handle the relabeled graph

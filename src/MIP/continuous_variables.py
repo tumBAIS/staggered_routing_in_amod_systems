@@ -15,7 +15,7 @@ def _add_departure_variable(
     departure = status_quo.congested_schedule[vehicle][arc_index]
     assert (
             earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
-    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
+    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
