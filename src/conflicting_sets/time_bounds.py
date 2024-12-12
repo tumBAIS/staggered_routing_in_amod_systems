@@ -396,20 +396,16 @@ def get_arc_based_time_bounds(
 
 def get_initial_latest_arrival_times(instance: Instance, ff_schedule: TripSchedules) -> list[list[float]]:
     """
-    Computes initial latest arrival times for all vehicles based on their free-flow schedules.
+    The function calculates the latest arrival times for each vehicle at each stop,
+    ensuring they respect the vehicle's deadline and account for available slack time.
     """
     assert len(instance.deadlines) == len(ff_schedule), "Mismatch in deadlines and free-flow schedule length."
     assert all(
         deadline + 1e-4 >= schedule[-1] for deadline, schedule in zip(instance.deadlines, ff_schedule)
     ), "Deadlines are inconsistent with schedules."
 
-    return [
-        [
-            schedule[position + 1] + instance.deadlines[vehicle] - schedule[-1]
-            for position, _ in enumerate(schedule[:-1])
-        ] + [instance.deadlines[vehicle]]
-        for vehicle, schedule in enumerate(ff_schedule)
-    ]
+    return [[schedule[position] + instance.deadlines[vehicle] - schedule[-1] for position, _ in enumerate(schedule[:])
+             ] for vehicle, schedule in enumerate(ff_schedule)]
 
 
 def get_undivided_conflicting_sets(

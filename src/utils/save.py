@@ -130,7 +130,7 @@ def _round_instance_data(instance, status_quo, solution, i):
 def _remove_unnecessary_instance_columns(instance_data_to_save):
     """Remove unnecessary attributes from instance data."""
     columns_to_remove = [
-        "input_data", "capacities_arcs", "release_times_dataset", "arrival_times_dataset",
+        "instance_params", "capacities_arcs", "release_times_dataset", "arrival_times_dataset",
         "undivided_conflicting_sets", "latest_departure_times", "earliest_departure_times",
         "min_delay_on_arc", "max_delay_on_arc",
     ]
