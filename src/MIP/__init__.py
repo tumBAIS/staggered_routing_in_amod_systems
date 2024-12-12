@@ -29,7 +29,8 @@ class StaggeredRoutingModel(grb.Model):
         self._alpha = {}
         self._beta = {}
         self._gamma = {}
-        self._totalDelay = self.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay")
+        self._totalDelay = self.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay", lb=0, ub=float("inf"), obj=0,
+                                       column=None)
         self._departure = {}
         self._delay = {}
         self._load = {}

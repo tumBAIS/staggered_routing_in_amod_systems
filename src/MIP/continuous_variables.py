@@ -55,13 +55,10 @@ def _add_load_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, con
             for second_vehicle in model._gamma[arc][vehicle]
         ) + 1
 
-        model._load[vehicle][arc] = model.addVar(
-            vtype=grb.GRB.CONTINUOUS, name=f"load_vehicle_{vehicle}_arc_{arc}", lb=lb, ub=ub
-        )
+        model.add_continuous_var(vehicle, arc, lb, ub, "load")
 
-        assert lb <= ub, f"Invalid load bounds for vehicle {vehicle} on arc {arc}: {lb} <= {ub}"
     else:
-        model._load[vehicle][arc] = 1
+        model.add_continuous_var(vehicle, arc, 1, 1, "load", True)
 
 
 def _add_continuous_variables_vehicle_on_arc(
