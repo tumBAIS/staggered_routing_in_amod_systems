@@ -6,7 +6,6 @@ from typing import Optional
 
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
-from instance_module.instance import Instance
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
 from MIP.support import (

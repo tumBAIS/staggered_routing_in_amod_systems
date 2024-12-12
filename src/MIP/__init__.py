@@ -17,51 +17,50 @@ class StaggeredRoutingModel(grb.Model):
         super().__init__("staggered_routing")
         # Optimization Metrics
         self._optimize_flag = True
-        self._optimalityGap = [100.0]
-        self._lowerBound = [0.0]
-        self._upperBound = [initial_total_delay]
-        self._optimizationTime = [self.get_elapsed_time(start_solution_time)]
-        self._flagUpdate = False
-        self._bestLowerBound = 0
-        self._bestUpperBound = float("inf")
-        self._improvementClock = datetime.datetime.now().timestamp()
-        self._remainingTimeForOptimization = None
+        self._optimality_gaps_list = [100.0]
+        self._lower_bounds_list = [0.0]
+        self._upper_bounds_list = [initial_total_delay]
+        self._optimization_times_list = [self.get_elapsed_time(start_solution_time)]
+        self._flag_update = False
+        self._best_lower_bound = 0
+        self._best_upper_bound = float("inf")
+        self._improvement_clock = datetime.datetime.now().timestamp()
+        self._remaining_time_for_optimization = None
         self.set_remaining_time_for_optimization(solver_params, start_solution_time)
         # Info on constraints
-        self._numBigMConstraints = 0
+        self._num_big_m_constraints = 0
         # Variables
         self._alpha = {}
         self._beta = {}
         self._gamma = {}
-        self._totalDelay = self.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay", lb=0, ub=float("inf"), obj=0,
-                                       column=None)
+        self._total_delay = self.create_total_delay_var()
         self._departure = {}
         self._delay = {}
         self._load = {}
 
         # Callback
-        self._cbTotalDelay = None
-        self._cbReleaseTimes = []
-        self._cbStaggeringApplied = []
-        self._cbRemainingTimeSlack = []
+        self._cb_total_delay = None
+        self._cb_release_times = []
+        self._cb_staggering_times = []
+        self._cb_remaining_time_slacks = []
 
     def get_cb_remaining_time_slack(self):
-        return self._cbRemainingTimeSlack
+        return self._cb_remaining_time_slacks
 
     def set_cb_remaining_time_slack(self, remaining_time_slack):
-        self._cbRemainingTimeSlack = remaining_time_slack
+        self._cb_remaining_time_slacks = remaining_time_slack
 
     def get_cb_staggering_applied(self):
-        return self._cbStaggeringApplied
+        return self._cb_staggering_times
 
     def set_cb_staggering_applied(self, cb_staggering_applied):
-        self._cbStaggeringApplied = cb_staggering_applied
+        self._cb_staggering_times = cb_staggering_applied
 
     def get_cb_release_times(self):
-        return self._cbReleaseTimes
+        return self._cb_release_times
 
     def set_cb_release_times(self, release_times: list[float]):
-        self._cbReleaseTimes = release_times
+        self._cb_release_times = release_times
 
     def get_continuous_var_cb(self, vehicle, arc, var_type) -> float:
         # Mapping for variable types
@@ -164,36 +163,36 @@ class StaggeredRoutingModel(grb.Model):
         continuous_var[var_type][vehicle][arc] = variable
 
     def get_flag_update(self) -> bool:
-        return self._flagUpdate
+        return self._flag_update
 
     def set_flag_update(self, flag):
-        self._flagUpdate = flag
+        self._flag_update = flag
 
     def set_best_lower_bound(self, value: float):
-        self._bestLowerBound = value
+        self._best_lower_bound = value
 
     def set_best_upper_bound(self, value: float):
-        self._bestUpperBound = value
+        self._best_upper_bound = value
 
     def get_best_lower_bound(self):
-        return self._bestLowerBound
+        return self._best_lower_bound
 
     def get_best_upper_bound(self):
-        return self._bestUpperBound
+        return self._best_upper_bound
 
     def get_cb_total_delay(self):
-        return self._cbTotalDelay
+        return self._cb_total_delay
 
     def set_cb_total_delay(self, arg_value):
-        self._cbTotalDelay = arg_value
+        self._cb_total_delay = arg_value
 
     def set_remaining_time_for_optimization(self, solver_params: SolverParameters, start_solution_time) -> None:
         total_optimization_time = solver_params.algorithm_time_limit
         elapsed_time = datetime.datetime.now().timestamp() - start_solution_time
-        self._remainingTimeForOptimization = total_optimization_time - elapsed_time
+        self._remaining_time_for_optimization = total_optimization_time - elapsed_time
 
     def get_remaining_time_for_optimization(self) -> float:
-        return self._remainingTimeForOptimization
+        return self._remaining_time_for_optimization
 
     def add_conflict_pair_var(self, arc, first_vehicle, second_vehicle, name, lb, ub, var_name):
         conflict_var = {
@@ -272,55 +271,55 @@ class StaggeredRoutingModel(grb.Model):
         return self._optimize_flag
 
     def get_last_optimality_gap(self):
-        if self._optimalityGap:
-            return self._optimalityGap[-1]
+        if self._optimality_gaps_list:
+            return self._optimality_gaps_list[-1]
         else:
             raise IndexError("no gap values")
 
     def get_last_lower_bound(self):
-        if self._lowerBound:
-            return self._lowerBound[-1]
+        if self._lower_bounds_list:
+            return self._lower_bounds_list[-1]
         else:
             raise IndexError("no lb values")
 
     def get_last_upper_bound(self):
-        if self._upperBound:
-            return self._upperBound[-1]
+        if self._upper_bounds_list:
+            return self._upper_bounds_list[-1]
         else:
             raise IndexError("no ub values")
 
     def store_lower_bound(self, arg_value: Optional[float] = None):
         if arg_value:
-            self._lowerBound.append(round(arg_value, 2))
+            self._lower_bounds_list.append(round(arg_value, 2))
         else:
-            self._lowerBound.append(round(self.ObjBound, 2))
+            self._lower_bounds_list.append(round(self.ObjBound, 2))
 
     def store_upper_bound(self, arg_value: Optional[float] = None):
         if arg_value:
-            self._upperBound.append(round(arg_value, 2))
+            self._upper_bounds_list.append(round(arg_value, 2))
         else:
-            self._upperBound.append(round(self.getObjective().getValue(), 2))
+            self._upper_bounds_list.append(round(self.getObjective().getValue(), 2))
 
     def store_optimality_gap(self, arg_value: Optional[float] = None):
         if arg_value:
-            self._optimalityGap.append(round(arg_value, 2))
+            self._optimality_gaps_list.append(round(arg_value, 2))
         else:
-            self._optimalityGap.append(round(self.MIPGap * 100, 2))
+            self._optimality_gaps_list.append(round(self.MIPGap * 100, 2))
 
     def store_optimization_time(self, start_time: float):
-        self._optimizationTime.append(datetime.datetime.now().timestamp() - start_time)
+        self._optimization_times_list.append(datetime.datetime.now().timestamp() - start_time)
 
     def get_lower_bound_list(self) -> list[float]:
-        return self._lowerBound
+        return self._lower_bounds_list
 
     def get_upper_bound_list(self) -> list[float]:
-        return self._upperBound
+        return self._upper_bounds_list
 
     def get_optimality_gap_list(self) -> list[float]:
-        return self._optimalityGap
+        return self._optimality_gaps_list
 
     def get_optimization_time_list(self) -> list[float]:
-        return self._optimizationTime
+        return self._optimization_times_list
 
     def add_load_constraint(self, trip: int, arc: int) -> None:
         """Add load constraints for a specific vehicle and arc."""
@@ -341,7 +340,7 @@ class StaggeredRoutingModel(grb.Model):
         """Add alpha constraints for two vehicles on a given arc."""
         if not self.is_gurobi_var(self._alpha[arc][v1][v2]):
             return
-        self._numBigMConstraints += 2
+        self._num_big_m_constraints += 2
         M1 = int(
             np.ceil(
                 self.get_continuous_var_bound("ub", arc, v1, "departure") -
@@ -367,7 +366,7 @@ class StaggeredRoutingModel(grb.Model):
         if not self.is_gurobi_var(self._alpha[arc][v1][v2]):
             return
 
-        self._numBigMConstraints += 2
+        self._num_big_m_constraints += 2
 
         self.addGenConstrIndicator(
             self._alpha[arc][v1][v2], True,
@@ -392,7 +391,7 @@ class StaggeredRoutingModel(grb.Model):
         next_arc_second_vehicle = second_vehicle_path[idx_second_vehicle_path + 1]
 
         # Increment the count of Big-M constraints
-        self._numBigMConstraints += 2
+        self._num_big_m_constraints += 2
 
         # use BIG-M constraints
         M3 = int(np.ceil(
@@ -428,7 +427,7 @@ class StaggeredRoutingModel(grb.Model):
         next_arc_second_vehicle = second_vehicle_path[idx_second_vehicle_path + 1]
 
         # Increment the count of Big-M constraints
-        self._numBigMConstraints += 2
+        self._num_big_m_constraints += 2
 
         # Add indicator constraints
         self.addGenConstrIndicator(
@@ -449,7 +448,7 @@ class StaggeredRoutingModel(grb.Model):
     def add_gamma_constraints(self, arc: int, v1: int, v2: int) -> None:
         """Add gamma constraints for two vehicles on a given arc."""
         if self.is_gurobi_var(self._gamma[arc][v1][v2]):
-            self._numBigMConstraints += 2
+            self._num_big_m_constraints += 2
             self.addConstr(
                 self._gamma[arc][v1][v2] >= self._alpha[arc][v1][v2] + self._beta[arc][v1][v2] - 1,
                 name=f"gamma_1_constr_arc_{arc}_vehicles_{v1}_{v2}"
@@ -474,20 +473,40 @@ class StaggeredRoutingModel(grb.Model):
                     name=f"continuity_vehicle_{vehicle}_arc_{current_arc}"
                 )
 
+    def create_total_delay_var(self) -> grb.Var:
+        return self.addVar(vtype=grb.GRB.CONTINUOUS, name="total_delay", lb=0, ub=float("inf"), obj=0,
+                           column=None)
+
     def add_objective_function(self) -> None:
         """Set the objective function for minimizing total delay."""
         print("Setting the objective function...")
         self.addConstr(
-            self._totalDelay == grb.quicksum(
+            self._total_delay == grb.quicksum(
                 self._delay[vehicle][arc] for vehicle in self._delay for arc in self._delay[vehicle]
             ),
             name="total_delay_constraint"
         )
-        self.setObjective(self._totalDelay, grb.GRB.MINIMIZE)
+        self.setObjective(self._total_delay, grb.GRB.MINIMIZE)
         print("Objective: Minimization of total delay.")
+
+    def get_objective_value(self) -> float:
+        return self._total_delay.X
+
+    def get_continuous_var_value(self, trip, arc, var_name) -> float:
+        continuous_var = {
+            "departure": self._departure,
+            "delay": self._delay,
+            "load": self._load,
+        }
+        if self.is_gurobi_var(continuous_var[var_name][trip][arc]):
+            return continuous_var[var_name][trip][arc].X
+        return continuous_var[var_name][trip][arc]
 
     def trip_can_have_delay_on_arc(self, trip, arc) -> bool:
         return isinstance(self._load[trip][arc], grb.Var)
 
     def print_num_big_m_constraints(self):
-        print(f"Number of BigM constraints in model: {self._numBigMConstraints}")
+        print(f"Number of BigM constraints in model: {self._num_big_m_constraints}")
+
+    def set_improvement_clock(self):
+        self._improvement_clock = datetime.datetime.now().timestamp()

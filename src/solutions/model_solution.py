@@ -6,29 +6,24 @@ from congestion_model.core import (
 )
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import EpochSolution
-from gurobipy import Model
-import gurobipy as grb
+from MIP import StaggeredRoutingModel
 
 
-def get_model_release_times(model: Model, paths: list[list[int]]) -> list[float]:
+def get_model_release_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
     """Retrieve the release times from the model for each vehicle."""
-    return [model._departure[vehicle][path[0]].X for vehicle, path in enumerate(paths)]
+    return [model.get_continuous_var_value(vehicle, path[0], "departure") for vehicle, path in enumerate(paths)]
 
 
-def get_model_schedule(model: Model, paths: list[list[int]]) -> list[list[float]]:
+def get_model_schedule(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[list[float]]:
     """Retrieve the complete schedule from the model for each vehicle."""
-    return [[model._departure[vehicle][arc].X for arc in path] for vehicle, path in enumerate(paths)]
+    return [[model.get_continuous_var_value(vehicle, arc, "departure") for arc in path] for vehicle, path in
+            enumerate(paths)]
 
 
-def get_model_delay_on_arcs(model: Model, paths: list[list[int]]) -> list[list[float]]:
+def get_model_delay_on_arcs(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[list[float]]:
     """Retrieve the delay on arcs from the model for each vehicle."""
-    return [
-        [
-            model._delay[vehicle][arc].X if isinstance(model._delay[vehicle][arc], grb.Var) else 0
-            for arc in path
-        ]
-        for vehicle, path in enumerate(paths)
-    ]
+    return [[model.get_continuous_var_value(vehicle, arc, "delay")
+             for arc in path] for vehicle, path in enumerate(paths)]
 
 
 def get_staggering_applied(release_times_solution: list[float], release_times_status_quo: list[float]) -> list[float]:
@@ -40,7 +35,7 @@ def get_staggering_applied(release_times_solution: list[float], release_times_st
 
 
 def get_epoch_model_solution(
-        model: Model,
+        model: StaggeredRoutingModel,
         epoch_instance: EpochInstance,
         epoch_status_quo: EpochSolution,
         epoch_warm_start: EpochSolution,
@@ -50,11 +45,11 @@ def get_epoch_model_solution(
     Compute the epoch model solution from the optimized model.
     """
     # If optimization is disabled, return the warm start or status quo
-    if not solver_params.optimize or not model._optimize_flag or epoch_instance.input_data.staggering_cap == 0:
+    if not solver_params.optimize or not model.get_optimize_flag() or epoch_instance.input_data.staggering_cap == 0:
         return epoch_warm_start if solver_params.warm_start else epoch_status_quo
 
     # Retrieve results from the model
-    total_delay = model._totalDelay.X
+    total_delay = model.get_objective_value()
     release_times = get_model_release_times(model, epoch_instance.trip_routes)
     congested_schedule = get_model_schedule(model, epoch_instance.trip_routes)
     delays_on_arcs = get_model_delay_on_arcs(model, epoch_instance.trip_routes)

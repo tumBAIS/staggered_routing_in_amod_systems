@@ -176,8 +176,8 @@ def callback(instance: EpochInstance, status_quo: CompleteSolution, solver_param
 
         if where == grb.GRB.Callback.MIPSOL:
             get_callback_solution(model, instance, status_quo)
-            model._improvementClock = datetime.datetime.now().timestamp()
-            model._bestUpperBound = model.get_cb_total_delay()
+            model.set_improvement_clock()
+            model.set_best_upper_bound(model.get_cb_total_delay())
 
         if where == grb.GRB.Callback.MIPNODE and model.get_flag_update():
             heuristic_solution = get_heuristic_solution(model, instance, solver_params)
