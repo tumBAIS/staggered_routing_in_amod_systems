@@ -39,12 +39,40 @@ class StaggeredRoutingModel(grb.Model):
         self._delay[trip] = {}
         self._load[trip] = {}
 
-    def add_departure_var(self, vehicle, arc, lb, ub):
-        self._departure[vehicle][arc] = self.addVar(vtype=grb.GRB.CONTINUOUS,
-                                                    name=f"departure_vehicle_{vehicle}_arc_{arc}",
-                                                    lb=lb, ub=ub, obj=0, column=None)
-        self._departure[vehicle][arc]._lb = lb
-        self._departure[vehicle][arc]._ub = ub
+    def add_continuous_var(self, vehicle, arc, lb, ub, var_type, constant_flag: bool = False):
+        # Mapping for variable types
+        continuous_var = {
+            "departure": self._departure,
+            "delay": self._delay,
+            "load": self._load,
+        }
+
+        # Validate bounds
+        assert lb <= ub + 1e-6, (
+            f"Invalid bounds for {var_type}_vehicle_{vehicle}_arc_{arc}: {lb} <= {ub}"
+        )
+
+        # Handle constant variable case
+        if abs(lb - ub) < 1e-6 and constant_flag:
+            continuous_var[var_type][vehicle][arc] = ub
+            return
+
+        # Add a continuous variable to the model
+        variable = self.addVar(
+            vtype=grb.GRB.CONTINUOUS,
+            name=f"{var_type}_vehicle_{vehicle}_arc_{arc}",
+            lb=lb,
+            ub=ub,
+            obj=0,
+            column=None
+        )
+
+        # Store additional attributes
+        variable._lb = lb
+        variable._ub = ub
+
+        # Update the variable mapping
+        continuous_var[var_type][vehicle][arc] = variable
 
     def set_best_lower_bound(self, value: float):
         self._bestLowerBound = value
