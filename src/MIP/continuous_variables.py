@@ -1,4 +1,3 @@
-import gurobipy as grb
 from utils.classes import EpochSolution
 from instance_module.instance import Instance
 from input_data import FIX_MODEL
@@ -40,7 +39,7 @@ def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, in
 def _add_load_variable(model: StaggeredRoutingModel, trip: int, arc: int, conflicting_set: list[int]) -> None:
     """Add load variable for a specific vehicle and arc."""
     if trip in conflicting_set:
-        
+
         lb = (sum(model.get_conflict_pair_var_bound(
             bound="lb", var_name="gamma", arc=arc, first_trip=trip, second_trip=conflicting_trip) for conflicting_trip
                   in model.get_conflicting_trips(arc, trip)) + 1)
@@ -73,7 +72,6 @@ def add_continuous_variables(
     print("Creating continuous variables... ", end="")
 
     for trip_id, path in enumerate(instance.trip_routes):
-        model.add_trip_continuous_variables(trip_id)
         for arc in path:
             _add_continuous_variables_vehicle_on_arc(model, instance, status_quo, trip_id, arc, epoch_warm_start)
 

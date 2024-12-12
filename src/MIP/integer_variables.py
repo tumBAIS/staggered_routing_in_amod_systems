@@ -1,8 +1,5 @@
-from gurobipy import Model
-
 from MIP import StaggeredRoutingModel
 from instance_module.instance import Instance
-import gurobipy as grb
 from collections import namedtuple
 
 BinariesBounds = namedtuple("BinariesBounds", ["lb_alpha", "ub_alpha", "lb_beta", "ub_beta", "lb_gamma", "ub_gamma"])

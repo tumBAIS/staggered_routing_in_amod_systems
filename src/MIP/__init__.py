@@ -17,7 +17,6 @@ class StaggeredRoutingModel(grb.Model):
         self._upperBound = [initial_total_delay]
         self._optimizationTime = [self.get_elapsed_time(start_solution_time)]
         self._flagUpdate = False
-        self._cbTotalDelay = None
         self._bestLowerBound = 0
         self._bestUpperBound = float("inf")
         self._improvementClock = datetime.datetime.now().timestamp()
@@ -35,10 +34,23 @@ class StaggeredRoutingModel(grb.Model):
         self._delay = {}
         self._load = {}
 
-    def add_trip_continuous_variables(self, trip):
-        self._departure[trip] = {}
-        self._delay[trip] = {}
-        self._load[trip] = {}
+        # Callback
+        self._cbTotalDelay = None
+        self._cbReleaseTimes = []
+        self._cbStaggeringApplied = []
+        self._cbRemainingTimeSlack = []
+
+    def get_cb_release_times(self):
+        return self._cbReleaseTimes
+
+    def get_continuous_var(self, vehicle, arc, var_type):
+        # Mapping for variable types
+        continuous_var = {
+            "departure": self._departure,
+            "delay": self._delay,
+            "load": self._load,
+        }
+        return continuous_var[var_type][vehicle][arc]
 
     def add_continuous_var(self, vehicle, arc, lb, ub, var_type, constant_flag: bool = False):
         # Mapping for variable types
@@ -47,6 +59,10 @@ class StaggeredRoutingModel(grb.Model):
             "delay": self._delay,
             "load": self._load,
         }
+
+        # Initialize
+        if not vehicle in continuous_var[var_type]:
+            continuous_var[var_type][vehicle] = {}
 
         # Validate bounds
         assert lb <= ub + 1e-6, (
@@ -74,6 +90,12 @@ class StaggeredRoutingModel(grb.Model):
 
         # Update the variable mapping
         continuous_var[var_type][vehicle][arc] = variable
+
+    def get_flag_update(self) -> bool:
+        return self._flagUpdate
+
+    def set_flag_update(self, flag):
+        self._flagUpdate = flag
 
     def set_best_lower_bound(self, value: float):
         self._bestLowerBound = value

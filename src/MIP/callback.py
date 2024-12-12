@@ -47,20 +47,20 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
 def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: CompleteSolution) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
     model._cbReleaseTimes = [
-        model.cbGetSolution(model._departure[vehicle][path[0]])
+        model.cbGetSolution(model.get_continuous_var(vehicle, path[0], "departure"))
         for vehicle, path in enumerate(instance.trip_routes)
     ]
     model.set_cb_total_delay(sum(
         sum(model.cbGetSolution(model._delay[vehicle][arc]) if isinstance(model._delay[vehicle][arc], grb.Var) else 0
             for arc in model._delay[vehicle])
-        for vehicle in range(len(model._cbReleaseTimes))
+        for vehicle, release_time in enumerate(model.get_cb_release_times())
     ))
     model._cbStaggeringApplied = [
-        model._cbReleaseTimes[vehicle] - status_quo.congested_schedule[vehicle][0]
-        for vehicle in range(len(model._cbReleaseTimes))
+        release_time - status_quo.congested_schedule[vehicle][0]
+        for vehicle, release_time in enumerate(model.get_cb_release_times())
     ]
     model._cbRemainingTimeSlack = get_staggering_applicable(instance, model._cbStaggeringApplied)
-    model._flagUpdate = True
+    model.set_flag_update(True)
 
 
 def assert_schedule(model: Model, congested_schedule: VehicleSchedules, delays_on_arcs: VehicleSchedules,
@@ -187,7 +187,7 @@ def callback(instance: EpochInstance, status_quo: CompleteSolution, solver_param
             model._improvementClock = datetime.datetime.now().timestamp()
             model._bestUpperBound = model.get_cb_total_delay()
 
-        if where == grb.GRB.Callback.MIPNODE and model._flagUpdate:
+        if where == grb.GRB.Callback.MIPNODE and model.get_flag_update():
             heuristic_solution = get_heuristic_solution(model, instance, solver_params)
             set_heuristic_solution(model, heuristic_solution, instance)
 
