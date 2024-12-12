@@ -43,14 +43,21 @@ class StaggeredRoutingModel(grb.Model):
     def get_cb_release_times(self):
         return self._cbReleaseTimes
 
-    def get_continuous_var(self, vehicle, arc, var_type):
+    def get_continuous_var_cb(self, vehicle, arc, var_type) -> float:
         # Mapping for variable types
         continuous_var = {
             "departure": self._departure,
             "delay": self._delay,
             "load": self._load,
         }
-        return continuous_var[var_type][vehicle][arc]
+        if self.is_gurobi_var(continuous_var[var_type][vehicle][arc]):
+            return self.cbGetSolution(continuous_var[var_type][vehicle][arc])
+        else:
+            return continuous_var[var_type][vehicle][arc]
+
+    @staticmethod
+    def is_gurobi_var(variable) -> bool:
+        return isinstance(variable, grb.Var)
 
     def add_continuous_var(self, vehicle, arc, lb, ub, var_type, constant_flag: bool = False):
         # Mapping for variable types

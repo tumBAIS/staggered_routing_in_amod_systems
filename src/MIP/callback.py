@@ -46,15 +46,11 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
 
 def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: CompleteSolution) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
-    model._cbReleaseTimes = [
-        model.cbGetSolution(model.get_continuous_var(vehicle, path[0], "departure"))
-        for vehicle, path in enumerate(instance.trip_routes)
-    ]
-    model.set_cb_total_delay(sum(
-        sum(model.cbGetSolution(model._delay[vehicle][arc]) if isinstance(model._delay[vehicle][arc], grb.Var) else 0
-            for arc in model._delay[vehicle])
-        for vehicle, release_time in enumerate(model.get_cb_release_times())
-    ))
+    model._cbReleaseTimes = [model.get_continuous_var_cb(vehicle, path[0], "departure")
+                             for vehicle, path in enumerate(instance.trip_routes)]
+    model.set_cb_total_delay(sum(model.get_continuous_var_cb(vehicle, arc, "delay")
+                                 for vehicle, path in enumerate(instance.trip_routes) for arc in path)
+                             )
     model._cbStaggeringApplied = [
         release_time - status_quo.congested_schedule[vehicle][0]
         for vehicle, release_time in enumerate(model.get_cb_release_times())
