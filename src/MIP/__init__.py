@@ -292,7 +292,10 @@ class StaggeredRoutingModel(grb.Model):
         if arg_value:
             self._lower_bounds_list.append(round(arg_value, 2))
         else:
-            self._lower_bounds_list.append(round(self.ObjBound, 2))
+            try:
+                self._lower_bounds_list.append(round(self.ObjBound, 2))
+            except AttributeError:
+                self._lower_bounds_list.append(0.0)
 
     def store_upper_bound(self, arg_value: Optional[float] = None):
         if arg_value:
