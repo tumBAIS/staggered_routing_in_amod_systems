@@ -34,8 +34,8 @@ class EpochInstance(Instance):
 
     def start(self, epoch_size):
         print("=" * 60)
-        print(f"Computing status quo for epoch {self.epoch_id} - "
-              f"Epoch start time: {self.epoch_id * epoch_size * 60} [sec]".center(60))
+        print(f"Starting epoch {self.epoch_id} - "
+              f"time offset: {self.epoch_id * epoch_size * 60} [sec]".center(60))
         print("=" * 60)
         self.clock_start_epoch = datetime.datetime.now().timestamp()
 
