@@ -75,10 +75,6 @@ def compute_solution_metrics(instance: Instance, release_times: List[float],
 
 def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int) -> None:
     """Print header for the current epoch's status quo computation."""
-    print("=" * 60)
-    print(f"Computing status quo for epoch {epoch_instance.epoch_id} - "
-          f"Epoch start time: {epoch_instance.epoch_id * epoch_size * 60} [sec]".center(60))
-    print("=" * 60)
 
 
 def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:
@@ -97,7 +93,6 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
 
 def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
     """Compute the status quo solution for the current epoch."""
-    print_epoch_status_header(epoch_instance, epoch_size=solver_params.epoch_size)
     cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)

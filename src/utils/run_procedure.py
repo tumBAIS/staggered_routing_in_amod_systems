@@ -26,7 +26,7 @@ def run_procedure(source: str) -> None:
     # Process each epoch instance
     for epoch_id, epoch_instance in enumerate(epoch_instances):
         # Start processing instance
-        epoch_instance.set_clock_start_epoch()
+        epoch_instance.start(solver_params.epoch_size)
 
         # Get the status quo for the current epoch
         epoch_status_quo = get_epoch_status_quo(epoch_instance, solver_params)

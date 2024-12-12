@@ -32,7 +32,11 @@ class EpochInstance(Instance):
         self.max_staggering_applicable = max_staggering_applicable  # TODO: avoid this override.
         self.clock_start_epoch = None
 
-    def set_clock_start_epoch(self):
+    def start(self, epoch_size):
+        print("=" * 60)
+        print(f"Computing status quo for epoch {self.epoch_id} - "
+              f"Epoch start time: {self.epoch_id * epoch_size * 60} [sec]".center(60))
+        print("=" * 60)
         self.clock_start_epoch = datetime.datetime.now().timestamp()
 
 
