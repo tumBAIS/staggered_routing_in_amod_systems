@@ -114,6 +114,23 @@ class StaggeredRoutingModel(grb.Model):
             conflict_var[var_name][arc][first_vehicle][second_vehicle]._lb = lb
             conflict_var[var_name][arc][first_vehicle][second_vehicle]._ub = ub
 
+    def get_conflict_pair_var_bound(self, bound: str, arc, first_vehicle, second_vehicle, var_name):
+        conflict_var = {
+            "alpha": self._alpha,
+            "beta": self._beta,
+            "gamma": self._gamma,
+        }
+        if isinstance(conflict_var[var_name][arc][first_vehicle][second_vehicle], grb.Var):
+            if bound == "lb":
+                return conflict_var[var_name][arc][first_vehicle][second_vehicle]._lb
+            elif bound == "ub":
+                return conflict_var[var_name][arc][first_vehicle][second_vehicle]._ub
+            else:
+                raise ValueError("undefined case")
+        else:
+            # variable is constant
+            return conflict_var[var_name][arc][first_vehicle][second_vehicle]
+
     def add_arc_conflict_vars(self, arc):
         self._alpha[arc] = {}
         self._beta[arc] = {}

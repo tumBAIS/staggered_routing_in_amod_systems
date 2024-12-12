@@ -14,6 +14,9 @@ def _add_departure_variable(
     earliest_departure = instance.earliest_departure_times[vehicle][arc_index]
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
     departure = status_quo.congested_schedule[vehicle][arc_index]
+    assert (
+            earliest_departure - 1e-4 <= departure <= latest_departure + 1e-6
+    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}: {earliest_departure} <= {departure} <= {latest_departure}"
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
@@ -21,10 +24,6 @@ def _add_departure_variable(
 
     else:
         model.add_continuous_var(vehicle, arc, earliest_departure, latest_departure, "departure")
-
-    assert (
-            earliest_departure - 1e-4 <= departure <= latest_departure + 1e-6
-    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}: {earliest_departure} <= {departure} <= {latest_departure}"
 
 
 def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance) -> None:
@@ -41,19 +40,17 @@ def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, in
 def _add_load_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, conflicting_set: list[int]) -> None:
     """Add load variable for a specific vehicle and arc."""
     if vehicle in conflicting_set:
-        lb = sum(
-            model._gamma[arc][vehicle][second_vehicle]._lb
-            if isinstance(model._gamma[arc][vehicle][second_vehicle], grb.Var)
-            else model._gamma[arc][vehicle][second_vehicle]
-            for second_vehicle in model._gamma[arc][vehicle]
-        ) + 1
+        lb = (
+                sum(model.get_conflict_pair_var_bound(bound="lb", var_name="gamma", arc=arc,
+                                                      second_vehicle=second_vehicle,
+                                                      first_vehicle=vehicle) for second_vehicle in
+                    model._gamma[arc][vehicle]) + 1)
 
-        ub = sum(
-            model._gamma[arc][vehicle][second_vehicle]._ub
-            if isinstance(model._gamma[arc][vehicle][second_vehicle], grb.Var)
-            else model._gamma[arc][vehicle][second_vehicle]
-            for second_vehicle in model._gamma[arc][vehicle]
-        ) + 1
+        ub = (
+                sum(model.get_conflict_pair_var_bound(bound="ub", var_name="gamma", arc=arc,
+                                                      second_vehicle=second_vehicle,
+                                                      first_vehicle=vehicle) for second_vehicle in
+                    model._gamma[arc][vehicle]) + 1)
 
         model.add_continuous_var(vehicle, arc, lb, ub, "load")
 
