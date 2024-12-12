@@ -307,7 +307,10 @@ class StaggeredRoutingModel(grb.Model):
         if arg_value:
             self._optimality_gaps_list.append(round(arg_value, 2))
         else:
-            self._optimality_gaps_list.append(round(self.MIPGap * 100, 2))
+            try:
+                self._optimality_gaps_list.append(round(self.MIPGap * 100, 2))
+            except AttributeError:
+                self._optimality_gaps_list.append(100.0)
 
     def store_optimization_time(self, start_time: float):
         self._optimization_times_list.append(datetime.datetime.now().timestamp() - start_time)

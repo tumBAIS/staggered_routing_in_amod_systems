@@ -6,7 +6,7 @@ from MIP import StaggeredRoutingModel
 
 def _add_departure_variable(
         model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance, status_quo: EpochSolution,
-        epoch_warm_start
+        epoch_warm_start: EpochSolution
 ) -> None:
     """Add departure variable for a specific vehicle and arc."""
     arc_index = instance.trip_routes[vehicle].index(arc)
@@ -15,10 +15,12 @@ def _add_departure_variable(
     departure = status_quo.congested_schedule[vehicle][arc_index]
     if abs(departure - latest_departure) < 1e-2:
         latest_departure = departure + TOLERANCE
-    assert (
-            earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
-    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
-
+    try:
+        assert (
+                earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
+        ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
+    except AssertionError:
+        raise ValueError()
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
         model.add_continuous_var(vehicle, arc, fixed_departure, fixed_departure, "departure")

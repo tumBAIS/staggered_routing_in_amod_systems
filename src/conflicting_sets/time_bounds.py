@@ -343,7 +343,7 @@ def get_latest_arrival_time(
     current_latest_arrival = latest_departure_time + nominal_travel_time
 
     if not sorted_events:
-        return min(known_latest_arrival, current_latest_arrival), 0
+        return current_latest_arrival, 0
 
     vehicles_on_arc = len(conflicting_arrivals) + 1
     filtered_events = [
@@ -362,7 +362,7 @@ def get_latest_arrival_time(
 
         vehicles_on_arc += 1 if event_type == "d" else -1 if event_type == "a" else 0
 
-    return min(known_latest_arrival, current_latest_arrival), max_delay
+    return current_latest_arrival, max_delay
 
 
 def get_arc_based_time_bounds(
@@ -381,6 +381,8 @@ def get_arc_based_time_bounds(
     while not edpq.empty():
         # Process the next earliest departure
         earliest_departure = edpq.get()
+        if earliest_departure.vehicle == 15:
+            x = 0
         latest_departure = get_latest_departure(earliest_departure, instance, arc_based_time_bounds)
 
         # Find conflicting arrivals and earliest departures

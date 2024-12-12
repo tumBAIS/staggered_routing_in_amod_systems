@@ -30,11 +30,6 @@ def remove_vehicle_from_system(vehicle: int, instance: Instance, status_quo: Com
     instance.max_delay_on_arc.pop(vehicle)
     instance.min_delay_on_arc.pop(vehicle)
     instance.deadlines.pop(vehicle)
-
-    # Remove optional attributes if available
-    if hasattr(instance, "due_dates"):
-        instance.due_dates.pop(vehicle)
-
     status_quo.release_times.pop(vehicle)
     status_quo.congested_schedule.pop(vehicle)
     assert sum(status_quo.delays_on_arcs[vehicle]) < 1e-6, "Vehicle has non-zero delays on arcs."
@@ -115,6 +110,8 @@ def remove_initial_paths(instance: Instance, status_quo: CompleteSolution) -> No
     removed_vehicles = []
 
     for vehicle in reversed(range(initial_vehicle_count)):
+        if vehicle == 14:
+            x = 0
         _remove_initial_part_of_path(instance, status_quo, vehicle)
         if not instance.trip_routes[vehicle]:
             removed_vehicles.append(vehicle)
