@@ -28,19 +28,25 @@ path_to_temp = Path(__file__).parent.parent.parent / "temp"
 
 
 def construct_model(
-        instance: Instance | EpochInstance,
-        status_quo: CompleteSolution | EpochSolution,
-        epoch_warm_start,
+        instance: EpochInstance,
+        status_quo: EpochSolution,
+        epoch_warm_start: EpochSolution,
         solver_params: SolverParameters,
 ) -> StaggeredRoutingModel:
-    """Constructs and initializes the optimization model."""
-    model = StaggeredRoutingModel(status_quo.total_delay, solver_params, instance.start_solution_time)
+    """Construct and initialize the optimization model."""
+    # Initialize the model with relevant parameters
+    model = StaggeredRoutingModel(
+        status_quo.total_delay, solver_params, instance.start_solution_time
+    )
 
+    # Check optimization and time constraints
     if not solver_params.optimize or not is_there_remaining_time(instance, solver_params):
         model.set_optimize_flag(False)
         if not is_there_remaining_time(instance, solver_params):
             print("No remaining time for optimization - model will not be constructed.")
         return model
+
+    # Add variables and constraints to the model
     add_conflict_variables(model, instance)
     add_continuous_variables(model, instance, status_quo, epoch_warm_start)
     add_conflict_constraints(model, instance)

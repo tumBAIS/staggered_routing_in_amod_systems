@@ -129,12 +129,12 @@ def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solut
     for arc in model.get_list_conflicting_arcs():
         for first_vehicle, second_vehicle in model.get_arc_conflicting_pairs(arc):
             if heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle] != -1:
-                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "alpha",
-                                             heuristic_solution.binaries.alpha[arc][first_vehicle][second_vehicle])
-                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "beta",
-                                             heuristic_solution.binaries.beta[arc][first_vehicle][second_vehicle])
-                model.set_conflicting_var_cb(first_vehicle, second_vehicle, arc, "gamma",
-                                             heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle])
+                model.set_conflicting_var(first_vehicle, second_vehicle, arc, "alpha",
+                                          heuristic_solution.binaries.alpha[arc][first_vehicle][second_vehicle], "cb")
+                model.set_conflicting_var(first_vehicle, second_vehicle, arc, "beta",
+                                          heuristic_solution.binaries.beta[arc][first_vehicle][second_vehicle], "cb")
+                model.set_conflicting_var(first_vehicle, second_vehicle, arc, "gamma",
+                                          heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle], "cb")
 
 
 def suspend_procedure(heuristic_solution: HeuristicSolution, model: StaggeredRoutingModel,
@@ -164,7 +164,9 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
 
 
 def callback(instance: EpochInstance, status_quo: CompleteSolution, solver_params: SolverParameters) -> Callable:
-    """Define the callback function for Gurobi."""
+    """Define the callback function for Gurobi.
+    @rtype: object
+    """
 
     def call_local_search(model: StaggeredRoutingModel, where: int) -> None:
         if where == grb.GRB.Callback.MIP:

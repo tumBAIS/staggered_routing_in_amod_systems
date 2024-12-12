@@ -1,4 +1,3 @@
-import gurobipy as grb
 from MIP import StaggeredRoutingModel
 from input_data import USE_GUROBI_INDICATORS
 from instance_module.instance import Instance
@@ -35,7 +34,7 @@ def get_x_and_y_points_pwl_function(instance: Instance, arc: int) -> \
     return x_axis_values, y_axis_values
 
 
-def _add_conflict_constraints_between_vehicle_pair(
+def add_conflict_constraints_between_vehicle_pair(
         model: StaggeredRoutingModel,
         first_vehicle: int,
         second_vehicle: int,
@@ -59,33 +58,33 @@ def add_conflict_constraints(model: StaggeredRoutingModel, instance: Instance) -
     """Add conflict constraints to the model."""
     print("Adding conflict constraints...", end=" ")
 
-    for arc in model._alpha:
-        _add_constraints_for_arc(model, instance, arc)
+    for arc in model.get_list_conflicting_arcs():
+        arc_travel_time = instance.travel_times_arcs[arc]
 
+        # Process trips on the current arc
+        for trip in model.get_trips_to_track_on_arc(arc):
+            if not model.trip_can_have_delay_on_arc(trip, arc):
+                continue
+
+            # Add load and piecewise linear (PWL) constraints
+            model.add_load_constraint(trip, arc)
+            x_points, y_points = get_x_and_y_points_pwl_function(instance, arc)
+            model.add_pwl_constraint(trip, arc, x_points, y_points)
+
+            # Add conflict constraints for conflicting trips
+            for conflicting_trip in model.get_conflicting_trips(arc, trip):
+                if trip >= conflicting_trip:
+                    continue
+
+                # Add bidirectional conflict constraints
+                add_conflict_constraints_between_vehicle_pair(
+                    model, trip, conflicting_trip, arc, instance.trip_routes[conflicting_trip], arc_travel_time
+                )
+                add_conflict_constraints_between_vehicle_pair(
+                    model, conflicting_trip, trip, arc, instance.trip_routes[trip], arc_travel_time
+                )
+
+    # Finalize and update the model
     print("done!")
-    print(f"Number of BigM constraints in model: {model._numBigMConstraints}")
+    model.print_num_big_m_constraints()
     model.update()
-
-
-def _add_constraints_for_arc(model: StaggeredRoutingModel, instance: Instance, arc: int) -> None:
-    """Add conflict constraints for a specific arc."""
-    arc_travel_time = instance.travel_times_arcs[arc]
-
-    for first_vehicle in model._alpha[arc]:
-        if isinstance(model._load[first_vehicle][arc], grb.Var):
-            _add_vehicle_constraints(model, instance, arc, first_vehicle, arc_travel_time)
-
-
-def _add_vehicle_constraints(model: StaggeredRoutingModel, instance: Instance, arc: int, trip: int,
-                             arc_travel_time: float) -> None:
-    """Add constraints for a specific vehicle on a given arc."""
-    model.add_load_constraint(trip, arc)
-    x_points, y_points = get_x_and_y_points_pwl_function(instance, arc)
-    model.add_pwl_constraint(trip, arc, x_points, y_points)
-
-    for conflicting_trip in model.get_conflicting_trips(arc, trip):
-        if trip < conflicting_trip:
-            _add_conflict_constraints_between_vehicle_pair(
-                model, trip, conflicting_trip, arc, instance.trip_routes[conflicting_trip], arc_travel_time)
-            _add_conflict_constraints_between_vehicle_pair(
-                model, conflicting_trip, trip, arc, instance.trip_routes[trip], arc_travel_time)

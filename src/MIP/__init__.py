@@ -85,15 +85,21 @@ class StaggeredRoutingModel(grb.Model):
         if self.is_gurobi_var(continuous_var[var_type][vehicle][arc]):
             self.cbSetSolution(continuous_var[var_type][vehicle][arc], value_to_set)
 
-    def set_conflicting_var_cb(self, first_trip, second_trip, arc, var_type, value_to_set) -> None:
+    def set_conflicting_var(self, first_trip, second_trip, arc, var_type, value_to_set, mode) -> None:
         # Mapping for variable types
         conflict_var = {
             "alpha": self._alpha,
             "beta": self._beta,
             "gamma": self._gamma,
         }
+        if mode not in ["start", "cb"]:
+            raise ValueError("Mode must be either 'start' or 'cb'")
+
         if self.is_gurobi_var(conflict_var[var_type][arc][first_trip][second_trip]):
-            self.cbSetSolution(conflict_var[var_type][arc][first_trip][second_trip], value_to_set)
+            if mode == "cb":
+                self.cbSetSolution(conflict_var[var_type][arc][first_trip][second_trip], value_to_set)
+            else:
+                conflict_var[var_type][arc][first_trip][second_trip].Start = value_to_set
 
     def get_list_conflicting_arcs(self) -> list[int]:
         """Return a list of all conflicting arcs."""
@@ -102,6 +108,10 @@ class StaggeredRoutingModel(grb.Model):
     def get_arc_conflicting_pairs(self, arc: int) -> Iterator[tuple[int, int]]:
         """Return an iterator of all conflicting trip pairs for a given arc."""
         return itertools.combinations(self._gamma[arc], 2)
+
+    def get_trips_to_track_on_arc(self, arc: int) -> list[int]:
+        """Return an iterator of all conflicting trip pairs for a given arc."""
+        return list(self._gamma[arc])
 
     @staticmethod
     def is_gurobi_var(variable) -> bool:
@@ -468,3 +478,9 @@ class StaggeredRoutingModel(grb.Model):
         )
         self.setObjective(self._totalDelay, grb.GRB.MINIMIZE)
         print("Objective: Minimization of total delay.")
+
+    def trip_can_have_delay_on_arc(self, trip, arc) -> bool:
+        return isinstance(self._load[trip][arc], grb.Var)
+
+    def print_num_big_m_constraints(self):
+        print(f"Number of BigM constraints in model: {self._numBigMConstraints}")
