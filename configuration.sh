@@ -34,7 +34,7 @@ module load gcc/11.1.0
 module load gdal/3.4.2
 source venv/bin/activate
 dos2unix run_list.csv
-rm joblog.csv
+#rm joblog.csv
 
 # build cpp_module library
 echo "Did you remember to build the cpp libraries? If no, run ./build_cpp_module.sh"

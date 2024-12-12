@@ -1,6 +1,6 @@
 from utils.classes import EpochSolution
 from instance_module.instance import Instance
-from input_data import FIX_MODEL
+from input_data import FIX_MODEL, TOLERANCE
 from MIP import StaggeredRoutingModel
 
 
@@ -14,8 +14,8 @@ def _add_departure_variable(
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
     departure = status_quo.congested_schedule[vehicle][arc_index]
     assert (
-            earliest_departure - 1e-4 <= departure <= latest_departure + 1e-6
-    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}: {earliest_departure} <= {departure} <= {latest_departure}"
+            earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
+    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
