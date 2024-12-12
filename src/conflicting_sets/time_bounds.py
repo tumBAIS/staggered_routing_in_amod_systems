@@ -306,7 +306,7 @@ def get_latest_arrival_time(
 
 def get_arc_based_time_bounds(
         instance: Instance,
-        known_latest_arrival_times: list[list[float]],
+        known_latest_arrival_times: TripSchedules,
         free_flow_schedule: TripSchedules
 ) -> list[list[TimeBound]]:
     """
