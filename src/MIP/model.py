@@ -107,7 +107,7 @@ def run_model(
 
         # Set the warm start if applicable
         if solver_params.warm_start:
-            set_warm_start_model(model, initial_solution)
+            set_warm_start_model(model, initial_solution, instance)
 
         # Configure Gurobi parameters
         set_gurobi_parameters(model, instance, solver_params)

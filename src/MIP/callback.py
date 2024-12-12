@@ -119,9 +119,10 @@ def set_heuristic_continuous_variables(model: StaggeredRoutingModel, heuristic_s
     """Set continuous variables in the model based on the heuristic solution."""
     for vehicle, route in enumerate(instance.trip_routes):
         for position, arc in enumerate(route):
-            model.set_continuous_var_cb(vehicle, arc, "departure",
-                                        heuristic_solution.congested_schedule[vehicle][position])
-            model.set_continuous_var_cb(vehicle, arc, "delay", heuristic_solution.delays_on_arcs[vehicle][position])
+            model.set_continuous_var(vehicle, arc, "departure",
+                                     heuristic_solution.congested_schedule[vehicle][position], "cb")
+            model.set_continuous_var(vehicle, arc, "delay", heuristic_solution.delays_on_arcs[vehicle][position],
+                                     "cb")
 
 
 def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:

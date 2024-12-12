@@ -75,15 +75,22 @@ class StaggeredRoutingModel(grb.Model):
         else:
             return continuous_var[var_type][vehicle][arc]
 
-    def set_continuous_var_cb(self, vehicle, arc, var_type, value_to_set) -> None:
+    def set_continuous_var(self, vehicle, arc, var_type, value_to_set, mode) -> None:
         # Mapping for variable types
         continuous_var = {
             "departure": self._departure,
             "delay": self._delay,
             "load": self._load,
         }
+
+        if mode not in ["start", "cb"]:
+            raise ValueError("Mode must be either 'start' or 'cb'")
+
         if self.is_gurobi_var(continuous_var[var_type][vehicle][arc]):
-            self.cbSetSolution(continuous_var[var_type][vehicle][arc], value_to_set)
+            if mode == "cb":
+                self.cbSetSolution(continuous_var[var_type][vehicle][arc], value_to_set)
+            else:
+                continuous_var[var_type][vehicle][arc].Start = value_to_set
 
     def set_conflicting_var(self, first_trip, second_trip, arc, var_type, value_to_set, mode) -> None:
         # Mapping for variable types
