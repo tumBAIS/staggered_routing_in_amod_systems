@@ -40,7 +40,7 @@ def save_experiment(instance: Instance, status_quo: CompleteSolution,
     path_to_results = solver_params.path_to_results
 
     # Prepare instance data for saving
-    instance_parameters_to_save = instance.input_data.__dict__.copy()
+    instance_parameters_to_save = instance.instance_params.__dict__.copy()
 
     # Save the path to the network file (path_to_G) before removing it
     path_to_G = instance_parameters_to_save.get("path_to_G")

@@ -13,6 +13,7 @@ from congestion_model.core import (
 )
 from congestion_model.conflict_binaries import get_conflict_binaries
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
+from input_data import SolverParameters
 
 
 def _merge_schedules(existing_schedule: list[float], new_schedule: list[float]) -> list[float]:
@@ -47,20 +48,20 @@ def _reconstruct_schedule(
     return reconstructed_schedule
 
 
-def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: TripSchedules) -> None:
+def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: TripSchedules,
+                                          solver_params: SolverParameters) -> None:
     """Ensure the reconstructed schedule matches the expected congested schedule."""
     if ACTIVATE_ASSERTIONS:
         release_times = [schedule[0] for schedule in reconstructed_schedule]
-        cpp_schedule = get_congested_schedule(global_instance, release_times)
+        cpp_schedule = get_congested_schedule(global_instance, release_times, solver_params)
 
         for vehicle, schedule in enumerate(reconstructed_schedule):
             if not all(abs(reconstructed - cpp) < 1e-4 for reconstructed, cpp in zip(schedule, cpp_schedule[vehicle])):
-                _print_not_matching_schedules(global_instance, reconstructed_schedule, cpp_schedule, vehicle)
+                _print_not_matching_schedules(reconstructed_schedule, cpp_schedule, vehicle)
                 raise AssertionError(f"Schedules do not match for vehicle {vehicle}")
 
 
 def _print_not_matching_schedules(
-        global_instance: Instance,
         reconstructed_schedule: TripSchedules,
         cpp_schedule: TripSchedules,
         vehicle: int,
@@ -79,12 +80,13 @@ def _print_not_matching_schedules(
 def reconstruct_solution(
         epoch_instances: list[EpochInstance],
         epoch_status_quo_list: list[EpochSolution],
-        global_instance: Instance
+        global_instance: Instance,
+        solver_params: SolverParameters
 ) -> CompleteSolution:
     """Reconstruct the global solution from epoch solutions."""
     # Reconstruct the global schedule
     congested_schedule = _reconstruct_schedule(epoch_instances, epoch_status_quo_list, global_instance)
-    _assert_congested_schedule_is_correct(global_instance, congested_schedule)
+    _assert_congested_schedule_is_correct(global_instance, congested_schedule, solver_params)
 
     # Compute delays, free flow schedule, and other metrics
     delays_on_arcs = get_delays_on_arcs(global_instance, congested_schedule)

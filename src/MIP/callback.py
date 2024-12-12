@@ -93,8 +93,8 @@ def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
         capacities_arcs=instance.capacities_arcs,
         trip_routes=instance.trip_routes,
         deadlines=instance.deadlines,
-        list_of_slopes=instance.input_data.list_of_slopes,
-        list_of_thresholds=instance.input_data.list_of_thresholds,
+        list_of_slopes=instance.instance_params.list_of_slopes,
+        list_of_thresholds=instance.instance_params.list_of_thresholds,
         parameters=cpp_parameters,
         lb_travel_time=instance.get_lb_travel_time()
     )

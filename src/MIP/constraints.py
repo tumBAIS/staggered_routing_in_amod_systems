@@ -13,8 +13,8 @@ def get_x_and_y_points_pwl_function(instance: Instance, arc: int) -> \
     th_capacity = 0
     piece_slope = 0
 
-    for i, slope in enumerate(instance.input_data.list_of_slopes):
-        th_capacity = instance.capacities_arcs[arc] * instance.input_data.list_of_thresholds[i]
+    for i, slope in enumerate(instance.instance_params.list_of_slopes):
+        th_capacity = instance.capacities_arcs[arc] * instance.instance_params.list_of_thresholds[i]
         piece_slope = instance.travel_times_arcs[arc] * slope / instance.capacities_arcs[arc]
 
         if i == 0:

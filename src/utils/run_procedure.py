@@ -46,7 +46,7 @@ def run_procedure(source: str) -> None:
 
     # Reconstruct the complete solution from all epochs
     complete_status_quo = get_offline_solution(instance, instance.release_times, solver_params)
-    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, instance)
+    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, instance, solver_params)
 
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)

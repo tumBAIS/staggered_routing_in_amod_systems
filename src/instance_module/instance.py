@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import typing
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -25,7 +24,7 @@ class TripsData:
 
 @dataclass
 class Instance:
-    input_data: InstanceParameters
+    instance_params: InstanceParameters
     capacities_arcs: list[int]
     release_times: list[float]
     trip_routes: list[list[int]]
@@ -65,7 +64,7 @@ class Instance:
             travel_time = sum(self.travel_times_arcs[arc] for arc in path)
 
             # Calculate max staggering based on staggering cap
-            staggering_cap_limit = self.input_data.staggering_cap / 100 * travel_time
+            staggering_cap_limit = self.instance_params.staggering_cap / 100 * travel_time
 
             # Calculate max staggering based on deadlines
             deadline_limit = self.deadlines[vehicle] - (travel_time + self.release_times[vehicle])
@@ -81,7 +80,7 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
     graph = import_graph(instance_params)
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
     trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(trips_data.routes, graph)
-    return Instance(input_data=instance_params, deadlines=trips_data.deadline,
+    return Instance(instance_params=instance_params, deadlines=trips_data.deadline,
                     trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
                     node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time)
 

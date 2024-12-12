@@ -90,7 +90,7 @@ def run_model(
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
     if not model.get_optimize_flag() or not is_there_remaining_time(instance,
-                                                                    solver_params) or instance.input_data.staggering_cap == 0:
+                                                                    solver_params) or instance.instance_params.staggering_cap == 0:
         return None
 
     # Save the initial solution for reference

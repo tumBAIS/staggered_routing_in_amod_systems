@@ -12,7 +12,7 @@ class EpochInstance(Instance):
     def __init__(
             self,
             epoch_id: int,
-            input_data: InstanceParameters,
+            instance_params: InstanceParameters,
             vehicles_original_ids: list[int],
             release_times: list[float],
             trip_routes: list[list[int]],
@@ -22,7 +22,7 @@ class EpochInstance(Instance):
             travel_times_arcs: list[float],
             last_position_for_reconstruction: list[Optional[int]],  # Assuming last positions keyed by vehicle ID
     ) -> None:
-        super().__init__(input_data=input_data, deadlines=deadlines,
+        super().__init__(instance_params=instance_params, deadlines=deadlines,
                          trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
                          node_based_trip_routes=None, release_times=release_times)
         self.epoch_id = epoch_id
@@ -74,7 +74,7 @@ def get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle_
 
     return EpochInstance(
         epoch_id=epoch_id,
-        input_data=instance.input_data,
+        instance_params=instance.instance_params,
         vehicles_original_ids=list(range(first_vehicle_in_epoch, last_vehicle_in_epoch + 1)),
         release_times=instance.release_times[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
         trip_routes=arc_based_shortest_paths,

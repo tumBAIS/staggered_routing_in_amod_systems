@@ -83,8 +83,8 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,
         capacities_arcs=instance.capacities_arcs,
-        list_of_slopes=instance.input_data.list_of_slopes,
-        list_of_thresholds=instance.input_data.list_of_thresholds,
+        list_of_slopes=instance.instance_params.list_of_slopes,
+        list_of_thresholds=instance.instance_params.list_of_thresholds,
         parameters=[solver_params.algorithm_time_limit],
         release_times=instance.release_times,
         lb_travel_time=instance.get_lb_travel_time()

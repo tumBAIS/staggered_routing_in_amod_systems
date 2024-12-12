@@ -70,16 +70,17 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehicles_on_arc: int) -> 
     delay_at_pieces = [0]
     height_prev_piece = 0
 
-    for i, threshold in enumerate(instance.input_data.list_of_thresholds):
+    for i, threshold in enumerate(instance.instance_params.list_of_thresholds):
         th_capacity = threshold * instance.capacities_arcs[arc]
-        slope = instance.travel_times_arcs[arc] * instance.input_data.list_of_slopes[i] / instance.capacities_arcs[arc]
+        slope = instance.travel_times_arcs[arc] * instance.instance_params.list_of_slopes[i] / instance.capacities_arcs[
+            arc]
 
         if vehicles_on_arc > th_capacity:
             delay_current_piece = height_prev_piece + slope * (vehicles_on_arc - th_capacity)
             delay_at_pieces.append(delay_current_piece)
 
-        if i < len(instance.input_data.list_of_slopes) - 1:
-            next_th_cap = instance.input_data.list_of_thresholds[i + 1] * instance.capacities_arcs[arc]
+        if i < len(instance.instance_params.list_of_slopes) - 1:
+            next_th_cap = instance.instance_params.list_of_thresholds[i + 1] * instance.capacities_arcs[arc]
             height_prev_piece += slope * (next_th_cap - th_capacity)
 
     return max(delay_at_pieces)
@@ -245,7 +246,7 @@ def get_earliest_arrival_time(
     """
     arc_capacity_threshold = max(
         MIN_SET_CAPACITY,
-        instance.capacities_arcs[earliest_departure.arc] * instance.input_data.list_of_thresholds[0]
+        instance.capacities_arcs[earliest_departure.arc] * instance.instance_params.list_of_thresholds[0]
     )
     min_vehicles_on_arc = sum(
         1 for arrival in conflicting_arrivals
@@ -421,7 +422,7 @@ def get_undivided_conflicting_sets(
         [
             [time_bound.vehicle for time_bound in bounds_set]
             if len(bounds_set) > max(
-                MIN_SET_CAPACITY, instance.capacities_arcs[arc] * instance.input_data.list_of_thresholds[0]
+                MIN_SET_CAPACITY, instance.capacities_arcs[arc] * instance.instance_params.list_of_thresholds[0]
             )
             else []
             for bounds_set in bounds_on_arc
