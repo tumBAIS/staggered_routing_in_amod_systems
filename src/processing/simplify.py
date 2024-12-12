@@ -54,7 +54,7 @@ def get_od_arc_count(osm_info_arcs_utilized: list[dict]) -> int:
 
 
 def simplify_system(
-        not_simplified_instance: Instance | EpochInstance,
+        not_simplified_instance: EpochInstance,
         not_simplified_status_quo: CompleteSolution | EpochSolution
 ) -> tuple[Instance | EpochInstance, CompleteSolution | EpochSolution]:
     """
@@ -74,7 +74,7 @@ def simplify_system(
     # Further preprocessing steps
     remove_final_paths(instance, status_quo)
     merge_arcs_on_paths_where_no_conflicts_can_happen(instance, status_quo)
-    remove_not_utilized_arcs(instance)
+    instance.removed_arcs = remove_not_utilized_arcs(instance)
 
     # Update conflict binaries for the simplified system
     status_quo.binaries = get_conflict_binaries(

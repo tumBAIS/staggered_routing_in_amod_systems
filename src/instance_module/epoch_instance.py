@@ -31,6 +31,8 @@ class EpochInstance(Instance):
         self.start_solution_time = datetime.datetime.now().timestamp()
         self.max_staggering_applicable = max_staggering_applicable  # TODO: avoid this override.
         self.clock_start_epoch = None
+        self.removed_vehicles = []
+        self.removed_arcs = []
 
     def start(self, epoch_size):
         print("=" * 60)
@@ -38,6 +40,65 @@ class EpochInstance(Instance):
               f"time offset: {self.epoch_id * epoch_size * 60} [sec]".center(60))
         print("=" * 60)
         self.clock_start_epoch = datetime.datetime.now().timestamp()
+
+    def get_trip_id_before_simplification(self, simplified_trip_id: int) -> int:
+        """
+        Given a simplified_trip_id in the current list, return the original index
+        before any integers were removed.
+
+        Args:
+            simplified_trip_id (int): The index in the simplified list.
+
+        Returns:
+            int: The original index before the list was simplified.
+        """
+        # Start with the simplified_trip_id
+        original_id = simplified_trip_id
+
+        # Iterate through the removed vehicles
+        for removed_id in sorted(self.removed_vehicles):
+            # If the removed_id is less than or equal to the current original_id,
+            # it means the original_id must shift forward by one.
+            if removed_id <= original_id:
+                original_id += 1
+
+        return original_id
+
+    def get_arc_id_before_simplification(self, simplified_arc_id: int) -> int:
+        """
+        Given a simplified_arc_id in the current list, return the original index
+        before any integers were removed.
+
+        Args:
+            simplified_arc_id (int): The index in the simplified list.
+
+        Returns:
+            int: The original index before the list was simplified.
+        """
+        # Start with the simplified_arc_id
+        original_id = simplified_arc_id
+
+        # Sort the removed arcs to ensure proper adjustment order
+        sorted_removed_arcs = sorted(self.removed_arcs)
+
+        # Debug: Print the simplified_arc_id and removed_arcs
+        print(f"Simplified Arc ID: {simplified_arc_id}")
+        print(f"Removed Arcs: {sorted_removed_arcs}")
+
+        # Iterate through the removed arcs to adjust the original_id
+        for removed_id in sorted_removed_arcs:
+            # Debug: Print the current removed_id and original_id
+            print(f"Checking Removed ID: {removed_id}, Current Original ID: {original_id}")
+
+            # If the removed_id is less than or equal to the current original_id,
+            # increment the original_id because this element was removed earlier.
+            if removed_id <= original_id:
+                original_id += 1
+
+        # Debug: Print the final computed original_id
+        print(f"Final Original ID: {original_id}")
+
+        return original_id
 
 
 EpochInstances = list[EpochInstance]

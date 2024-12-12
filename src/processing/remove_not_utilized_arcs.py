@@ -1,5 +1,6 @@
 from input_data import ACTIVATE_ASSERTIONS
 from instance_module.instance import Instance
+from instance_module.epoch_instance import EpochInstance
 
 
 def _get_vehicles_utilizing_arcs(instance: Instance) -> list[list[int]]:
@@ -47,7 +48,7 @@ def _remove_arcs(instance: Instance, arcs_to_remove: list[int]) -> None:
             instance.conflicting_sets.pop(arc)
 
 
-def remove_not_utilized_arcs(instance: Instance) -> None:
+def remove_not_utilized_arcs(instance: EpochInstance) -> list[int]:
     """
     Remove arcs that are not utilized by any vehicle and update the instance accordingly.
     """
@@ -60,3 +61,4 @@ def remove_not_utilized_arcs(instance: Instance) -> None:
     _update_trip_routes(instance, arcs_to_remove)
 
     print(f"Arcs removed during preprocessing because they were not utilized: {len(arcs_to_remove)}")
+    return arcs_to_remove

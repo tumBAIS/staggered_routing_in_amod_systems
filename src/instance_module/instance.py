@@ -37,7 +37,6 @@ class Instance:
     min_delay_on_arc: list[list[float]] = field(default_factory=list)
     max_delay_on_arc: list[list[float]] = field(default_factory=list)
     start_solution_time: float = 0
-    removed_vehicles: list[int] = field(default_factory=list)
     max_staggering_applicable: Optional[list[Staggering]] = None
 
     def __post_init__(self):

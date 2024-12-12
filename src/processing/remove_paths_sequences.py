@@ -91,18 +91,14 @@ def _remove_last_entry(instance: Instance, status_quo: CompleteSolution, vehicle
     instance.earliest_departure_times[vehicle].pop(-1)
     instance.max_delay_on_arc[vehicle].pop(-1)
     instance.min_delay_on_arc[vehicle].pop(-1)
-
     instance.deadlines[vehicle] -= instance.travel_times_arcs[last_arc]
-    if hasattr(instance, "due_dates"):
-        instance.due_dates[vehicle] -= instance.travel_times_arcs[last_arc]
-
     status_quo.congested_schedule[vehicle].pop(-1)
     status_quo.free_flow_schedule[vehicle].pop(-1)
     assert status_quo.delays_on_arcs[vehicle][-1] < 1e-6, "Vehicle has non-zero delay on last arc."
     status_quo.delays_on_arcs[vehicle].pop(-1)
 
 
-def remove_initial_paths(instance: Instance, status_quo: CompleteSolution) -> None:
+def remove_initial_paths(instance, status_quo: CompleteSolution) -> None:
     """
     Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
     """
@@ -110,8 +106,6 @@ def remove_initial_paths(instance: Instance, status_quo: CompleteSolution) -> No
     removed_vehicles = []
 
     for vehicle in reversed(range(initial_vehicle_count)):
-        if vehicle == 14:
-            x = 0
         _remove_initial_part_of_path(instance, status_quo, vehicle)
         if not instance.trip_routes[vehicle]:
             removed_vehicles.append(vehicle)
