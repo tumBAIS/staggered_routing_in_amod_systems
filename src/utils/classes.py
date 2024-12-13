@@ -30,6 +30,15 @@ class Solution:
     binaries: Optional[Binaries] = None  # type: ignore
     nothing_to_optimize: bool = False
 
+    def remove_trip(self, trip):
+        self.release_times.pop(trip)
+        self.congested_schedule.pop(trip)
+        assert sum(self.delays_on_arcs[trip]) < 1e-6, "Vehicle has non-zero delays on arcs."
+        self.delays_on_arcs.pop(trip)
+        self.staggering_applicable.pop(trip)
+        self.free_flow_schedule.pop(trip)
+        self.staggering_applied.pop(trip)
+
     def remove_trip_at_position_entry_from_solution(self, trip, position):
         """ Used during simplification: removes entries where delay cannot occur """
         self.congested_schedule[trip].pop(position)

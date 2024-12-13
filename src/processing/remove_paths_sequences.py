@@ -19,26 +19,6 @@ def _assert_all_vehicles_in_conflicting_set(instance: EpochInstance, removed_veh
                if vehicle not in removed_vehicles), "Some active vehicles are not in conflicting sets."
 
 
-def remove_vehicle_from_system(vehicle: int, instance: EpochInstance, status_quo: Solution) -> None:
-    """
-    Remove a vehicle from the system, including related schedules and instance properties.
-    """
-    instance.max_staggering_applicable.pop(vehicle)
-    instance.trip_routes.pop(vehicle)
-    instance.latest_departure_times.pop(vehicle)
-    instance.earliest_departure_times.pop(vehicle)
-    instance.max_delay_on_arc.pop(vehicle)
-    instance.min_delay_on_arc.pop(vehicle)
-    instance.deadlines.pop(vehicle)
-    status_quo.release_times.pop(vehicle)
-    status_quo.congested_schedule.pop(vehicle)
-    assert sum(status_quo.delays_on_arcs[vehicle]) < 1e-6, "Vehicle has non-zero delays on arcs."
-    status_quo.delays_on_arcs.pop(vehicle)
-    status_quo.staggering_applicable.pop(vehicle)
-    status_quo.free_flow_schedule.pop(vehicle)
-    status_quo.staggering_applied.pop(vehicle)
-
-
 def update_conflicting_sets(conflicting_sets: list[list[int]], removed_vehicles: list[int]) -> None:
     """
     Update conflicting sets after vehicles are removed.
@@ -103,26 +83,26 @@ def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
     Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
     """
     initial_vehicle_count = len(instance.trip_routes)
-    removed_vehicles = []
+    # removed_vehicles = []
 
-    for vehicle in reversed(range(initial_vehicle_count)):
-        remove_initial_part_of_path(instance, status_quo, vehicle)
-        if not instance.trip_routes[vehicle]:
-            removed_vehicles.append(vehicle)
-            remove_vehicle_from_system(vehicle, instance, status_quo)
+    for trip in reversed(range(initial_vehicle_count)):
+        remove_initial_part_of_path(instance, status_quo, trip)
+        if not instance.trip_routes[trip]:
+            instance.remove_trip(trip)
+            status_quo.remove_trip(trip)
 
-    instance.removed_vehicles = removed_vehicles
+    # instance.removed_vehicles = removed_vehicles
 
-    if initial_vehicle_count == len(removed_vehicles):
+    if initial_vehicle_count == len(instance.removed_vehicles):
         print("All vehicles removed. Nothing to optimize.")
         return
 
-    _assert_all_vehicles_in_conflicting_set(instance, removed_vehicles)
-    update_conflicting_sets(instance.conflicting_sets, removed_vehicles)
+    _assert_all_vehicles_in_conflicting_set(instance, instance.removed_vehicles)
+    update_conflicting_sets(instance.conflicting_sets, instance.removed_vehicles)
     _assert_all_vehicles_in_conflicting_set(instance)
 
-    print(f"Vehicles removed: {len(removed_vehicles)}")
-    print(f"Remaining vehicles: {initial_vehicle_count - len(removed_vehicles)}")
+    print(f"Vehicles removed: {len(instance.removed_vehicles)}")
+    print(f"Remaining vehicles: {initial_vehicle_count - len(instance.removed_vehicles)}")
 
 
 def remove_final_paths(instance: EpochInstance, status_quo: Solution) -> None:

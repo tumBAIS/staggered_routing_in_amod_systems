@@ -34,6 +34,16 @@ class EpochInstance(Instance):
         self.removed_vehicles = []
         self.removed_arcs = []
 
+    def remove_trip(self, trip):
+        self.max_staggering_applicable.pop(trip)
+        self.trip_routes.pop(trip)
+        self.latest_departure_times.pop(trip)
+        self.earliest_departure_times.pop(trip)
+        self.max_delay_on_arc.pop(trip)
+        self.min_delay_on_arc.pop(trip)
+        self.deadlines.pop(trip)
+        self.removed_vehicles.append(trip)
+
     def start(self, epoch_size):
         print("=" * 60)
         print(f"Starting epoch {self.epoch_id} - "
