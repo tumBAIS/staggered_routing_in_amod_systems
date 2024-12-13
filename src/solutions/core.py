@@ -96,16 +96,6 @@ def get_epoch_solution(
 ) -> tuple[Solution, Optional[MIP.support.OptimizationMeasures]]:
     """
     Computes the solution for a single epoch, mapping it back to the full system.
-
-    Args:
-        simplified_instance: Simplified problem instance.
-        simplified_status_quo: Simplified status quo solution.
-        epoch_instance: Original problem instance for the epoch.
-        epoch_status_quo: Status quo solution for the epoch.
-        solver_params: Solver parameters.
-
-    Returns:
-        tuple: EpochSolution and corresponding optimization measures.
     """
     if len(simplified_status_quo.congested_schedule) > 0:
         epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)

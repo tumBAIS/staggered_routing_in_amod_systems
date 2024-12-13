@@ -48,10 +48,9 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
 
 def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:
     """Compute IIS if the model is infeasible, unbounded, or otherwise not solved."""
-    if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
-        model.computeIIS()
-        model.write(f"{path_to_results}/unsolvedModel.ilp")
-        raise RuntimeError("Model could not be solved.")
+    model.computeIIS()
+    model.write(f"{path_to_results}/unsolvedModel.ilp")
+    raise RuntimeError("Model could not be solved.")
 
 
 def _delete_solution_external_file(instance: EpochInstance) -> None:

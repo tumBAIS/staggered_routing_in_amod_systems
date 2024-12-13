@@ -126,37 +126,25 @@ def run_model(
         solver_params: SolverParameters,
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
-    if not model.get_optimize_flag() or not is_there_remaining_time(instance,
-                                                                    solver_params) or instance.instance_params.staggering_cap == 0:
+    if (not model.get_optimize_flag() or
+            not is_there_remaining_time(instance, solver_params) or
+            instance.instance_params.staggering_cap == 0):
         return None
 
-    # Save the initial solution for reference
-    save_solution_in_external_file(warm_start, instance)
+    set_gurobi_parameters(model, instance, solver_params)
 
-    # Run optimization until criteria are met
-    while _continue_solving(model, instance, solver_params):
-        try:
-            initial_solution = load_initial_solution(instance)
-        except FileNotFoundError:
-            print("No solution to start the model - terminating procedure.")
-            return None
+    if solver_params.warm_start:
+        set_warm_start_model(model, warm_start, instance)
 
-        # Set the warm start if applicable
-        if solver_params.warm_start:
-            set_warm_start_model(model, initial_solution, instance)
-
-        # Configure Gurobi parameters
-        set_gurobi_parameters(model, instance, solver_params)
-
-        # Optimize with or without a callback
-        if solver_params.local_search_callback:
-            model.optimize(callback(instance, status_quo, solver_params))
-        else:
-            model.optimize()
-
-        # fetch final optimization measures
-        return get_final_optimization_measures(model, instance)
+    # Optimize with or without a callback
+    if solver_params.local_search_callback:
+        model.optimize(callback(instance, status_quo, solver_params))
+    else:
+        model.optimize()
 
     # Compute IIS if the model was not solved successfully
-    compute_iis_if_not_solved(model)
-    return None
+    if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
+        compute_iis_if_not_solved(model)
+        raise RuntimeError("Model could not be solved")
+
+    return get_final_optimization_measures(model, instance)

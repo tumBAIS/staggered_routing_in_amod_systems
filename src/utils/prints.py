@@ -2,11 +2,12 @@ import datetime
 import pandas as pd
 
 from input_data import TOLERANCE
-from instance_module.epoch_instance import EpochInstance, EpochInstances
+from instance_module.epoch_instance import EpochInstances
+from instance_module.instance import Instance
 from utils.classes import Solution
 
 
-def print_conflicting_sets_info(instance: EpochInstance):
+def print_conflicting_sets_info(instance: Instance):
     """
     Prints information about the sizes of conflicting sets and related statistics.
 
@@ -14,7 +15,7 @@ def print_conflicting_sets_info(instance: EpochInstance):
         instance: The problem instance containing conflicting sets data.
     """
     print("=" * 50)
-    print(f"Conflicting Sets Information For Epoch {instance.epoch_id}".center(50))
+    print(f"Conflicting Sets Information".center(50))
     print("=" * 50)
 
     # Check if there are any conflicting sets
