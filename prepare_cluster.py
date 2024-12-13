@@ -369,5 +369,5 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
 
 
 if __name__ == "__main__":
-    main(preset_name="staggering_analysis_paper", network_name="manhattan_100", number_of_trips=5000,
+    main(preset_name="algo_performance_paper", network_name="manhattan_100", number_of_trips=5000,
          add_shortcuts=True)
