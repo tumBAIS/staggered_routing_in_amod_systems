@@ -98,24 +98,22 @@ def print_parameters(instance_parameters, solver_parameters):
     print("-" * 50)
 
     # Function to prepare data for printing by removing paths and converting to tabulate format
-    def prepare_data_for_printing(parameters, exclude_keys=None):
+    def prepare_data_for_printing(parameters, mode: str, exclude_keys=None):
         if exclude_keys is None:
             exclude_keys = []
         data_to_print = {k: v for k, v in vars(parameters).items() if 'path' not in k and k not in exclude_keys}
-        return tabulate(list(data_to_print.items()), headers=['Parameter', 'Value'], tablefmt='simple')
+        return tabulate(list(data_to_print.items()), headers=[f'{mode} Parameters', 'Value'], tablefmt='simple')
 
     # Print instance parameters
-    print("Instance Parameters:")
-    print(prepare_data_for_printing(instance_parameters))
+    print(prepare_data_for_printing(instance_parameters, "Instance"))
     print("-" * 50)
 
     # Print solver parameters, ensuring no overlap with instance parameter keys
-    print("Solver Parameters:")
-    print(prepare_data_for_printing(solver_parameters, exclude_keys=["instance_parameters"]))
+    print(prepare_data_for_printing(solver_parameters, "Solver", exclude_keys=["instance_parameters"]))
     print("-" * 50)
 
-    print("START PROCEDURE".center(50))
-    print("=" * 50)
+    print("START PROCEDURE".center(100))
+    print("=" * 100)
 
 
 def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParameters]:
