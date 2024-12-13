@@ -14,7 +14,7 @@ def _add_departure_variable(
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
     departure = status_quo.congested_schedule[vehicle][arc_index]
     assert (
-            earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
+            earliest_departure - CONSTR_TOLERANCE <= departure <= latest_departure + CONSTR_TOLERANCE
     ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - CONSTR_TOLERANCE} <\= {departure} <\= {latest_departure + CONSTR_TOLERANCE}"
 
     if FIX_MODEL:
