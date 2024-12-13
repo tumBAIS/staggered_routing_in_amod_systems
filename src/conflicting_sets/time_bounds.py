@@ -226,7 +226,7 @@ def get_conflicting_latest_arrivals(
     return [
         arrival
         for arrival in arc_based_arrivals[earliest_departure.arc]
-        if arrival.latest_arrival > earliest_departure.earliest_departure
+        if arrival.latest_arrival > earliest_departure.earliest_departure + TOLERANCE
     ]
 
 
@@ -249,9 +249,9 @@ def get_conflicting_departures(
     for other_departure in arc_departures:
         is_different_vehicle = other_departure.vehicle != current_earliest_departure.vehicle
         is_within_time_window = (
-                current_earliest_departure.earliest_departure
+                current_earliest_departure.earliest_departure - TOLERANCE
                 <= other_departure.earliest_departure
-                <= current_latest_departure
+                <= current_latest_departure + TOLERANCE
         )
 
         if is_different_vehicle and is_within_time_window:
@@ -345,7 +345,7 @@ def get_latest_arrival_time(
 
     vehicles_on_arc = len(conflicting_arrivals) + 1
     filtered_events = [
-        event for event in sorted_events if not (event[1] == "a" and event[0] > latest_departure_time)
+        event for event in sorted_events if not (event[1] == "a" and event[0] > latest_departure_time - TOLERANCE)
     ]
     filtered_events.append((latest_departure_time, "latest_departure"))
 
@@ -353,9 +353,9 @@ def get_latest_arrival_time(
         delay = compute_delay_on_arc(earliest_departure.arc, instance, vehicles_on_arc)
         latest_arrival = interval_end + delay + nominal_travel_time
 
-        if latest_arrival > current_latest_arrival:
+        if latest_arrival > current_latest_arrival + TOLERANCE:
             current_latest_arrival = copy.copy(latest_arrival)
-        if delay > max_delay:
+        if delay > max_delay + TOLERANCE:
             max_delay = copy.copy(delay)
 
         vehicles_on_arc += 1 if event_type == "d" else -1 if event_type == "a" else 0
