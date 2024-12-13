@@ -165,6 +165,10 @@ namespace cpp_module {
         }
 
 
+        [[nodiscard]] const Time &get_trip_release_time(TripID trip_id) const {
+            return release_times[trip_id];
+        }
+
         [[nodiscard]] const long &get_number_of_trips() const {
             return number_of_trips;
         }

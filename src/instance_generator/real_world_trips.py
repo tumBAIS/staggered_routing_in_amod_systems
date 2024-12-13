@@ -72,6 +72,9 @@ def get_real_world_trips(instance_parameters: InstanceParameters, network: Netwo
     dataset_gdf = _filter_trips_not_in_network(dataset_gdf, network)
     dataset_gdf["destination_coords"] = dataset_gdf["geometry"]
 
+    # Drop raw coordinate columns after creating geometries
+    dataset_gdf.drop(columns=["Start_Lon", "Start_Lat", "End_Lon", "End_Lat"], inplace=True)
+
     # Vectorized finding of closest nodes
     dataset_gdf["origin"] = dataset_gdf["origin_coords"].apply(network.find_closest_node)
     dataset_gdf["destination"] = dataset_gdf["destination_coords"].apply(network.find_closest_node)
@@ -81,6 +84,9 @@ def get_real_world_trips(instance_parameters: InstanceParameters, network: Netwo
     dataset_gdf["origin_coords"] = dataset_gdf["origin"].apply(lambda x: network.gdf_nodes.iloc[x])
     dataset_gdf["destination_coords"] = dataset_gdf["destination"].apply(lambda x: network.gdf_nodes.iloc[x])
 
+    # Drop geometry column once transformed data is no longer needed
+    dataset_gdf.drop(columns=["geometry"], inplace=True)
+
     # Sample
     dataset_gdf = sample_dataset(dataset_gdf, instance_parameters)
 
@@ -88,14 +94,7 @@ def get_real_world_trips(instance_parameters: InstanceParameters, network: Netwo
 
     # Vectorized computation of shortest paths
     # Compute n-shortest paths for each row
-    dataset_gdf['path'] = dataset_gdf.apply(lambda row: find_shortest_path(row, network),
-                                            axis=1)
-
-    # Calculate the length of each path in the paths list, store these as tuples (length, path)
-    dataset_gdf['path_length'] = dataset_gdf['path'].apply(lambda path: network.compute_path_length(path))
-
-    # Filter out rows where the shortest path is 350 or less
-    dataset_gdf = dataset_gdf[dataset_gdf["path_length"] > 350]  # FILTER OUT SHORT PATHS
+    dataset_gdf = compute_shortest_paths(dataset_gdf, network)
 
     dataset_gdf["origin_coords"] = dataset_gdf["origin_coords"].apply(_point_to_dict)
     dataset_gdf["destination_coords"] = dataset_gdf["destination_coords"].apply(_point_to_dict)
@@ -108,9 +107,7 @@ def get_real_world_trips(instance_parameters: InstanceParameters, network: Netwo
     dataset_gdf["trip_id"] = dataset_gdf.index
 
     print(f"Number of trips in network: {len(dataset_gdf)}")
-    columns_to_drop = ["Start_Lon", "Start_Lat", "End_Lat", "End_Lon", "Trip_Pickup_DateTime", "Trip_Dropoff_DateTime",
-                       "geometry"]
-    dataset_gdf.drop(columns=columns_to_drop, axis=1, inplace=True)
+    dataset_gdf.drop(columns=["Trip_Pickup_DateTime", "Trip_Dropoff_DateTime"], axis=1, inplace=True)
 
     # Summarize the generated trips
     num_trips = len(dataset_gdf)
@@ -175,18 +172,26 @@ def find_destination_node(row, network):
     return network.find_closest_node(row['destination_coords'])
 
 
-def find_shortest_path(row, network: Network):
-    # Get all shortest paths of the same length
-    all_shortest_paths = list(nx.all_shortest_paths(
-        network.G,
-        source=row['origin'],
-        target=row['destination'],
-        weight='length'
-    ))
+def compute_shortest_paths(dataset_gdf: gpd.GeoDataFrame, network: Network) -> gpd.GeoDataFrame:
+    """Compute the shortest paths for all trips in a vectorized or batched manner."""
+    paths = []
+    path_lengths = []
 
-    # Select the shortest path with the fewest arcs
-    optimal_path = min(all_shortest_paths, key=len)
-    return optimal_path
+    for origin, destination in zip(dataset_gdf["origin"], dataset_gdf["destination"]):
+        # Batch process shortest paths
+        try:
+            shortest_path = nx.shortest_path(network.G, source=origin, target=destination, weight="length")
+            paths.append(shortest_path)
+            path_lengths.append(network.compute_path_length(shortest_path))
+        except nx.NetworkXNoPath:
+            paths.append(None)
+            path_lengths.append(float('inf'))  # No path found
+
+    # Add paths and path lengths back to the GeoDataFrame
+    dataset_gdf["path"] = paths
+    dataset_gdf["path_length"] = path_lengths
+
+    return dataset_gdf[dataset_gdf["path_length"] > 350]  # Filter out short paths
 
 
 def _filter_trips_not_in_network(gdf: gpd.GeoDataFrame, network: Network) -> gpd.GeoDataFrame:

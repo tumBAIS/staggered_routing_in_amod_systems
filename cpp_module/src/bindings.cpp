@@ -160,6 +160,7 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("get_trip_schedule", &cpp_module::Solution::get_trip_schedule, py::arg("trip_id"))
             .def("get_schedule", &cpp_module::Solution::get_schedule)
             .def("get_start_times", &cpp_module::Solution::get_start_times)
+            .def("get_trip_start_time", &cpp_module::Solution::get_trip_start_time)
             .def("get_delays_on_arcs", &cpp_module::Solution::get_delays_on_arcs)
             .def("get_total_delay", &cpp_module::Solution::get_total_delay)
             .def("get_total_travel_time", &cpp_module::Solution::get_total_travel_time);
@@ -189,6 +190,7 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("get_list_of_thresholds", &cpp_module::Instance::get_list_of_thresholds)
             .def("get_parameters", &cpp_module::Instance::get_parameters)
             .def("get_release_times", &cpp_module::Instance::get_release_times)
+            .def("get_trip_release_time", &cpp_module::Instance::get_trip_release_time)
             .def("get_free_flow_schedule", &cpp_module::Instance::get_free_flow_schedule, py::arg("start_times"));
 
     // Scheduler class bindings

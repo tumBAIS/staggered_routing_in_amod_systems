@@ -212,7 +212,7 @@ class InstanceComputer:
         for trip in trips.R:
             trip_info = {
                 "id": trip.id,
-                "release_time": trip.release_time,
+                "release_time": solution.get_trip_start_time(trip.id),
                 "deadline": trip.deadline,
             }
 

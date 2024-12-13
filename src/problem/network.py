@@ -28,7 +28,6 @@ class Network:
         self.travel_time_arcs = []
         self.nominal_capacities_arcs = []
         self.arc_map = {}
-        self.shortest_path_map = {}
         self.map_arc_trip_path_position = []
 
     def __str__(self):

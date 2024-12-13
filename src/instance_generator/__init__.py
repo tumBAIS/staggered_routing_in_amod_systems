@@ -39,7 +39,7 @@ if __name__ == "__main__":
     # ===========================
     instance_params = InstanceParameters(
         day=1,
-        number_of_trips=2,
+        number_of_trips=100,
         seed=0,
         network_name="manhattan_10",
         max_flow_allowed=100,
