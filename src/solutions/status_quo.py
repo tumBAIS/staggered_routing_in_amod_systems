@@ -5,8 +5,6 @@ from input_data import SolverParameters, ACTIVATE_ASSERTIONS
 from congestion_model.conflict_binaries import get_conflict_binaries
 from utils.prints import (
     print_info_conflicting_sets_sizes,
-    print_info_arcs_utilized,
-    print_info_length_trips,
 )
 import cpp_module as cpp
 from utils.classes import Solution
@@ -107,14 +105,13 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
         cpp_status_quo.get_schedule(),
     )
 
-    # Print additional details about the status quo
-    print_info_arcs_utilized(epoch_instance)
-    print_info_length_trips(
-        epoch_instance,
-        cpp_status_quo.get_schedule(),
-        free_flow_schedule,
-        cpp_status_quo.get_delays_on_arcs(),
-    )
+    # # Print additional details about the status quo
+    # print_info_length_trips(
+    #     epoch_instance,
+    #     cpp_status_quo.get_schedule(),
+    #     free_flow_schedule,
+    #     cpp_status_quo.get_delays_on_arcs(),
+    # )
 
     vehicles_utilizing_arcs = get_vehicles_utilizing_arcs(epoch_instance.trip_routes)
     assert_trips_are_not_duplicated(epoch_instance, vehicles_utilizing_arcs)

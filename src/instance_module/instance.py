@@ -10,7 +10,7 @@ from instance_generator import InstanceComputer
 from instance_module.graph import import_graph, set_arcs_nominal_travel_times_and_capacities
 from instance_module.paths import get_arc_based_paths_with_features
 
-from input_data import InstanceParameters
+from input_data import InstanceParameters, SPEED_KPH
 from utils.aliases import Time, Staggering
 from typing import Optional
 
@@ -72,6 +72,24 @@ class Instance:
             max_staggering = min(staggering_cap_limit, deadline_limit)
             self.max_staggering_applicable.append(max_staggering)
 
+    def print_info_arcs_utilized(self):
+        """
+        Print a concise summary of the arcs utilized in the instance.
+
+        Args:
+            instance: The instance containing travel times and capacities for arcs.
+        """
+        length_arcs = [travel_time * SPEED_KPH / 3.6 for travel_time in self.travel_times_arcs]
+        dataframe_info = pd.DataFrame({
+            "Length [m]": length_arcs,
+            "Travel Times [min]": [x / 60 for x in self.travel_times_arcs],
+            "Nominal Capacities": self.capacities_arcs,
+        })
+
+        summary = dataframe_info.describe().round(2)
+        print("\nInfo - Arcs Utilized:")
+        print(summary)
+
 
 def get_instance(instance_params: InstanceParameters) -> Instance:
     """Constructs an instance from input data without simplification."""
@@ -79,9 +97,11 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
     graph = import_graph(instance_params)
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
     trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(trips_data.routes, graph)
-    return Instance(instance_params=instance_params, deadlines=trips_data.deadline,
-                    trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
-                    node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time)
+    instance = Instance(instance_params=instance_params, deadlines=trips_data.deadline,
+                        trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
+                        node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time)
+    instance.print_info_arcs_utilized()
+    return instance
 
 
 def import_trips_data(instance_parameters: InstanceParameters) -> TripsData:

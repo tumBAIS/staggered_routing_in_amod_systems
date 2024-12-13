@@ -34,8 +34,9 @@ namespace cpp_module {
 
 // Print a message when a tie is solved
     auto print_tie_solved(const Tie &tie) -> void {
-        std::cout << "Staggering vehicle " << tie.vehicle_one << " by " << CONSTR_TOLERANCE
-                  << " [s] to solve tie with vehicle " << tie.vehicle_two << " on arc " << tie.arc << "\n";
+        std::cout << "Tie solved: Trip " << tie.vehicle_one
+                  << " - Trip " << tie.vehicle_two
+                  << " - Arc " << tie.arc << '\n';
     }
 
 // Check if there is a tie between two vehicles
@@ -139,6 +140,7 @@ namespace cpp_module {
 
             solve_arc_ties(instance, arc_id, complete_solution, scheduler);
         }
+        std::cout << std::endl; // end printing ties
     }
 
 } // namespace cpp_module

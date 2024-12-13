@@ -1,4 +1,5 @@
 import MIP.support
+import utils.prints
 from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics
@@ -17,9 +18,10 @@ def print_header_offline_solution() -> None:
     """
     Prints a header for the offline solution computation section.
     """
-    print("#" * 20)
-    print("COMPUTING OFFLINE SOLUTION")
-    print("#" * 20)
+    print("")
+    print("=" * 50)
+    print("Computing offline status quo".center(50))
+    print("-" * 50)
 
 
 def get_offline_solution(
@@ -39,9 +41,14 @@ def get_offline_solution(
     print_header_offline_solution()
 
     solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
-    add_conflicting_sets_to_instance(instance, solution_metrics.free_flow_schedule)
 
-    return Solution(
+    # utils.prints.print_info_length_trips(instance,
+    #                                      solution_metrics.congested_schedule,
+    #                                      solution_metrics.free_flow_schedule,
+    #                                      solution_metrics.delays_on_arcs,
+    #                                      )
+
+    offline_solution = Solution(
         delays_on_arcs=solution_metrics.delays_on_arcs,
         free_flow_schedule=solution_metrics.free_flow_schedule,
         release_times=solution_metrics.release_times,
@@ -52,6 +59,15 @@ def get_offline_solution(
         total_travel_time=get_total_travel_time(solution_metrics.congested_schedule),
         binaries=None,
     )
+
+    offline_solution.print_congestion_info()
+
+    utils.prints.print_combined_info(instance,
+                                     offline_solution.congested_schedule,
+                                     offline_solution.free_flow_schedule,
+                                     offline_solution.delays_on_arcs)
+
+    return offline_solution
 
 
 def print_info_epoch_solution(epoch_status_quo: Solution, epoch_solution: Solution) -> None:

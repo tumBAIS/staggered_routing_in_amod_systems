@@ -1,15 +1,9 @@
 import datetime
 import pandas as pd
 
-from input_data import SPEED_KPH, TOLERANCE
+from input_data import TOLERANCE
 from instance_module.epoch_instance import EpochInstances
 from utils.classes import Solution
-
-
-def print_info_arcs_utilized(instance):
-    length_arcs = _calculate_length_arcs_utilized(instance)
-    dataframe_info = _create_info_dataframe(instance, length_arcs)
-    _print_arcs_utilized_info(dataframe_info)
 
 
 def print_info_conflicting_sets_sizes(instance):
@@ -42,18 +36,6 @@ def print_info_conflicting_sets_sizes(instance):
     print("\nInfo - Outliers (Above 75th Percentile + 1.5 * IQR):")
     print(outliers.describe())
     print("=" * 50)
-
-
-def print_info_length_trips(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
-    """Prints information about trip lengths, delays on arcs, and deadlines."""
-    length_trips_df = _create_length_trips_dataframe(congested_schedule, free_flow_schedule)
-    length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > TOLERANCE]
-
-    pd.options.display.float_format = '{:.2f}'.format
-
-    _print_length_all_trips_info(length_trips_df)
-    _print_length_congested_trips_info(length_congested_trips_df)
-    _print_delays_on_arcs_info(instance, delays_on_arcs)
 
 
 def _calculate_trip_lengths_in_minutes(schedule):
@@ -95,49 +77,63 @@ def _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs):
     return pd.DataFrame(data)
 
 
-def _print_length_all_trips_info(length_trips_df):
-    print("=" * 50)
-    print("Trip Length Info - All Trips [min]".center(50))
-    print("=" * 50)
-    print(length_trips_df.describe())
-    print("=" * 50, "\n")
+def print_combined_info(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
+    """
+    Prints combined information about conflicting sets, trip lengths, and delays on arcs side-by-side.
 
+    Args:
+        instance: The problem instance containing trip and arc data.
+        congested_schedule: The congested trip schedule.
+        free_flow_schedule: The free-flow trip schedule.
+        delays_on_arcs: Delay data for arcs.
+    """
+    conflicting_sets_string = "Conflicting Sets & " if any(instance.conflicting_sets) else ""
+    print("=" * 200)
+    print(f"{conflicting_sets_string}Trips Info".center(200))
+    print("=" * 200)
 
-def _print_length_congested_trips_info(length_congested_trips_df):
-    print("=" * 50)
-    print("Trip Length Info - Congested Trips [min]".center(50))
-    print("=" * 50)
-    print(length_congested_trips_df.describe())
-    print("=" * 50, "\n")
+    # Conflicting Sets Info
+    if any(instance.conflicting_sets):  # Check if conflicting sets are non-empty
+        conflicting_sets_sizes = [len(x) for x in instance.conflicting_sets if x]
+        conf_set_series = pd.Series(conflicting_sets_sizes)
 
+        arc_with_largest_set = max(
+            range(len(instance.travel_times_arcs)),
+            key=lambda x: len(instance.conflicting_sets[x])
+        )
+        largest_set_size = len(instance.conflicting_sets[arc_with_largest_set])
 
-def _print_delays_on_arcs_info(instance, delays_on_arcs):
+        conflicting_sets_summary = f"""
+        Total Sets: {len(conflicting_sets_sizes)}
+        Largest Set - Arc ID: {arc_with_largest_set}, Size: {largest_set_size}
+        Free Flow Travel Time: {instance.travel_times_arcs[arc_with_largest_set] / 60:.2f} [min]
+        Nominal Capacity: {instance.capacities_arcs[arc_with_largest_set]}
+        """
+    else:
+        conflicting_sets_summary = f""
+
+    # Trip Length Info
+    length_trips_df = _create_length_trips_dataframe(congested_schedule, free_flow_schedule)
+    length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > TOLERANCE]
+    trip_length_summary = length_trips_df.describe().round(2)
+    congested_trip_length_summary = length_congested_trips_df.describe().round(2)
+
+    # Delays on Arcs Info
     delays_on_arcs_series = _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs)
-    print("=" * 50)
-    print("Delay Info - Arcs [min]".center(50))
-    print("=" * 50)
-    print(delays_on_arcs_series.describe())
-    print("=" * 50, "\n")
+    delay_summary = delays_on_arcs_series.describe().round(2)
 
+    # Combine outputs into one side-by-side format
+    combined_table = pd.concat(
+        [trip_length_summary, congested_trip_length_summary, delay_summary],
+        axis=1,
+        keys=["All Trips", "Congested Trips", "Delays on Arcs"]
+    )
 
-def _calculate_length_arcs_utilized(instance):
-    return [travel_time * SPEED_KPH / 3.6 for travel_time in instance.travel_times_arcs]
-
-
-def _create_info_dataframe(instance, length_arcs):
-    return pd.DataFrame({
-        "Length [m]": length_arcs,
-        "Travel Times [min]": [x / 60 for x in instance.travel_times_arcs],
-        "Nominal Capacities": instance.capacities_arcs,
-    })
-
-
-def _print_arcs_utilized_info(dataframe_info):
-    print("=" * 50)
-    print("Info - Arcs Utilized".center(50))
-    print("=" * 50)
-    print(dataframe_info.describe().round(2))
-    print("=" * 50)
+    # Print summaries
+    with pd.option_context('display.max_columns', None, 'display.width', 1000):
+        print(conflicting_sets_summary)
+        print(combined_table)
+        print("=" * 200)
 
 
 def print_insights_algorithm(complete_status_quo: Solution, reconstructed_solution: Solution,
