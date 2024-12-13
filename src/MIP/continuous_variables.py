@@ -5,20 +5,45 @@ from MIP import StaggeredRoutingModel
 
 
 def _add_departure_variable(
-        model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance, status_quo: Solution,
+        model: StaggeredRoutingModel,
+        vehicle: int,
+        arc: int,
+        instance: Instance,
+        status_quo: Solution,
         epoch_warm_start: Solution
 ) -> None:
-    """Add departure variable for a specific vehicle and arc."""
+    """
+    Add a departure variable for a specific vehicle and arc.
+
+    """
+    # Get arc index and departure bounds
     arc_index = instance.trip_routes[vehicle].index(arc)
     earliest_departure = instance.earliest_departure_times[vehicle][arc_index]
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
 
+    # Fix numerical issues if needed
+    if latest_departure < earliest_departure + TOLERANCE:
+        latest_departure = earliest_departure + TOLERANCE
+        instance.latest_departure_times[vehicle][arc_index] = latest_departure
+
+    # Add fixed or variable departure to the model
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
-        model.add_continuous_var(vehicle, arc, fixed_departure, fixed_departure, "departure")
-
+        model.add_continuous_var(
+            vehicle=vehicle,
+            arc=arc,
+            lb=fixed_departure,
+            ub=fixed_departure,
+            var_type="departure"
+        )
     else:
-        model.add_continuous_var(vehicle, arc, earliest_departure, latest_departure, "departure")
+        model.add_continuous_var(
+            vehicle=vehicle,
+            arc=arc,
+            lb=earliest_departure,
+            ub=latest_departure,
+            var_type="departure"
+        )
 
 
 def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance) -> None:
