@@ -145,6 +145,22 @@ class EpochInstance(Instance):
 
         return original_id
 
+    def merge_arc_sequence_in_trip_route(self, arc_sequence_to_merge: list[int], trip: int, start_idx: int,
+                                         end_idx: int) -> None:
+        merged_travel_time = sum(self.travel_times_arcs[arc] for arc in arc_sequence_to_merge)
+        self.travel_times_arcs.append(merged_travel_time)
+        self.capacities_arcs.append(1)  # Conflict cannot happen
+        self.conflicting_sets.append([])
+        merged_arc_id = len(self.travel_times_arcs) - 1
+
+        del self.latest_departure_times[trip][start_idx + 1:end_idx + 1]
+        del self.earliest_departure_times[trip][start_idx + 1:end_idx + 1]
+        del self.max_delay_on_arc[trip][start_idx + 1:end_idx + 1]
+        del self.min_delay_on_arc[trip][start_idx + 1:end_idx + 1]
+
+        del self.trip_routes[trip][start_idx:end_idx + 1]
+        self.trip_routes[trip].insert(start_idx, merged_arc_id)
+
 
 EpochInstances = list[EpochInstance]
 

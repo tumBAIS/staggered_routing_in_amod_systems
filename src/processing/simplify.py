@@ -8,49 +8,27 @@ from processing.remove_paths_sequences import remove_initial_paths, remove_final
 from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
 from instance_module.instance import Instance
 from utils.classes import Solution
+from input_data import TOLERANCE
 
 
-def _adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution) -> None:
+def adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution) -> None:
     """
     Adjust release times and deadlines to set the minimum release time to zero.
     """
     min_release_time = min(status_quo.release_times)
-    if min_release_time == 0:
+    if min_release_time <= TOLERANCE:
         return
 
     for vehicle in range(len(status_quo.release_times)):
         status_quo.release_times[vehicle] -= min_release_time
         instance.deadlines[vehicle] -= min_release_time
+        instance.release_times[vehicle] -= min_release_time
 
         for arc_id in range(len(status_quo.congested_schedule[vehicle])):
             status_quo.congested_schedule[vehicle][arc_id] -= min_release_time
             status_quo.free_flow_schedule[vehicle][arc_id] -= min_release_time
             instance.latest_departure_times[vehicle][arc_id] -= min_release_time
             instance.earliest_departure_times[vehicle][arc_id] -= min_release_time
-
-
-def _print_congestion_info(status_quo: Solution) -> None:
-    """
-    Print summary statistics about the congestion in the simplified system.
-    """
-    total_free_flow_time = status_quo.total_travel_time - status_quo.total_delay
-    congestion_delay_percentage = (status_quo.total_delay / status_quo.total_travel_time) * 100
-    tomtom_congestion_index = ((status_quo.total_travel_time - total_free_flow_time) / total_free_flow_time) * 100
-
-    print(f"Delay after preprocessing: {round(congestion_delay_percentage, 2)}% of travel time")
-    print(f"TomTom congestion index: {round(tomtom_congestion_index, 2)}%")
-
-
-def get_od_arc_count(osm_info_arcs_utilized: list[dict]) -> int:
-    """
-    Count unique origin-destination (OD) arc combinations.
-    """
-    unique_combinations = {
-        (arc_info.get("origin"), arc_info.get("destination"))
-        for arc_info in osm_info_arcs_utilized
-        if arc_info.get("origin") is not None and arc_info.get("destination") is not None
-    }
-    return len(unique_combinations)
 
 
 def simplify_system(
@@ -84,9 +62,9 @@ def simplify_system(
     )
 
     # Adjust release times and deadlines
-    _adjust_release_times_and_deadlines(instance, status_quo)
+    adjust_release_times_and_deadlines(instance, status_quo)
 
     # Print congestion information for the simplified system
-    _print_congestion_info(status_quo)
+    status_quo.print_congestion_info()
 
     return instance, status_quo

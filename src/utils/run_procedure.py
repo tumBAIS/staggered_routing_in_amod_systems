@@ -30,9 +30,6 @@ def run_procedure(source: str) -> None:
         # Start processing instance
         epoch_instance.start(solver_params.epoch_size)
 
-        if epoch_id == 4:
-            x = 0
-
         # Get the status quo for the current epoch
         epoch_status_quo = get_epoch_status_quo(epoch_instance, solver_params)
 

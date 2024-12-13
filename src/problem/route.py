@@ -19,7 +19,7 @@ class TripRoute:
         self.path_travel_time = self._get_path_travel_time(network)
         self.path_length_meters = self._get_path_length_meters(network)
         self.id = arg_route_id  # route id among alternative paths for given trip
-        self.latest_departure = self.get_latest_departure(trip, instance_params.staggering_cap)
+        self.latest_departure = self.get_route_latest_departure(trip, instance_params.staggering_cap)
         self.path_with_arcs: Optional[list[Arc]] = None
         self.arc_indices: Optional[dict[int:int]] = None  # maps an arc to its index in path
         self.network_path_ids: Optional[list[int]] = None
@@ -53,7 +53,7 @@ class TripRoute:
         self.arc_indices = {arc.id: index for index, arc in enumerate(self.path_with_arcs)}
         self.num_path_arcs = len(self.path_with_arcs)
 
-    def get_latest_departure(self, trip: Trip, staggering_cap: float):
+    def get_route_latest_departure(self, trip: Trip, staggering_cap: float):
         """Get latest departure on route
         WARNING: we are losing control over the maximum staggering parameter.
         """

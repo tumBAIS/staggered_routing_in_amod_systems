@@ -1,22 +1,23 @@
-import shapely
 from utils.classes import Solution
-from instance_module.instance import Instance
+from instance_module.epoch_instance import EpochInstance
 
 
-def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: Instance, status_quo: Solution) -> None:
+def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: EpochInstance, status_quo: Solution) -> None:
     """
     Merge arcs in vehicle paths where no conflicts can occur.
     """
-    for vehicle, vehicle_path in enumerate(instance.trip_routes):
-        arcs_to_merge_groups = _get_arcs_eligible_for_merging(vehicle, instance)
-        if arcs_to_merge_groups:
-            for arcs_to_merge in arcs_to_merge_groups:
-                merged_arc_id = _add_merged_arc_to_instance(instance, arcs_to_merge)
-                _update_vehicle_schedule(vehicle_path, vehicle, status_quo, arcs_to_merge, instance)
-                _replace_arcs_with_merged_arc(vehicle_path, arcs_to_merge, merged_arc_id)
+    for trip, route in enumerate(instance.trip_routes):
+        arc_sequences_to_merge = get_arc_sequences_to_merge(trip, instance)
+        if arc_sequences_to_merge:
+            for arc_sequence_to_merge in arc_sequences_to_merge:
+                # Update schedules and instance timing information
+                start_idx = route.index(arc_sequence_to_merge[0])
+                end_idx = route.index(arc_sequence_to_merge[-1])
+                instance.merge_arc_sequence_in_trip_route(arc_sequence_to_merge, trip, start_idx, end_idx)
+                status_quo.remove_trip_arcs_between_indices(trip, start_idx, end_idx)
 
 
-def _get_arcs_eligible_for_merging(vehicle: int, instance: Instance) -> list[list[int]]:
+def get_arc_sequences_to_merge(vehicle: int, instance: EpochInstance) -> list[list[int]]:
     """
     Identify groups of arcs in a vehicle's path that can be merged.
     """
@@ -36,46 +37,3 @@ def _get_arcs_eligible_for_merging(vehicle: int, instance: Instance) -> list[lis
         arcs_to_merge_groups.append(current_group)
 
     return arcs_to_merge_groups
-
-
-def _add_merged_arc_to_instance(instance: Instance, arcs_to_merge: list[int]) -> int:
-    """
-    Add a new merged arc to the instance and return its ID.
-    """
-    merged_travel_time = sum(instance.travel_times_arcs[arc] for arc in arcs_to_merge)
-    instance.travel_times_arcs.append(merged_travel_time)
-    instance.capacities_arcs.append(1)
-    instance.conflicting_sets.append([])
-    return len(instance.travel_times_arcs) - 1
-
-
-def _update_vehicle_schedule(
-        vehicle_path: list[int], vehicle: int, status_quo: Solution,
-        arcs_to_merge: list[int], instance: Instance
-) -> None:
-    """
-    Update the vehicle's schedule and associated data after merging arcs.
-    """
-    start_idx = vehicle_path.index(arcs_to_merge[0])
-    end_idx = vehicle_path.index(arcs_to_merge[-1])
-
-    # Update schedules and instance timing information
-    del status_quo.congested_schedule[vehicle][start_idx + 1:end_idx + 1]
-    del status_quo.free_flow_schedule[vehicle][start_idx + 1:end_idx + 1]
-    del status_quo.delays_on_arcs[vehicle][start_idx + 1:end_idx + 1]
-
-    del instance.latest_departure_times[vehicle][start_idx + 1:end_idx + 1]
-    del instance.earliest_departure_times[vehicle][start_idx + 1:end_idx + 1]
-    del instance.max_delay_on_arc[vehicle][start_idx + 1:end_idx + 1]
-    del instance.min_delay_on_arc[vehicle][start_idx + 1:end_idx + 1]
-
-
-def _replace_arcs_with_merged_arc(vehicle_path: list[int], arcs_to_merge: list[int], merged_arc_id: int) -> None:
-    """
-    Replace the specified arcs in the vehicle's path with a single merged arc.
-    """
-    start_idx = vehicle_path.index(arcs_to_merge[0])
-    end_idx = vehicle_path.index(arcs_to_merge[-1])
-
-    del vehicle_path[start_idx:end_idx + 1]
-    vehicle_path.insert(start_idx, merged_arc_id)
