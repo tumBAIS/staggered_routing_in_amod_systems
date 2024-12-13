@@ -1,6 +1,7 @@
 import datetime
 from input_data import SolverParameters
 from utils.aliases import *
+from input_data import TOLERANCE
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import Solution
 from congestion_model.core import (
@@ -65,7 +66,7 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
     """
     Checks whether there is sufficient time left for optimization.
     """
-    return _compute_remaining_time(instance, solver_params) > 1e-6
+    return _compute_remaining_time(instance, solver_params) > TOLERANCE
 
 
 def get_epoch_warm_start(

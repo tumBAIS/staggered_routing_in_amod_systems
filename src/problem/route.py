@@ -4,8 +4,8 @@ from utils.tools import pairwise
 from problem.network import Network
 from problem.arc import Arc
 import random
-from typing import TypeVar
-from problem.parameters import SPEED
+from typing import TypeVar, Optional
+from input_data import SPEED_KPH, InstanceParameters
 
 Trip = TypeVar("Trip")  # Alias for trip
 
@@ -35,7 +35,7 @@ class TripRoute:
         return [(origin, destination) for origin, destination in pairwise(self.path_nodes)]
 
     def _get_path_travel_time(self, network) -> float:
-        return sum([network.G[origin][destination]["length"] * 3.6 / SPEED
+        return sum([network.G[origin][destination]["length"] * 3.6 / SPEED_KPH
                     for origin, destination in self.path_tuples_of_nodes])
 
     def _get_path_length_meters(self, network) -> float:

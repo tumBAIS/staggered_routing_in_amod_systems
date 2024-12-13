@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 import numpy as np
 
-from problem.parameters import InstanceParams, SPEED
 from utils.aliases import *
+from input_data import SPEED_KPH, InstanceParameters
 
 
 class Arc:
@@ -43,7 +43,7 @@ class Arc:
             return 0
         if self.length is None:
             raise AttributeError("Arc length is not set.")
-        return self.length * 3.6 / SPEED
+        return self.length * 3.6 / SPEED_KPH
 
     def __str__(self):
         return f"arc_{self.id}"
@@ -93,7 +93,7 @@ class Arc:
         self.precomputed_delays[vehicles_on_arc] = max_delay
         return max_delay
 
-    def initialize_arc_slopes_and_thresholds(self, instance_params: InstanceParams):
+    def initialize_arc_slopes_and_thresholds(self, instance_params: InstanceParameters):
         """Initialize arc slopes and thresholds."""
         self.arc_slopes = [self.nominal_travel_time * slope / self.nominal_capacity
                            for slope in instance_params.list_of_slopes]

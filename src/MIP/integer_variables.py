@@ -1,7 +1,9 @@
 from MIP import StaggeredRoutingModel
 from instance_module.instance import Instance
 from collections import namedtuple
+from input_data import TOLERANCE
 
+# TODO: remove named tuple
 BinariesBounds = namedtuple("BinariesBounds", ["lb_alpha", "ub_alpha", "lb_beta", "ub_beta", "lb_gamma", "ub_gamma"])
 
 
@@ -9,7 +11,6 @@ def _get_bounds_for_binaries(
         first_vehicle: int, second_vehicle: int, arc: int, instance: Instance
 ) -> BinariesBounds:
     """Calculate bounds for binary variables (alpha, beta, gamma) between two vehicles on a specific arc."""
-    TOLERANCE = 1e-4  # Define tolerance for comparisons
     lb_alpha = lb_beta = lb_gamma = 0
     ub_alpha = ub_beta = ub_gamma = 1
 

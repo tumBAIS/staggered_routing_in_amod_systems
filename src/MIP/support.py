@@ -41,8 +41,8 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
     model.setParam("MIPFocus", 2)
     model.setParam("Disconnected", 0)
     model.setParam("NumericFocus", 2)
-    model.setParam("FeasibilityTol", 1e-8)
-    model.setParam("IntFeasTol", 1e-7)
+    # model.setParam("FeasibilityTol", 1e-8)
+    # model.setParam("IntFeasTol", 1e-7)
 
 
 def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:

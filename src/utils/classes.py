@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from gurobipy import Model
 from typing import Optional
 from utils.aliases import *
+from input_data import TOLERANCE
 
 
 class Binaries:
@@ -33,7 +34,7 @@ class Solution:
     def remove_trip(self, trip):
         self.release_times.pop(trip)
         self.congested_schedule.pop(trip)
-        assert sum(self.delays_on_arcs[trip]) < 1e-6, "Vehicle has non-zero delays on arcs."
+        assert sum(self.delays_on_arcs[trip]) < TOLERANCE, "Vehicle has non-zero delays on arcs."
         self.delays_on_arcs.pop(trip)
         self.staggering_applicable.pop(trip)
         self.free_flow_schedule.pop(trip)
@@ -43,7 +44,7 @@ class Solution:
         """ Used during simplification: removes entries where delay cannot occur """
         self.congested_schedule[trip].pop(position)
         self.free_flow_schedule[trip].pop(position)
-        assert self.delays_on_arcs[trip][position] < 1e-6, "Vehicle has delay on the first arc."
+        assert self.delays_on_arcs[trip][position] < TOLERANCE, "Vehicle has delay on the first arc."
         self.delays_on_arcs[trip].pop(position)
         if self.congested_schedule[trip]:
             self.release_times[trip] = self.congested_schedule[trip][0]

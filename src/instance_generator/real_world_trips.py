@@ -8,7 +8,6 @@ from shapely.geometry import Point
 
 from input_data import InstanceParameters
 from problem.network import Network
-from problem.parameters import InstanceParams
 import matplotlib.pyplot as plt
 import networkx as nx
 import warnings
@@ -78,7 +77,7 @@ def get_real_world_trips(instance_parameters: InstanceParameters, network: Netwo
     dataset_gdf["origin"] = dataset_gdf["origin_coords"].apply(network.find_closest_node)
     dataset_gdf["destination"] = dataset_gdf["destination_coords"].apply(network.find_closest_node)
     dataset_gdf = dataset_gdf[dataset_gdf['origin'] != dataset_gdf["destination"]]
-    
+
     # Update coordinates based on nodes assigned
     dataset_gdf["origin_coords"] = dataset_gdf["origin"].apply(lambda x: network.gdf_nodes.iloc[x])
     dataset_gdf["destination_coords"] = dataset_gdf["destination"].apply(lambda x: network.gdf_nodes.iloc[x])

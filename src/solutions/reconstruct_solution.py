@@ -1,4 +1,4 @@
-from input_data import ACTIVATE_ASSERTIONS
+from input_data import ACTIVATE_ASSERTIONS, TOLERANCE
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import Solution
 from instance_module.instance import Instance
@@ -22,7 +22,7 @@ def _merge_schedules(existing_schedule: list[float], new_schedule: list[float]) 
         return existing_schedule
 
     for idx, time in enumerate(existing_schedule):
-        if abs(time - new_schedule[0]) < 1e-1:
+        if abs(time - new_schedule[0]) < TOLERANCE:
             # Found a common element
             return existing_schedule[:idx] + new_schedule
 
@@ -56,7 +56,8 @@ def _assert_congested_schedule_is_correct(global_instance: Instance, reconstruct
         cpp_schedule = get_congested_schedule(global_instance, release_times, solver_params)
 
         for vehicle, schedule in enumerate(reconstructed_schedule):
-            if not all(abs(reconstructed - cpp) < 1e-4 for reconstructed, cpp in zip(schedule, cpp_schedule[vehicle])):
+            if not all(abs(reconstructed - cpp) < TOLERANCE for reconstructed, cpp in
+                       zip(schedule, cpp_schedule[vehicle])):
                 _print_not_matching_schedules(reconstructed_schedule, cpp_schedule, vehicle)
                 raise AssertionError(f"Schedules do not match for vehicle {vehicle}")
 
@@ -72,7 +73,7 @@ def _print_not_matching_schedules(
     print(f"CPP schedule: {cpp_schedule[vehicle]}")
     mismatches = [
         idx for idx, (reconstructed, cpp) in enumerate(zip(reconstructed_schedule[vehicle], cpp_schedule[vehicle]))
-        if abs(reconstructed - cpp) > 1e-4
+        if abs(reconstructed - cpp) > TOLERANCE
     ]
     print(f"Mismatched positions: {mismatches}")
 

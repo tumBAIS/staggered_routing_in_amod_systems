@@ -1,5 +1,5 @@
 import MIP.support
-from input_data import SolverParameters
+from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
@@ -69,7 +69,7 @@ def print_info_epoch_solution(epoch_status_quo: Solution, epoch_solution: Soluti
     print(f"Total delay epoch status quo: {epoch_status_quo.total_delay / 60:.2f} [min]")
     print(f"Total delay epoch model solution: {epoch_solution.total_delay / 60:.2f} [min]")
 
-    if epoch_status_quo.total_delay > 1e-6:
+    if epoch_status_quo.total_delay > TOLERANCE:
         delay_reduction = (
                 (epoch_status_quo.total_delay - epoch_solution.total_delay) / epoch_status_quo.total_delay
         )

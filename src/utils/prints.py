@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 
-from input_data import SPEED_KPH
+from input_data import SPEED_KPH, TOLERANCE
 from instance_module.epoch_instance import EpochInstances
 from utils.classes import Solution
 
@@ -47,7 +47,7 @@ def print_info_conflicting_sets_sizes(instance):
 def print_info_length_trips(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
     """Prints information about trip lengths, delays on arcs, and deadlines."""
     length_trips_df = _create_length_trips_dataframe(congested_schedule, free_flow_schedule)
-    length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > 1e-6]
+    length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > TOLERANCE]
 
     pd.options.display.float_format = '{:.2f}'.format
 
@@ -84,7 +84,7 @@ def _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs):
 
     for vehicle, delays in enumerate(delays_on_arcs):
         for position, delay in enumerate(delays):
-            if delay > 1e-5:
+            if delay > TOLERANCE:
                 arc = instance.trip_routes[vehicle][position]
                 travel_time = instance.travel_times_arcs[arc] / 60  # Convert to minutes
                 delay_min = delay / 60  # Convert to minutes
@@ -147,7 +147,7 @@ def print_insights_algorithm(complete_status_quo: Solution, reconstructed_soluti
     print("=" * 50)
 
     delay_reduction = (complete_status_quo.total_delay - reconstructed_solution.total_delay) / \
-                      complete_status_quo.total_delay if complete_status_quo.total_delay > 1e-6 else 0
+                      complete_status_quo.total_delay if complete_status_quo.total_delay > TOLERANCE else 0
 
     print(f"- Total Delay - Complete Status Quo: {complete_status_quo.total_delay / 60:.2f} [min]")
     print(f"- Total Delay - Final Solution: {reconstructed_solution.total_delay / 60:.2f} [min]")
