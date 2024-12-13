@@ -34,6 +34,14 @@ class EpochInstance(Instance):
         self.removed_vehicles = []
         self.removed_arcs = []
 
+    def update_conflicting_sets_after_trip_removal(self) -> None:
+        """
+        Update conflicting sets with new TripIDs after vehicles are removed.
+        """
+        self.conflicting_sets = [
+            [vehicle - sum(1 for removed in self.removed_vehicles if removed < vehicle) for vehicle in conf_set]
+            for conf_set in self.conflicting_sets]
+
     def remove_trip(self, trip):
         self.max_staggering_applicable.pop(trip)
         self.trip_routes.pop(trip)

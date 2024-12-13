@@ -2,48 +2,6 @@ from utils.classes import Solution
 from instance_module.epoch_instance import EpochInstance
 
 
-def _assert_all_vehicles_in_conflicting_set(instance: EpochInstance, removed_vehicles=None) -> None:
-    """
-    Ensures all active vehicles are part of a conflicting set.
-    """
-    if removed_vehicles is None:
-        removed_vehicles = []
-
-    all_vehicles_in_conf_sets = sorted({
-        vehicle for conf_set in instance.conflicting_sets for vehicle in conf_set
-    })
-
-    assert all(vehicle not in all_vehicles_in_conf_sets for vehicle in removed_vehicles), \
-        "Removed vehicles are still in conflicting sets."
-    assert all(vehicle in all_vehicles_in_conf_sets for vehicle in range(len(instance.trip_routes))
-               if vehicle not in removed_vehicles), "Some active vehicles are not in conflicting sets."
-
-
-def update_conflicting_sets(conflicting_sets: list[list[int]], removed_vehicles: list[int]) -> None:
-    """
-    Update conflicting sets after vehicles are removed.
-    """
-    conflicting_sets[:] = [
-        [vehicle - sum(removed < vehicle for removed in removed_vehicles) for vehicle in conf_set]
-        for conf_set in conflicting_sets
-    ]
-
-
-def remove_initial_part_of_path(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
-    """
-    Remove the initial part of a vehicle's path where there are no conflicts.
-    """
-    initial_route = instance.trip_routes[vehicle][:]
-
-    for arc in initial_route:
-        if vehicle in instance.conflicting_sets[arc]:
-            break
-
-        # Remove the arc from the vehicle's route and update the solution state
-        instance.remove_arc_at_position_from_trip_route(vehicle, 0)
-        status_quo.remove_trip_at_position_entry_from_solution(vehicle, 0)
-
-
 def _remove_first_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
     """
     Remove the first entry from the vehicle's schedules and paths.
@@ -83,23 +41,30 @@ def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
     Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
     """
     initial_vehicle_count = len(instance.trip_routes)
-    # removed_vehicles = []
 
     for trip in reversed(range(initial_vehicle_count)):
-        remove_initial_part_of_path(instance, status_quo, trip)
+        initial_route = instance.trip_routes[trip][:]  # Modified in place
+
+        for arc in initial_route:
+            if trip in instance.conflicting_sets[arc]:
+                break
+
+            # Remove the arc from the vehicle's route and update the solution state
+            instance.remove_arc_at_position_from_trip_route(trip, 0)
+            status_quo.remove_trip_at_position_entry_from_solution(trip, 0)
+
+        # Remove the trip if no routes are left
         if not instance.trip_routes[trip]:
             instance.remove_trip(trip)
             status_quo.remove_trip(trip)
 
-    # instance.removed_vehicles = removed_vehicles
-
-    if initial_vehicle_count == len(instance.removed_vehicles):
+    # Handle the case where all vehicles are removed
+    if not instance.trip_routes:
         print("All vehicles removed. Nothing to optimize.")
         return
 
-    _assert_all_vehicles_in_conflicting_set(instance, instance.removed_vehicles)
-    update_conflicting_sets(instance.conflicting_sets, instance.removed_vehicles)
-    _assert_all_vehicles_in_conflicting_set(instance)
+    # Update conflicting sets for the remaining vehicles
+    instance.update_conflicting_sets_after_trip_removal()
 
     print(f"Vehicles removed: {len(instance.removed_vehicles)}")
     print(f"Remaining vehicles: {initial_vehicle_count - len(instance.removed_vehicles)}")
