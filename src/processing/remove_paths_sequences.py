@@ -53,17 +53,15 @@ def remove_initial_part_of_path(instance: EpochInstance, status_quo: Solution, v
     """
     Remove the initial part of a vehicle's path where there are no conflicts.
     """
-    # start_index = 0
-    for arc in instance.trip_routes[vehicle][:]:
-        if vehicle not in instance.conflicting_sets[arc]:
-            instance.remove_arc_at_position_from_trip_route(vehicle, 0)
-            status_quo.remove_trip_at_position_entry_from_solution(vehicle, 0)
-            # start_index += 1
-            # _remove_first_entry(instance, status_quo, vehicle)
-        else:
+    initial_route = instance.trip_routes[vehicle][:]
+
+    for arc in initial_route:
+        if vehicle in instance.conflicting_sets[arc]:
             break
 
-    # instance.trip_routes[vehicle] = instance.trip_routes[vehicle][start_index:]
+        # Remove the arc from the vehicle's route and update the solution state
+        instance.remove_arc_at_position_from_trip_route(vehicle, 0)
+        status_quo.remove_trip_at_position_entry_from_solution(vehicle, 0)
 
 
 def _remove_first_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
