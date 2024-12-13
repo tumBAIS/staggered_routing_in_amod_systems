@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from collections import Counter
 
-from input_data import SolverParameters, ACTIVATE_ASSERTIONS
+from input_data import SolverParameters, ACTIVATE_ASSERTIONS, CONSTR_TOLERANCE
 from instance_module.epoch_instance import EpochInstance
 from instance_module.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, \
     VehicleStatus
@@ -38,10 +38,11 @@ def get_max_staggering_applicable_next_epoch(
     departure_is_in_next_epoch = departure.time / 60 > next_epoch_instance.epoch_id * solver_params.epoch_size
 
     if arc_is_origin and departure_is_in_next_epoch:
-        staggering_applied = max(1e-2, departure.time - global_instance.release_times[original_vehicle_id])
+        staggering_applied = max(10 * CONSTR_TOLERANCE,
+                                 departure.time - global_instance.release_times[original_vehicle_id])
         max_staggering = global_instance.max_staggering_applicable[original_vehicle_id] - staggering_applied
     else:
-        max_staggering = 1e-2  # To resolve ties.
+        max_staggering = 10 * CONSTR_TOLERANCE  # To resolve ties.
 
     return max_staggering
 

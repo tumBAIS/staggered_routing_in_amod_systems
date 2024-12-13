@@ -14,7 +14,7 @@ namespace cpp_module {
     using ConflictingSetsList = std::vector<ConflictingSet>;
     using TripRoute = std::vector<ArcID>;
 // Parameters
-    const double CONSTR_TOLERANCE = 1 * 1e-3;
+    const double CONSTR_TOLERANCE = 1e-3;
     const double TOLERANCE = 1e-6;
 
     struct Conflict {

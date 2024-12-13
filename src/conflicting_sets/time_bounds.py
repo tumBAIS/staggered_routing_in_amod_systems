@@ -182,7 +182,7 @@ def propagate_min_delay(earliest_departures: list[list[TimeBound]], min_delay_on
     """
     Propagates a minimum delay along the vehicle's route for subsequent arcs.
     """
-    if min_delay_on_this_arc < 1e-6:
+    if min_delay_on_this_arc < TOLERANCE:
         return
 
     if departure.arc == 0:
@@ -454,7 +454,7 @@ def get_initial_latest_arrival_times(instance: Instance, ff_schedule: TripSchedu
     """
     assert len(instance.deadlines) == len(ff_schedule), "Mismatch in deadlines and free-flow schedule length."
     assert all(
-        deadline + 1e-4 >= schedule[-1] for deadline, schedule in zip(instance.deadlines, ff_schedule)
+        deadline + TOLERANCE >= schedule[-1] for deadline, schedule in zip(instance.deadlines, ff_schedule)
     ), "Deadlines are inconsistent with schedules."
 
     return [[schedule[position] + instance.deadlines[vehicle] - schedule[-1] for position, _ in

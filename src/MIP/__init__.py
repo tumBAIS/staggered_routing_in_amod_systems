@@ -136,12 +136,12 @@ class StaggeredRoutingModel(grb.Model):
             continuous_var[var_type][vehicle] = {}
 
         # Validate bounds
-        assert lb <= ub + 1e-6, (
+        assert lb <= ub + TOLERANCE, (
             f"Invalid bounds for {var_type}_vehicle_{vehicle}_arc_{arc}: {lb} <= {ub}"
         )
 
         # Handle constant variable case
-        if abs(lb - ub) < 1e-6 and constant_flag:
+        if abs(lb - ub) < TOLERANCE and constant_flag:
             continuous_var[var_type][vehicle][arc] = ub
             return
 

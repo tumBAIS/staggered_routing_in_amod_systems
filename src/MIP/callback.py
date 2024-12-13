@@ -64,17 +64,18 @@ def assert_schedule(model: StaggeredRoutingModel, congested_schedule: TripSchedu
             first_arc = instance.trip_routes[vehicle][0]
             assert schedule[0] - model.get_continuous_var_bound("lb", first_arc, vehicle, "departure") <= \
                    instance.max_staggering_applicable[
-                       vehicle] + 1e-6, f"Invalid departure time for the first arc of vehicle {vehicle}."
+                       vehicle] + TOLERANCE, f"Invalid departure time for the first arc of vehicle {vehicle}."
 
             for position, arc in enumerate(instance.trip_routes[vehicle]):
-                assert model.get_continuous_var_bound("lb", arc, vehicle, "departure") - 1e-6 <= schedule[position] <= \
+                assert model.get_continuous_var_bound("lb", arc, vehicle, "departure") - TOLERANCE <= schedule[
+                    position] <= \
                        model.get_continuous_var_bound("ub", arc, vehicle,
-                                                      "departure") + 1e-6, (f"Invalid departure time "
-                                                                            f"for arc {arc} of vehicle {vehicle}.")
-                assert model.get_continuous_var_bound("lb", arc, vehicle, "delay") - 1e-6 <= delays[position] <= \
+                                                      "departure") + TOLERANCE, (f"Invalid departure time "
+                                                                                 f"for arc {arc} of vehicle {vehicle}.")
+                assert model.get_continuous_var_bound("lb", arc, vehicle, "delay") - TOLERANCE <= delays[position] <= \
                        model.get_continuous_var_bound("ub", arc, vehicle,
-                                                      "delay") + 1e-6, (f"Invalid delay for arc {arc} "
-                                                                        f"of vehicle {vehicle}.")
+                                                      "delay") + TOLERANCE, (f"Invalid delay for arc {arc} "
+                                                                             f"of vehicle {vehicle}.")
 
 
 def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,

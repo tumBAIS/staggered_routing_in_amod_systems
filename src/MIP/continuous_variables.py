@@ -13,14 +13,10 @@ def _add_departure_variable(
     earliest_departure = instance.earliest_departure_times[vehicle][arc_index]
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
     departure = status_quo.congested_schedule[vehicle][arc_index]
-    if abs(departure - latest_departure) < 1e-2:
-        latest_departure = departure + TOLERANCE
-    try:
-        assert (
-                earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
-        ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
-    except AssertionError:
-        raise ValueError()
+    assert (
+            earliest_departure - TOLERANCE <= departure <= latest_departure + TOLERANCE
+    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - TOLERANCE} <\= {departure} <\= {latest_departure + TOLERANCE}"
+
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
         model.add_continuous_var(vehicle, arc, fixed_departure, fixed_departure, "departure")

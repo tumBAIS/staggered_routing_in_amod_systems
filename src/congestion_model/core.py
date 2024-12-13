@@ -5,6 +5,7 @@ from input_data import SolverParameters
 from instance_module.instance import Instance
 from instance_module.epoch_instance import EpochInstance
 from utils.aliases import *
+from input_data import TOLERANCE
 
 
 def get_free_flow_schedule(instance: Instance | EpochInstance,
@@ -57,7 +58,8 @@ def get_delays_on_arcs(instance: Instance | EpochInstance,
         ]
         for vehicle, path in enumerate(instance.trip_routes)
     ]
-    delays_on_arcs = [[0 if abs(element) < 1e-6 else element for element in delays] + [0] for delays in delays_on_arcs]
+    delays_on_arcs = [[0 if abs(element) < TOLERANCE else element for element in delays] + [0] for delays in
+                      delays_on_arcs]
     return delays_on_arcs
 
 

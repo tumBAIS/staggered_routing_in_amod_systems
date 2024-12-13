@@ -79,7 +79,7 @@ class EpochInstance(Instance):
         self.release_times.pop(trip)
         self.removed_vehicles.append(trip)
 
-    def start(self, epoch_size):
+    def print_start(self, epoch_size):
         print("=" * 60)
         print(f"Starting epoch {self.epoch_id} - "
               f"time offset: {self.epoch_id * epoch_size * 60} [sec]".center(60))
