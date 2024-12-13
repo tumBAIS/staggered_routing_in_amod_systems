@@ -1,8 +1,8 @@
-from utils.classes import CompleteSolution
-from instance_module.instance import Instance
+from utils.classes import Solution
+from instance_module.epoch_instance import EpochInstance
 
 
-def _assert_all_vehicles_in_conflicting_set(instance: Instance, removed_vehicles=None) -> None:
+def _assert_all_vehicles_in_conflicting_set(instance: EpochInstance, removed_vehicles=None) -> None:
     """
     Ensures all active vehicles are part of a conflicting set.
     """
@@ -19,7 +19,7 @@ def _assert_all_vehicles_in_conflicting_set(instance: Instance, removed_vehicles
                if vehicle not in removed_vehicles), "Some active vehicles are not in conflicting sets."
 
 
-def remove_vehicle_from_system(vehicle: int, instance: Instance, status_quo: CompleteSolution) -> None:
+def remove_vehicle_from_system(vehicle: int, instance: EpochInstance, status_quo: Solution) -> None:
     """
     Remove a vehicle from the system, including related schedules and instance properties.
     """
@@ -49,22 +49,24 @@ def update_conflicting_sets(conflicting_sets: list[list[int]], removed_vehicles:
     ]
 
 
-def _remove_initial_part_of_path(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+def remove_initial_part_of_path(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
     """
     Remove the initial part of a vehicle's path where there are no conflicts.
     """
-    start_index = 0
-    for arc in instance.trip_routes[vehicle]:
+    # start_index = 0
+    for arc in instance.trip_routes[vehicle][:]:
         if vehicle not in instance.conflicting_sets[arc]:
-            start_index += 1
-            _remove_first_entry(instance, status_quo, vehicle)
+            instance.remove_arc_at_position_from_trip_route(vehicle, 0)
+            status_quo.remove_trip_at_position_entry_from_solution(vehicle, 0)
+            # start_index += 1
+            # _remove_first_entry(instance, status_quo, vehicle)
         else:
             break
 
-    instance.trip_routes[vehicle] = instance.trip_routes[vehicle][start_index:]
+    # instance.trip_routes[vehicle] = instance.trip_routes[vehicle][start_index:]
 
 
-def _remove_first_entry(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+def _remove_first_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
     """
     Remove the first entry from the vehicle's schedules and paths.
     """
@@ -81,7 +83,7 @@ def _remove_first_entry(instance: Instance, status_quo: CompleteSolution, vehicl
         status_quo.release_times[vehicle] = status_quo.congested_schedule[vehicle][0]
 
 
-def _remove_last_entry(instance: Instance, status_quo: CompleteSolution, vehicle: int) -> None:
+def _remove_last_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
     """
     Remove the last entry from the vehicle's schedules and paths.
     """
@@ -98,7 +100,7 @@ def _remove_last_entry(instance: Instance, status_quo: CompleteSolution, vehicle
     status_quo.delays_on_arcs[vehicle].pop(-1)
 
 
-def remove_initial_paths(instance, status_quo: CompleteSolution) -> None:
+def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
     """
     Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
     """
@@ -106,7 +108,7 @@ def remove_initial_paths(instance, status_quo: CompleteSolution) -> None:
     removed_vehicles = []
 
     for vehicle in reversed(range(initial_vehicle_count)):
-        _remove_initial_part_of_path(instance, status_quo, vehicle)
+        remove_initial_part_of_path(instance, status_quo, vehicle)
         if not instance.trip_routes[vehicle]:
             removed_vehicles.append(vehicle)
             remove_vehicle_from_system(vehicle, instance, status_quo)
@@ -125,7 +127,7 @@ def remove_initial_paths(instance, status_quo: CompleteSolution) -> None:
     print(f"Remaining vehicles: {initial_vehicle_count - len(removed_vehicles)}")
 
 
-def remove_final_paths(instance: Instance, status_quo: CompleteSolution) -> None:
+def remove_final_paths(instance: EpochInstance, status_quo: Solution) -> None:
     """
     Remove the final parts of paths without conflicts.
     """

@@ -1,13 +1,13 @@
 from __future__ import annotations
 import itertools
 import gurobipy as grb
-from utils.classes import CompleteSolution, HeuristicSolution
+from utils.classes import Solution, HeuristicSolution
 from MIP import StaggeredRoutingModel
 from instance_module.instance import Instance
 
 
 def set_warm_start_model(model: StaggeredRoutingModel,
-                         warm_start: CompleteSolution | HeuristicSolution,
+                         warm_start: Solution | HeuristicSolution,
                          instance: Instance) -> None:
     """Set initial values for binary variables in the warm start model."""
     for arc in model.get_list_conflicting_arcs():

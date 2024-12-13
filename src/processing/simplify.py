@@ -7,10 +7,10 @@ from processing.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no
 from processing.remove_paths_sequences import remove_initial_paths, remove_final_paths
 from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
 from instance_module.instance import Instance
-from utils.classes import EpochSolution, CompleteSolution
+from utils.classes import Solution
 
 
-def _adjust_release_times_and_deadlines(instance: Instance, status_quo: CompleteSolution) -> None:
+def _adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution) -> None:
     """
     Adjust release times and deadlines to set the minimum release time to zero.
     """
@@ -29,7 +29,7 @@ def _adjust_release_times_and_deadlines(instance: Instance, status_quo: Complete
             instance.earliest_departure_times[vehicle][arc_id] -= min_release_time
 
 
-def _print_congestion_info(status_quo: CompleteSolution) -> None:
+def _print_congestion_info(status_quo: Solution) -> None:
     """
     Print summary statistics about the congestion in the simplified system.
     """
@@ -55,8 +55,8 @@ def get_od_arc_count(osm_info_arcs_utilized: list[dict]) -> int:
 
 def simplify_system(
         not_simplified_instance: EpochInstance,
-        not_simplified_status_quo: CompleteSolution | EpochSolution
-) -> tuple[Instance | EpochInstance, CompleteSolution | EpochSolution]:
+        not_simplified_status_quo: Solution
+) -> tuple[EpochInstance, Solution]:
     """
     Simplify the system by preprocessing paths, merging arcs, and removing unused arcs.
     """

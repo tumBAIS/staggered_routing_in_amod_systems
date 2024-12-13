@@ -1,12 +1,12 @@
-from utils.classes import EpochSolution
+from utils.classes import Solution
 from instance_module.instance import Instance
 from input_data import FIX_MODEL, TOLERANCE
 from MIP import StaggeredRoutingModel
 
 
 def _add_departure_variable(
-        model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance, status_quo: EpochSolution,
-        epoch_warm_start: EpochSolution
+        model: StaggeredRoutingModel, vehicle: int, arc: int, instance: Instance, status_quo: Solution,
+        epoch_warm_start: Solution
 ) -> None:
     """Add departure variable for a specific vehicle and arc."""
     arc_index = instance.trip_routes[vehicle].index(arc)
@@ -59,7 +59,7 @@ def _add_load_variable(model: StaggeredRoutingModel, trip: int, arc: int, confli
 
 
 def _add_continuous_variables_vehicle_on_arc(
-        model: StaggeredRoutingModel, instance: Instance, status_quo: EpochSolution, vehicle: int, arc: int,
+        model: StaggeredRoutingModel, instance: Instance, status_quo: Solution, vehicle: int, arc: int,
         epoch_warm_start
 ) -> None:
     """Add all continuous variables (departure, delay, load) for a specific vehicle and arc."""
@@ -70,7 +70,7 @@ def _add_continuous_variables_vehicle_on_arc(
 
 
 def add_continuous_variables(
-        model: StaggeredRoutingModel, instance: Instance, status_quo: EpochSolution, epoch_warm_start
+        model: StaggeredRoutingModel, instance: Instance, status_quo: Solution, epoch_warm_start
 ) -> None:
     """Create all continuous variables for the optimization model."""
     print("Creating continuous variables... ", end="")

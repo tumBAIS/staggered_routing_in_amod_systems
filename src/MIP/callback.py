@@ -4,7 +4,7 @@ from typing import Callable
 import gurobipy as grb
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
-from utils.classes import CompleteSolution, HeuristicSolution
+from utils.classes import Solution, HeuristicSolution
 from utils.aliases import TripSchedules
 from instance_module.epoch_instance import EpochInstance
 from MIP.support import save_solution_in_external_file
@@ -40,7 +40,7 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
         model.terminate()
 
 
-def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: CompleteSolution) -> None:
+def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: Solution) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
     model.set_cb_release_times([model.get_continuous_var_cb(vehicle, path[0], "departure")
                                 for vehicle, path in enumerate(instance.trip_routes)])
@@ -162,7 +162,7 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
             suspend_procedure(heuristic_solution, model, instance)
 
 
-def callback(instance: EpochInstance, status_quo: CompleteSolution, solver_params: SolverParameters) -> Callable:
+def callback(instance: EpochInstance, status_quo: Solution, solver_params: SolverParameters) -> Callable:
     """Define the callback function for Gurobi.
     @rtype: object
     """

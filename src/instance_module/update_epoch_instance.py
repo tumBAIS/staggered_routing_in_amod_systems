@@ -7,7 +7,7 @@ from input_data import SolverParameters, ACTIVATE_ASSERTIONS
 from instance_module.epoch_instance import EpochInstance
 from instance_module.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, \
     VehicleStatus
-from utils.classes import EpochSolution
+from utils.classes import Solution
 import instance_module.instance
 
 
@@ -74,7 +74,7 @@ def add_departures_to_next_epoch(
 
 
 def get_next_epoch_departures_active_vehicles(
-        current_epoch_status_quo: EpochSolution,
+        current_epoch_status_quo: Solution,
         current_epoch_instance: EpochInstance,
         vehicle_status_list: list[VehicleStatus],
         solver_params: SolverParameters
@@ -92,7 +92,7 @@ def get_next_epoch_departures_active_vehicles(
 
 def update_next_epoch_departures(
         current_epoch_instance: EpochInstance,
-        current_epoch_status_quo: EpochSolution,
+        current_epoch_status_quo: Solution,
         vehicle_status_list: list[VehicleStatus],
         active_departures: list[NextEpochDeparture],
         solver_params: SolverParameters
@@ -117,7 +117,7 @@ def assert_maximum_one_departure_for_vehicle(next_epoch_departures: list[NextEpo
 
 def update_next_epoch_instance(
         current_epoch_instance: EpochInstance,
-        current_epoch_status_quo: EpochSolution,
+        current_epoch_status_quo: Solution,
         next_epoch_instance: EpochInstance,
         global_instance: instance_module.instance.Instance,
         solver_params: SolverParameters

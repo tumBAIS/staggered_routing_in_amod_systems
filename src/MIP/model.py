@@ -7,7 +7,7 @@ from typing import Optional
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution, CompleteSolution, HeuristicSolution
+from utils.classes import Solution, HeuristicSolution
 from MIP.support import (
     set_gurobi_parameters,
     compute_iis_if_not_solved,
@@ -28,8 +28,8 @@ path_to_temp = Path(__file__).parent.parent.parent / "temp"
 
 def construct_model(
         instance: EpochInstance,
-        status_quo: EpochSolution,
-        epoch_warm_start: EpochSolution,
+        status_quo: Solution,
+        epoch_warm_start: Solution,
         solver_params: SolverParameters,
 ) -> StaggeredRoutingModel:
     """Construct and initialize the optimization model."""
@@ -84,8 +84,8 @@ def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParame
 def run_model(
         model: StaggeredRoutingModel,
         instance: EpochInstance,
-        warm_start: CompleteSolution | HeuristicSolution | EpochSolution,
-        status_quo: CompleteSolution | EpochSolution,
+        warm_start: HeuristicSolution | Solution,
+        status_quo: Solution,
         solver_params: SolverParameters,
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""

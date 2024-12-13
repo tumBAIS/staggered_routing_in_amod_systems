@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 from input_data import SolverParameters
 from instance_module.instance import Instance
-from utils.classes import CompleteSolution, OptimizationMeasures
+from utils.classes import Solution, OptimizationMeasures
 
 
 def transform_path_to_string(path: Path) -> str:
@@ -24,8 +24,8 @@ def transform_path_to_string(path: Path) -> str:
         raise ValueError(f"'data{os.path.sep}' not found in path {path_str}.")
 
 
-def save_experiment(instance: Instance, status_quo: CompleteSolution,
-                    solution: CompleteSolution, solver_params: SolverParameters,
+def save_experiment(instance: Instance, status_quo: Solution,
+                    solution: Solution, solver_params: SolverParameters,
                     optimization_measures_list: list[OptimizationMeasures]):
     """
     Save experiment results to JSON files.

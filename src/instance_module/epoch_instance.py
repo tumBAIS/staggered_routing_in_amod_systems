@@ -100,6 +100,14 @@ class EpochInstance(Instance):
 
         return original_id
 
+    def remove_arc_at_position_from_trip_route(self, trip, position) -> None:
+
+        self.latest_departure_times[trip].pop(position)
+        self.earliest_departure_times[trip].pop(position)
+        self.max_delay_on_arc[trip].pop(position)
+        self.min_delay_on_arc[trip].pop(position)
+        self.trip_routes[trip].pop(position)
+
 
 EpochInstances = list[EpochInstance]
 

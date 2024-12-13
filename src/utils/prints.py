@@ -3,7 +3,7 @@ import pandas as pd
 
 from input_data import SPEED_KPH
 from instance_module.epoch_instance import EpochInstances
-from utils.classes import CompleteSolution
+from utils.classes import Solution
 
 
 def print_info_arcs_utilized(instance):
@@ -140,7 +140,7 @@ def _print_arcs_utilized_info(dataframe_info):
     print("=" * 50)
 
 
-def print_insights_algorithm(complete_status_quo: CompleteSolution, reconstructed_solution: CompleteSolution,
+def print_insights_algorithm(complete_status_quo: Solution, reconstructed_solution: Solution,
                              epoch_instances: EpochInstances):
     print("=" * 50)
     print("Final Algorithm Insights".center(50))

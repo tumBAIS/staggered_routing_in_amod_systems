@@ -5,7 +5,7 @@ from congestion_model.core import (
     get_staggering_applicable,
 )
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution
+from utils.classes import Solution
 from MIP import StaggeredRoutingModel
 
 
@@ -37,10 +37,10 @@ def get_staggering_applied(release_times_solution: list[float], release_times_st
 def get_epoch_model_solution(
         model: StaggeredRoutingModel,
         epoch_instance: EpochInstance,
-        epoch_status_quo: EpochSolution,
-        epoch_warm_start: EpochSolution,
+        epoch_status_quo: Solution,
+        epoch_warm_start: Solution,
         solver_params: SolverParameters,
-) -> EpochSolution:
+) -> Solution:
     """
     Compute the epoch model solution from the optimized model.
     """
@@ -59,7 +59,7 @@ def get_epoch_model_solution(
     total_travel_time = get_total_travel_time(congested_schedule)
 
     # Construct and return the model solution
-    return EpochSolution(
+    return Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
         release_times=release_times,

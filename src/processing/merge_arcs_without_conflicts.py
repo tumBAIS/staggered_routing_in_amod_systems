@@ -1,9 +1,9 @@
 import shapely
-from utils.classes import CompleteSolution
+from utils.classes import Solution
 from instance_module.instance import Instance
 
 
-def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: Instance, status_quo: CompleteSolution) -> None:
+def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: Instance, status_quo: Solution) -> None:
     """
     Merge arcs in vehicle paths where no conflicts can occur.
     """
@@ -50,7 +50,7 @@ def _add_merged_arc_to_instance(instance: Instance, arcs_to_merge: list[int]) ->
 
 
 def _update_vehicle_schedule(
-        vehicle_path: list[int], vehicle: int, status_quo: CompleteSolution,
+        vehicle_path: list[int], vehicle: int, status_quo: Solution,
         arcs_to_merge: list[int], instance: Instance
 ) -> None:
     """

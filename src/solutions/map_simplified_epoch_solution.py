@@ -8,14 +8,14 @@ from congestion_model.core import (
     get_delays_on_arcs,
 )
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution
+from utils.classes import Solution
 
 
 def map_simplified_epoch_solution(
         epoch_instance: EpochInstance,
-        simplified_epoch_solution: EpochSolution,
+        simplified_epoch_solution: Solution,
         solver_params: SolverParameters,
-) -> EpochSolution:
+) -> Solution:
     """
     Maps the simplified epoch solution back to the full instance, including removed vehicles.
 
@@ -54,7 +54,7 @@ def map_simplified_epoch_solution(
     print(f"Total delay mapped solution: {total_delay / 60:.2f} [min]")
 
     # Create and return the mapped epoch solution
-    return EpochSolution(
+    return Solution(
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,

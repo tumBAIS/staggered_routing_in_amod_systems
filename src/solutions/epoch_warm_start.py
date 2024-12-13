@@ -2,7 +2,7 @@ import datetime
 from input_data import SolverParameters
 from utils.aliases import *
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution
+from utils.classes import Solution
 from congestion_model.core import (
     get_free_flow_schedule,
     get_total_travel_time,
@@ -14,7 +14,7 @@ import cpp_module as cpp
 
 
 def _run_local_search(
-        solution: EpochSolution, instance: EpochInstance, solver_params: SolverParameters
+        solution: Solution, instance: EpochInstance, solver_params: SolverParameters
 ) -> TripSchedules:
     """
     Performs local search optimization to compute a warm start solution.
@@ -69,8 +69,8 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
 
 
 def get_epoch_warm_start(
-        epoch_instance: EpochInstance, epoch_status_quo: EpochSolution, solver_params: SolverParameters
-) -> EpochSolution:
+        epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters
+) -> Solution:
     """
     Computes the warm start solution for the given epoch.
 
@@ -98,7 +98,7 @@ def get_epoch_warm_start(
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
     total_travel_time = get_total_travel_time(congested_schedule)
 
-    warm_start = EpochSolution(
+    warm_start = Solution(
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,

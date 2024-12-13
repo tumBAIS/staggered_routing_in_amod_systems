@@ -311,7 +311,7 @@ def get_earliest_arrival_time(
     min_vehicles_on_arc = sum(
         1 for arrival in conflicting_arrivals
         if
-        arrival.latest_departure + 10 * TOLERANCE < earliest_departure.earliest_departure and current_latest_departure < arrival.earliest_arrival - 10 * TOLERANCE
+        arrival.latest_departure + TOLERANCE < earliest_departure.earliest_departure and current_latest_departure < arrival.earliest_arrival - TOLERANCE
     ) + 1
 
     min_delay = compute_delay_on_arc(

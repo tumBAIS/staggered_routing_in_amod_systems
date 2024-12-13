@@ -9,7 +9,7 @@ from utils.prints import (
     print_info_length_trips,
 )
 import cpp_module as cpp
-from utils.classes import EpochSolution
+from utils.classes import Solution
 from instance_module.epoch_instance import EpochInstance
 from instance_module.instance import Instance
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
@@ -91,7 +91,7 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
     )
 
 
-def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> EpochSolution:
+def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> Solution:
     """Compute the status quo solution for the current epoch."""
     cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
@@ -120,7 +120,7 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
     assert_trips_are_not_duplicated(epoch_instance, vehicles_utilizing_arcs)
     print_info_conflicting_sets_sizes(epoch_instance)
 
-    return EpochSolution(
+    return Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
         release_times=cpp_status_quo.get_start_times(),

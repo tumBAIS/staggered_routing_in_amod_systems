@@ -17,22 +17,7 @@ class Binaries:
 
 
 @dataclass
-class EpochSolution:
-    delays_on_arcs: list[list[float]]
-    free_flow_schedule: list[list[float]]
-    congested_schedule: list[list[float]]
-    release_times: list[float]
-    staggering_applicable: list[float]
-    staggering_applied: list[float]
-    vehicles_utilizing_arcs: list[list[int]]
-    total_delay: float
-    total_travel_time: float
-    nothing_to_optimize: bool = False
-    binaries: Binaries = field(default=Binaries)
-
-
-@dataclass
-class CompleteSolution:
+class Solution:
     delays_on_arcs: list[list[float]]
     free_flow_schedule: list[list[float]]
     congested_schedule: list[list[float]]
@@ -41,8 +26,18 @@ class CompleteSolution:
     staggering_applied: list[float]
     total_delay: float
     total_travel_time: float
-    binaries: Optional[Binaries]  # type: ignore
+    vehicles_utilizing_arcs: Optional[list[list[int]]] = None
+    binaries: Optional[Binaries] = None  # type: ignore
     nothing_to_optimize: bool = False
+
+    def remove_trip_at_position_entry_from_solution(self, trip, position):
+        """ Used during simplification: removes entries where delay cannot occur """
+        self.congested_schedule[trip].pop(position)
+        self.free_flow_schedule[trip].pop(position)
+        assert self.delays_on_arcs[trip][position] < 1e-6, "Vehicle has delay on the first arc."
+        self.delays_on_arcs[trip].pop(position)
+        if self.congested_schedule[trip]:
+            self.release_times[trip] = self.congested_schedule[trip][0]
 
 
 @dataclass(init=False)

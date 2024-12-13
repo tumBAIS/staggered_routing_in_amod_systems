@@ -8,7 +8,7 @@ from instance_module.instance import Instance
 from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
 from solutions.epoch_warm_start import get_epoch_warm_start
 from solutions.model_solution import get_epoch_model_solution
-from utils.classes import EpochSolution, CompleteSolution
+from utils.classes import Solution
 from typing import Optional
 from instance_module.epoch_instance import EpochInstance
 
@@ -24,7 +24,7 @@ def print_header_offline_solution() -> None:
 
 def get_offline_solution(
         instance: Instance, release_times: list[float], solver_params: SolverParameters
-) -> CompleteSolution:
+) -> Solution:
     """
     Computes the offline global solution, which serves as a baseline for comparison.
 
@@ -34,14 +34,14 @@ def get_offline_solution(
         solver_params: Solver parameters.
 
     Returns:
-        CompleteSolution: The computed offline solution.
+        Solution: The computed offline solution.
     """
     print_header_offline_solution()
 
     solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
     add_conflicting_sets_to_instance(instance, solution_metrics.free_flow_schedule)
 
-    return CompleteSolution(
+    return Solution(
         delays_on_arcs=solution_metrics.delays_on_arcs,
         free_flow_schedule=solution_metrics.free_flow_schedule,
         release_times=solution_metrics.release_times,
@@ -54,7 +54,7 @@ def get_offline_solution(
     )
 
 
-def print_info_epoch_solution(epoch_status_quo: EpochSolution, epoch_solution: EpochSolution) -> None:
+def print_info_epoch_solution(epoch_status_quo: Solution, epoch_solution: Solution) -> None:
     """
     Prints information about the computed epoch solution, including delay reduction.
 
@@ -80,11 +80,11 @@ def print_info_epoch_solution(epoch_status_quo: EpochSolution, epoch_solution: E
 
 def get_epoch_solution(
         simplified_instance: EpochInstance,
-        simplified_status_quo: EpochSolution,
+        simplified_status_quo: Solution,
         epoch_instance: EpochInstance,
-        epoch_status_quo: EpochSolution,
+        epoch_status_quo: Solution,
         solver_params: SolverParameters,
-) -> tuple[EpochSolution, Optional[MIP.support.OptimizationMeasures]]:
+) -> tuple[Solution, Optional[MIP.support.OptimizationMeasures]]:
     """
     Computes the solution for a single epoch, mapping it back to the full system.
 

@@ -1,6 +1,6 @@
 from input_data import ACTIVATE_ASSERTIONS
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution, CompleteSolution
+from utils.classes import Solution
 from instance_module.instance import Instance
 from utils.aliases import *
 from congestion_model.core import (
@@ -32,7 +32,7 @@ def _merge_schedules(existing_schedule: list[float], new_schedule: list[float]) 
 
 def _reconstruct_schedule(
         epoch_instances: list[EpochInstance],
-        epoch_status_quo_list: list[EpochSolution],
+        epoch_status_quo_list: list[Solution],
         global_instance: Instance,
 ) -> TripSchedules:
     """Reconstruct the global schedule from epoch solutions."""
@@ -79,10 +79,10 @@ def _print_not_matching_schedules(
 
 def reconstruct_solution(
         epoch_instances: list[EpochInstance],
-        epoch_status_quo_list: list[EpochSolution],
+        epoch_status_quo_list: list[Solution],
         global_instance: Instance,
         solver_params: SolverParameters
-) -> CompleteSolution:
+) -> Solution:
     """Reconstruct the global solution from epoch solutions."""
     # Reconstruct the global schedule
     congested_schedule = _reconstruct_schedule(epoch_instances, epoch_status_quo_list, global_instance)
@@ -103,7 +103,7 @@ def reconstruct_solution(
     binaries = get_conflict_binaries(global_instance.conflicting_sets, global_instance.trip_routes, congested_schedule)
 
     # Return the reconstructed solution
-    return CompleteSolution(
+    return Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
         release_times=release_times,

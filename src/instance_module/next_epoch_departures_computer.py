@@ -6,7 +6,7 @@ from enum import Enum
 
 from input_data import SolverParameters
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import EpochSolution
+from utils.classes import Solution
 
 
 class NextEpochDeparturesComputer:
@@ -24,7 +24,7 @@ class NextEpochDeparturesComputer:
 
     def run(self, next_epoch_departures: list[NextEpochDeparture],
             current_epoch_instance: EpochInstance,
-            current_epoch_status_quo: EpochSolution,
+            current_epoch_status_quo: Solution,
             vehicle_status_list: list[VehicleStatus],
             solver_params: SolverParameters) -> list[NextEpochDeparture]:
         """
@@ -181,7 +181,7 @@ def _get_stored_next_epoch_departure(departures, vehicle) -> tuple[int, NextEpoc
     )
 
 
-def _get_other_vehicle_info(current_epoch_instance: EpochInstance, current_epoch_status_quo: EpochSolution,
+def _get_other_vehicle_info(current_epoch_instance: EpochInstance, current_epoch_status_quo: Solution,
                             other_vehicle: int, arc: int) -> OtherVehicleInfo:
     """Get detailed information about another vehicle."""
     position = current_epoch_instance.trip_routes[other_vehicle].index(arc)

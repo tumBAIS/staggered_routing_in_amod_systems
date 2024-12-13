@@ -9,7 +9,7 @@ from typing import Optional
 
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP
 from instance_module.epoch_instance import EpochInstance
-from utils.classes import CompleteSolution, HeuristicSolution
+from utils.classes import Solution, HeuristicSolution
 from MIP import StaggeredRoutingModel
 
 # Define the path for results
@@ -86,7 +86,7 @@ def get_final_optimization_measures(model: StaggeredRoutingModel, instance: Epoc
     return None
 
 
-def save_solution_in_external_file(solution: HeuristicSolution | CompleteSolution,
+def save_solution_in_external_file(solution: HeuristicSolution | Solution,
                                    instance: EpochInstance) -> None:
     """Save the heuristic solution to an external file."""
     os.makedirs(path_to_results, exist_ok=True)
