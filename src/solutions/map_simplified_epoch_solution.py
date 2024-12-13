@@ -22,6 +22,10 @@ def map_simplified_epoch_solution(
     This function reinserts removed vehicles into the schedule, adjusts release times,
     computes the updated schedules and delays, and returns the full epoch solution.
     """
+    print("\n" + "=" * 50)
+    print("Mapping Simplified Solution to Full Instance".center(50))
+    print("=" * 50)
+
     # Extract initial release times and removed vehicles for mapping
     release_times_epoch = epoch_instance.release_times
     removed_vehicles = epoch_instance.removed_vehicles
@@ -32,6 +36,7 @@ def map_simplified_epoch_solution(
     for vehicle in sorted(removed_vehicles):
         staggering_applied.insert(vehicle, 0)
         staggering_applicable.insert(vehicle, 0)
+    print(f"Reinserted {len(removed_vehicles)} removed vehicles.")
 
     # Calculate staggered release times for all vehicles
     staggered_release_times = [
@@ -41,6 +46,7 @@ def map_simplified_epoch_solution(
 
     # Compute the full congested schedule
     congested_schedule = get_congested_schedule(epoch_instance, staggered_release_times, solver_params)
+    print("Full congested schedule computed.")
 
     # Compute additional metrics
     free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
@@ -50,8 +56,10 @@ def map_simplified_epoch_solution(
 
     # Update epoch timing and print summary
     epoch_instance.clock_end_epoch = datetime.datetime.now().timestamp()
-    print(f"Time to complete the epoch: {epoch_instance.clock_end_epoch - epoch_instance.clock_start_epoch:.2f} [s]")
-    print(f"Total delay mapped solution: {total_delay / 60:.2f} [min]")
+
+    print("=" * 50)
+    print("Mapping completed successfully.".center(50))
+    print("=" * 50)
 
     # Create and return the mapped epoch solution
     return Solution(

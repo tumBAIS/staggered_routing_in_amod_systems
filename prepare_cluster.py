@@ -254,6 +254,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     warm_start = PRESETS[preset_name]["warm_start"]
     improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
     local_search_callback = PRESETS[preset_name]["local_search_callback"]
+    verbose_model = False
 
     pretty_print_experiment_parameters(PRESETS[preset_name], network_name, number_of_trips,
                                        add_shortcuts)
@@ -323,6 +324,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
             "warm_start": warm_start,
             "improve_warm_start": improve_warm_start,
             "local_search_callback": local_search_callback,
+            "verbose_model": verbose_model
         }
 
         # Generate the solver parameters filename

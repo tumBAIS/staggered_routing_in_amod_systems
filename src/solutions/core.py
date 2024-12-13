@@ -64,19 +64,17 @@ def get_offline_solution(
 
 
 def print_comparison_between_solution_and_status_quo(epoch_status_quo: Solution, epoch_solution: Solution,
-                                                     epoch_id) -> None:
+                                                     epoch_instance) -> None:
     """
     Prints information about the computed epoch solution, including delay reduction.
-
-    Args:
-        epoch_status_quo: The current status quo solution for the epoch.
-        epoch_solution: The computed solution for the epoch.
     """
     print("\n" + "=" * 50)
-    print(f"Comparison Between Status Quo and Solution Epoch {epoch_id}".center(50))
+    print(f"Comparison Between Status Quo and Solution Epoch {epoch_instance.epoch_id}".center(50))
     print("=" * 50)
 
     # Print delays
+    time_taken = epoch_instance.clock_end_epoch - epoch_instance.clock_start_epoch
+    print(f"Time to complete the epoch: {time_taken:.2f} [s]")
     print(f"Total Delay (Status Quo): {epoch_status_quo.total_delay / 60:.2f} [min]")
     print(f"Total Delay (Computed Solution): {epoch_solution.total_delay / 60:.2f} [min]")
 
@@ -117,6 +115,6 @@ def get_epoch_solution(
 
     # Map the solution back to the full system
     epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
-    print_comparison_between_solution_and_status_quo(epoch_status_quo, epoch_solution, epoch_instance.epoch_id)
+    print_comparison_between_solution_and_status_quo(epoch_status_quo, epoch_solution, epoch_instance)
 
     return epoch_solution, optimization_measures

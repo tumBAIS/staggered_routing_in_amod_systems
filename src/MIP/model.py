@@ -87,7 +87,6 @@ def construct_model(
 
     print("=" * 50)
     print("Model construction completed successfully.".center(50))
-    print("=" * 50)
 
     return model
 
@@ -126,25 +125,42 @@ def run_model(
         solver_params: SolverParameters,
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
+    print("=" * 50)
+    print("Starting Model Optimization".center(50))
+    print("=" * 50)
+
+    # Check if model should be optimized
     if (not model.get_optimize_flag() or
             not is_there_remaining_time(instance, solver_params) or
             instance.instance_params.staggering_cap == 0):
+        print("Optimization skipped due to one of the following reasons:")
+        print(" - Optimization flag is disabled.")
+        print(" - No remaining time for optimization.")
+        print(" - Staggering capacity is zero.")
+        print("=" * 50)
         return None
 
     set_gurobi_parameters(model, instance, solver_params)
 
     if solver_params.warm_start:
+        print("Applying warm start to the model...")
         set_warm_start_model(model, warm_start, instance)
 
-    # Optimize with or without a callback
+    # Optimize the model
+    print("Optimizing the model...")
     if solver_params.local_search_callback:
+        print("Using local search callback during optimization.")
         model.optimize(callback(instance, status_quo, solver_params))
     else:
         model.optimize()
 
-    # Compute IIS if the model was not solved successfully
+    # Handle infeasible or interrupted cases
     if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
+        print("Optimization was unsuccessful. Computing IIS...")
         compute_iis_if_not_solved(model)
         raise RuntimeError("Model could not be solved")
+
+    print("Optimization completed successfully.")
+    print("=" * 50)
 
     return get_final_optimization_measures(model, instance)

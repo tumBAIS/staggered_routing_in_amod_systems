@@ -72,6 +72,7 @@ class SolverParameters:
     local_search_callback: bool
     instance_parameters: InstanceParameters
     set_of_experiments: Optional[str]
+    verbose_model: bool
 
     def __post_init__(self):
         self.path_to_results = self.instance_parameters.path_to_instance.parent / (f"{self.get_string_mode()}/"
@@ -126,7 +127,8 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
     solver_params = SolverParameters(epoch_size=6, optimize=True, algorithm_time_limit=100,
                                      epoch_time_limit=100,
                                      warm_start=True, improve_warm_start=True, local_search_callback=True,
-                                     instance_parameters=instance_params, set_of_experiments="local")
+                                     instance_parameters=instance_params, set_of_experiments="local",
+                                     verbose_model=False)
     return instance_params, solver_params
 
 
@@ -192,7 +194,8 @@ def get_input_from_dicts(instance_params_dict: dict, solver_params_dict: dict) -
         improve_warm_start=format_bool(solver_params_dict["improve_warm_start"]),
         local_search_callback=format_bool(solver_params_dict["local_search_callback"]),
         epoch_time_limit=int(solver_params_dict["epoch_time_limit"]),
-        algorithm_time_limit=int(solver_params_dict["algorithm_time_limit"])
+        algorithm_time_limit=int(solver_params_dict["algorithm_time_limit"]),
+        verbose_model=format_bool(solver_params_dict["verbose_model"])
     )
 
     return instance_params, solver_params

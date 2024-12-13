@@ -36,7 +36,9 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
     )
     time_remaining = max(0.0, round(min(total_time_remaining, epoch_time_remaining), 2))
     # Suppress Gurobi logging
+    log_val = 1 if solver_params.verbose_model else 0
     with SuppressOutput():
+        model.setParam('OutputFlag', log_val)
         model.setParam("timeLimit", time_remaining)
         model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
         model.setParam("NodeFileStart", 0.5)

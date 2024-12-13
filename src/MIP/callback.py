@@ -152,13 +152,13 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
     """Apply the heuristic solution to the model if it improves the current solution."""
     solution_is_improving = model.get_cb_total_delay() - heuristic_solution.total_delay > TOLERANCE
     if solution_is_improving:
-        print("Setting heuristic solution in callback...", end=" ")
+        print("Setting heuristic solution in callback...")
         set_heuristic_binary_variables(model, heuristic_solution)
         set_heuristic_continuous_variables(model, heuristic_solution, instance)
-        solution_status = model.cbUseSolution()
-        print(f"Model.cbUseSolution() returned {solution_status}")
+        solution_value = model.cbUseSolution()
+        print(f"Heuristic solution accepted with value {solution_value:.0f}")
         model.update()
-        if solution_status == 1e+100:
+        if solution_value == 1e+100:
             print("Heuristic solution not accepted - terminating model.")
             suspend_procedure(heuristic_solution, model, instance)
 
