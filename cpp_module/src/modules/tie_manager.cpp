@@ -42,15 +42,15 @@ namespace cpp_module {
     auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool {
         bool depart_at_same_time = std::abs(
                 congested_schedule[tie.vehicle_one][tie.position_one] -
-                congested_schedule[tie.vehicle_two][tie.position_two]) < CONSTR_TOLERANCE - 1e-6;
+                congested_schedule[tie.vehicle_two][tie.position_two]) < CONSTR_TOLERANCE - TOLERANCE;
 
         bool vehicle_one_arrives_at_departure = std::abs(
                 congested_schedule[tie.vehicle_two][tie.position_two] -
-                congested_schedule[tie.vehicle_one][tie.position_one + 1]) < CONSTR_TOLERANCE - 1e-6;
+                congested_schedule[tie.vehicle_one][tie.position_one + 1]) < CONSTR_TOLERANCE - TOLERANCE;
 
         bool vehicle_two_arrives_at_departure = std::abs(
                 congested_schedule[tie.vehicle_one][tie.position_one] -
-                congested_schedule[tie.vehicle_two][tie.position_two + 1]) < CONSTR_TOLERANCE - 1e-6;
+                congested_schedule[tie.vehicle_two][tie.position_two + 1]) < CONSTR_TOLERANCE - TOLERANCE;
 
         return depart_at_same_time || vehicle_one_arrives_at_departure || vehicle_two_arrives_at_departure;
     }

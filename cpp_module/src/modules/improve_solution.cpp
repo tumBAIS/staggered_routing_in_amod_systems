@@ -171,7 +171,7 @@ namespace cpp_module {
                           Solution &current_solution) -> bool {
         Solution new_solution(current_solution);
         for (auto conflict: conflicts_list) {
-            if (std::abs(conflict.distance_to_cover) < 1e-6) {
+            if (std::abs(conflict.distance_to_cover) < TOLERANCE) {
                 continue;
             }
             solve_conflict(conflict, new_solution, instance, scheduler);
