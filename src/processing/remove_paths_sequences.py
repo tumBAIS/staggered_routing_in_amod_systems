@@ -2,40 +2,6 @@ from utils.classes import Solution
 from instance_module.epoch_instance import EpochInstance
 
 
-def _remove_first_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
-    """
-    Remove the first entry from the vehicle's schedules and paths.
-    """
-    instance.latest_departure_times[vehicle].pop(0)
-    instance.earliest_departure_times[vehicle].pop(0)
-    instance.max_delay_on_arc[vehicle].pop(0)
-    instance.min_delay_on_arc[vehicle].pop(0)
-    status_quo.congested_schedule[vehicle].pop(0)
-    status_quo.free_flow_schedule[vehicle].pop(0)
-    assert status_quo.delays_on_arcs[vehicle][0] < 1e-6, "Vehicle has delay on the first arc."
-    status_quo.delays_on_arcs[vehicle].pop(0)
-
-    if status_quo.congested_schedule[vehicle]:
-        status_quo.release_times[vehicle] = status_quo.congested_schedule[vehicle][0]
-
-
-def _remove_last_entry(instance: EpochInstance, status_quo: Solution, vehicle: int) -> None:
-    """
-    Remove the last entry from the vehicle's schedules and paths.
-    """
-    last_arc = instance.trip_routes[vehicle][-2]
-    instance.trip_routes[vehicle].pop(-2)
-    instance.latest_departure_times[vehicle].pop(-1)
-    instance.earliest_departure_times[vehicle].pop(-1)
-    instance.max_delay_on_arc[vehicle].pop(-1)
-    instance.min_delay_on_arc[vehicle].pop(-1)
-    instance.deadlines[vehicle] -= instance.travel_times_arcs[last_arc]
-    status_quo.congested_schedule[vehicle].pop(-1)
-    status_quo.free_flow_schedule[vehicle].pop(-1)
-    assert status_quo.delays_on_arcs[vehicle][-1] < 1e-6, "Vehicle has non-zero delay on last arc."
-    status_quo.delays_on_arcs[vehicle].pop(-1)
-
-
 def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
     """
     Remove the initial parts of paths without conflicts and remove vehicles with no remaining paths.
@@ -50,7 +16,7 @@ def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
                 break
 
             # Remove the arc from the vehicle's route and update the solution state
-            instance.remove_arc_at_position_from_trip_route(trip, 0)
+            instance.remove_arc_at_position_from_trip_route(trip, 0, "first")
             status_quo.remove_trip_at_position_entry_from_solution(trip, 0)
 
         # Remove the trip if no routes are left
@@ -72,11 +38,17 @@ def remove_initial_paths(instance: EpochInstance, status_quo: Solution) -> None:
 
 def remove_final_paths(instance: EpochInstance, status_quo: Solution) -> None:
     """
-    Remove the final parts of paths without conflicts.
+    Remove the final parts of paths without conflicts, starting from the second-to-last arc.
+
+    Args:
+        instance (EpochInstance): The problem instance containing trip routes and conflict data.
+        status_quo (Solution): The current solution state to be updated.
     """
-    for vehicle, path in enumerate(instance.trip_routes):
-        for arc in reversed(path):
-            if vehicle not in instance.conflicting_sets[arc] and arc > 0:
-                _remove_last_entry(instance, status_quo, vehicle)
-            else:
+    for trip, route in enumerate(instance.trip_routes):
+        reversed_route = list(reversed(route[:-1]))
+        for index, arc in enumerate(reversed_route, 1):  # Start from the second-to-last arc
+            position = len(reversed_route) - index  # Calculate the original index in the route
+            if trip in instance.conflicting_sets[arc]:
                 break
+            instance.remove_arc_at_position_from_trip_route(trip, position, "last")
+            status_quo.remove_trip_at_position_entry_from_solution(trip, position + 1)

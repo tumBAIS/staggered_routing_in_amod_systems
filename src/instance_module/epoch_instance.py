@@ -42,6 +42,32 @@ class EpochInstance(Instance):
             [vehicle - sum(1 for removed in self.removed_vehicles if removed < vehicle) for vehicle in conf_set]
             for conf_set in self.conflicting_sets]
 
+    def remove_arc_at_position_from_trip_route(self, trip, position, mode: str) -> None:
+        """
+        Remove an arc at a specific position from a trip route and update related attributes.
+        """
+        # Retrieve arc and travel time
+        arc = self.trip_routes[trip][position]
+        travel_time = self.travel_times_arcs[arc]
+
+        # Remove the arc from the trip route
+        self.trip_routes[trip].pop(position)
+
+        # Adjust position index for timing-related attributes if mode is "last"
+        timing_position = position + 1 if mode == "last" else position
+
+        # Update timing and delay attributes
+        self.latest_departure_times[trip].pop(timing_position)
+        self.earliest_departure_times[trip].pop(timing_position)
+        self.max_delay_on_arc[trip].pop(timing_position)
+        self.min_delay_on_arc[trip].pop(timing_position)
+
+        # Adjust release times or deadlines based on the mode
+        if mode == "first":
+            self.release_times[trip] += travel_time
+        elif mode == "last":
+            self.deadlines[trip] -= travel_time
+
     def remove_trip(self, trip):
         self.max_staggering_applicable.pop(trip)
         self.trip_routes.pop(trip)
@@ -50,6 +76,7 @@ class EpochInstance(Instance):
         self.max_delay_on_arc.pop(trip)
         self.min_delay_on_arc.pop(trip)
         self.deadlines.pop(trip)
+        self.release_times.pop(trip)
         self.removed_vehicles.append(trip)
 
     def start(self, epoch_size):
@@ -117,14 +144,6 @@ class EpochInstance(Instance):
         print(f"Final Original ID: {original_id}")
 
         return original_id
-
-    def remove_arc_at_position_from_trip_route(self, trip, position) -> None:
-
-        self.latest_departure_times[trip].pop(position)
-        self.earliest_departure_times[trip].pop(position)
-        self.max_delay_on_arc[trip].pop(position)
-        self.min_delay_on_arc[trip].pop(position)
-        self.trip_routes[trip].pop(position)
 
 
 EpochInstances = list[EpochInstance]
