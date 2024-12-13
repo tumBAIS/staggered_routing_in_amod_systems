@@ -266,10 +266,10 @@ def assert_time_bound(time_bound: TimeBound) -> None:
     """
     if ACTIVATE_ASSERTIONS:
         assert (
-                time_bound.latest_arrival - time_bound.earliest_arrival > -1e-6
+                time_bound.latest_arrival - time_bound.earliest_arrival > -TOLERANCE
         ), f"TimeBoundError#1: Latest arrival <= Earliest arrival. Details: {time_bound}"
         assert (
-                time_bound.latest_departure - time_bound.earliest_departure > -1e-6
+                time_bound.latest_departure - time_bound.earliest_departure > -TOLERANCE
         ), f"TimeBoundError#2: Latest departure <= Earliest departure. Details: {time_bound}"
 
 
