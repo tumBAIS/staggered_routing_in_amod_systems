@@ -143,7 +143,23 @@ PRESETS = {
         "warm_start": True,
         "improve_warm_start": True,
         "local_search_callback": True  # end solver params
-    }
+    },
+    "algo_performance_paper": {
+        "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [15, 30],
+        "seed_list": [0],
+        "list_of_slopes": [0.5],
+        "list_of_thresholds": [1],
+        "staggering_cap_list": [10],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["OFFLINE", "ONLINE"],
+        "algorithm_time_limit": 7200,  # start solver params
+        "epoch_time_limit": 360,
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start": True,
+        "local_search_callback": True  # end solver params
+    },
 }
 
 
@@ -269,6 +285,8 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     # Cluster parameters
     job_title = set_of_experiments
     job_priority = "NORMAL"  # NORMAL, URGENT
+    cpu_per_run = 1
+    node_type = "ANY"
     if network_name == "manhattan_5":
         minutes_per_run = 30
         memory_per_cpu = "2G"
@@ -276,10 +294,11 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
         minutes_per_run = 60
         memory_per_cpu = "500MB"
     else:
-        minutes_per_run = 500
-        memory_per_cpu = "10G"
-    node_type = "ANY"
-    cpu_per_run = 1
+        # LARGE EXPERIMENTS
+        minutes_per_run = 300
+        memory_per_cpu = "15G"
+        cpu_per_run = 2
+        node_type = "CPU_ONLY"
 
     # cluster_setup
     cluster_setup = ClusterSetup(
@@ -338,5 +357,5 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance", network_name="manhattan_10", number_of_trips=100,
+    main(preset_name="algo_performance_paper", network_name="manhattan_100", number_of_trips=5000,
          add_shortcuts=True)
