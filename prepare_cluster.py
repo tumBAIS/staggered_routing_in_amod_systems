@@ -166,7 +166,7 @@ PRESETS = {
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
-        "algorithm_time_limit": 100,  # start solver params
+        "algorithm_time_limit": 7200,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -369,5 +369,5 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_paper", network_name="manhattan_100", number_of_trips=5000,
+    main(preset_name="staggering_analysis_paper", network_name="manhattan_100", number_of_trips=5000,
          add_shortcuts=True)
