@@ -20,11 +20,9 @@ def _run_local_search(
     """
     Performs local search optimization to compute a warm start solution.
     """
-    print("Computing warm start solution")
     instance.due_dates = instance.deadlines[:]
     time_remaining = _compute_remaining_time(instance, solver_params)
 
-    start_time = datetime.datetime.now().timestamp()
     cpp_parameters = [time_remaining]
 
     congested_schedule = cpp.cpp_local_search(
@@ -44,8 +42,6 @@ def _run_local_search(
         lb_travel_time=instance.get_lb_travel_time(),
     )
 
-    elapsed_time = datetime.datetime.now().timestamp() - start_time
-    print("Time required to compute warm start solution: ", elapsed_time)
     return congested_schedule
 
 
@@ -78,12 +74,20 @@ def get_epoch_warm_start(
     If the solver parameters allow improving the warm start and there is time left for optimization,
     performs a local search. Otherwise, returns the status quo.
     """
+    print("\n" + "=" * 50)
+    print(f"Computing Warm Start Epoch {epoch_instance.epoch_id}".center(50))
+    print("=" * 50)
+
+    # Decide whether to improve warm start or use status quo
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
+        print("Improving warm start using local search...")
         congested_schedule = _run_local_search(epoch_status_quo, epoch_instance, solver_params)
+        print("Local search completed.")
     else:
         if not _is_time_left_for_optimization(epoch_instance, solver_params):
             print("No remaining time for optimization - ", end="")
-        print("Using status quo as warm start")
+        print("Using status quo as warm start.")
+        print("=" * 50)
         return epoch_status_quo
 
     # Compute necessary metrics for the warm start solution
@@ -99,6 +103,7 @@ def get_epoch_warm_start(
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
     total_travel_time = get_total_travel_time(congested_schedule)
 
+    # Construct the warm start solution
     warm_start = Solution(
         total_delay=total_delay,
         congested_schedule=congested_schedule,
@@ -112,5 +117,11 @@ def get_epoch_warm_start(
         vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
     )
 
-    print(f"The delay of the warm start is {total_delay / total_travel_time:.2%} of the travel time")
+    # Print final metrics
+    delay_percentage = total_delay / total_travel_time * 100
+    print(f"Warm start solution computed successfully.")
+    print(f" - Total Delay: {total_delay:.2f}")
+    print(f" - Delay as % of Travel Time: {delay_percentage:.2f}%")
+    print("=" * 50)
+
     return warm_start

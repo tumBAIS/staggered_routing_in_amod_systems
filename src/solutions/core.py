@@ -63,7 +63,8 @@ def get_offline_solution(
     return offline_solution
 
 
-def print_info_epoch_solution(epoch_status_quo: Solution, epoch_solution: Solution) -> None:
+def print_comparison_between_solution_and_status_quo(epoch_status_quo: Solution, epoch_solution: Solution,
+                                                     epoch_id) -> None:
     """
     Prints information about the computed epoch solution, including delay reduction.
 
@@ -71,20 +72,24 @@ def print_info_epoch_solution(epoch_status_quo: Solution, epoch_solution: Soluti
         epoch_status_quo: The current status quo solution for the epoch.
         epoch_solution: The computed solution for the epoch.
     """
-    print("#" * 20)
-    print("INFO EPOCH SOLUTION")
-    print("#" * 20)
+    print("\n" + "=" * 50)
+    print(f"Comparison Between Status Quo and Solution Epoch {epoch_id}".center(50))
+    print("=" * 50)
 
-    print(f"Total delay epoch status quo: {epoch_status_quo.total_delay / 60:.2f} [min]")
-    print(f"Total delay epoch model solution: {epoch_solution.total_delay / 60:.2f} [min]")
+    # Print delays
+    print(f"Total Delay (Status Quo): {epoch_status_quo.total_delay / 60:.2f} [min]")
+    print(f"Total Delay (Computed Solution): {epoch_solution.total_delay / 60:.2f} [min]")
 
+    # Compute and print delay reduction
     if epoch_status_quo.total_delay > TOLERANCE:
         delay_reduction = (
                 (epoch_status_quo.total_delay - epoch_solution.total_delay) / epoch_status_quo.total_delay
         )
-        print(f"Total delay epoch reduction: {delay_reduction:.2%}")
+        print(f"Delay Reduction: {delay_reduction:.2%}")
     else:
-        print("Total delay epoch reduction: 0.00%")
+        print("Delay Reduction: 0.00%")
+
+    print("=" * 50)
 
 
 def get_epoch_solution(
@@ -97,20 +102,21 @@ def get_epoch_solution(
     """
     Computes the solution for a single epoch, mapping it back to the full system.
     """
-    if len(simplified_status_quo.congested_schedule) > 0:
-        epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
-        model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
-        optimization_measures = run_model(
-            model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params
-        )
-        model_solution = get_epoch_model_solution(
-            model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params
-        )
-
-        # Map the solution back to the full system
-        epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
-        print_info_epoch_solution(epoch_status_quo, epoch_solution)
-
-        return epoch_solution, optimization_measures
-    else:
+    # Handle case in which nothing should be optimized.
+    if len(simplified_status_quo.congested_schedule) == 0:
         return epoch_status_quo, None
+
+    epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
+    model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
+    optimization_measures = run_model(
+        model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params
+    )
+    model_solution = get_epoch_model_solution(
+        model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params
+    )
+
+    # Map the solution back to the full system
+    epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
+    print_comparison_between_solution_and_status_quo(epoch_status_quo, epoch_solution, epoch_instance.epoch_id)
+
+    return epoch_solution, optimization_measures

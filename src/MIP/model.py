@@ -46,7 +46,7 @@ def construct_model(
         StaggeredRoutingModel: The constructed optimization model.
     """
     print("\n" + "=" * 50)
-    print(f"Constructing Optimization Model For Epoch {instance.epoch_id}".center(50))
+    print(f"Constructing Optimization Model Epoch {instance.epoch_id}".center(50))
     print("=" * 50)
 
     # Initialize the model with relevant parameters

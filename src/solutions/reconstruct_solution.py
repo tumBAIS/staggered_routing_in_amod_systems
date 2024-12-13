@@ -1,3 +1,4 @@
+import utils.prints
 from input_data import ACTIVATE_ASSERTIONS, TOLERANCE
 from instance_module.epoch_instance import EpochInstance
 from utils.classes import Solution
@@ -86,6 +87,7 @@ def reconstruct_solution(
 ) -> Solution:
     """Reconstruct the global solution from epoch solutions."""
     # Reconstruct the global schedule
+    utils.prints.print_unified_solution_construction_start()
     congested_schedule = _reconstruct_schedule(epoch_instances, epoch_status_quo_list, global_instance)
     _assert_congested_schedule_is_correct(global_instance, congested_schedule, solver_params)
 

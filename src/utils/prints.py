@@ -136,6 +136,18 @@ def print_trips_info(instance, congested_schedule, free_flow_schedule, delays_on
         print("=" * 100)
 
 
+def print_unified_solution_construction_start() -> None:
+    """
+    Prints a message to indicate that computations across epochs are complete
+    and the unified solution is being constructed.
+    """
+    print("\n" + "=" * 50)
+    print("Computation Across Epochs Complete".center(50))
+    print("=" * 50)
+    print("Now constructing the unified solution...".center(50))
+    print("=" * 50)
+
+
 def print_insights_algorithm(complete_status_quo: Solution, reconstructed_solution: Solution,
                              epoch_instances: EpochInstances):
     print("=" * 50)
