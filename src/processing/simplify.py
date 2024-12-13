@@ -68,7 +68,7 @@ def simplify_system(
     not_simplified_instance.removed_vehicles = instance.removed_vehicles[:]  # Map IDs of removed vehicles
 
     # If all vehicles are removed, return the simplified instance and status quo
-    if len(not_simplified_status_quo.congested_schedule) == len(not_simplified_instance.removed_vehicles):
+    if not instance.trip_routes:
         return instance, status_quo
 
     # Further preprocessing steps
