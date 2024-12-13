@@ -5,7 +5,7 @@ from conflicting_sets.time_bounds import TimeBound, get_initial_latest_arrival_t
     split_time_bounds_on_arcs, arrange_bounds_by_vehicle, get_undivided_conflicting_sets
 from instance_module.instance import Instance
 from utils.aliases import *
-from input_data import TOLERANCE
+from input_data import TOLERANCE, CONSTR_TOLERANCE
 
 
 def get_max_delay_on_arcs(vehicle_based_time_bounds: list[list[TimeBound]]) -> list[list[float]]:
@@ -31,7 +31,7 @@ def get_earliest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]
 
 def get_latest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]]) -> list[list[float]]:
     return [
-        [bound.latest_departure for bound in
+        [bound.latest_departure + CONSTR_TOLERANCE + TOLERANCE for bound in
          sorted(bounds_of_one_vehicle, key=lambda x: x.earliest_departure)]
         for bounds_of_one_vehicle in vehicle_based_time_bounds
     ]
