@@ -1,6 +1,6 @@
 from utils.classes import Solution
 from instance_module.instance import Instance
-from input_data import FIX_MODEL, TOLERANCE, CONSTR_TOLERANCE
+from input_data import FIX_MODEL, TOLERANCE, CONSTR_TOLERANCE, ACTIVATE_ASSERTIONS
 from MIP import StaggeredRoutingModel
 
 
@@ -13,9 +13,10 @@ def _add_departure_variable(
     earliest_departure = instance.earliest_departure_times[vehicle][arc_index]
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
     departure = status_quo.congested_schedule[vehicle][arc_index]
-    assert (
-            earliest_departure - CONSTR_TOLERANCE - TOLERANCE <= departure <= latest_departure + CONSTR_TOLERANCE - TOLERANCE
-    ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - CONSTR_TOLERANCE - TOLERANCE} <\= {departure} <\= {latest_departure + CONSTR_TOLERANCE + TOLERANCE}"
+    if ACTIVATE_ASSERTIONS:
+        assert (
+                earliest_departure - CONSTR_TOLERANCE - TOLERANCE <= departure <= latest_departure + CONSTR_TOLERANCE - TOLERANCE
+        ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - CONSTR_TOLERANCE - TOLERANCE} <\= {departure} <\= {latest_departure + CONSTR_TOLERANCE + TOLERANCE}"
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
