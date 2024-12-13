@@ -155,7 +155,7 @@ def run_model(
         model.optimize()
 
     # Handle infeasible or interrupted cases
-    if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
+    if model.status in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED]:
         print("Optimization was unsuccessful. Computing IIS...")
         compute_iis_if_not_solved(model)
         raise RuntimeError("Model could not be solved")
