@@ -4,6 +4,8 @@ import os
 import pickle
 import datetime
 import dataclasses
+from utils.tools import SuppressOutput
+
 import gurobipy as grb
 from typing import Optional
 
@@ -33,16 +35,15 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
     )
     time_remaining = max(0.0, round(min(total_time_remaining, epoch_time_remaining), 2))
-
-    model.setParam("timeLimit", time_remaining)
-    model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
-    model.setParam("NodeFileStart", 0.5)
-    model.setParam("Threads", 1)
-    model.setParam("MIPFocus", 2)
-    model.setParam("Disconnected", 0)
-    model.setParam("NumericFocus", 2)
-    # model.setParam("FeasibilityTol", 1e-8)
-    # model.setParam("IntFeasTol", 1e-7)
+    # Suppress Gurobi logging
+    with SuppressOutput():
+        model.setParam("timeLimit", time_remaining)
+        model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
+        model.setParam("NodeFileStart", 0.5)
+        model.setParam("Threads", 1)
+        model.setParam("MIPFocus", 2)
+        model.setParam("Disconnected", 0)
+        model.setParam("NumericFocus", 2)
 
 
 def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:

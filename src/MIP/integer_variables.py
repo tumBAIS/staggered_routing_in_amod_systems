@@ -103,10 +103,7 @@ def _add_conflict_variables_among_vehicles_in_conflicting_set(
 
 def add_conflict_variables(model: StaggeredRoutingModel, instance: Instance) -> None:
     """Add all conflict variables for each arc and its conflicting set."""
-    print("Creating conflict variables ...", end=" ")
 
     for arc, conflicting_set in enumerate(instance.conflicting_sets):
         if conflicting_set:
             _add_conflict_variables_among_vehicles_in_conflicting_set(model, arc, conflicting_set, instance)
-
-    print("done!")

@@ -83,23 +83,29 @@ namespace cpp_module {
                     const Solution &new_solution,
                     const Conflict &conflict) -> void {
         if (std::abs(old_solution.get_total_delay() - new_solution.get_total_delay()) > TOLERANCE) {
-            if (conflict.staggering_current_vehicle > 0) {
-                std::cout << std::fixed << std::setprecision(2) << " - staggering " << conflict.current_trip_id
-                          << " by "
-                          << conflict.staggering_current_vehicle;
-            }
-            if (conflict.destaggering_other_vehicle > 0) {
-                std::cout << std::fixed << std::setprecision(2) << " - destaggering " << conflict.other_trip_id
-                          << " by "
-                          << conflict.destaggering_other_vehicle;
-            }
-            std::cout << std::fixed << std::setprecision(2) << " - DELnew: "
-                      << new_solution.get_total_delay() << " -> DELold - DELnew = "
-                      << old_solution.get_total_delay() - new_solution.get_total_delay();
-            std::cout << std::endl;
-        }
+            std::ostringstream output;
 
+            if (conflict.staggering_current_vehicle > 0) {
+                output << "Staggering trip " << conflict.current_trip_id
+                       << " by " << std::fixed << std::setprecision(2)
+                       << conflict.staggering_current_vehicle << "; ";
+            }
+
+            if (conflict.destaggering_other_vehicle > 0) {
+                output << "destaggering trip " << conflict.other_trip_id
+                       << " by " << std::fixed << std::setprecision(2)
+                       << conflict.destaggering_other_vehicle << "; ";
+            }
+
+            output << "new total delay: " << std::fixed << std::setprecision(2)
+                   << new_solution.get_total_delay()
+                   << "; delay improvement: "
+                   << old_solution.get_total_delay() - new_solution.get_total_delay();
+
+            std::cout << output.str() << std::endl;
+        }
     }
+
 
     auto update_distance_to_cover(const Solution &complete_solution,
                                   Conflict &conflict,

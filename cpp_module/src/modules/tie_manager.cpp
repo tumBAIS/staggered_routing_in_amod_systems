@@ -140,7 +140,6 @@ namespace cpp_module {
 
             solve_arc_ties(instance, arc_id, complete_solution, scheduler);
         }
-        std::cout << std::endl; // end printing ties
     }
 
 } // namespace cpp_module

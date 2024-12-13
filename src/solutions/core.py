@@ -3,7 +3,6 @@ import utils.prints
 from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics
-from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import get_total_travel_time
 from instance_module.instance import Instance
 from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
@@ -42,12 +41,6 @@ def get_offline_solution(
 
     solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
 
-    # utils.prints.print_info_length_trips(instance,
-    #                                      solution_metrics.congested_schedule,
-    #                                      solution_metrics.free_flow_schedule,
-    #                                      solution_metrics.delays_on_arcs,
-    #                                      )
-
     offline_solution = Solution(
         delays_on_arcs=solution_metrics.delays_on_arcs,
         free_flow_schedule=solution_metrics.free_flow_schedule,
@@ -62,10 +55,10 @@ def get_offline_solution(
 
     offline_solution.print_congestion_info()
 
-    utils.prints.print_combined_info(instance,
-                                     offline_solution.congested_schedule,
-                                     offline_solution.free_flow_schedule,
-                                     offline_solution.delays_on_arcs)
+    utils.prints.print_trips_info(instance,
+                                  offline_solution.congested_schedule,
+                                  offline_solution.free_flow_schedule,
+                                  offline_solution.delays_on_arcs)
 
     return offline_solution
 
@@ -117,7 +110,6 @@ def get_epoch_solution(
     if len(simplified_status_quo.congested_schedule) > 0:
         epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
         model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
-
         optimization_measures = run_model(
             model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params
         )

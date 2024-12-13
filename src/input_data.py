@@ -112,6 +112,7 @@ def print_parameters(instance_parameters, solver_parameters):
     print(prepare_data_for_printing(solver_parameters, "Solver", exclude_keys=["instance_parameters"]))
     print("-" * 50)
 
+    print("=" * 100)
     print("START PROCEDURE".center(100))
     print("=" * 100)
 

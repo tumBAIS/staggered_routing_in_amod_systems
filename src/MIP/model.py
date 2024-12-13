@@ -3,6 +3,7 @@ import datetime
 from pathlib import Path
 import gurobipy as grb
 from typing import Optional
+from utils.tools import SuppressOutput
 
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
@@ -32,25 +33,61 @@ def construct_model(
         epoch_warm_start: Solution,
         solver_params: SolverParameters,
 ) -> StaggeredRoutingModel:
-    """Construct and initialize the optimization model."""
+    """
+    Construct and initialize the optimization model.
+
+    Args:
+        instance: The problem instance containing trip and arc data.
+        status_quo: The current solution state.
+        epoch_warm_start: A warm start solution for the epoch.
+        solver_params: Parameters controlling solver behavior.
+
+    Returns:
+        StaggeredRoutingModel: The constructed optimization model.
+    """
+    print("\n" + "=" * 50)
+    print(f"Constructing Optimization Model For Epoch {instance.epoch_id}".center(50))
+    print("=" * 50)
+
     # Initialize the model with relevant parameters
-    model = StaggeredRoutingModel(
-        status_quo.total_delay, solver_params, instance.start_solution_time
-    )
+    print("Initializing the optimization model...")
+    model = StaggeredRoutingModel(status_quo.total_delay, solver_params, instance.start_solution_time)
+    print("Model initialized successfully.")
 
     # Check optimization and time constraints
-    if not solver_params.optimize or not is_there_remaining_time(instance, solver_params):
+    print("Checking optimization and time constraints...")
+    if not solver_params.optimize:
+        print("Optimization flag is disabled. Skipping model construction.")
         model.set_optimize_flag(False)
-        if not is_there_remaining_time(instance, solver_params):
-            print("No remaining time for optimization - model will not be constructed.")
         return model
+
+    if not is_there_remaining_time(instance, solver_params):
+        print("No remaining time for optimization. Model will not be constructed.")
+        model.set_optimize_flag(False)
+        return model
+
+    print("Optimization and time constraints validated.")
 
     # Add variables and constraints to the model
     add_conflict_variables(model, instance)
+    print("Conflict variables added.")
+
     add_continuous_variables(model, instance, status_quo, epoch_warm_start)
+    print("Continuous variables added.")
+
     add_conflict_constraints(model, instance)
+    print("Conflict constraints added.")
+    model.print_num_big_m_constraints()
+
     model.add_travel_continuity_constraints(instance)
+    print("Travel continuity constraints added.")
+
     model.add_objective_function()
+    print("Objective function added.")
+
+    print("=" * 50)
+    print("Model construction completed successfully.".center(50))
+    print("=" * 50)
 
     return model
 

@@ -90,10 +90,7 @@ def add_continuous_variables(
         model: StaggeredRoutingModel, instance: Instance, status_quo: Solution, epoch_warm_start
 ) -> None:
     """Create all continuous variables for the optimization model."""
-    print("Creating continuous variables... ", end="")
 
     for trip_id, path in enumerate(instance.trip_routes):
         for arc in path:
             _add_continuous_variables_vehicle_on_arc(model, instance, status_quo, trip_id, arc, epoch_warm_start)
-
-    print("done!")

@@ -56,7 +56,6 @@ def add_conflict_constraints_between_vehicle_pair(
 
 def add_conflict_constraints(model: StaggeredRoutingModel, instance: Instance) -> None:
     """Add conflict constraints to the model."""
-    print("Adding conflict constraints...", end=" ")
 
     for arc in model.get_list_conflicting_arcs():
         arc_travel_time = instance.travel_times_arcs[arc]
@@ -85,6 +84,4 @@ def add_conflict_constraints(model: StaggeredRoutingModel, instance: Instance) -
                 )
 
     # Finalize and update the model
-    print("done!")
-    model.print_num_big_m_constraints()
     model.update()

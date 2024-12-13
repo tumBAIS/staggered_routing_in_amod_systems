@@ -68,7 +68,7 @@ class Solution:
         print(f"Free Flow Travel Time:     {total_free_flow_time:.2f} [sec]")
         print(f"Congestion Delay:          {congestion_delay_percentage:.2f}% of travel time")
         print(f"TomTom Congestion Index:   {tomtom_congestion_index:.2f}%")
-        print("--------------------------------------\n")
+        print("--------------------------------------")
 
 
 @dataclass(init=False)

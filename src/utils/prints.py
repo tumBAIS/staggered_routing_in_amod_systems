@@ -2,39 +2,60 @@ import datetime
 import pandas as pd
 
 from input_data import TOLERANCE
-from instance_module.epoch_instance import EpochInstances
+from instance_module.epoch_instance import EpochInstance, EpochInstances
 from utils.classes import Solution
 
 
-def print_info_conflicting_sets_sizes(instance):
-    """Prints information about sizes of conflicting sets and related statistics."""
+def print_conflicting_sets_info(instance: EpochInstance):
+    """
+    Prints information about the sizes of conflicting sets and related statistics.
+
+    Args:
+        instance: The problem instance containing conflicting sets data.
+    """
+    print("=" * 50)
+    print(f"Conflicting Sets Information For Epoch {instance.epoch_id}".center(50))
+    print("=" * 50)
+
+    # Check if there are any conflicting sets
     conflicting_sets_sizes = [len(x) for x in instance.conflicting_sets if x]
+    if not conflicting_sets_sizes:
+        print("No conflicting sets found.")
+        print("=" * 50)
+        return
+
+    # Convert conflicting sets sizes into a Pandas Series for statistical analysis
     conf_set_series = pd.Series(conflicting_sets_sizes)
 
-    print("=" * 50)
-    print("Distributional Info - Conflicting Sets".center(50))
-    print("=" * 50)
+    # Transpose and print summary statistics
+    print("Summary Statistics:")
+    print(conf_set_series.describe().to_frame(name="Value").T.round(2))
 
-    print(conf_set_series.describe())
-
+    # Identify the arc with the largest conflicting set
     arc_with_largest_set = max(
         range(len(instance.travel_times_arcs)),
         key=lambda x: len(instance.conflicting_sets[x])
     )
     largest_set_size = len(instance.conflicting_sets[arc_with_largest_set])
 
-    print(f"\nInfo - Arc with Largest Conflicting Set:")
+    # Print details about the largest conflicting set
+    print("\nDetails of the Largest Conflicting Set:")
     print(f"- Arc ID: {arc_with_largest_set}")
     print(f"- Conflicting Set Size: {largest_set_size}")
-    print(f"- Free Flow Travel Time: {instance.travel_times_arcs[arc_with_largest_set]} [s]")
+    print(f"- Free Flow Travel Time: {instance.travel_times_arcs[arc_with_largest_set] / 60:.2f} [min]")
     print(f"- Nominal Capacity: {instance.capacities_arcs[arc_with_largest_set]}")
 
+    # Calculate outliers (Above Q3 + 1.5*IQR)
     Q1, Q3 = conf_set_series.quantile([0.25, 0.75])
     IQR = Q3 - Q1
     outliers = conf_set_series[conf_set_series >= Q3 + 1.5 * IQR]
 
-    print("\nInfo - Outliers (Above 75th Percentile + 1.5 * IQR):")
-    print(outliers.describe())
+    print("\nOutliers (Above 75th Percentile + 1.5 * IQR):")
+    if not outliers.empty:
+        print(outliers.describe().to_frame(name="Value").T.round(2))
+    else:
+        print("No outliers found.")
+
     print("=" * 50)
 
 
@@ -77,9 +98,9 @@ def _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs):
     return pd.DataFrame(data)
 
 
-def print_combined_info(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
+def print_trips_info(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
     """
-    Prints combined information about conflicting sets, trip lengths, and delays on arcs side-by-side.
+    Prints combined information about trip lengths and delays on arcs side-by-side.
 
     Args:
         instance: The problem instance containing trip and arc data.
@@ -87,53 +108,31 @@ def print_combined_info(instance, congested_schedule, free_flow_schedule, delays
         free_flow_schedule: The free-flow trip schedule.
         delays_on_arcs: Delay data for arcs.
     """
-    conflicting_sets_string = "Conflicting Sets & " if any(instance.conflicting_sets) else ""
-    print("=" * 200)
-    print(f"{conflicting_sets_string}Trips Info".center(200))
-    print("=" * 200)
-
-    # Conflicting Sets Info
-    if any(instance.conflicting_sets):  # Check if conflicting sets are non-empty
-        conflicting_sets_sizes = [len(x) for x in instance.conflicting_sets if x]
-        conf_set_series = pd.Series(conflicting_sets_sizes)
-
-        arc_with_largest_set = max(
-            range(len(instance.travel_times_arcs)),
-            key=lambda x: len(instance.conflicting_sets[x])
-        )
-        largest_set_size = len(instance.conflicting_sets[arc_with_largest_set])
-
-        conflicting_sets_summary = f"""
-        Total Sets: {len(conflicting_sets_sizes)}
-        Largest Set - Arc ID: {arc_with_largest_set}, Size: {largest_set_size}
-        Free Flow Travel Time: {instance.travel_times_arcs[arc_with_largest_set] / 60:.2f} [min]
-        Nominal Capacity: {instance.capacities_arcs[arc_with_largest_set]}
-        """
-    else:
-        conflicting_sets_summary = f""
+    print("=" * 100)
+    print("Offline Solution - Trips Info".center(100))
+    print("=" * 100)
 
     # Trip Length Info
     length_trips_df = _create_length_trips_dataframe(congested_schedule, free_flow_schedule)
     length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > TOLERANCE]
-    trip_length_summary = length_trips_df.describe().round(2)
-    congested_trip_length_summary = length_congested_trips_df.describe().round(2)
+    trip_length_summary = length_trips_df.describe().round(2).T
+    congested_trip_length_summary = length_congested_trips_df.describe().round(2).T
 
     # Delays on Arcs Info
     delays_on_arcs_series = _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs)
-    delay_summary = delays_on_arcs_series.describe().round(2)
+    delay_summary = delays_on_arcs_series.describe().round(2).T
 
-    # Combine outputs into one side-by-side format
+    # Combine outputs into one transposed format
     combined_table = pd.concat(
         [trip_length_summary, congested_trip_length_summary, delay_summary],
-        axis=1,
+        axis=0,
         keys=["All Trips", "Congested Trips", "Delays on Arcs"]
     )
 
     # Print summaries
     with pd.option_context('display.max_columns', None, 'display.width', 1000):
-        print(conflicting_sets_summary)
         print(combined_table)
-        print("=" * 200)
+        print("=" * 100)
 
 
 def print_insights_algorithm(complete_status_quo: Solution, reconstructed_solution: Solution,

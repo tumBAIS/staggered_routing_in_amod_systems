@@ -9,12 +9,14 @@ from input_data import SolverParameters
 import datetime
 
 import gurobipy as grb
+from utils.tools import SuppressOutput
 
 
 class StaggeredRoutingModel(grb.Model):
 
     def __init__(self, initial_total_delay, solver_params, start_solution_time):
-        super().__init__("staggered_routing")
+        with SuppressOutput():
+            super().__init__("staggered_routing")
         # Optimization Metrics
         self._optimize_flag = True
         self._optimality_gaps_list = [100.0]
@@ -466,7 +468,6 @@ class StaggeredRoutingModel(grb.Model):
 
     def add_travel_continuity_constraints(self, instance: Instance) -> None:
         """Add travel continuity constraints to the self."""
-        print("Adding travel continuity constraints...")
 
         for vehicle in self._departure:
             for position in range(1, len(self._departure[vehicle])):
@@ -485,7 +486,6 @@ class StaggeredRoutingModel(grb.Model):
 
     def add_objective_function(self) -> None:
         """Set the objective function for minimizing total delay."""
-        print("Setting the objective function...")
         self.addConstr(
             self._total_delay == grb.quicksum(
                 self._delay[vehicle][arc] for vehicle in self._delay for arc in self._delay[vehicle]
@@ -493,7 +493,6 @@ class StaggeredRoutingModel(grb.Model):
             name="total_delay_constraint"
         )
         self.setObjective(self._total_delay, grb.GRB.MINIMIZE)
-        print("Objective: Minimization of total delay.")
 
     def get_objective_value(self) -> float:
         return self._total_delay.X

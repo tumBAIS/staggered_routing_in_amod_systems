@@ -60,5 +60,4 @@ def remove_not_utilized_arcs(instance: EpochInstance) -> list[int]:
     _remove_arcs(instance, arcs_to_remove)
     _update_trip_routes(instance, arcs_to_remove)
 
-    print(f"Arcs removed during preprocessing because they were not utilized: {len(arcs_to_remove)}")
     return arcs_to_remove

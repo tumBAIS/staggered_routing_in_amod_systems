@@ -4,9 +4,20 @@ import networkx as nx
 from networkx import MultiDiGraph
 from networkx.readwrite import json_graph
 from typing import TypeVar
+import sys
 
 K = TypeVar('K')
 V = TypeVar('V')
+
+
+class SuppressOutput:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open('NUL', 'w')  # Use 'NUL' for Windows
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
 
 
 def pairwise(iterable):
