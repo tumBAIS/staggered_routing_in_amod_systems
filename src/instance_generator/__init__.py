@@ -16,9 +16,7 @@ os.chdir(path_to_repo.as_posix())
 # ===========================
 build = "release"  # Options: release, debug, relwithdebinfo
 path_to_build = path_to_repo / f"cpp_module/cmake-build-{build}"
-path_to_kspwlo = path_to_repo / f"kspwlo/cmake-build-release"
 sys.path.append(path_to_build.as_posix())
-sys.path.append(path_to_kspwlo.as_posix())
 sys.path.append(path_to_src.as_posix())
 
 # ===========================

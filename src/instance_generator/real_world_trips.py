@@ -63,7 +63,6 @@ def _plot_od_pairs(network: Network, dataset_gdf: gpd.GeoDataFrame, path_to_inst
 def get_real_world_trips(instance_parameters: InstanceParameters, network: Network) -> list[dict]:
     """Retrieve all trips within a network polygon and time range."""
     dataset = _load_dataset(instance_parameters)
-    dataset = _filter_dataset_by_time(dataset, instance_parameters)
 
     dataset_gdf = _convert_dataset_to_gdf(dataset, lon_col="Start_Lon", lat_col="Start_Lat")
     dataset_gdf = _filter_trips_not_in_network(dataset_gdf, network)
@@ -217,7 +216,7 @@ def _convert_dataset_to_gdf(dataset: pd.DataFrame, lon_col: str, lat_col: str) -
 
 
 def _load_dataset(instance_params: InstanceParameters) -> pd.DataFrame:
-    """Load TLC data relative to Manhattan."""
+    """Load and filter TLC data relative to Manhattan."""
     tlc_folder_name = "YellowTripDataManhattan2015-01"
     path_to_repo = Path(__file__).resolve().parents[2]
     path_to_real_world_data = path_to_repo / "data" / tlc_folder_name
@@ -226,9 +225,18 @@ def _load_dataset(instance_params: InstanceParameters) -> pd.DataFrame:
     if not file_path.exists():
         raise FileNotFoundError(f"The file {file_path} does not exist.")
 
-    loaded_df = pd.read_parquet(file_path)
-    columns_to_drop = ["travelTime", "Projected Pickup Point", "Projected Dropoff Point"]
+    # Define time bounds for filtering
+    start_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=0, second=0)
+    end_time = datetime(year=2015, month=1, day=instance_params.day, hour=16, minute=59, second=59)
 
+    # Use filters if the Parquet library supports it
+    loaded_df = pd.read_parquet(file_path, filters=[
+        ("Trip_Pickup_DateTime", ">=", start_time),
+        ("Trip_Pickup_DateTime", "<=", end_time)
+    ])
+
+    # Drop unnecessary columns during load
+    columns_to_drop = ["travelTime", "Projected Pickup Point", "Projected Dropoff Point"]
     return loaded_df.drop(columns=columns_to_drop, axis=1)
 
 
