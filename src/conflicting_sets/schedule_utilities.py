@@ -30,9 +30,17 @@ def get_earliest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]
 
 
 def get_latest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]]) -> list[list[float]]:
+    """
+    Calculate the latest departure times for each vehicle based on time bounds.
+
+    """
     return [
-        [bound.latest_departure + CONSTR_TOLERANCE + TOLERANCE for bound in
-         sorted(bounds_of_one_vehicle, key=lambda x: x.earliest_departure)]
+        [
+            bound.latest_departure
+            if bound.latest_departure > bound.earliest_departure
+            else bound.earliest_departure + CONSTR_TOLERANCE
+            for bound in sorted(bounds_of_one_vehicle, key=lambda x: x.earliest_departure)
+        ]
         for bounds_of_one_vehicle in vehicle_based_time_bounds
     ]
 

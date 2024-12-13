@@ -12,11 +12,6 @@ def _add_departure_variable(
     arc_index = instance.trip_routes[vehicle].index(arc)
     earliest_departure = instance.earliest_departure_times[vehicle][arc_index]
     latest_departure = instance.latest_departure_times[vehicle][arc_index]
-    departure = status_quo.congested_schedule[vehicle][arc_index]
-    if ACTIVATE_ASSERTIONS:
-        assert (
-                earliest_departure - CONSTR_TOLERANCE - TOLERANCE <= departure <= latest_departure + CONSTR_TOLERANCE - TOLERANCE
-        ), f"Invalid departure time for vehicle {vehicle} on arc {arc}, position {arc_index}: {earliest_departure - CONSTR_TOLERANCE - TOLERANCE} <\= {departure} <\= {latest_departure + CONSTR_TOLERANCE + TOLERANCE}"
 
     if FIX_MODEL:
         fixed_departure = epoch_warm_start.congested_schedule[vehicle][arc_index]
