@@ -48,7 +48,7 @@ def print_delay_statistics(delays: Dict):
         print(f"{percentile}th Percentile: {np.percentile(delay_values, percentile):.2f} minutes")
 
 
-def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path_to_networks: Path):
+def get_congestion_heatmap_delayed_trips(results_df: pd.DataFrame, path_to_figures: Path, path_to_networks: Path):
     """Generate separate congestion heatmaps for LC and HC congestion levels."""
     print("\n" + "=" * 50)
     print("Starting Congestion Heatmap Generation".center(50))
@@ -196,7 +196,7 @@ def get_congestion_heatmap(results_df: pd.DataFrame, path_to_figures: Path, path
             cbar.ax.set_yticklabels([])
 
         # Save the heatmap
-        output_dir = path_to_figures / "heatmaps"
+        output_dir = path_to_figures / "heatmaps_delayed_trips"
         os.makedirs(output_dir, exist_ok=True)
         fig.subplots_adjust(left=0.025, right=.8)
         suffix = "annotated" if annotate else "no_annotations"
