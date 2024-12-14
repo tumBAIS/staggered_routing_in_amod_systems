@@ -4,6 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import tikzplotlib
 from pathlib import Path
+import numpy as np
 
 
 def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, verbose: bool = False) -> None:
@@ -24,6 +25,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     print("=" * 50)
     print("Step 2: Processing 'optimization_measures_list' column".center(50))
     print("=" * 50 + "\n")
+
     filtered_df['optimization_measures'] = filtered_df['optimization_measures_list'].apply(
         lambda x: x[0] if x else {}
     )
@@ -42,15 +44,38 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         filtered_df[final_col] = filtered_df[col].apply(lambda x: x[-1] if isinstance(x, list) and x else None)
     print("Final values extracted from list columns.\n")
 
-    # Calculate bounds difference
+    # Calculate bounds difference and convert time values to minutes
     print("=" * 50)
-    print("Step 4: Calculating bounds difference".center(50))
+    print("Step 4: Calculating bounds difference and converting time to minutes".center(50))
     print("=" * 50 + "\n")
+
+    nan_rows = filtered_df[
+        filtered_df[['optimization_measures_upper_bound_final',
+                     'optimization_measures_lower_bound_final',
+                     'optimization_measures_optimality_gap_final']].isna().any(axis=1)
+    ]
+
+    if not nan_rows.empty:
+        print(f"Found {len(nan_rows)} rows with NaN values. Replacing with default values...")
+        filtered_df = filtered_df.copy()  # Ensure a deep copy to avoid chained assignment warnings
+        filtered_df['optimization_measures_upper_bound_final'] = filtered_df[
+            'optimization_measures_upper_bound_final'].fillna(
+            filtered_df['solution_total_delay']
+        )
+        filtered_df['optimization_measures_lower_bound_final'] = filtered_df[
+            'optimization_measures_lower_bound_final'].fillna(0)
+        filtered_df['optimization_measures_optimality_gap_final'] = filtered_df[
+            'optimization_measures_optimality_gap_final'].fillna(100)
+        print("NaN values replaced.\n")
+
     filtered_df['optimization_measures_bounds_difference_final'] = (
             filtered_df['optimization_measures_upper_bound_final'] -
             filtered_df['optimization_measures_lower_bound_final']
     )
-    print("Bounds difference calculated.\n")
+    filtered_df['optimization_measures_lower_bound_final'] /= 60  # Convert to minutes
+    filtered_df['optimization_measures_bounds_difference_final'] /= 60  # Convert to minutes
+
+    print("Bounds difference calculated and time values converted to minutes.\n")
 
     # Split the data into LC and HC
     print("=" * 50)
@@ -59,7 +84,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     lc_data = filtered_df[filtered_df['congestion_level'] == "LC"]
     hc_data = filtered_df[filtered_df['congestion_level'] == "HC"]
 
-    def plot_horizontal_boxplot(data, x_col, xlabel, file_name, label):
+    def plot_horizontal_boxplot(data, x_col, xlabel, file_name, label, is_percentage=False, xlimits=None):
         """Helper function to create horizontal boxplots."""
         print(f"Creating boxplot for '{file_name}'...")
 
@@ -94,6 +119,15 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
 
         plt.grid(axis='x', linestyle='--', color='gray', alpha=0.7)
         plt.xlabel(xlabel)
+
+        # Set x-axis limits for percentage boxplots
+        if is_percentage:
+            plt.xlim(-1, 101)  # Set limits for percentage boxplots
+            plt.xticks(ticks=np.arange(0, 101, 20), labels=np.arange(0, 101, 20))
+        elif xlimits:
+            plt.xlim(xlimits[0], xlimits[1])  # Set custom x-axis limits for time values
+            # plt.xticks(ticks=np.arange(xlimits[0] + 1, xlimits[1]))
+
         plt.tight_layout()
 
         output_dir = path_to_figures / "mip_bounds_boxplots"
@@ -116,21 +150,24 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         x_col='optimization_measures_optimality_gap_final',
         xlabel=r"$\Delta$ [\%] (LC)",
         file_name="optimality_gap_LC",
-        label="LC"
+        label="LC",
+        is_percentage=True
     )
     plot_horizontal_boxplot(
         data=lc_data,
         x_col='optimization_measures_lower_bound_final',
-        xlabel="LB [sec] (LC)",
+        xlabel="LB [min] (LC)",  # Adjusted to minutes
         file_name="lower_bound_LC",
-        label="LC"
+        label="LC",
+        xlimits=(-0.9, 11)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=lc_data,
         x_col='optimization_measures_bounds_difference_final',
-        xlabel=r"$\Delta$ [sec] (LC)",
+        xlabel=r"$\Delta$ [min] (LC)",  # Adjusted to minutes
         file_name="bounds_difference_LC",
-        label="LC"
+        label="LC",
+        xlimits=(-0.9, 11)  # Adjust xlimits for time values if needed
     )
 
     # Generate boxplots for HC experiments
@@ -140,21 +177,24 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         x_col='optimization_measures_optimality_gap_final',
         xlabel=r"$\Delta$ [\%] (HC)",
         file_name="optimality_gap_HC",
-        label="HC"
+        label="HC",
+        is_percentage=True
     )
     plot_horizontal_boxplot(
         data=hc_data,
         x_col='optimization_measures_lower_bound_final',
-        xlabel="LB [sec] (HC)",
+        xlabel="LB [min] (HC)",  # Adjusted to minutes
         file_name="lower_bound_HC",
-        label="HC"
+        label="HC",
+        xlimits=(-1, None)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=hc_data,
         x_col='optimization_measures_bounds_difference_final',
-        xlabel=r"$\Delta$ [sec] (HC)",
+        xlabel=r"$\Delta$ [min] (HC)",  # Adjusted to minutes
         file_name="bounds_difference_HC",
-        label="HC"
+        label="HC",
+        xlimits=(-1, None)  # Adjust xlimits for time values if needed
     )
 
     print("\n" + "=" * 50)

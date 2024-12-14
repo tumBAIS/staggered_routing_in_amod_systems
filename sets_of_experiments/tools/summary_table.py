@@ -17,7 +17,7 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
 
     # Helper function to calculate statistics
     def calculate_statistics(df):
-        total_delays = df["status_quo_total_delay"]
+        total_delays = df["status_quo_total_delay"] / 60
         num_conflicting_sets = df["instance_conflicting_sets"].apply(
             lambda x: sum(len(sublist) > 0 for sublist in x)
         )

@@ -6,6 +6,7 @@ import seaborn as sns
 import tikzplotlib
 import warnings
 from matplotlib import MatplotlibDeprecationWarning
+import numpy as np
 
 # Suppress specific MatplotlibDeprecationWarning
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
@@ -23,11 +24,13 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
 
     # Calculate absolute and relative delay reduction
     print("Step 1: Calculating delay reductions...")
-    results_df['absolute_delay_reduction'] = results_df['status_quo_total_delay'] - results_df['solution_total_delay']
+    results_df['absolute_delay_reduction_seconds'] = results_df['status_quo_total_delay'] - results_df[
+        'solution_total_delay']
+    results_df['absolute_delay_reduction'] = results_df['absolute_delay_reduction_seconds'] / 60  # Convert to minutes
     results_df['relative_delay_reduction'] = (
-            results_df['absolute_delay_reduction'] / results_df['status_quo_total_delay'] * 100
+            results_df['absolute_delay_reduction_seconds'] / results_df['status_quo_total_delay'] * 100
     )
-    print("Delay reductions calculated.")
+    print("Delay reductions calculated (absolute in minutes, relative in percentage).")
 
     # Add a label for solver_parameters_epoch_size
     print("\nStep 2: Adding labels for solver parameters...")
@@ -41,7 +44,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
     lc_data = results_df[results_df['congestion_level'] == "LC"]
     hc_data = results_df[results_df['congestion_level'] == "HC"]
 
-    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name, label):
+    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name, label, is_percentage=False):
         print(f"\nCreating boxplot for {file_name}...")
 
         if verbose:
@@ -53,7 +56,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
 
         # Set the desired figure dimensions
         marker_size = 4  # Size of markers
-        box_width = 0.8  # Width of boxplots
+        box_width = 0.85  # Width of boxplots
 
         plt.figure(figsize=(6.5, 4.0))  # Use standard figure size for consistency
 
@@ -85,9 +88,15 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         # Add vertical grid lines
         plt.grid(axis='x', linestyle='--', color='gray', alpha=0.7)
 
-        # Customize labels and save the plot
+        # Customize labels
         plt.ylabel(ylabel)
         plt.xlabel(xlabel)
+
+        # Set x-axis ticks and limits for percentage plots
+        if is_percentage:
+            plt.xticks(ticks=np.arange(0, 101, 20), labels=np.arange(0, 101, 20))
+            plt.xlim(-1, 101)  # Ensure x-axis starts at 0 and ends at 100
+
         plt.tight_layout()
 
         # Save the figure as a JPEG
@@ -111,7 +120,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         x_col='absolute_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [sec] (LC)",
+        xlabel=r"$\Theta$ [min] (LC)",  # Updated unit to minutes
         file_name="absolute_delay_reduction_LC",
         label="LC"
     )
@@ -122,7 +131,8 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         ylabel="",
         xlabel=r"$\Theta$ [\%] (LC)",
         file_name="relative_delay_reduction_LC",
-        label="LC"
+        label="LC",
+        is_percentage=True
     )
 
     # Generate plots for HC experiments
@@ -132,7 +142,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         x_col='absolute_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [sec] (HC)",
+        xlabel=r"$\Theta$ [min] (HC)",  # Updated unit to minutes
         file_name="absolute_delay_reduction_HC",
         label="HC"
     )
@@ -143,7 +153,8 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         ylabel="",
         xlabel=r"$\Theta$ [\%] (HC)",
         file_name="relative_delay_reduction_HC",
-        label="HC"
+        label="HC",
+        is_percentage=True
     )
 
     print("\n" + "=" * 50)

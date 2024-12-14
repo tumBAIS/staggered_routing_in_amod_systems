@@ -35,7 +35,7 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
                         node_pair = arc_mapping[arc]
                         if node_pair not in arc_delays:
                             arc_delays[node_pair] = 0
-                        arc_delays[node_pair] += delay
+                        arc_delays[node_pair] += delay / 60  # Convert delay to minutes
         return arc_delays
 
     def create_barplot_for_congestion(data, label):
@@ -57,8 +57,9 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         off_delays = {arc: delay for arc, delay in off_delays.items() if arc in filtered_arcs}
         on_delays = {arc: delay for arc, delay in on_delays.items() if arc in filtered_arcs}
 
-        # Create frequency bins for delays
-        bins = [-1e-2, 1e-2] + list(np.arange(10, 310, 10))
+        # Create frequency bins for delays with 2-minute intervals, ending at 32 minutes
+        bins = np.arange(0, 34, 2)  # Bins from 0 to 32 with 2-minute intervals
+
         unc_values = list(unc_delays.values())
         off_values = list(off_delays.values())
         on_values = list(on_delays.values())
@@ -67,26 +68,16 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         off_freq, _ = np.histogram(off_values, bins=bins)
         on_freq, _ = np.histogram(on_values, bins=bins)
 
-        # Combine frequencies to determine which bins have data
-        combined_freq = unc_freq + off_freq + on_freq
-        valid_bins = [i for i, freq in enumerate(combined_freq) if freq > 0]
-
-        # Filter bins and frequencies
-        filtered_bins = [bins[i] for i in valid_bins] + [bins[max(valid_bins) + 1]]
-        unc_freq = unc_freq[valid_bins]
-        off_freq = off_freq[valid_bins]
-        on_freq = on_freq[valid_bins]
-
         if verbose:
             # Print detailed information about the barplots
             print(f"\n{label} Barplot Information:")
-            for i in range(len(filtered_bins) - 1):
-                print(f"  Bin [{filtered_bins[i]}, {filtered_bins[i + 1]}):")
+            for i in range(len(bins) - 1):
+                print(f"  Bin [{bins[i]}, {bins[i + 1]}):")
                 print(f"    UNC: {unc_freq[i]}, OFF: {off_freq[i]}, ON: {on_freq[i]}")
 
         # Create barplot
         bar_width = 0.3
-        x = np.arange(len(filtered_bins) - 1)  # X positions for the bars
+        x = np.arange(len(bins) - 1)  # X positions for the bars
 
         plt.figure(figsize=(8, 5))
         plt.grid(axis="y", linestyle="--", color="gray", alpha=0.7, which="major", zorder=0)
@@ -99,11 +90,14 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
                 zorder=2)
 
         plt.yscale("log")
-        plt.xlabel(r"$\mathcal{E}_a$ [min]")
+        plt.ylim(top=3000)  # Set y-axis maximum to 3000
+        plt.xlabel(r"$\mathcal{E}_a$ [min]")  # Updated to minutes
         plt.ylabel("Observations")
 
-        xticks = [f"{int(filtered_bins[i])}" for i in range(1, len(filtered_bins))]
-        plt.xticks(x, xticks, rotation=0)
+        # Update xticks to ensure 32 is included
+        xticks = [f"{int(bins[i])}" for i in range(len(bins))]  # Include the last bin edge (32)
+        plt.xticks(x, xticks[:-1], rotation=0)  # Use bins[:-1] for bar positions
+
         plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black")
         plt.tight_layout()
 

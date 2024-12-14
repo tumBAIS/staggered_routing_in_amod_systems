@@ -29,6 +29,13 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
     print(f"LC data contains {len(lc_data)} rows.".center(50))
     print(f"HC data contains {len(hc_data)} rows.".center(50))
 
+    # Convert solution_total_delay and solution_staggering_applied to minutes using .loc
+    for data in [lc_data, hc_data]:
+        data.loc[:, "solution_total_delay"] = data["solution_total_delay"] / 60  # Convert to minutes
+        data.loc[:, "solution_staggering_applied"] = data["solution_staggering_applied"].apply(
+            lambda x: [v / 60 for v in x] if isinstance(x, list) else x  # Convert lists to minutes
+        )
+
     # Step 2: Define a helper function for generating the plots
     def generate_plots(data, label):
         print(f"\nGenerating plots for {label}...".center(50))
@@ -44,7 +51,7 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             edgecolor="black"
         )
         plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
-        plt.ylabel(r"$Z(\pi)$ [sec]")
+        plt.ylabel(r"$Z(\pi)$ [min]")
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
 
@@ -75,7 +82,7 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             capprops=dict(color='black')
         )
         plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
-        plt.ylabel(r"$\sigma^\pi$ [sec]")
+        plt.ylabel(r"$\sigma^\pi$ [min]")
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
 
