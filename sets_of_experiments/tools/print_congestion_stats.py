@@ -56,8 +56,8 @@ def print_arc_delays_distribution(results_df):
                     'Max': round(np.max(total_delays), 2),
                     'Mean': round(np.mean(total_delays), 2),
                     'Median': round(np.median(total_delays), 2),
-                    '10th Percentile': round(np.percentile(total_delays, 10), 2),
-                    '90th Percentile': round(np.percentile(total_delays, 90), 2),
+                    'P10': round(np.percentile(total_delays, 10), 2),
+                    'P90': round(np.percentile(total_delays, 90), 2),
                     'Count': len(total_delays),
                 }
 
@@ -66,16 +66,17 @@ def print_arc_delays_distribution(results_df):
                 nominal_capacity = math.ceil(nominal_travel_time * 60 / max_flow_allowed)
 
                 most_congested_stats_dict[idx] = {
+                    'Arc Name': most_congested_arc,
                     'Sum': round(np.sum(arc_delays), 2),
                     'Min': round(np.min(arc_delays), 2),
                     'Max': round(np.max(arc_delays), 2),
                     'Mean': round(np.mean(arc_delays), 2),
                     'Median': round(np.median(arc_delays), 2),
-                    '10th Percentile': round(np.percentile(arc_delays, 10), 2),
-                    '90th Percentile': round(np.percentile(arc_delays, 90), 2),
+                    'P10': round(np.percentile(arc_delays, 10), 2),
+                    'P90': round(np.percentile(arc_delays, 90), 2),
                     'Count': len(arc_delays),
-                    'Nominal Travel Time (min)': round(nominal_travel_time, 2),
-                    'Nominal Capacity': nominal_capacity,
+                    'NTT (min)': round(nominal_travel_time, 2),
+                    'Capacity': nominal_capacity,
                 }
 
                 # Ensure max delay in first table matches the sum of delays on the most congested arc
@@ -83,14 +84,13 @@ def print_arc_delays_distribution(results_df):
             else:
                 stats_dict[idx] = {
                     'Sum': 0, 'Min': 0, 'Max': 0, 'Mean': 0,
-                    'Median': 0, '10th Percentile': 0,
-                    '90th Percentile': 0, 'Count': 0
+                    'Median': 0, 'P10': 0, 'P90': 0, 'Count': 0
                 }
                 most_congested_stats_dict[idx] = {
+                    'Arc Name': "None",
                     'Sum': 0, 'Min': 0, 'Max': 0, 'Mean': 0,
-                    'Median': 0, '10th Percentile': 0,
-                    '90th Percentile': 0, 'Count': 0,
-                    'Nominal Travel Time (min)': 0, 'Nominal Capacity': 0
+                    'Median': 0, 'P10': 0, 'P90': 0, 'Count': 0,
+                    'NTT (min)': 0, 'Capacity': 0
                 }
 
         return stats_dict, most_congested_stats_dict
@@ -98,9 +98,8 @@ def print_arc_delays_distribution(results_df):
     # Helper function to print tables
     def print_table(data, title):
         df = pd.DataFrame(data)
-        df.columns = [f'Instance {i + 1}' for i in range(df.shape[1])]
-        print(f"\n--- {title} ---\n")
-        print(tabulate(df, headers='keys', tablefmt='fancy_grid', showindex=True))
+        print(f"\n{title}")
+        print(tabulate(df, headers='keys', tablefmt='plain', showindex=True))
 
     # Process Low Congestion group
     lc_stats, lc_most_congested = calculate_arc_statistics(lc_df)

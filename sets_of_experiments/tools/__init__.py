@@ -162,7 +162,6 @@ def get_results_df(path_to_results: Path) -> pd.DataFrame:
     print("\n" + "=" * 50)
     print("Completed get_results_df function".center(50))
     print("=" * 50 + "\n")
-    raise RuntimeError
     return results_df
 
 
