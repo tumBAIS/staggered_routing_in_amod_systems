@@ -90,8 +90,8 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
 
         if verbose:
             # Print all values in a single line for the current plot
-            values = data[x_col].dropna().tolist()
-            print(f"\nValues for {label} - {x_col}: {values}")
+            values = data[x_col].dropna().round(2).tolist()
+            print(f"\nValues for {label} - {x_col}:\n {values}")
 
         plt.figure(figsize=(6.5, 4.0))
 

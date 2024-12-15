@@ -12,7 +12,6 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
     Generate barplots for arc congestion distributions for UNC, OFF, and ON scenarios,
     separately for LC and HC congestion levels, with optional verbose output.
     """
-
     print("\n" + "=" * 50)
     print("Starting get_arc_congestion_distribution_barplot".center(50))
     print("=" * 50 + "\n")
@@ -51,14 +50,15 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         # Filter out arcs with a maximum delay of at most 1e-2 in all barplots
         all_arcs = set(unc_delays.keys()) | set(off_delays.keys()) | set(on_delays.keys())
         filtered_arcs = {arc for arc in all_arcs if max(unc_delays.get(arc, 0), off_delays.get(arc, 0),
-                                                        on_delays.get(arc, 0)) > 1e-2}
+                                                        on_delays.get(arc, 0)) > 1e-4}
 
         unc_delays = {arc: delay for arc, delay in unc_delays.items() if arc in filtered_arcs}
         off_delays = {arc: delay for arc, delay in off_delays.items() if arc in filtered_arcs}
         on_delays = {arc: delay for arc, delay in on_delays.items() if arc in filtered_arcs}
 
-        # Create frequency bins for delays with 2-minute intervals, ending at 32 minutes
-        bins = np.arange(0, 34, 2)  # Bins from 0 to 32 with 2-minute intervals
+        # Adjust bins: include the 0-1e-4 bin explicitly
+        bins = np.concatenate(([0, 1e-4], np.arange(2, 34, 2)))  # Include 0 to 1e-4 bin
+        bin_labels = ["0"] + [f"{int(bins[i])}" for i in range(2, len(bins))]
 
         unc_values = list(unc_delays.values())
         off_values = list(off_delays.values())
@@ -94,9 +94,8 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         plt.xlabel(r"$\mathcal{E}_a$ [min]")  # Updated to minutes
         plt.ylabel("Observations")
 
-        # Update xticks to ensure 32 is included
-        xticks = [f"{int(bins[i])}" for i in range(len(bins))]  # Include the last bin edge (32)
-        plt.xticks(x, xticks[:-1], rotation=0)  # Use bins[:-1] for bar positions
+        # Update xticks to include labels
+        plt.xticks(x, bin_labels, rotation=0)
 
         plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black")
         plt.tight_layout()

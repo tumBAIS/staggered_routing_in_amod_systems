@@ -51,7 +51,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
             # Print values being plotted in a tidy format
             print(f"\nValues for {label} - {x_col}:")
             for epoch_label in data[y_col].unique():
-                filtered_data = data[data[y_col] == epoch_label][x_col].dropna().tolist()
+                filtered_data = data[data[y_col] == epoch_label][x_col].dropna().round(2).tolist()
                 print(f"  {epoch_label}: {filtered_data}")
 
         # Set the desired figure dimensions

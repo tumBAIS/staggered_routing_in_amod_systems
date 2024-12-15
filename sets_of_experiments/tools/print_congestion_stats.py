@@ -32,7 +32,7 @@ def print_arc_delays_distribution(results_df):
             arc_mapping = row['arc_to_node_mapping']  # dict[int:tuple]
             travel_times = row['instance_travel_times_arcs']  # list[float]
             max_flow_allowed = row['instance_parameters_max_flow_allowed']
-
+            day = f"Day {row['instance_parameters_day']}"
             # Flatten the list of delays and their corresponding arcs
             total_delays = []
             arc_delay_totals = {}
@@ -50,7 +50,7 @@ def print_arc_delays_distribution(results_df):
             if total_delays:
                 most_congested_arc = max(arc_delay_totals, key=lambda x: sum(arc_delay_totals[x]))
                 arc_delays = arc_delay_totals[most_congested_arc]
-                stats_dict[idx] = {
+                stats_dict[day] = {
                     'Sum': round(np.sum(total_delays), 2),
                     'Min': round(np.min(total_delays), 2),
                     'Max': round(np.max(total_delays), 2),
@@ -65,7 +65,7 @@ def print_arc_delays_distribution(results_df):
                     list(arc_mapping.values()).index(most_congested_arc)]] / 60
                 nominal_capacity = math.ceil(nominal_travel_time * 60 / max_flow_allowed)
 
-                most_congested_stats_dict[idx] = {
+                most_congested_stats_dict[day] = {
                     'Arc Name': most_congested_arc,
                     'Sum': round(np.sum(arc_delays), 2),
                     'Min': round(np.min(arc_delays), 2),
@@ -78,15 +78,12 @@ def print_arc_delays_distribution(results_df):
                     'NTT (min)': round(nominal_travel_time, 2),
                     'Capacity': nominal_capacity,
                 }
-
-                # Ensure max delay in first table matches the sum of delays on the most congested arc
-                stats_dict[idx]['Max'] = most_congested_stats_dict[idx]['Sum']
             else:
-                stats_dict[idx] = {
+                stats_dict[day] = {
                     'Sum': 0, 'Min': 0, 'Max': 0, 'Mean': 0,
                     'Median': 0, 'P10': 0, 'P90': 0, 'Count': 0
                 }
-                most_congested_stats_dict[idx] = {
+                most_congested_stats_dict[day] = {
                     'Arc Name': "None",
                     'Sum': 0, 'Min': 0, 'Max': 0, 'Mean': 0,
                     'Median': 0, 'P10': 0, 'P90': 0, 'Count': 0,
@@ -97,7 +94,7 @@ def print_arc_delays_distribution(results_df):
 
     # Helper function to print tables
     def print_table(data, title):
-        df = pd.DataFrame(data)
+        df = pd.DataFrame.from_dict(data, orient='index').T
         print(f"\n{title}")
         print(tabulate(df, headers='keys', tablefmt='plain', showindex=True))
 

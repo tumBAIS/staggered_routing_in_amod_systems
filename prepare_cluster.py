@@ -144,7 +144,7 @@ PRESETS = {
     },
     "algo_performance_paper": {
         "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [45, 60],
+        "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
         "list_of_slopes": [.5],
         "list_of_thresholds": [1],
@@ -158,8 +158,8 @@ PRESETS = {
         "local_search_callback": True  # end solver params
     },
     "staggering_analysis_paper": {
-        "day_list": [1],  # start instance params
-        "max_flow_allowed_list": [45, 60],
+        "day_list": [3],  # start instance params
+        "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
         "list_of_slopes": [.5],
         "list_of_thresholds": [1],
@@ -369,5 +369,5 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
 
 
 if __name__ == "__main__":
-    main(preset_name="staggering_analysis_paper", network_name="manhattan_100", number_of_trips=5000,
+    main(preset_name="algo_performance_paper", network_name="manhattan_100", number_of_trips=5000,
          add_shortcuts=True)
