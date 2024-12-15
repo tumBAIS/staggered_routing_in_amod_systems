@@ -1,8 +1,10 @@
+import numpy as np
 import pandas as pd
 import json
 from pathlib import Path
 from pandas import DataFrame
 import warnings
+from tabulate import tabulate
 
 # Suppress the specific FutureWarning about applymap
 warnings.filterwarnings(
@@ -130,6 +132,79 @@ def assign_congestion_level(results_df: pd.DataFrame) -> pd.DataFrame:
     return results_df
 
 
+import pandas as pd
+import numpy as np
+
+
+def print_arc_delays_distribution(results_df):
+    """
+    Process and print arc delay statistics for the given dataframe of experiments.
+
+    Parameters:
+        results_df (pd.DataFrame): Dataframe containing experiment results with relevant columns.
+    """
+    # Filter only the OFFLINE experiments (solver_parameters_epoch_size == 60)
+    offline_df = results_df[results_df['solver_parameters_epoch_size'] == 60]
+
+    # Split the dataframe into low and high flow constraint groups
+    lc_df = offline_df[offline_df['instance_parameters_max_flow_allowed'] <= \
+                       offline_df['instance_parameters_max_flow_allowed'].median()]
+    hc_df = offline_df[offline_df['instance_parameters_max_flow_allowed'] > \
+                       offline_df['instance_parameters_max_flow_allowed'].median()]
+
+    # Helper function to process a dataframe
+    def process_df(group_df, label):
+        stats_dict = {}
+
+        for index, row in group_df.iterrows():
+            # Retrieve required columns
+            arc_delays = row['status_quo_delays_on_arcs']  # list[list[float]]
+            trip_routes = row['instance_trip_routes']  # list[list[int]]
+            arc_mapping = row['arc_to_node_mapping']  # dict[int:tuple]
+
+            # Flatten the list of delays and their corresponding arcs
+            total_delays = []
+            arc_names = []
+            for route_idx, route_delays in enumerate(arc_delays):
+                for arc_idx, delay in enumerate(route_delays):
+                    total_delays.append(delay)
+                    arc_id = trip_routes[route_idx][arc_idx]  # Get the arc ID from the trip routes
+                    arc_names.append(arc_mapping.get(arc_id, ("Unknown",)))
+
+            # Calculate statistics for total delays
+            stats = {
+                'Sum': round(np.sum(total_delays), 2),
+                'Min': round(np.min(total_delays), 2),
+                'Max': round(np.max(total_delays), 2),
+                'Mean': round(np.mean(total_delays), 2),
+                'Median': round(np.median(total_delays), 2),
+                '10th Percentile': round(np.percentile(total_delays, 10), 2),
+                '90th Percentile': round(np.percentile(total_delays, 90), 2),
+            }
+
+            stats_dict[index] = stats
+
+        # Create a DataFrame for all statistics
+        stats_df = pd.DataFrame(stats_dict).T
+
+        # Sort the table by the sum of delays in descending order
+        stats_df = stats_df.sort_values(by='Sum', ascending=False)
+
+        # Transpose the table for better readability
+        transposed_stats_df = stats_df.T
+
+        # Remove column names
+        transposed_stats_df.columns = ["" for _ in transposed_stats_df.columns]
+
+        # Print the table with pretty borders
+        print(f"\n--- {label} Congestion Instances Arc Total Delays Statistics ---\n")
+        print(tabulate(transposed_stats_df, headers='keys', tablefmt='fancy_grid'))
+
+    # Process both dataframes
+    process_df(lc_df, "Low")
+    process_df(hc_df, "High")
+
+
 def get_results_df(path_to_results: Path) -> pd.DataFrame:
     """
     Imports results from JSON files located in subdirectories of a given path.
@@ -157,12 +232,13 @@ def get_results_df(path_to_results: Path) -> pd.DataFrame:
     # Step 3: Assign instance parameter IDs
     print("\nStep 3: Creating arc to node mapping...")
     results_df = set_arc_to_node_mapping(results_df)
+    print_arc_delays_distribution(results_df)
     print(f"Arc mapping assigned. DataFrame shape: {results_df.shape}")
 
     print("\n" + "=" * 50)
     print("Completed get_results_df function".center(50))
     print("=" * 50 + "\n")
-
+    raise RuntimeError
     return results_df
 
 
