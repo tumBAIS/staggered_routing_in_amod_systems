@@ -249,7 +249,7 @@ namespace cpp_module {
 
         bool is_improved = true;
         while (is_improved) { // Initially set to true
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
+            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) { break; }
             scheduler.set_best_total_delay(arg_solution.get_total_delay());
@@ -389,7 +389,7 @@ namespace cpp_module {
         scheduler.increase_counter(EXPLORED_SOLUTIONS);
         bool conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
         while (conflict_is_not_solved) {
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
+            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) {
                 break;
@@ -421,7 +421,7 @@ namespace cpp_module {
                 continue;
             }
             solve_conflict(conflict, new_solution);
-            bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),
+            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
                                                                      instance.get_max_time_optimization());
             if (time_limit_reached) {
                 return false;

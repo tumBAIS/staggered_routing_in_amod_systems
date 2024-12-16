@@ -81,7 +81,6 @@ namespace cpp_module {
         bool lazy_update_pq{};
         bool tie_found{};
         bool trip_is_late{};
-        double start_search_clock;
         std::vector<TripStatus> trip_status_list;
         long iteration = 0;
         long worse_solutions = 0;
@@ -95,7 +94,6 @@ namespace cpp_module {
 
     public:
         explicit SchedulerFields(Instance &arg_instance) : instance(arg_instance) {
-            start_search_clock = clock() / (double) CLOCKS_PER_SEC;
             best_total_delay = std::numeric_limits<double>::max();
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
@@ -134,10 +132,6 @@ namespace cpp_module {
 
         void set_best_total_delay(double arg_delay) {
             best_total_delay = arg_delay;
-        }
-
-        [[nodiscard]] double get_start_search_clock() const {
-            return start_search_clock;
         }
 
 

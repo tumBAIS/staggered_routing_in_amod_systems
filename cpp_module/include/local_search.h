@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "chrono"
 
 #ifndef CPP_MODULE_LOCAL_SEARCH_H
 #define CPP_MODULE_LOCAL_SEARCH_H
@@ -38,6 +39,7 @@ namespace cpp_module {
         VehicleInfo other_info{};
         ConflictingArrival conflicting_arrival{};
         std::vector<ConflictingArrival> conflicting_arrivals;
+        double start_search_clock;
 
 
         static bool compare_conflicting_arrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
@@ -58,9 +60,23 @@ namespace cpp_module {
         Conflict create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const;
 
 
+        [[nodiscard]] double get_start_search_clock() const {
+            return start_search_clock;
+        }
+
+        static auto get_current_time_in_seconds() -> double {
+            using Clock = std::chrono::high_resolution_clock;
+            auto now = Clock::now();
+            auto epoch = now.time_since_epoch();
+            return std::chrono::duration<double>(epoch).count();
+        }
+
+
     public:
 
-        explicit LocalSearch(Instance &arg_instance) : scheduler(arg_instance), instance(arg_instance) {};
+        explicit LocalSearch(Instance &arg_instance) : scheduler(arg_instance),
+                                                       instance(arg_instance),
+                                                       start_search_clock(get_current_time_in_seconds()) {}
 
 
         void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
