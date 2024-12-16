@@ -83,7 +83,9 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
         release_times=instance.release_times,
         deadlines=instance.deadlines,
         lb_travel_time=instance.get_lb_travel_time(),
-        conflicting_sets=instance.conflicting_sets
+        conflicting_sets=instance.conflicting_sets,
+        earliest_departures=instance.earliest_departure_times,
+        latest_departures=instance.latest_departure_times
     )
 
 

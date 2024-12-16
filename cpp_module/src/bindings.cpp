@@ -23,8 +23,8 @@ namespace cpp_module {
 // Create an instance for local search
     auto get_instance_for_local_search(
             const ConflictingSets &arg_conflicting_sets,
-            const std::vector<std::vector<double>> &earliest_departure_times,
-            const std::vector<std::vector<double>> &latest_departure_times,
+            const std::vector<std::vector<double>> &arg_earliest_times,
+            const std::vector<std::vector<double>> &arg_latest_times,
             const std::vector<double> &nominal_travel_times_arcs,
             const std::vector<long> &nominal_capacities_arcs_utilized,
             const std::vector<std::vector<long>> &arc_based_shortest_paths,
@@ -45,11 +45,11 @@ namespace cpp_module {
                 arg_release_times,
                 arg_deadlines,
                 arg_conflicting_sets,
+                arg_earliest_times,
+                arg_latest_times,
                 arg_lb_travel_time
         );
 
-        instance.set_earliest_departure_times(earliest_departure_times);
-        instance.set_latest_departure_times(latest_departure_times);
 
         return instance;
     }
@@ -166,6 +166,8 @@ PYBIND11_MODULE(cpp_module, m) {
                          const std::vector<double> &,
                          const std::vector<double> &,
                          const cpp_module::ConflictingSets &,
+                         const cpp_module::VehicleSchedule &,
+                         const cpp_module::VehicleSchedule &,
                          const double &>(),
                  py::arg("set_of_vehicle_paths"),
                  py::arg("travel_times_arcs"),
@@ -176,6 +178,8 @@ PYBIND11_MODULE(cpp_module, m) {
                  py::arg("release_times"),
                  py::arg("deadlines"),
                  py::arg("conflicting_sets"),
+                 py::arg("earliest_departures"),
+                 py::arg("latest_departures"),
                  py::arg("lb_travel_time"))
             .def("get_trip_routes", &cpp_module::Instance::get_trip_routes)
             .def("get_travel_times_arcs", &cpp_module::Instance::get_travel_times_arcs)

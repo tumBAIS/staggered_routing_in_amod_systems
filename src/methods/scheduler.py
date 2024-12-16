@@ -46,7 +46,7 @@ class Scheduler:
         Constructs and returns a C++ instance by aggregating required data from trip and network models.
         """
         # Gather trip-specific data
-        set_of_vehicle_routes = self.trips.get_vehicle_routes()
+        trip_routes = self.trips.get_vehicle_routes()
         release_times = self.trips.release_times
         parameters = [0]
 
@@ -58,15 +58,34 @@ class Scheduler:
 
         # Create and return the C++ instance
         return cpp.cpp_instance(
-            set_of_vehicle_paths=set_of_vehicle_routes,
+            set_of_vehicle_paths=trip_routes,
             travel_times_arcs=travel_times_arcs,
             capacities_arcs=capacities_arcs,
             list_of_slopes=list_of_slopes,
             list_of_thresholds=list_of_thresholds,
             parameters=parameters,
             release_times=release_times,
-            lb_travel_time=self.trips.lb_travel_time
+            lb_travel_time=self.trips.lb_travel_time,
+            deadlines=self.initialize_deadlines(),
+            conflicting_sets=self.initialize_conflicting_sets(travel_times_arcs),
+            earliest_departures=self.initialize_earliest_departures(trip_routes),
+            latest_departures=self.initialize_latest_departures(trip_routes),
         )
+
+    def initialize_deadlines(self):
+        return [float('inf')] * len(self.trips.deadlines)
+
+    @staticmethod
+    def initialize_conflicting_sets(travel_times):
+        return [[] for arc in travel_times]
+
+    @staticmethod
+    def initialize_earliest_departures(trip_routes):
+        return [[0 for _ in route] for route in trip_routes]
+
+    @staticmethod
+    def initialize_latest_departures(trip_routes):
+        return [[float("inf") for _ in route] for route in trip_routes]
 
     def save_cpp_instance_to_json(self, filename):
         # Construct a dictionary from the cpp_instance data using getter methods

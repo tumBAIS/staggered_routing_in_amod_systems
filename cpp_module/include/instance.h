@@ -37,9 +37,9 @@ namespace cpp_module {
         const std::vector<long> nominal_capacities_arcs;
         std::vector<Time> deadlines;
         std::vector<Time> release_times;
-        ConflictingSets conflicting_sets;
-        std::vector<std::vector<Time>> earliest_departure_times;
-        std::vector<std::vector<Time>> latest_departure_times;
+        const ConflictingSets conflicting_sets;
+        const VehicleSchedule earliest_departure_times;
+        const VehicleSchedule latest_departure_times;
         std::vector<Time> free_flow_travel_times_trips;
         long number_of_trips;
         long number_of_arcs;
@@ -60,12 +60,16 @@ namespace cpp_module {
                 const std::vector<Time> &arg_release_times,
                 const std::vector<Time> &arg_deadlines,
                 ConflictingSets arg_conflicting_sets,
+                VehicleSchedule arg_earliest_times,
+                VehicleSchedule arg_latest_times,
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
                   travel_times_arcs(arg_nominal_travel_times_arcs),
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
                   conflicting_sets(std::move(arg_conflicting_sets)),
+                  earliest_departure_times(std::move(arg_earliest_times)),
+                  latest_departure_times(std::move(arg_latest_times)),
                   release_times(arg_release_times),
                   deadlines(arg_deadlines),
                   free_flow_travel_times_trips(arg_arc_based_shortest_paths.size(), 0),
@@ -215,29 +219,11 @@ namespace cpp_module {
             return free_flow_schedule;
         }
 
-        void insert_trip_in_conflicting_set(ArcID arc_id, TripID trip_id) {
-            conflicting_sets[arc_id].push_back(trip_id);
-        }
 
         void increase_free_flow_travel_time_trip(TripID trip_id, double amount) {
             free_flow_travel_times_trips[trip_id] += amount;
         }
 
-        // Setter for deadlines
-        void set_deadlines(const std::vector<double> &arg_deadlines) {
-            deadlines = arg_deadlines;
-        }
-
-
-        // Setter for earliest departure times
-        void set_earliest_departure_times(const std::vector<std::vector<double>> &arg_earliest_departure_times) {
-            earliest_departure_times = arg_earliest_departure_times;
-        }
-
-        // Setter for latest departure times
-        void set_latest_departure_times(const std::vector<std::vector<double>> &arg_latest_departure_times) {
-            latest_departure_times = arg_latest_departure_times;
-        }
 
     };
 
