@@ -430,6 +430,8 @@ namespace cpp_module {
 
         bool check_if_other_starts_before_current(const TripID other_trip_id, const VehicleSchedule &congestedSchedule,
                                                   const Departure &departure) const;
+
+        void stagger_trip(Solution &complete_solution, long vehicle, double staggering);
     };
 
     auto apply_staggering_to_solve_conflict(Solution &complete_solution,
@@ -443,8 +445,6 @@ namespace cpp_module {
                                         Conflict &conflict) -> void;
 
     auto get_index(const std::vector<long> &v, long k) -> long;
-
-    auto stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void;
 
     auto solve_solution_ties(const Instance &instance, Solution &complete_solution, Scheduler &scheduler) -> void;
 

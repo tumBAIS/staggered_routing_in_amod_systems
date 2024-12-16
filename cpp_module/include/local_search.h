@@ -1,14 +1,17 @@
-#include <vector>
-#include <set>
-#include <tuple>
-#include <queue>
-#include <limits>
-#include <stdexcept> // For std::out_of_range
+#include "scheduler.h"
+
+#ifndef CPP_MODULE_LOCAL_SEARCH_H
+#define CPP_MODULE_LOCAL_SEARCH_H
+
+#endif //CPP_MODULE_LOCAL_SEARCH_H
+
 
 namespace cpp_module {
 
-    class ConflictSearcherNew {
-    public:
+    class LocalSearch {
+
+    private:
+        Scheduler scheduler;
         struct VehicleInfo {
             long trip_id;
             double departure_time;
@@ -36,8 +39,6 @@ namespace cpp_module {
         ConflictingArrival conflicting_arrival{};
         std::vector<ConflictingArrival> conflicting_arrivals;
 
-        explicit ConflictSearcherNew(const Instance &arg_instance) :
-                instance(arg_instance) {}
 
         static bool compare_conflicting_arrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
             return a.arrival < b.arrival;
@@ -56,5 +57,37 @@ namespace cpp_module {
 
         Conflict create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const;
 
+
+    public:
+
+        explicit LocalSearch(Instance &arg_instance) : scheduler(arg_instance), instance(arg_instance) {};
+
+
+        Solution run(Solution &arg_solution);
+
+
+        void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
+
+        void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
+
+        void
+        update_current_solution(Solution &current_solution, const Solution &new_solution, Conflict &conflict);
+
+        static void print_move(const Solution &old_solution, const Solution &new_solution, const Conflict &conflict);
+
+
+        static auto
+        check_if_possible_to_solve_conflict(const double &distance_to_cover, const double &slack_vehicle_one,
+                                            const double &staggering_applied_vehicle_two);
+
+        void update_distance_to_cover(const Solution &complete_solution, Conflict &conflict);
+
+        bool check_if_solution_is_admissible(Solution &complete_solution);
+
+        auto solve_conflict(Conflict &conflict, Solution &new_solution);
+
+        bool improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution);
     };
+
+
 }
