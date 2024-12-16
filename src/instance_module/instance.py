@@ -11,7 +11,7 @@ from instance_module.graph import import_graph, set_arcs_nominal_travel_times_an
 from instance_module.paths import get_arc_based_paths_with_features
 
 from input_data import InstanceParameters, SPEED_KPH
-from utils.aliases import Time, Staggering, ConflictingSets
+from utils.aliases import Time, Staggering, ConflictingSets, Schedules
 from typing import Optional
 
 
@@ -31,16 +31,16 @@ class Instance:
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
     deadlines: list[Time]
-    latest_departure_times: list[list[float]] = field(default_factory=list)
-    earliest_departure_times: list[list[float]] = field(default_factory=list)
-    min_delay_on_arc: list[list[float]] = field(default_factory=list)
-    max_delay_on_arc: list[list[float]] = field(default_factory=list)
     start_solution_time: float = 0
     max_staggering_applicable: Optional[list[Staggering]] = None
 
     def __post_init__(self):
         self.set_max_staggering_applicable()
         self.conflicting_sets = self.initialize_conflicting_sets()
+        self.earliest_departure_times = self.initialize_earliest_departure_times()
+        self.latest_departure_times = self.initialize_latest_departure_times()
+        self.min_delay_on_arcs = self.initialize_min_delay_on_arcs()
+        self.max_delay_on_arcs = self.initialize_max_delay_on_arcs()
 
     def initialize_conflicting_sets(self) -> ConflictingSets:
         num_arcs = len(self.travel_times_arcs)
@@ -98,6 +98,59 @@ class Instance:
         summary = dataframe_info.describe().round(2)
         print("\nInfo - Arcs Utilized:")
         print(summary)
+
+    def initialize_earliest_departure_times(self):
+        # Initialize a list to store the earliest departure times for each trip
+        earliest_departure_times = []
+
+        # Iterate over each trip and its route
+        for trip, route in enumerate(self.trip_routes):
+            # Start with the release time for the trip
+            release_time = self.release_times[trip]
+            trip_departure_times = [release_time]
+
+            # Calculate earliest departure times for each arc in the route
+            for arc in route[:-1]:
+                nominal_time = self.travel_times_arcs[arc]
+                last_time = trip_departure_times[-1]
+                trip_departure_times.append(last_time + nominal_time)
+
+            # Add the calculated times for the current trip to the result
+            earliest_departure_times.append(trip_departure_times)
+
+        return earliest_departure_times
+
+    def initialize_latest_departure_times(self):
+        """
+        Initializes the latest departure times for each trip based on the deadlines
+        and nominal travel times for each arc in the route.
+        """
+        # Initialize a list to store the latest departure times for each trip
+        latest_departure_times = []
+
+        # Iterate over each trip and its route
+        for trip, route in enumerate(self.trip_routes):
+            # Start with the deadline for the trip
+            deadline = self.deadlines[trip]
+            trip_departure_times = [deadline]
+
+            # Calculate latest departure times for each arc in reverse order
+            for arc in reversed(route[:-1]):
+                nominal_time = self.travel_times_arcs[arc]
+                last_time = trip_departure_times[0]  # Get the last computed time (at the front of the list)
+                trip_departure_times.insert(0, last_time - nominal_time)
+
+            # Add the calculated times for the current trip to the result
+            latest_departure_times.append(trip_departure_times)
+
+        return latest_departure_times
+
+    def initialize_min_delay_on_arcs(self):
+        return [[0 for _ in route] for route in self.trip_routes]
+
+    def initialize_max_delay_on_arcs(self):
+        return [[self.latest_departure_times[trip][position] - self.earliest_departure_times[trip][position] for
+                 position, arc in enumerate(route)] for trip, route in enumerate(self.trip_routes)]
 
 
 def get_instance(instance_params: InstanceParameters) -> Instance:

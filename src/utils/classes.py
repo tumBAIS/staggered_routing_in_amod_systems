@@ -92,7 +92,7 @@ class OptimizationMeasures:
 
 @dataclass
 class HeuristicSolution:
-    congested_schedule: TripSchedules
+    congested_schedule: Schedules
     binaries: Binaries
-    delays_on_arcs: TripSchedules
+    delays_on_arcs: Schedules
     total_delay: float

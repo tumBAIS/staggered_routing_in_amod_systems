@@ -9,7 +9,7 @@ from input_data import TOLERANCE
 
 
 def get_free_flow_schedule(instance: Instance | EpochInstance,
-                           congested_schedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+                           congested_schedule: list[Schedule]) -> list[Schedule]:
     free_flow_schedule = [[schedule[0]] for schedule in congested_schedule]
 
     for vehicle, path in enumerate(instance.trip_routes):
@@ -21,7 +21,7 @@ def get_free_flow_schedule(instance: Instance | EpochInstance,
 
 
 def get_congested_schedule(instance: Instance,
-                           release_times: list[float], solver_params: SolverParameters) -> list[VehicleSchedule]:
+                           release_times: list[float], solver_params: SolverParameters) -> list[Schedule]:
     cpp_instance = cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
         travel_times_arcs=instance.travel_times_arcs,
@@ -41,7 +41,7 @@ def get_congested_schedule(instance: Instance,
     return schedule
 
 
-def get_total_delay(free_flow_schedule: list[VehicleSchedule], congested_schedule: list[VehicleSchedule]) -> float:
+def get_total_delay(free_flow_schedule: list[Schedule], congested_schedule: list[Schedule]) -> float:
     total_delay = sum(
         congested_schedule[vehicle][-1] - congested_schedule[vehicle][0] -
         (free_flow_schedule[vehicle][-1] - free_flow_schedule[vehicle][0])
@@ -51,7 +51,7 @@ def get_total_delay(free_flow_schedule: list[VehicleSchedule], congested_schedul
 
 
 def get_delays_on_arcs(instance: Instance | EpochInstance,
-                       congested_schedule: list[VehicleSchedule]) -> list[VehicleSchedule]:
+                       congested_schedule: list[Schedule]) -> list[Schedule]:
     delays_on_arcs = [
         [
             congested_schedule[vehicle][position + 1] - congested_schedule[vehicle][position] -
@@ -65,7 +65,7 @@ def get_delays_on_arcs(instance: Instance | EpochInstance,
     return delays_on_arcs
 
 
-def get_total_travel_time(vehicle_schedule: list[VehicleSchedule]) -> float:
+def get_total_travel_time(vehicle_schedule: list[Schedule]) -> float:
     return sum([schedule[-1] - schedule[0] for schedule in vehicle_schedule])
 
 

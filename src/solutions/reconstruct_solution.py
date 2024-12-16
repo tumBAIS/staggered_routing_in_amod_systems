@@ -35,7 +35,7 @@ def _reconstruct_schedule(
         epoch_instances: list[EpochInstance],
         epoch_status_quo_list: list[Solution],
         global_instance: Instance,
-) -> TripSchedules:
+) -> Schedules:
     """Reconstruct the global schedule from epoch solutions."""
     reconstructed_schedule = [[] for _ in range(len(global_instance.trip_routes))]
 
@@ -49,7 +49,7 @@ def _reconstruct_schedule(
     return reconstructed_schedule
 
 
-def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: TripSchedules,
+def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: Schedules,
                                           solver_params: SolverParameters) -> None:
     """Ensure the reconstructed schedule matches the expected congested schedule."""
     if ACTIVATE_ASSERTIONS:
@@ -64,8 +64,8 @@ def _assert_congested_schedule_is_correct(global_instance: Instance, reconstruct
 
 
 def _print_not_matching_schedules(
-        reconstructed_schedule: TripSchedules,
-        cpp_schedule: TripSchedules,
+        reconstructed_schedule: Schedules,
+        cpp_schedule: Schedules,
         vehicle: int,
 ) -> None:
     """Print details for mismatched schedules."""

@@ -1,3 +1,4 @@
+#include <utility>
 #include <vector>
 #include <limits>
 #include <stdexcept> // For std::out_of_range
@@ -58,13 +59,13 @@ namespace cpp_module {
                 const std::vector<double> &arg_parameters,
                 const std::vector<Time> &arg_release_times,
                 const std::vector<Time> &arg_deadlines,
-                const ConflictingSets &arg_conflicting_sets,
+                ConflictingSets arg_conflicting_sets,
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
                   travel_times_arcs(arg_nominal_travel_times_arcs),
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
-                  conflicting_sets(arg_conflicting_sets),
+                  conflicting_sets(std::move(arg_conflicting_sets)),
                   release_times(arg_release_times),
                   deadlines(arg_deadlines),
                   free_flow_travel_times_trips(arg_arc_based_shortest_paths.size(), 0),
@@ -73,7 +74,19 @@ namespace cpp_module {
                   number_of_trips(static_cast<long>(arg_arc_based_shortest_paths.size())),
                   number_of_arcs(static_cast<long>(arg_nominal_travel_times_arcs.size())),
                   max_time_optimization(arg_parameters[0]),
-                  lb_travel_time(arg_lb_travel_time) {}
+                  lb_travel_time(arg_lb_travel_time) {
+
+            add_total_free_flow_time_vehicles();
+        }
+
+        // Add total free-flow travel time for each vehicle in the instance
+        auto add_total_free_flow_time_vehicles() -> void {
+            for (long trip_id = 0; trip_id < get_number_of_trips(); ++trip_id) {
+                for (auto arc: get_trip_route(trip_id)) {
+                    increase_free_flow_travel_time_trip(trip_id, get_arc_travel_time(arc));
+                }
+            }
+        }
 
         // Getters
         [[nodiscard]] const std::vector<std::vector<TripID>> &get_trip_routes() const {

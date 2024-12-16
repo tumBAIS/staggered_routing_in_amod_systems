@@ -46,7 +46,7 @@ def get_latest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]])
     ]
 
 
-def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: TripSchedules) -> None:
+def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: Schedules) -> None:
     """
     Add undivided conflicting sets and update time-related properties in the instance.
 
@@ -95,8 +95,8 @@ def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: TripSchedu
     undivided_conflicting_sets = get_undivided_conflicting_sets(instance, bounds_on_arcs_split)
     instance.earliest_departure_times = get_earliest_departure_times(vehicle_based_time_bounds)
     instance.latest_departure_times = get_latest_departure_times(vehicle_based_time_bounds)
-    instance.min_delay_on_arc = get_min_delay_on_arcs(vehicle_based_time_bounds)
-    instance.max_delay_on_arc = get_max_delay_on_arcs(vehicle_based_time_bounds)
+    instance.min_delay_on_arcs = get_min_delay_on_arcs(vehicle_based_time_bounds)
+    instance.max_delay_on_arcs = get_max_delay_on_arcs(vehicle_based_time_bounds)
     print("done.")
 
     # Split conflicting sets

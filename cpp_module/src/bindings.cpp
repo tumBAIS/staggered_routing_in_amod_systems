@@ -19,14 +19,6 @@ namespace cpp_module {
         return complete_solution;
     }
 
-// Add total free-flow travel time for each vehicle in the instance
-    auto add_total_free_flow_time_vehicles(Instance &instance) -> void {
-        for (long trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
-            for (auto arc: instance.get_trip_route(trip_id)) {
-                instance.increase_free_flow_travel_time_trip(trip_id, instance.get_arc_travel_time(arc));
-            }
-        }
-    }
 
 // Create an instance for local search
     auto get_instance_for_local_search(
@@ -58,7 +50,6 @@ namespace cpp_module {
 
         instance.set_earliest_departure_times(earliest_departure_times);
         instance.set_latest_departure_times(latest_departure_times);
-        add_total_free_flow_time_vehicles(instance);
 
         return instance;
     }

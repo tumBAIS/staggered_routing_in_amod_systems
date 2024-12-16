@@ -131,7 +131,7 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehicles_on_arc: int) -> 
 
 
 def get_earliest_departures_list_and_pq(
-        free_flow_schedule: TripSchedules,
+        free_flow_schedule: Schedules,
         instance: Instance,
         known_latest_arrival_times,
 ) -> tuple[list[list[TimeBound]], PriorityQueue]:
@@ -365,8 +365,8 @@ def get_latest_arrival_time(
 
 def get_arc_based_time_bounds(
         instance: Instance,
-        known_latest_arrival_times: TripSchedules,
-        free_flow_schedule: TripSchedules
+        known_latest_arrival_times: Schedules,
+        free_flow_schedule: Schedules
 ) -> list[list[TimeBound]]:
     """
     Computes time bounds for all arcs in the network based on earliest and latest departures and arrivals.
@@ -447,7 +447,7 @@ def get_arc_based_time_bounds(
     return arc_based_time_bounds
 
 
-def get_initial_latest_arrival_times(instance: Instance, ff_schedule: TripSchedules) -> list[list[float]]:
+def get_initial_latest_arrival_times(instance: Instance, ff_schedule: Schedules) -> list[list[float]]:
     """
     The function calculates the latest arrival times for each vehicle at each stop,
     ensuring they respect the vehicle's deadline and account for available slack time.

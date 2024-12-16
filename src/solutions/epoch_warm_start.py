@@ -16,7 +16,7 @@ import cpp_module as cpp
 
 def _run_local_search(
         solution: Solution, instance: EpochInstance, solver_params: SolverParameters
-) -> TripSchedules:
+) -> Schedules:
     """
     Performs local search optimization to compute a warm start solution.
     """

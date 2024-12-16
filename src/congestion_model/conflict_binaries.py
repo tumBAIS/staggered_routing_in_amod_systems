@@ -123,7 +123,7 @@ def set_binaries_between_pair(binaries: Binaries, vehicle_pair: VehiclePair):
 
 
 def get_conflict_binaries(conflicting_sets: list[list[int]], shortest_paths: list[list[int]],
-                          congested_schedule: TripSchedules, print_variables=False) -> Binaries:
+                          congested_schedule: Schedules, print_variables=False) -> Binaries:
     if print_variables:
         print("Computing conflicting binaries ... ", end="")
     binaries = Binaries({}, {}, {})

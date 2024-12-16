@@ -59,8 +59,8 @@ class EpochInstance(Instance):
         # Update timing and delay attributes
         self.latest_departure_times[trip].pop(timing_position)
         self.earliest_departure_times[trip].pop(timing_position)
-        self.max_delay_on_arc[trip].pop(timing_position)
-        self.min_delay_on_arc[trip].pop(timing_position)
+        self.max_delay_on_arcs[trip].pop(timing_position)
+        self.min_delay_on_arcs[trip].pop(timing_position)
 
         # Adjust release times or deadlines based on the mode
         if mode == "first":
@@ -73,8 +73,8 @@ class EpochInstance(Instance):
         self.trip_routes.pop(trip)
         self.latest_departure_times.pop(trip)
         self.earliest_departure_times.pop(trip)
-        self.max_delay_on_arc.pop(trip)
-        self.min_delay_on_arc.pop(trip)
+        self.max_delay_on_arcs.pop(trip)
+        self.min_delay_on_arcs.pop(trip)
         self.deadlines.pop(trip)
         self.release_times.pop(trip)
         self.removed_vehicles.append(trip)
@@ -155,8 +155,8 @@ class EpochInstance(Instance):
 
         del self.latest_departure_times[trip][start_idx + 1:end_idx + 1]
         del self.earliest_departure_times[trip][start_idx + 1:end_idx + 1]
-        del self.max_delay_on_arc[trip][start_idx + 1:end_idx + 1]
-        del self.min_delay_on_arc[trip][start_idx + 1:end_idx + 1]
+        del self.max_delay_on_arcs[trip][start_idx + 1:end_idx + 1]
+        del self.min_delay_on_arcs[trip][start_idx + 1:end_idx + 1]
 
         del self.trip_routes[trip][start_idx:end_idx + 1]
         self.trip_routes[trip].insert(start_idx, merged_arc_id)

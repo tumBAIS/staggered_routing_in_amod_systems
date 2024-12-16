@@ -50,8 +50,8 @@ def _add_delay_variable(model: StaggeredRoutingModel, vehicle: int, arc: int, in
     """Add delay variable for a specific vehicle and arc."""
     if vehicle in instance.conflicting_sets[arc]:
         position = instance.trip_routes[vehicle].index(arc)
-        lb = instance.min_delay_on_arc[vehicle][position]
-        ub = instance.max_delay_on_arc[vehicle][position]
+        lb = instance.min_delay_on_arcs[vehicle][position]
+        ub = instance.max_delay_on_arcs[vehicle][position]
         model.add_continuous_var(vehicle, arc, lb, ub, "delay")
     else:
         model.add_continuous_var(vehicle, arc, 0, 0, "delay", True)
