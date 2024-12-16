@@ -81,37 +81,12 @@ namespace cpp_module {
             const std::vector<double> &arg_release_times,
             const std::vector<double> &arg_remaining_time_slack,
             const std::vector<double> &arg_staggering_applied,
-            const ConflictingSets &arg_conflicting_sets,
-            const std::vector<std::vector<double>> &earliest_departure_times,
-            const std::vector<std::vector<double>> &latest_departure_times,
-            const std::vector<double> &arg_nominal_travel_times_arcs,
-            const std::vector<long> &arg_nominal_capacities_arcs_utilized,
-            const std::vector<std::vector<long>> &arc_based_shortest_paths,
-            const std::vector<double> &arg_deadlines,
-            const std::vector<double> &arg_list_of_slopes,
-            const std::vector<double> &arg_list_of_thresholds,
-            const std::vector<double> &arg_parameters,
-            const double &arg_lb_travel_time
-    ) -> VehicleSchedule {
-        Instance instance = get_instance_for_local_search(
-                arg_conflicting_sets,
-                earliest_departure_times,
-                latest_departure_times,
-                arg_nominal_travel_times_arcs,
-                arg_nominal_capacities_arcs_utilized,
-                arc_based_shortest_paths,
-                arg_deadlines,
-                arg_list_of_slopes,
-                arg_list_of_thresholds,
-                arg_parameters,
-                arg_release_times,
-                arg_lb_travel_time
-        );
+            Instance &arg_instance) -> VehicleSchedule {
 
-        Scheduler scheduler(instance);
+        Scheduler scheduler(arg_instance);
         Solution current_solution = get_initial_solution_for_local_search(
                 scheduler,
-                instance,
+                arg_instance,
                 arg_release_times,
                 arg_remaining_time_slack,
                 arg_staggering_applied
@@ -124,13 +99,13 @@ namespace cpp_module {
             return current_solution.get_schedule();
         }
 
-        check_if_solution_has_ties(instance, current_solution);
+        check_if_solution_has_ties(arg_instance, current_solution);
 
         if (current_solution.get_ties_flag()) {
-            solve_solution_ties(instance, current_solution, scheduler);
+            solve_solution_ties(arg_instance, current_solution, scheduler);
         }
 
-        improve_towards_solution_quality(instance, current_solution, scheduler);
+        improve_towards_solution_quality(arg_instance, current_solution, scheduler);
 
         return current_solution.get_schedule();
     }
@@ -202,15 +177,5 @@ PYBIND11_MODULE(cpp_module, m) {
           py::arg("release_times"),
           py::arg("remaining_time_slack"),
           py::arg("staggering_applied"),
-          py::arg("conflicting_sets"),
-          py::arg("earliest_departure_times"),
-          py::arg("latest_departure_times"),
-          py::arg("travel_times_arcs"),
-          py::arg("capacities_arcs"),
-          py::arg("trip_routes"),
-          py::arg("deadlines"),
-          py::arg("list_of_slopes"),
-          py::arg("list_of_thresholds"),
-          py::arg("parameters"),
-          py::arg("lb_travel_time"));
+          py::arg("cpp_instance"));
 }

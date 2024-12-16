@@ -11,6 +11,7 @@ from solutions.model_solution import get_epoch_model_solution
 from utils.classes import Solution
 from typing import Optional
 from instance_module.epoch_instance import EpochInstance
+from solutions.status_quo import get_cpp_epoch_instance
 
 
 def print_header_offline_solution() -> None:
@@ -103,11 +104,13 @@ def get_epoch_solution(
     # Handle case in which nothing should be optimized.
     if len(simplified_status_quo.congested_schedule) == 0:
         return epoch_status_quo, None
-
-    epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params)
+    cpp_simplified_epoch_instance = get_cpp_epoch_instance(simplified_instance, solver_params)
+    epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
+                                            cpp_simplified_epoch_instance)
     model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
     optimization_measures = run_model(
-        model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params
+        model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params,
+        cpp_simplified_epoch_instance
     )
     model_solution = get_epoch_model_solution(
         model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params

@@ -79,7 +79,7 @@ def assert_schedule(model: StaggeredRoutingModel, congested_schedule: Schedules,
 
 
 def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
-                           solver_params: SolverParameters) -> HeuristicSolution:
+                           solver_params: SolverParameters, cpp_instance: cpp.cpp_instance) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
     model.set_flag_update(False)
     cpp_parameters = [solver_params.algorithm_time_limit]
@@ -87,17 +87,7 @@ def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
         release_times=model.get_cb_release_times(),
         remaining_time_slack=model.get_cb_remaining_time_slack(),
         staggering_applied=model.get_cb_staggering_applied(),
-        conflicting_sets=instance.conflicting_sets,
-        earliest_departure_times=instance.earliest_departure_times,
-        latest_departure_times=instance.latest_departure_times,
-        travel_times_arcs=instance.travel_times_arcs,
-        capacities_arcs=instance.capacities_arcs,
-        trip_routes=instance.trip_routes,
-        deadlines=instance.deadlines,
-        list_of_slopes=instance.instance_params.list_of_slopes,
-        list_of_thresholds=instance.instance_params.list_of_thresholds,
-        parameters=cpp_parameters,
-        lb_travel_time=instance.get_lb_travel_time()
+        cpp_instance=cpp_instance
     )
 
     delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
@@ -163,9 +153,9 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
             suspend_procedure(heuristic_solution, model, instance)
 
 
-def callback(instance: EpochInstance, status_quo: Solution, solver_params: SolverParameters) -> Callable:
+def callback(instance: EpochInstance, status_quo: Solution, solver_params: SolverParameters,
+             cpp_instance: cpp.cpp_instance) -> Callable:
     """Define the callback function for Gurobi.
-    @rtype: object
     """
 
     def call_local_search(model: StaggeredRoutingModel, where: int) -> None:
@@ -179,7 +169,7 @@ def callback(instance: EpochInstance, status_quo: Solution, solver_params: Solve
             model.set_best_upper_bound(model.get_cb_total_delay())
 
         if where == grb.GRB.Callback.MIPNODE and model.get_flag_update():
-            heuristic_solution = get_heuristic_solution(model, instance, solver_params)
+            heuristic_solution = get_heuristic_solution(model, instance, solver_params, cpp_instance)
             set_heuristic_solution(model, heuristic_solution, instance)
 
     return call_local_search

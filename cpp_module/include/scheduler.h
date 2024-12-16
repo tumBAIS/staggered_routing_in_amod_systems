@@ -55,17 +55,7 @@ namespace cpp_module {
     auto cpp_local_search(const std::vector<double> &arg_release_times,
                           const std::vector<double> &arg_remaining_time_slack,
                           const std::vector<double> &arg_staggering_applied,
-                          const ConflictingSets &arg_conflicting_sets,
-                          const std::vector<std::vector<double>> &earliest_departure_times,
-                          const std::vector<std::vector<double>> &latest_departure_times,
-                          const std::vector<double> &arg_nominal_travel_times_arcs,
-                          const std::vector<long> &arg_nominal_capacities_arcs_utilized,
-                          const std::vector<std::vector<long>> &arc_based_shortest_paths,
-                          const std::vector<double> &arg_deadlines,
-                          const std::vector<double> &arg_list_of_slopes,
-                          const std::vector<double> &arg_list_of_thresholds,
-                          const std::vector<double> &arg_parameters,
-                          const double &lb_travel_time) -> VehicleSchedule;
+                          Instance &arg_instance) -> VehicleSchedule;
 
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 

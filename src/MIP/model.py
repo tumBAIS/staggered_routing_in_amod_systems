@@ -3,8 +3,7 @@ import datetime
 from pathlib import Path
 import gurobipy as grb
 from typing import Optional
-from utils.tools import SuppressOutput
-
+import cpp_module as cpp
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
 from instance_module.epoch_instance import EpochInstance
@@ -12,9 +11,7 @@ from utils.classes import Solution, HeuristicSolution
 from MIP.support import (
     set_gurobi_parameters,
     compute_iis_if_not_solved,
-    load_initial_solution,
     get_final_optimization_measures,
-    save_solution_in_external_file,
     OptimizationMeasures
 )
 from MIP.integer_variables import add_conflict_variables
@@ -123,6 +120,7 @@ def run_model(
         warm_start: HeuristicSolution | Solution,
         status_quo: Solution,
         solver_params: SolverParameters,
+        cpp_instance: cpp.cpp_instance
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
     print("=" * 50)
@@ -150,7 +148,7 @@ def run_model(
     print("Optimizing the model...")
     if solver_params.local_search_callback:
         print("Using local search callback during optimization.")
-        model.optimize(callback(instance, status_quo, solver_params))
+        model.optimize(callback(instance, status_quo, solver_params, cpp_instance))
     else:
         model.optimize()
 

@@ -15,31 +15,19 @@ import cpp_module as cpp
 
 
 def _run_local_search(
-        solution: Solution, instance: EpochInstance, solver_params: SolverParameters
+        solution: Solution, instance: EpochInstance, solver_params: SolverParameters,
+        cpp_simplified_epoch_instance: cpp.cpp_instance
 ) -> Schedules:
     """
     Performs local search optimization to compute a warm start solution.
     """
-    instance.due_dates = instance.deadlines[:]
     time_remaining = _compute_remaining_time(instance, solver_params)
-
-    cpp_parameters = [time_remaining]
 
     congested_schedule = cpp.cpp_local_search(
         release_times=solution.release_times,
         remaining_time_slack=solution.staggering_applicable,
         staggering_applied=solution.staggering_applied,
-        conflicting_sets=instance.conflicting_sets,
-        earliest_departure_times=instance.earliest_departure_times,
-        latest_departure_times=instance.latest_departure_times,
-        travel_times_arcs=instance.travel_times_arcs,
-        capacities_arcs=instance.capacities_arcs,
-        trip_routes=instance.trip_routes,
-        deadlines=instance.deadlines,
-        list_of_slopes=instance.instance_params.list_of_slopes,
-        list_of_thresholds=instance.instance_params.list_of_thresholds,
-        parameters=cpp_parameters,
-        lb_travel_time=instance.get_lb_travel_time(),
+        cpp_instance=cpp_simplified_epoch_instance,
     )
 
     return congested_schedule
@@ -66,7 +54,8 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
 
 
 def get_epoch_warm_start(
-        epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters
+        epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters,
+        cpp_simplified_epoch_instance: cpp.cpp_instance
 ) -> Solution:
     """
     Computes the warm start solution for the given epoch.
@@ -81,7 +70,8 @@ def get_epoch_warm_start(
     # Decide whether to improve warm start or use status quo
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
         print("Improving warm start using local search...")
-        congested_schedule = _run_local_search(epoch_status_quo, epoch_instance, solver_params)
+        congested_schedule = _run_local_search(epoch_status_quo, epoch_instance, solver_params,
+                                               cpp_simplified_epoch_instance)
         print("Local search completed.")
     else:
         if not _is_time_left_for_optimization(epoch_instance, solver_params):
