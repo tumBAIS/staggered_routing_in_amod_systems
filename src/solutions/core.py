@@ -12,6 +12,7 @@ from utils.classes import Solution
 from typing import Optional
 from instance_module.epoch_instance import EpochInstance
 from solutions.status_quo import get_cpp_epoch_instance
+import cpp_module as cpp
 
 
 def print_header_offline_solution() -> None:
@@ -105,12 +106,13 @@ def get_epoch_solution(
     if len(simplified_status_quo.congested_schedule) == 0:
         return epoch_status_quo, None
     cpp_simplified_epoch_instance = get_cpp_epoch_instance(simplified_instance, solver_params)
+    cpp_local_search = cpp.LocalSearch(cpp_simplified_epoch_instance)
     epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
-                                            cpp_simplified_epoch_instance)
+                                            cpp_local_search)
     model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
     optimization_measures = run_model(
         model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params,
-        cpp_simplified_epoch_instance
+        cpp_local_search
     )
     model_solution = get_epoch_model_solution(
         model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params

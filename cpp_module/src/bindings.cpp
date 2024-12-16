@@ -20,61 +20,6 @@ namespace cpp_module {
     }
 
 
-// Generate an initial solution for local search
-    auto get_initial_solution_for_local_search(
-            Scheduler &scheduler,
-            Instance &instance,
-            const std::vector<double> &arg_release_times,
-            const std::vector<double> &arg_remaining_time_slack,
-            const std::vector<double> &arg_staggering_applied
-    ) -> Solution {
-        Solution current_solution(arg_release_times, instance);
-        scheduler.construct_schedule(current_solution);
-
-        if (!current_solution.get_feasible_and_improving_flag()) {
-            std::cout << "Initial solution is infeasible - local search stopped\n";
-            return current_solution;
-        }
-
-        current_solution.set_remaining_time_slack(arg_remaining_time_slack);
-        current_solution.set_staggering_applied(arg_staggering_applied);
-
-        return current_solution;
-    }
-
-// Perform local search
-    auto cpp_local_search(
-            const std::vector<double> &arg_release_times,
-            const std::vector<double> &arg_remaining_time_slack,
-            const std::vector<double> &arg_staggering_applied,
-            Instance &arg_instance) -> VehicleSchedule {
-
-        Scheduler scheduler(arg_instance);
-        Solution current_solution = get_initial_solution_for_local_search(
-                scheduler,
-                arg_instance,
-                arg_release_times,
-                arg_remaining_time_slack,
-                arg_staggering_applied
-        );
-
-        std::cout << "Local search received a solution with " << std::round(current_solution.get_total_delay())
-                  << " sec of delay\n";
-
-        if (!current_solution.get_feasible_and_improving_flag()) {
-            return current_solution.get_schedule();
-        }
-
-        check_if_solution_has_ties(arg_instance, current_solution);
-
-        if (current_solution.get_ties_flag()) {
-            solve_solution_ties(arg_instance, current_solution, scheduler);
-        }
-        auto improved_solution = LocalSearch(arg_instance).run(current_solution);
-
-        return current_solution.get_schedule();
-    }
-
 } // namespace cpp_module
 
 namespace py = pybind11;
@@ -137,10 +82,10 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("construct_schedule", &cpp_module::Scheduler::construct_schedule)
             .def("construct_solution", &cpp_module::Scheduler::construct_solution, py::arg("start_times"));
 
-    // Function binding for local search
-    m.def("cpp_local_search", &cpp_module::cpp_local_search,
-          py::arg("release_times"),
-          py::arg("remaining_time_slack"),
-          py::arg("staggering_applied"),
-          py::arg("cpp_instance"));
+
+    // Solution class bindings
+    py::class_<cpp_module::LocalSearch>(m, "LocalSearch")
+            .def(py::init<cpp_module::Instance &>(),
+                 py::arg("instance"))
+            .def("run", &cpp_module::LocalSearch::run);
 }

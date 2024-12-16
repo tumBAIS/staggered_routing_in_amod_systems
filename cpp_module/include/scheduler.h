@@ -52,10 +52,6 @@ namespace cpp_module {
 
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
-    auto cpp_local_search(const std::vector<double> &arg_release_times,
-                          const std::vector<double> &arg_remaining_time_slack,
-                          const std::vector<double> &arg_staggering_applied,
-                          Instance &arg_instance) -> VehicleSchedule;
 
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 

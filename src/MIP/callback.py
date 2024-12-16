@@ -79,17 +79,15 @@ def assert_schedule(model: StaggeredRoutingModel, congested_schedule: Schedules,
 
 
 def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
-                           solver_params: SolverParameters, cpp_instance: cpp.cpp_instance) -> HeuristicSolution:
+                           solver_params: SolverParameters,
+                           cpp_local_search: cpp.cpp_local_search) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
     model.set_flag_update(False)
     cpp_parameters = [solver_params.algorithm_time_limit]
-    congested_schedule = cpp.cpp_local_search(
-        release_times=model.get_cb_release_times(),
-        remaining_time_slack=model.get_cb_remaining_time_slack(),
-        staggering_applied=model.get_cb_staggering_applied(),
-        cpp_instance=cpp_instance
-    )
-
+    cpp_solution = cpp_local_search.run(model.get_cb_release_times(),
+                                        model.get_cb_remaining_time_slack(),
+                                        model.get_cb_staggering_applied())
+    congested_schedule = cpp_solution.get_schedule()
     delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
     assert_schedule(model, congested_schedule, delays_on_arcs, instance)
     binaries = get_conflict_binaries(instance.conflicting_sets, instance.trip_routes, congested_schedule)
@@ -154,7 +152,7 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
 
 
 def callback(instance: EpochInstance, status_quo: Solution, solver_params: SolverParameters,
-             cpp_instance: cpp.cpp_instance) -> Callable:
+             cpp_local_search: cpp.cpp_local_search) -> Callable:
     """Define the callback function for Gurobi.
     """
 
@@ -169,7 +167,7 @@ def callback(instance: EpochInstance, status_quo: Solution, solver_params: Solve
             model.set_best_upper_bound(model.get_cb_total_delay())
 
         if where == grb.GRB.Callback.MIPNODE and model.get_flag_update():
-            heuristic_solution = get_heuristic_solution(model, instance, solver_params, cpp_instance)
+            heuristic_solution = get_heuristic_solution(model, instance, solver_params, cpp_local_search)
             set_heuristic_solution(model, heuristic_solution, instance)
 
     return call_local_search

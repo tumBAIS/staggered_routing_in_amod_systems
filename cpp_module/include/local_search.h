@@ -63,9 +63,6 @@ namespace cpp_module {
         explicit LocalSearch(Instance &arg_instance) : scheduler(arg_instance), instance(arg_instance) {};
 
 
-        Solution run(Solution &arg_solution);
-
-
         void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
 
         void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
@@ -87,6 +84,15 @@ namespace cpp_module {
         auto solve_conflict(Conflict &conflict, Solution &new_solution);
 
         bool improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution);
+
+        Solution
+        get_initial_solution(const std::vector<double> &arg_release_times,
+                             const std::vector<double> &arg_remaining_time_slack,
+                             const std::vector<double> &arg_staggering_applied);
+
+
+        Solution run(std::vector<Time> &arg_start_times, const std::vector<double> &arg_remaining_time_slack,
+                     const std::vector<double> &arg_staggering_applied);
     };
 
 

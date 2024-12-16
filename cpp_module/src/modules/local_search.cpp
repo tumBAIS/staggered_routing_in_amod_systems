@@ -205,9 +205,48 @@ namespace cpp_module {
         return conflicts_list;
     }
 
+    // Generate an initial solution for local search
+    auto LocalSearch::get_initial_solution(
+            const std::vector<double> &arg_release_times,
+            const std::vector<double> &arg_remaining_time_slack,
+            const std::vector<double> &arg_staggering_applied
+    ) -> Solution {
 
-    auto LocalSearch::run(Solution &arg_solution) -> Solution {
+        Solution current_solution(arg_release_times, instance);
+        scheduler.construct_schedule(current_solution);
+
+        if (!current_solution.get_feasible_and_improving_flag()) {
+            std::cout << "Initial solution is infeasible - local search stopped\n";
+            return current_solution;
+        }
+
+        current_solution.set_remaining_time_slack(arg_remaining_time_slack);
+        current_solution.set_staggering_applied(arg_staggering_applied);
+
+        return current_solution;
+    }
+
+    auto LocalSearch::run(std::vector<Time> &arg_start_times,
+                          const std::vector<double> &arg_remaining_time_slack,
+                          const std::vector<double> &arg_staggering_applied) -> Solution {
         // Improve value of solution
+
+        auto arg_solution = get_initial_solution(arg_start_times, arg_remaining_time_slack, arg_staggering_applied);
+
+
+        std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
+                  << " sec of delay\n";
+
+        if (!arg_solution.get_feasible_and_improving_flag()) {
+            return arg_solution;
+        }
+
+        check_if_solution_has_ties(instance, arg_solution);
+
+        if (arg_solution.get_ties_flag()) {
+            solve_solution_ties(instance, arg_solution, scheduler);
+        }
+
         bool is_improved = true;
         while (is_improved) { // Initially set to true
             bool time_limit_reached = check_if_time_limit_is_reached(scheduler.get_start_search_clock(),

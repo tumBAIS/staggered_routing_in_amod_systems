@@ -120,7 +120,7 @@ def run_model(
         warm_start: HeuristicSolution | Solution,
         status_quo: Solution,
         solver_params: SolverParameters,
-        cpp_instance: cpp.cpp_instance
+        cpp_local_search: cpp.cpp_local_search
 ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
     print("=" * 50)
@@ -148,7 +148,7 @@ def run_model(
     print("Optimizing the model...")
     if solver_params.local_search_callback:
         print("Using local search callback during optimization.")
-        model.optimize(callback(instance, status_quo, solver_params, cpp_instance))
+        model.optimize(callback(instance, status_quo, solver_params, cpp_local_search))
     else:
         model.optimize()
 

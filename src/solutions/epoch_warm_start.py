@@ -14,25 +14,6 @@ from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
 
-def _run_local_search(
-        solution: Solution, instance: EpochInstance, solver_params: SolverParameters,
-        cpp_simplified_epoch_instance: cpp.cpp_instance
-) -> Schedules:
-    """
-    Performs local search optimization to compute a warm start solution.
-    """
-    time_remaining = _compute_remaining_time(instance, solver_params)
-
-    congested_schedule = cpp.cpp_local_search(
-        release_times=solution.release_times,
-        remaining_time_slack=solution.staggering_applicable,
-        staggering_applied=solution.staggering_applied,
-        cpp_instance=cpp_simplified_epoch_instance,
-    )
-
-    return congested_schedule
-
-
 def _compute_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> float:
     """
     Calculates the remaining time for optimization based on algorithm and epoch limits.
@@ -55,7 +36,7 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
 
 def get_epoch_warm_start(
         epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters,
-        cpp_simplified_epoch_instance: cpp.cpp_instance
+        cpp_local_search: cpp.LocalSearch
 ) -> Solution:
     """
     Computes the warm start solution for the given epoch.
@@ -70,8 +51,11 @@ def get_epoch_warm_start(
     # Decide whether to improve warm start or use status quo
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
         print("Improving warm start using local search...")
-        congested_schedule = _run_local_search(epoch_status_quo, epoch_instance, solver_params,
-                                               cpp_simplified_epoch_instance)
+
+        time_remaining = _compute_remaining_time(epoch_instance, solver_params)
+        cpp_solution = cpp_local_search.run(epoch_status_quo.release_times, epoch_status_quo.staggering_applicable,
+                                            epoch_status_quo.staggering_applied)
+        congested_schedule = cpp_solution.get_schedule()
         print("Local search completed.")
     else:
         if not _is_time_left_for_optimization(epoch_instance, solver_params):

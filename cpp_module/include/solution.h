@@ -33,7 +33,7 @@ namespace cpp_module {
 
     public:
         // Constructor
-        explicit Solution(const std::vector<double> &arg_start_times, Instance &instance)
+        explicit Solution(const std::vector<double> &arg_start_times, const Instance &instance)
                 : schedule(arg_start_times.size()),
                   delays_on_arcs(arg_start_times.size()),
                   staggering_applied(arg_start_times.size(), 0.0),
