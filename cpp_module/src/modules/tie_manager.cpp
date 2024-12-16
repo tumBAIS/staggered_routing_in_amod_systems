@@ -15,7 +15,7 @@ namespace cpp_module {
 // Reset a solution to a previously correct state
     auto
     reset_solution(Solution &complete_solution, long vehicle_one, const CorrectSolution &correct_solution) -> void {
-        complete_solution.increase_trip_start_time(vehicle_one, -CONSTR_TOLERANCE);
+        stagger_trip(complete_solution, vehicle_one, -CONSTR_TOLERANCE);
         complete_solution.set_ties_flag(true);
         complete_solution.set_schedule(correct_solution.schedule);
         complete_solution.set_total_delay(correct_solution.total_delay);
@@ -60,11 +60,11 @@ namespace cpp_module {
     auto solve_tie(Solution &complete_solution, const Tie &tie, Scheduler &scheduler) -> void {
         bool has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
         bool slack_is_enough = check_slack_to_solve_tie(
-                scheduler.get_trip_remaining_time_slack(complete_solution, tie.vehicle_one));
+                complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
 
         while (has_tie && slack_is_enough) {
             CorrectSolution correct_solution = set_correct_solution(complete_solution);
-            complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE);
+            stagger_trip(complete_solution, tie.vehicle_one, CONSTR_TOLERANCE);
             scheduler.construct_schedule(complete_solution);
 
             if (!complete_solution.get_feasible_and_improving_flag()) {
@@ -75,7 +75,7 @@ namespace cpp_module {
             print_tie_solved(tie);
             has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
             slack_is_enough = check_slack_to_solve_tie(
-                    scheduler.get_trip_remaining_time_slack(complete_solution, tie.vehicle_one));
+                    complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
         }
     }
 
