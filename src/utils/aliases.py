@@ -13,7 +13,7 @@ OsmInfo = dict[str, Any]
 VehicleSchedule = list[Time]
 TripSchedules = list[list[float]]
 UndividedConflictingSets = list[list[list[int]]]
-ConflictingSetsAfterPreprocessing = list[list[int]]
+ConflictingSets = list[list[int]]
 
 # Aliases for routes generation.
 RoutesFile = list[dict]

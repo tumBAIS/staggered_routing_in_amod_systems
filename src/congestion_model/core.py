@@ -31,7 +31,8 @@ def get_congested_schedule(instance: Instance,
         parameters=[solver_params.algorithm_time_limit],
         release_times=release_times,
         deadlines=instance.deadlines,
-        lb_travel_time=instance.get_lb_travel_time()
+        lb_travel_time=instance.get_lb_travel_time(),
+        conflicting_sets=instance.conflicting_sets
     )
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_solution = cpp_scheduler.construct_solution(release_times)

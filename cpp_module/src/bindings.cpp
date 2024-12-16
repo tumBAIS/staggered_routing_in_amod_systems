@@ -12,7 +12,6 @@ namespace cpp_module {
     auto Scheduler::construct_solution(const std::vector<double> &start_times) -> Solution {
         Solution complete_solution(start_times, instance);
         construct_schedule(complete_solution);
-        initialize_conflicting_sets_for_construct_schedule(instance);
         check_if_solution_has_ties(instance, complete_solution);
         if (complete_solution.get_ties_flag()) {
             solve_solution_ties(instance, complete_solution, *this);
@@ -31,7 +30,7 @@ namespace cpp_module {
 
 // Create an instance for local search
     auto get_instance_for_local_search(
-            const ConflictingSetsList &arg_conflicting_sets,
+            const ConflictingSets &arg_conflicting_sets,
             const std::vector<std::vector<double>> &earliest_departure_times,
             const std::vector<std::vector<double>> &latest_departure_times,
             const std::vector<double> &nominal_travel_times_arcs,
@@ -53,11 +52,10 @@ namespace cpp_module {
                 arg_parameters,
                 arg_release_times,
                 arg_deadlines,
+                arg_conflicting_sets,
                 arg_lb_travel_time
         );
 
-        instance.set_deadlines(arg_deadlines);
-        instance.set_conflicting_sets(arg_conflicting_sets);
         instance.set_earliest_departure_times(earliest_departure_times);
         instance.set_latest_departure_times(latest_departure_times);
         add_total_free_flow_time_vehicles(instance);
@@ -92,7 +90,7 @@ namespace cpp_module {
             const std::vector<double> &arg_release_times,
             const std::vector<double> &arg_remaining_time_slack,
             const std::vector<double> &arg_staggering_applied,
-            const ConflictingSetsList &arg_conflicting_sets,
+            const ConflictingSets &arg_conflicting_sets,
             const std::vector<std::vector<double>> &earliest_departure_times,
             const std::vector<std::vector<double>> &latest_departure_times,
             const std::vector<double> &arg_nominal_travel_times_arcs,
@@ -176,6 +174,7 @@ PYBIND11_MODULE(cpp_module, m) {
                          const std::vector<double> &,
                          const std::vector<double> &,
                          const std::vector<double> &,
+                         const cpp_module::ConflictingSets &,
                          const double &>(),
                  py::arg("set_of_vehicle_paths"),
                  py::arg("travel_times_arcs"),
@@ -185,6 +184,7 @@ PYBIND11_MODULE(cpp_module, m) {
                  py::arg("parameters"),
                  py::arg("release_times"),
                  py::arg("deadlines"),
+                 py::arg("conflicting_sets"),
                  py::arg("lb_travel_time"))
             .def("get_trip_routes", &cpp_module::Instance::get_trip_routes)
             .def("get_travel_times_arcs", &cpp_module::Instance::get_travel_times_arcs)

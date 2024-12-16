@@ -55,7 +55,7 @@ namespace cpp_module {
     auto cpp_local_search(const std::vector<double> &arg_release_times,
                           const std::vector<double> &arg_remaining_time_slack,
                           const std::vector<double> &arg_staggering_applied,
-                          const ConflictingSetsList &arg_conflicting_sets,
+                          const ConflictingSets &arg_conflicting_sets,
                           const std::vector<std::vector<double>> &earliest_departure_times,
                           const std::vector<std::vector<double>> &latest_departure_times,
                           const std::vector<double> &arg_nominal_travel_times_arcs,

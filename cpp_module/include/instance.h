@@ -11,7 +11,7 @@ namespace cpp_module {
     using Time = double;
     using VehicleSchedule = std::vector<std::vector<Time>>;
     using ConflictingSet = std::vector<TripID>;
-    using ConflictingSetsList = std::vector<ConflictingSet>;
+    using ConflictingSets = std::vector<ConflictingSet>;
     using TripRoute = std::vector<ArcID>;
 // Parameters
     const double CONSTR_TOLERANCE = 1e-3;
@@ -36,7 +36,7 @@ namespace cpp_module {
         const std::vector<long> nominal_capacities_arcs;
         std::vector<Time> deadlines;
         std::vector<Time> release_times;
-        ConflictingSetsList conflicting_sets;
+        ConflictingSets conflicting_sets;
         std::vector<std::vector<Time>> earliest_departure_times;
         std::vector<std::vector<Time>> latest_departure_times;
         std::vector<Time> free_flow_travel_times_trips;
@@ -58,12 +58,13 @@ namespace cpp_module {
                 const std::vector<double> &arg_parameters,
                 const std::vector<Time> &arg_release_times,
                 const std::vector<Time> &arg_deadlines,
+                const ConflictingSets &arg_conflicting_sets,
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
                   travel_times_arcs(arg_nominal_travel_times_arcs),
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
-                  conflicting_sets(arg_nominal_capacities_arcs.size()),
+                  conflicting_sets(arg_conflicting_sets),
                   release_times(arg_release_times),
                   deadlines(arg_deadlines),
                   free_flow_travel_times_trips(arg_arc_based_shortest_paths.size(), 0),
@@ -214,10 +215,6 @@ namespace cpp_module {
             deadlines = arg_deadlines;
         }
 
-        // Setter for conflicting sets
-        void set_conflicting_sets(const std::vector<std::vector<long>> &arg_conflicting_sets) {
-            conflicting_sets = arg_conflicting_sets;
-        }
 
         // Setter for earliest departure times
         void set_earliest_departure_times(const std::vector<std::vector<double>> &arg_earliest_departure_times) {

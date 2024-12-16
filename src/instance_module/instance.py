@@ -11,7 +11,7 @@ from instance_module.graph import import_graph, set_arcs_nominal_travel_times_an
 from instance_module.paths import get_arc_based_paths_with_features
 
 from input_data import InstanceParameters, SPEED_KPH
-from utils.aliases import Time, Staggering
+from utils.aliases import Time, Staggering, ConflictingSets
 from typing import Optional
 
 
@@ -31,7 +31,6 @@ class Instance:
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
     deadlines: list[Time]
-    conflicting_sets: list[list[int]] = field(default_factory=list)
     latest_departure_times: list[list[float]] = field(default_factory=list)
     earliest_departure_times: list[list[float]] = field(default_factory=list)
     min_delay_on_arc: list[list[float]] = field(default_factory=list)
@@ -41,6 +40,16 @@ class Instance:
 
     def __post_init__(self):
         self.set_max_staggering_applicable()
+        self.conflicting_sets = self.initialize_conflicting_sets()
+
+    def initialize_conflicting_sets(self) -> ConflictingSets:
+        num_arcs = len(self.travel_times_arcs)
+        conflicting_sets = [[] for _ in range(num_arcs)]
+
+        for trip, route in enumerate(self.trip_routes):
+            for arc in route:
+                conflicting_sets[arc].append(trip)
+        return conflicting_sets
 
     def get_lb_travel_time(self) -> float:
         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)

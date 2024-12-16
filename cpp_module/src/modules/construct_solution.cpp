@@ -5,17 +5,7 @@
 
 namespace cpp_module {
 
-// Initialize conflicting sets for constructing the schedule
-    auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void {
-        long trip_id = 0;
-        for (const auto &path: instance.get_trip_routes()) {
-            for (auto arc_id: path) {
-                instance.insert_trip_in_conflicting_set(arc_id, trip_id);
-            }
-            trip_id++;
-        }
-    }
-
+ 
 // Find the index of an element in a vector
     auto get_index(const std::vector<long> &vec, long value) -> long {
         auto it = std::find(vec.begin(), vec.end(), value);
