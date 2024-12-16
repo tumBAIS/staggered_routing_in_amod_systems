@@ -81,6 +81,7 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
         list_of_thresholds=instance.instance_params.list_of_thresholds,
         parameters=[solver_params.algorithm_time_limit],
         release_times=instance.release_times,
+        deadlines=instance.deadlines,
         lb_travel_time=instance.get_lb_travel_time()
     )
 

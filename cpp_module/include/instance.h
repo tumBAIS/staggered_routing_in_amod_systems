@@ -57,6 +57,7 @@ namespace cpp_module {
                 const std::vector<double> &arg_list_of_thresholds,
                 const std::vector<double> &arg_parameters,
                 const std::vector<Time> &arg_release_times,
+                const std::vector<Time> &arg_deadlines,
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
@@ -64,7 +65,7 @@ namespace cpp_module {
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
                   conflicting_sets(arg_nominal_capacities_arcs.size()),
                   release_times(arg_release_times),
-                  deadlines(arg_arc_based_shortest_paths.size(), std::numeric_limits<Time>::max()),
+                  deadlines(arg_deadlines),
                   free_flow_travel_times_trips(arg_arc_based_shortest_paths.size(), 0),
                   list_of_slopes(arg_list_of_slopes),
                   list_of_thresholds(arg_list_of_thresholds),

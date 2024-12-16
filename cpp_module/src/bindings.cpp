@@ -52,6 +52,7 @@ namespace cpp_module {
                 arg_list_of_thresholds,
                 arg_parameters,
                 arg_release_times,
+                arg_deadlines,
                 arg_lb_travel_time
         );
 
@@ -174,6 +175,7 @@ PYBIND11_MODULE(cpp_module, m) {
                          const std::vector<double> &,
                          const std::vector<double> &,
                          const std::vector<double> &,
+                         const std::vector<double> &,
                          const double &>(),
                  py::arg("set_of_vehicle_paths"),
                  py::arg("travel_times_arcs"),
@@ -182,6 +184,7 @@ PYBIND11_MODULE(cpp_module, m) {
                  py::arg("list_of_thresholds"),
                  py::arg("parameters"),
                  py::arg("release_times"),
+                 py::arg("deadlines"),
                  py::arg("lb_travel_time"))
             .def("get_trip_routes", &cpp_module::Instance::get_trip_routes)
             .def("get_travel_times_arcs", &cpp_module::Instance::get_travel_times_arcs)

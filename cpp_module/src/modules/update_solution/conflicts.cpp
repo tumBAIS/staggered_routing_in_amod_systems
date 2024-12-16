@@ -11,7 +11,7 @@ namespace cpp_module {
             const long other_position,
             const Departure &departure
     ) const -> InstructionConflictingSet {
-        // Assumption: The trips in the conflicting set are ordered by ascending earliest departure time.
+
 
         // Fetch the earliest departure and latest arrival times for the current trip
         double current_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
@@ -29,20 +29,20 @@ namespace cpp_module {
                 other_trip_id, other_position + 1
         );
 
-        // Determine overlap conditions
+        // Determine overlap conditions using TOLERANCE
         bool other_comes_before_and_does_not_overlap =
-                other_latest_arrival_time < current_earliest_departure_time;
+                other_latest_arrival_time < current_earliest_departure_time - TOLERANCE;
 
         bool other_comes_before_and_overlaps =
-                other_earliest_departure_time <= current_earliest_departure_time &&
-                current_earliest_departure_time < other_latest_arrival_time;
+                other_earliest_departure_time <= current_earliest_departure_time + TOLERANCE &&
+                current_earliest_departure_time < other_latest_arrival_time + TOLERANCE;
 
         bool other_comes_after_and_overlaps =
-                current_earliest_departure_time <= other_earliest_departure_time &&
-                other_earliest_departure_time < current_latest_arrival_time;
+                current_earliest_departure_time <= other_earliest_departure_time + TOLERANCE &&
+                other_earliest_departure_time < current_latest_arrival_time + TOLERANCE;
 
         bool other_comes_after_and_does_not_overlap =
-                other_earliest_departure_time > current_latest_arrival_time;
+                other_earliest_departure_time > current_latest_arrival_time + TOLERANCE;
 
         // Determine the appropriate instruction
         if (other_comes_before_and_does_not_overlap) {
@@ -55,6 +55,7 @@ namespace cpp_module {
             throw std::invalid_argument("Comparing vehicle bounds: undefined case!");
         }
     }
+
 
     auto Scheduler::update_vehicles_on_arc_of_conflicting_set(Solution &solution,
                                                               double &vehicles_on_arc,
