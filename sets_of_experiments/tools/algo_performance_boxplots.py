@@ -44,7 +44,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
     lc_data = results_df[results_df['congestion_level'] == "LC"]
     hc_data = results_df[results_df['congestion_level'] == "HC"]
 
-    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name, label, is_percentage=False):
+    def plot_boxplot(data, x_col, y_col, ylabel, xlabel, file_name, label, is_percentage=False, x_limits=None):
         print(f"\nCreating boxplot for {file_name}...")
 
         if verbose:
@@ -92,6 +92,10 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         plt.ylabel(ylabel)
         plt.xlabel(xlabel)
 
+        # Set x-axis limits if specified
+        if x_limits is not None:
+            plt.xlim(x_limits)
+
         # Set x-axis ticks and limits for percentage plots
         if is_percentage:
             plt.xticks(ticks=np.arange(0, 101, 20), labels=np.arange(0, 101, 20))
@@ -114,7 +118,12 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         print(f"Boxplot for {file_name} saved.")
 
     # Generate plots for LC experiments
+    # Determine global x-axis limits for absolute delay reduction
+    global_min = min(lc_data['absolute_delay_reduction'].min(), hc_data['absolute_delay_reduction'].min())
+    global_max = max(lc_data['absolute_delay_reduction'].max(), hc_data['absolute_delay_reduction'].max())
+    x_limits_absolute = (global_min - 1, global_max + 1)
     print("\nStep 4: Generating plots for LC experiments...")
+    # Generate plots for LC experiments with fixed x-axis
     plot_boxplot(
         data=lc_data,
         x_col='absolute_delay_reduction',
@@ -122,8 +131,10 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         ylabel="",
         xlabel=r"$\Theta$ [min] (LC)",  # Updated unit to minutes
         file_name="absolute_delay_reduction_LC",
-        label="LC"
+        label="LC",
+        x_limits=x_limits_absolute  # Use global x-axis limits
     )
+
     plot_boxplot(
         data=lc_data,
         x_col='relative_delay_reduction',
@@ -137,6 +148,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
 
     # Generate plots for HC experiments
     print("\nStep 5: Generating plots for HC experiments...")
+    # Generate plots for HC experiments with fixed x-axis
     plot_boxplot(
         data=hc_data,
         x_col='absolute_delay_reduction',
@@ -144,7 +156,8 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         ylabel="",
         xlabel=r"$\Theta$ [min] (HC)",  # Updated unit to minutes
         file_name="absolute_delay_reduction_HC",
-        label="HC"
+        label="HC",
+        x_limits=x_limits_absolute  # Use global x-axis limits
     )
     plot_boxplot(
         data=hc_data,

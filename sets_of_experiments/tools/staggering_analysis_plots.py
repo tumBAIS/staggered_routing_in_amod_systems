@@ -69,11 +69,19 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         plt.figure(figsize=(6.5, 4.0))
         # Explode the lists in `solution_staggering_applied` for boxplot generation
         exploded_data = data.explode("solution_staggering_applied").dropna(subset=["solution_staggering_applied"])
+        filtered_data = exploded_data[exploded_data["solution_staggering_applied"] > 1e-4]  # Keep data > 1e-4
+        # Add a single artificial data point where instance_parameters_staggering_cap == 0
+        artificial_data = pd.DataFrame({
+            "instance_parameters_staggering_cap": [0],
+            "solution_staggering_applied": [0]
+        })
+
+        filtered_data = pd.concat([filtered_data, artificial_data], ignore_index=True)
 
         sns.boxplot(
             x="instance_parameters_staggering_cap",
             y="solution_staggering_applied",
-            data=exploded_data,
+            data=filtered_data,
             width=0.8,
             boxprops=dict(facecolor='white', edgecolor='black'),
             flierprops=dict(marker='x', color='black'),
@@ -83,6 +91,7 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         )
         plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
         plt.ylabel(r"$\sigma^\pi$ [min]")
+        plt.ylim(-0.5, 8.3)  # Set y-axis limits to [0, 8]
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
 

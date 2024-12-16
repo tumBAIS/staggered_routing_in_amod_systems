@@ -3,7 +3,7 @@ from sets_of_experiments.tools import get_results_df, filter_non_comparable_expe
 from sets_of_experiments.tools.algo_performance_boxplots import get_algo_performance_boxplots
 from sets_of_experiments.tools.mip_bounds_boxplots import get_mip_bounds_boxplots
 from sets_of_experiments.tools.arc_congestion_distribution_barplot import get_arc_congestion_distribution_barplot
-from sets_of_experiments.tools.heatmaps import get_congestion_heatmap_total_delay
+from sets_of_experiments.tools.heatmaps import get_congestion_heatmaps
 from sets_of_experiments.tools.summary_table import get_summary_table
 from pathlib import Path
 
@@ -21,4 +21,4 @@ if __name__ == "__main__":
     get_algo_performance_boxplots(results_df, PATH_TO_FIGURES, verbose=True)
     get_mip_bounds_boxplots(results_df, PATH_TO_FIGURES, verbose=True)
     get_arc_congestion_distribution_barplot(results_df, PATH_TO_FIGURES, verbose=True)
-    get_congestion_heatmap_total_delay(results_df, PATH_TO_FIGURES, PATH_TO_NETWORKS)
+    get_congestion_heatmaps(results_df, PATH_TO_FIGURES, PATH_TO_NETWORKS)

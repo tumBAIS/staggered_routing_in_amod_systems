@@ -151,7 +151,8 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         xlabel=r"$\Delta$ [\%] (LC)",
         file_name="optimality_gap_LC",
         label="LC",
-        is_percentage=True
+        is_percentage=True,
+        xlimits=(-1, None)
     )
     plot_horizontal_boxplot(
         data=lc_data,
@@ -159,7 +160,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         xlabel="LB [min] (LC)",  # Adjusted to minutes
         file_name="lower_bound_LC",
         label="LC",
-        xlimits=(-0.9, 11)  # Adjust xlimits for time values if needed
+        xlimits=(-1, 11)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=lc_data,
@@ -167,7 +168,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         xlabel=r"$\Delta$ [min] (LC)",  # Adjusted to minutes
         file_name="bounds_difference_LC",
         label="LC",
-        xlimits=(-0.9, 11)  # Adjust xlimits for time values if needed
+        xlimits=(-.99, None)  # Adjust xlimits for time values if needed
     )
 
     # Generate boxplots for HC experiments
@@ -178,7 +179,8 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         xlabel=r"$\Delta$ [\%] (HC)",
         file_name="optimality_gap_HC",
         label="HC",
-        is_percentage=True
+        is_percentage=True,
+        xlimits=(-1, None)
     )
     plot_horizontal_boxplot(
         data=hc_data,

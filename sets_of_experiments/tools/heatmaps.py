@@ -27,7 +27,7 @@ def calculate_total_arc_delays(results_df: pd.DataFrame, delay_column: str, mapp
         arc_mapping = row[mapping_column]
         for trip, delays in zip(row["instance_trip_routes"], delays_on_arcs):
             for arc, delay in zip(trip, delays):
-                if arc in arc_mapping:
+                if arc in arc_mapping and delay > 1e-4:
                     node_pair = arc_mapping[arc]
                     if node_pair not in arc_delays:
                         arc_delays[node_pair] = 0
@@ -43,7 +43,7 @@ def calculate_arc_delay_counts(results_df: pd.DataFrame, delay_column: str, mapp
     """
     print(f"\nCalculating delayed trip counts for arcs using column '{delay_column}'...")
     arc_delay_counts = {}
-    threshold = 1e-4
+    threshold = 1e-2
     for _, row in results_df.iterrows():
         delays_on_arcs = row[delay_column]
         arc_mapping = row[mapping_column]
@@ -82,7 +82,7 @@ def print_delay_count_statistics(counts: Dict):
         print(f"{percentile}th Percentile: {np.percentile(count_values, percentile):.2f}")
 
 
-def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures: Path, path_to_networks: Path):
+def get_congestion_heatmaps(results_df: pd.DataFrame, path_to_figures: Path, path_to_networks: Path):
     """Generate separate congestion heatmaps for LC and HC congestion levels, and also generate
     plots for delayed trip counts."""
     print("\n" + "=" * 50)
@@ -120,7 +120,19 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
     print(f"LC DataFrame contains {len(lc_df)} rows.")
     print(f"HC DataFrame contains {len(hc_df)} rows.")
 
-    def calculate_and_plot_heatmap(data_df, label, annotate=True, max_percentile: int = 100):
+    # Calculate shared colorbar limits from LC data
+    print("\nCalculating shared colorbar limits from LC data...".center(50))
+
+    lc_offline_status_quo_counts = calculate_arc_delay_counts(
+        lc_df[lc_df["solver_parameters_epoch_size"] == 60], delay_column="status_quo_delays_on_arcs",
+        mapping_column="arc_to_node_mapping"
+    )
+    lc_all_counts = list(lc_offline_status_quo_counts.values())
+    lc_max_count = np.percentile(lc_all_counts, 90) if lc_all_counts else 1
+
+    print(f"Shared max count: {lc_max_count:.2f}")
+
+    def calculate_and_plot_heatmap(data_df, label, annotate=True, shared_max_count=None):
         print(f"\nProcessing {label} data...".center(50))
 
         # Split into offline and online
@@ -149,16 +161,6 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
             print(f"\nStatistics for {label} - ON:")
             print_delay_statistics(online_solution_delays)
 
-        # Determine a shared color scale for delays
-        all_delays = list(offline_status_quo_delays.values()) + \
-                     list(offline_solution_delays.values()) + \
-                     list(online_solution_delays.values())
-        max_delay = np.percentile(list(offline_status_quo_delays.values()),
-                                  max_percentile) if offline_status_quo_delays and max_percentile < 100 else max(
-            all_delays, default=1)
-        cmap = LinearSegmentedColormap.from_list("heatmap", ["green", "orange", "red"])
-        norm = plt.Normalize(vmin=0, vmax=max_delay)
-
         # Calculate delayed trip counts
         offline_status_quo_counts = calculate_arc_delay_counts(
             offline_df, delay_column="status_quo_delays_on_arcs", mapping_column="arc_to_node_mapping"
@@ -182,13 +184,16 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
             print_delay_count_statistics(online_solution_counts)
 
         # Determine color scale for counts
-        all_counts = list(offline_status_quo_counts.values()) + \
-                     list(offline_solution_counts.values()) + \
-                     list(online_solution_counts.values())
-        max_count = np.percentile(list(offline_status_quo_counts.values()),
-                                  max_percentile) if offline_status_quo_counts and max_percentile < 100 else max(
-            all_counts, default=1)
-        count_cmap = LinearSegmentedColormap.from_list("count_heatmap", ["white", "blue", "purple"])
+
+        # Determine color scale for counts
+        max_count = shared_max_count or max(
+            list(offline_status_quo_counts.values()) + list(offline_solution_counts.values()) + list(
+                online_solution_counts.values()),
+            default=1
+        )
+        count_cmap = LinearSegmentedColormap.from_list(
+            "custom_heatmap", [(0.0, "green"), (0.025, "orange"), (0.6, "red"), (1.0, "red")]
+        )
         count_norm = plt.Normalize(vmin=0, vmax=max_count)
 
         rotation_angle = 29
@@ -202,7 +207,7 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
                 geometry = edge_data.get("geometry", None)
                 if isinstance(geometry, LineString):
                     rotated_geometry = rotate_geometry(geometry, angle=rotation_angle, origin=origin)
-                    ax.plot(*rotated_geometry.xy, color="green", linewidth=0.25, zorder=0)
+                    ax.plot(*rotated_geometry.xy, color="green", linewidth=0.25, zorder=0, alpha=0.5)
 
         def style_axes(axs):
             for ax in axs:
@@ -216,42 +221,32 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
                     spine.set_color('black')
                     spine.set_linewidth(1.0)
 
-        def plot_data(datasets, title, cmap, norm, output_folder_name, suffix):
+        def plot_data(datasets, cmap, norm, output_folder_name, suffix):
             # datasets = [UNC_data, OFF_data, ON_data]
             fig, axs = plt.subplots(1, 3, figsize=(3, 3), gridspec_kw={'width_ratios': [1, 1, 1], 'wspace': 0})
 
-            # UNC
-            ax = axs[0]
-            plot_background_map(ax)
-            if annotate:
-                ax.set_title("UNC", pad=10)
-            for u, v, edge_data in G.edges(data=True):
-                val = datasets[0].get((u, v), 0)
-                if val > 0 and isinstance(edge_data.get("geometry", None), LineString):
-                    rotated_geometry = rotate_geometry(edge_data["geometry"], angle=rotation_angle, origin=origin)
-                    ax.plot(*rotated_geometry.xy, color=cmap(norm(val)), linewidth=0.25, zorder=10000)
+            def plot_single_ax(ax, data, ax_label):
+                plot_background_map(ax)
+                if annotate:
+                    ax.set_title(ax_label, pad=10)
 
-            # OFF
-            ax = axs[1]
-            plot_background_map(ax)
-            if annotate:
-                ax.set_title("OFF", pad=10)
-            for u, v, edge_data in G.edges(data=True):
-                val = datasets[1].get((u, v), 0)
-                if val > 0 and isinstance(edge_data.get("geometry", None), LineString):
-                    rotated_geometry = rotate_geometry(edge_data["geometry"], angle=rotation_angle, origin=origin)
-                    ax.plot(*rotated_geometry.xy, color=cmap(norm(val)), linewidth=0.25, zorder=10000)
+                # Collect edges and their values for sorting
+                arcs_to_plot = [(u, v, edge_data) for u, v, edge_data in G.edges(data=True)
+                                if isinstance(edge_data.get("geometry", None), LineString)]
+                arcs_to_plot.sort(key=lambda x: data.get((x[0], x[1]), 0), reverse=True)  # Sort by delay (descending)
 
-            # ON
-            ax = axs[2]
-            plot_background_map(ax)
-            if annotate:
-                ax.set_title("ON", pad=10)
-            for u, v, edge_data in G.edges(data=True):
-                val = datasets[2].get((u, v), 0)
-                if val > 0 and isinstance(edge_data.get("geometry", None), LineString):
-                    rotated_geometry = rotate_geometry(edge_data["geometry"], angle=rotation_angle, origin=origin)
-                    ax.plot(*rotated_geometry.xy, color=cmap(norm(val)), linewidth=0.25, zorder=10000)
+                # Plot sorted arcs
+                for u, v, edge_data in arcs_to_plot:
+                    val = data.get((u, v), 0)
+                    if val > 0:
+                        rotated_geometry = rotate_geometry(edge_data["geometry"], angle=rotation_angle, origin=origin)
+                        linewidth = 0.25
+                        ax.plot(*rotated_geometry.xy, color=cmap(norm(val)), linewidth=linewidth, zorder=10000)
+
+            # Plot for each dataset
+            plot_single_ax(axs[0], datasets[0], "UNC")
+            plot_single_ax(axs[1], datasets[1], "OFF")
+            plot_single_ax(axs[2], datasets[2], "ON")
 
             style_axes(axs)
 
@@ -279,20 +274,16 @@ def get_congestion_heatmap_total_delay(results_df: pd.DataFrame, path_to_figures
             print(f"Saved: {output_dir / f'congestion_heatmap_{label.lower()}_{suffix}.jpeg'}")
             plt.close()
 
-        # Plot original delay data
-        plot_data([offline_status_quo_delays, offline_solution_delays, online_solution_delays],
-                  "Delays", cmap, norm, "heatmaps", "annotated" if annotate else "no_annotations")
-
-        # Plot delayed trips count data
-        plot_data([offline_status_quo_counts, offline_solution_counts, online_solution_counts],
-                  "Counts", count_cmap, count_norm, "heatmaps_delayed_trips",
-                  "annotated" if annotate else "no_annotations")
+        plot_data(
+            [offline_status_quo_counts, offline_solution_counts, online_solution_counts],
+            count_cmap, count_norm, "heatmaps_delayed_trips", "annotated" if annotate else "no_annotations"
+        )
 
     # Generate heatmaps for LC and HC
-    calculate_and_plot_heatmap(lc_df, "LC", annotate=True, max_percentile=99)
-    calculate_and_plot_heatmap(lc_df, "LC", annotate=False, max_percentile=99)
-    calculate_and_plot_heatmap(hc_df, "HC", annotate=True, max_percentile=99)
-    calculate_and_plot_heatmap(hc_df, "HC", annotate=False, max_percentile=99)
+    calculate_and_plot_heatmap(lc_df, "LC", annotate=True, shared_max_count=lc_max_count)
+    calculate_and_plot_heatmap(lc_df, "LC", annotate=False, shared_max_count=lc_max_count)
+    calculate_and_plot_heatmap(hc_df, "HC", annotate=True, shared_max_count=lc_max_count)
+    calculate_and_plot_heatmap(hc_df, "HC", annotate=False, shared_max_count=lc_max_count)
 
     print("\n" + "=" * 50)
     print("Completed Congestion Heatmap Generation".center(50))
