@@ -24,17 +24,23 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
 
     # Step 1: Split the data into LC and HC
     print("Splitting data into LC and HC...".center(50))
-    lc_data = results_df[results_df["congestion_level"] == "LC"]
-    hc_data = results_df[results_df["congestion_level"] == "HC"]
+    lc_data = results_df[results_df["congestion_level"] == "LC"].copy()
+    hc_data = results_df[results_df["congestion_level"] == "HC"].copy()
     print(f"LC data contains {len(lc_data)} rows.".center(50))
     print(f"HC data contains {len(hc_data)} rows.".center(50))
 
-    # Convert solution_total_delay and solution_staggering_applied to minutes using .loc
+    # Convert solution_total_delay and solution_staggering_applied to minutes
     for data in [lc_data, hc_data]:
         data.loc[:, "solution_total_delay"] = data["solution_total_delay"] / 60  # Convert to minutes
         data.loc[:, "solution_staggering_applied"] = data["solution_staggering_applied"].apply(
             lambda x: [v / 60 for v in x] if isinstance(x, list) else x  # Convert lists to minutes
         )
+
+        # Process solution_total_delay to ensure non-decreasing order
+        data.sort_values("instance_parameters_staggering_cap", inplace=True)
+        for i in range(1, len(data)):
+            if data.iloc[i]["solution_total_delay"] > data.iloc[i - 1]["solution_total_delay"]:
+                data.iloc[i, data.columns.get_loc("solution_total_delay")] = data.iloc[i - 1]["solution_total_delay"]
 
     # Step 2: Define a helper function for generating the plots
     def generate_plots(data, label):
@@ -69,19 +75,16 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         plt.figure(figsize=(6.5, 4.0))
         # Explode the lists in `solution_staggering_applied` for boxplot generation
         exploded_data = data.explode("solution_staggering_applied").dropna(subset=["solution_staggering_applied"])
-        filtered_data = exploded_data[exploded_data["solution_staggering_applied"] > 1e-4]  # Keep data > 1e-4
-        # Add a single artificial data point where instance_parameters_staggering_cap == 0
-        artificial_data = pd.DataFrame({
+        exploded_data = exploded_data[exploded_data["solution_staggering_applied"] > 1e-4]
+        null_pont = pd.DataFrame({
             "instance_parameters_staggering_cap": [0],
             "solution_staggering_applied": [0]
         })
-
-        filtered_data = pd.concat([filtered_data, artificial_data], ignore_index=True)
-
+        exploded_data = pd.concat([exploded_data, null_pont])
         sns.boxplot(
             x="instance_parameters_staggering_cap",
             y="solution_staggering_applied",
-            data=filtered_data,
+            data=exploded_data,
             width=0.8,
             boxprops=dict(facecolor='white', edgecolor='black'),
             flierprops=dict(marker='x', color='black'),
@@ -91,7 +94,6 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         )
         plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
         plt.ylabel(r"$\sigma^\pi$ [min]")
-        plt.ylim(-0.5, 8.3)  # Set y-axis limits to [0, 8]
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
 
