@@ -79,8 +79,6 @@ namespace cpp_module {
             return current_solution;
         }
 
-        current_solution.set_remaining_time_slack(arg_remaining_time_slack);
-        current_solution.set_staggering_applied(arg_staggering_applied);
 
         return current_solution;
     }

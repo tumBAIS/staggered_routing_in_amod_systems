@@ -181,7 +181,6 @@ namespace cpp_module {
             return original_schedule[trip_id][position];
         }
 
-
         [[nodiscard]]Time get_last_original_trip_departure(TripID trip_id) {
             return original_schedule[trip_id].back();
         }
@@ -440,10 +439,22 @@ namespace cpp_module {
 
         bool check_if_other_starts_before_current(const TripID other_trip_id, const VehicleSchedule &congestedSchedule,
                                                   const Departure &departure) const;
+
+
+        auto apply_staggering_to_solve_conflict(Solution &complete_solution,
+                                                Conflict &conflict) const -> void;
+
+        [[nodiscard]] double get_trip_remaining_time_slack(const Solution &solution, TripID trip_id) const {
+            return instance.get_trip_deadline(trip_id) - solution.get_trip_arrival(trip_id);
+        }
+
+        [[nodiscard]] double get_trip_staggering_applied(const Solution &solution, TripID trip_id) const {
+            return solution.get_trip_start_time(trip_id) - instance.get_trip_release_time(trip_id);
+        }
+
+
     };
 
-    auto apply_staggering_to_solve_conflict(Solution &complete_solution,
-                                            Conflict &conflict) -> void;
 
     static auto reset_new_solution(const Solution &current_solution, Solution &new_solution,
                                    Conflict &conflict) -> void;
@@ -454,7 +465,6 @@ namespace cpp_module {
 
     auto get_index(const std::vector<long> &v, long k) -> long;
 
-    auto stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void;
 
     auto solve_solution_ties(const Instance &instance, Solution &complete_solution, Scheduler &scheduler) -> void;
 

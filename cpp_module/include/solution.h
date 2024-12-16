@@ -22,10 +22,7 @@ namespace cpp_module {
 
     private:
         VehicleSchedule schedule;
-        VehicleSchedule delays_on_arcs;
         std::vector<double> start_times;
-        std::vector<double> remaining_time_slack;
-        std::vector<double> staggering_applied;
         double total_delay;
         double lb_travel_time;
         bool is_feasible_and_improving;
@@ -35,9 +32,6 @@ namespace cpp_module {
         // Constructor
         explicit Solution(const std::vector<double> &arg_start_times, Instance &instance)
                 : schedule(arg_start_times.size()),
-                  delays_on_arcs(arg_start_times.size()),
-                  staggering_applied(arg_start_times.size(), 0.0),
-                  remaining_time_slack(arg_start_times.size(), std::numeric_limits<double>::max()),
                   start_times(arg_start_times),
                   total_delay(0.0),
                   lb_travel_time(instance.get_lb_travel_time()),
@@ -46,7 +40,6 @@ namespace cpp_module {
 
             for (TripID trip_id = 0; trip_id < arg_start_times.size(); ++trip_id) {
                 schedule[trip_id].resize(instance.get_trip_route(trip_id).size());
-                delays_on_arcs[trip_id] = std::vector<double>(instance.get_trip_route(trip_id).size(), 0.0);
             }
         }
 
@@ -55,9 +48,31 @@ namespace cpp_module {
             return schedule;
         }
 
-        [[nodiscard]] const VehicleSchedule &get_delays_on_arcs() const {
+        [[nodiscard]] VehicleSchedule get_delays_on_arcs(const Instance &instance) const {
+            // Initialize the delays_on_arcs structure with the correct number of trips
+            VehicleSchedule delays_on_arcs(instance.get_number_of_trips());
+
+            // Iterate over each trip schedule in the main schedule
+            for (TripID i = 0; i < schedule.size(); ++i) {
+                const auto &trip_schedule = schedule[i];
+
+                // Iterate over arcs within the current trip    schedule
+                for (Position j = 0; j < trip_schedule.size() - 1; ++j) {
+                    // Get the arc and its travel time
+                    auto arc = instance.get_arc_at_position_in_trip_route(i, j);
+                    auto travel_time = instance.get_arc_travel_time(arc);
+
+                    // Calculate the delay for this arc
+                    double delay = trip_schedule[j + 1] - trip_schedule[j] - travel_time;
+                    delays_on_arcs[i].push_back(delay);
+                }
+                delays_on_arcs[i].push_back(0);
+
+            }
+
             return delays_on_arcs;
         }
+
 
         [[nodiscard]] const std::vector<double> &get_start_times() const {
             return start_times;
@@ -67,17 +82,13 @@ namespace cpp_module {
             return start_times[trip_id];
         }
 
+
         [[nodiscard]] const Time &get_trip_arc_departure(TripID trip_id, Position position) const {
             return schedule[trip_id][position];
         }
 
-
-        [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id) const {
-            return remaining_time_slack[trip_id];
-        }
-
-        [[nodiscard]] double get_trip_staggering_applied(TripID trip_id) const {
-            return staggering_applied[trip_id];
+        [[nodiscard]] const Time &get_trip_arrival(TripID trip_id) const {
+            return schedule[trip_id].back();
         }
 
 
@@ -106,19 +117,6 @@ namespace cpp_module {
             return is_feasible_and_improving;
         }
 
-        // Setters
-        void set_delay_on_arc(double delay, int trip_id, int position) {
-#ifdef ENABLE_RANGE_CHECKS_SOLUTION
-            if (trip_id < 0 || static_cast<size_t>(trip_id) >= delays_on_arcs.size()) {
-                throw std::out_of_range("Trip ID is out of range.");
-            }
-            if (position < 0 || static_cast<size_t>(position) >= delays_on_arcs[trip_id].size()) {
-                throw std::out_of_range("Position is out of range.");
-            }
-#endif
-            delays_on_arcs[trip_id][position] = delay;
-        }
-
         void set_total_delay(double arg_total_delay) {
             total_delay = arg_total_delay;
         }
@@ -131,13 +129,6 @@ namespace cpp_module {
             schedule[trip_id][position] = time;
         }
 
-        void set_remaining_time_slack(const std::vector<double> &arg_time_slacks) {
-            remaining_time_slack = arg_time_slacks;
-        }
-
-        void set_staggering_applied(const std::vector<double> &arg_staggering_applied) {
-            staggering_applied = arg_staggering_applied;
-        }
 
         void set_feasible_and_improving_flag(bool arg_flag) {
             is_feasible_and_improving = arg_flag;
@@ -157,13 +148,6 @@ namespace cpp_module {
             start_times[trip_id] += amount;
         }
 
-        void increase_staggering_applied(TripID trip_id, double amount) {
-            staggering_applied[trip_id] += amount;
-        }
-
-        void increase_remaining_time_slack(TripID trip_id, double amount) {
-            remaining_time_slack[trip_id] += amount;
-        }
 
     };
 
