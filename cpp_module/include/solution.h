@@ -26,7 +26,7 @@ namespace cpp_module {
         std::vector<double> start_times;
         double total_delay;
         double lb_travel_time;
-        bool is_feasible_and_improving;
+        bool is_feasible_and_improving_flag;
         bool has_ties;
 
     public:
@@ -37,7 +37,7 @@ namespace cpp_module {
                   start_times(arg_start_times),
                   total_delay(0.0),
                   lb_travel_time(instance.get_lb_travel_time()),
-                  is_feasible_and_improving(true),
+                  is_feasible_and_improving_flag(true),
                   has_ties(false) {
 
             for (TripID trip_id = 0; trip_id < arg_start_times.size(); ++trip_id) {
@@ -88,8 +88,8 @@ namespace cpp_module {
             return has_ties;
         }
 
-        [[nodiscard]]bool get_feasible_and_improving_flag() const {
-            return is_feasible_and_improving;
+        [[nodiscard]]bool is_feasible_and_improving() const {
+            return is_feasible_and_improving_flag;
         }
 
         // Setters
@@ -118,7 +118,7 @@ namespace cpp_module {
         }
 
         void set_feasible_and_improving_flag(bool arg_flag) {
-            is_feasible_and_improving = arg_flag;
+            is_feasible_and_improving_flag = arg_flag;
         }
 
         void set_ties_flag(bool arg_flag) {

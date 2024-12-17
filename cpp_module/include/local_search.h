@@ -9,7 +9,7 @@
 
 namespace cpp_module {
 
-    class LocalSearch {
+    class LocalSearch : public TieManager {
 
     private:
         Scheduler scheduler;
@@ -73,7 +73,8 @@ namespace cpp_module {
 
     public:
 
-        explicit LocalSearch(Instance &arg_instance) : scheduler(arg_instance),
+        explicit LocalSearch(Instance &arg_instance) : TieManager(arg_instance),
+                                                       scheduler(arg_instance),
                                                        instance(arg_instance),
                                                        start_search_clock(get_current_time_in_seconds()) {}
 
@@ -108,6 +109,8 @@ namespace cpp_module {
         auto compute_remaining_time_slack(const std::vector<Time> &arg_start_times);
 
         Solution get_initial_solution(const std::vector<double> &arg_release_times);
+
+        static void print_start(const Solution &arg_solution);
     };
 
 

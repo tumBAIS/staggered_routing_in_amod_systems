@@ -7,6 +7,7 @@
 #include <ctime>
 #include <stdexcept>  // Include for std::out_of_range
 #include "solution.h"
+#include "tie_manager.h"
 
 namespace cpp_module {
 
@@ -22,14 +23,6 @@ namespace cpp_module {
             TRAVEL, ACTIVATION
         } event_type;
         long reinsertion_number;
-    };
-
-    struct Tie {
-        long vehicle_one;
-        long vehicle_two;
-        long position_one;
-        long position_two;
-        long arc;
     };
 
     struct CompareDepartures {
@@ -55,7 +48,7 @@ namespace cpp_module {
 
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 
-    class SchedulerFields {
+    class SchedulerFields : public TieManager {
     public:
         using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
         enum TripStatus {
@@ -87,11 +80,10 @@ namespace cpp_module {
         long explored_solutions = 0;
         bool slack_is_enough = true;
     protected:
-        Instance &instance;
 
 
     public:
-        explicit SchedulerFields(Instance &arg_instance) : instance(arg_instance) {
+        explicit SchedulerFields(Instance &arg_instance) : TieManager(arg_instance) {
             best_total_delay = std::numeric_limits<double>::max();
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
@@ -111,6 +103,15 @@ namespace cpp_module {
                     iteration++;
             }
         }
+
+        [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
+            return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;
+        }
+
+        [[nodiscard]] double get_trip_staggering_applied(TripID trip_id, Time start_time) const {
+            return start_time - instance.get_trip_release_time(trip_id);
+        }
+
 
         [[nodiscard]] bool get_slack_is_enough_flag() const {
             return slack_is_enough;
@@ -413,39 +414,30 @@ namespace cpp_module {
 
         void set_next_departure_and_push_to_queue(double delay, Departure &departure);
 
-        bool check_if_other_starts_before_current(TripID other_trip_id, const VehicleSchedule &congestedSchedule,
-                                                  const Departure &departure) const;
+        [[nodiscard]] bool
+        check_if_other_starts_before_current(TripID other_trip_id, const VehicleSchedule &congestedSchedule,
+                                             const Departure &departure) const;
 
-
-        [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
-            return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;
-        }
-
-        [[nodiscard]] double get_trip_staggering_applied(TripID trip_id, Time start_time) const {
-            return start_time - instance.get_trip_release_time(trip_id);
-        }
-
-        Solution construct_solution(std::vector<Time> &arg_start_times);
-
-        Solution construct_solution_and_solve_ties(const std::vector<double> &start_times);
 
         Solution construct_solution(const std::vector<Time> &arg_start_times);
+
+        void solve_arc_ties(ArcID arc_id, Solution &complete_solution);
+
+        void solve_tie(Solution &complete_solution, const Tie &tie);
+
+        void solve_solution_ties(Solution &complete_solution);
+
+
+        Solution construct_solution_and_solve_ties(const std::vector<double> &start_times);
     };
 
     auto get_index(const std::vector<long> &v, long k) -> long;
-
-    auto solve_solution_ties(const Instance &instance, Solution &complete_solution, Scheduler &scheduler) -> void;
-
-    auto check_if_solution_has_ties(const Instance &instance, Solution &complete_solution) -> void;
 
     auto compute_delay_on_arc(const double &vehicles_on_arc, const Instance &instance, long arc) -> double;
 
     auto _assert_solution_is_correct(Solution &new_solution, Scheduler &scheduler) -> void;
 
-
     auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double;
-
-    auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool;
 
 
 }

@@ -211,7 +211,7 @@ namespace cpp_module {
 
         auto current_solution = scheduler.construct_solution(arg_release_times);
 
-        if (!current_solution.get_feasible_and_improving_flag()) {
+        if (!current_solution.is_feasible_and_improving()) {
             std::cout << "Initial solution is infeasible - local search stopped\n";
             return current_solution;
         }
@@ -246,23 +246,26 @@ namespace cpp_module {
         return time_slack_trips;
     }
 
+    auto LocalSearch::print_start(const Solution &arg_solution) -> void {
+        std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
+                  << " sec of delay\n";
+    }
+
     auto LocalSearch::run(std::vector<Time> &arg_start_times) -> Solution {
         // Improve value of solution
 
         auto arg_solution = get_initial_solution(arg_start_times);
 
+        print_start(arg_solution);
 
-        std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
-                  << " sec of delay\n";
-
-        if (!arg_solution.get_feasible_and_improving_flag()) {
+        if (!arg_solution.is_feasible_and_improving()) {
             return arg_solution;
         }
 
-        check_if_solution_has_ties(instance, arg_solution);
+        check_if_solution_has_ties(arg_solution);
 
         if (arg_solution.get_ties_flag()) {
-            solve_solution_ties(instance, arg_solution, scheduler);
+            scheduler.solve_solution_ties(arg_solution);
         }
 
         bool is_improved = true;
@@ -290,7 +293,7 @@ namespace cpp_module {
         new_solution.set_schedule(current_solution.get_schedule());
         new_solution.set_total_delay(current_solution.get_total_delay());
         new_solution.set_ties_flag(current_solution.get_ties_flag());
-        new_solution.set_feasible_and_improving_flag(current_solution.get_feasible_and_improving_flag());
+        new_solution.set_feasible_and_improving_flag(current_solution.is_feasible_and_improving());
     }
 
     void LocalSearch::apply_staggering_to_solve_conflict(Solution &complete_solution,
@@ -360,7 +363,7 @@ namespace cpp_module {
         current_solution.set_schedule(new_solution.get_schedule());
         current_solution.set_total_delay(new_solution.get_total_delay());
         current_solution.set_ties_flag(new_solution.get_ties_flag());
-        current_solution.set_feasible_and_improving_flag(new_solution.get_feasible_and_improving_flag());
+        current_solution.set_feasible_and_improving_flag(new_solution.is_feasible_and_improving());
     }
 
     auto LocalSearch::print_move(const Solution &old_solution,
@@ -414,7 +417,7 @@ namespace cpp_module {
     }
 
     auto LocalSearch::check_if_solution_is_admissible(Solution &complete_solution) -> bool {
-        if (!complete_solution.get_feasible_and_improving_flag()) {
+        if (!complete_solution.is_feasible_and_improving()) {
             return false;
         }
         if (complete_solution.get_ties_flag()) {
@@ -466,7 +469,7 @@ namespace cpp_module {
             scheduler.update_existing_congested_schedule(new_solution, conflict);
 
             // Check if the solution is feasible and improving
-            if (!new_solution.get_feasible_and_improving_flag()) {
+            if (!new_solution.is_feasible_and_improving()) {
                 break;  // Exit if no feasible or improving solution is found
             }
 

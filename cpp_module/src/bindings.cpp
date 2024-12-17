@@ -12,9 +12,9 @@ namespace cpp_module {
     auto Scheduler::construct_solution_and_solve_ties(const std::vector<double> &start_times) -> Solution {
         //TODO: remove
         Solution complete_solution = construct_solution(start_times);
-        check_if_solution_has_ties(instance, complete_solution);
+        check_if_solution_has_ties(complete_solution);
         if (complete_solution.get_ties_flag()) {
-            solve_solution_ties(instance, complete_solution, *this);
+            solve_solution_ties(complete_solution);
         }
         return complete_solution;
     }
