@@ -23,6 +23,18 @@ namespace cpp_module {
             double latest_arrival_time;
         };
 
+        enum CounterName {
+            WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS, ITERATION
+        };
+
+        struct Counters {
+            long worse_solutions = 0;
+            long slack_not_enough = 0;
+            long solution_with_ties = 0;
+            long explored_solutions = 0;
+            long iteration = 0;
+        };
+
         struct ConflictingArrival {
             long vehicle;
             double arrival;
@@ -40,6 +52,8 @@ namespace cpp_module {
         ConflictingArrival conflicting_arrival{};
         std::vector<ConflictingArrival> conflicting_arrivals;
         double start_search_clock;
+        double best_total_delay = INFTY;
+        Counters counters;
 
 
         static bool compare_conflicting_arrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
@@ -59,15 +73,41 @@ namespace cpp_module {
 
         Conflict create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const;
 
-        [[nodiscard]] double get_start_search_clock() const {
-            return start_search_clock;
+        [[nodiscard]] long get_iteration() const {
+            return counters.iteration;
         }
+
+
+        [[nodiscard]] double get_best_total_delay() const {
+            return best_total_delay;
+        }
+
+        void set_best_total_delay(double arg_delay) {
+            best_total_delay = arg_delay;
+        }
+
 
         static auto get_current_time_in_seconds() -> double {
             using Clock = std::chrono::high_resolution_clock;
             auto now = Clock::now();
             auto epoch = now.time_since_epoch();
             return std::chrono::duration<double>(epoch).count();
+        }
+
+
+        void increase_counter(CounterName counter_name) {
+            switch (counter_name) {
+                case EXPLORED_SOLUTIONS:
+                    counters.explored_solutions++;
+                case SLACK_NOT_ENOUGH:
+                    counters.slack_not_enough++;
+                case SOLUTION_WITH_TIES:
+                    counters.solution_with_ties++;
+                case WORSE_SOLUTIONS:
+                    counters.worse_solutions++;
+                case ITERATION:
+                    counters.iteration++;
+            }
         }
 
 

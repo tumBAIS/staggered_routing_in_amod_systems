@@ -15,7 +15,7 @@ namespace cpp_module {
 // Initialize the solution object
     auto initialize_complete_solution(Solution &complete_solution) -> void {
         complete_solution.set_total_delay(0);
-        complete_solution.set_feasible_and_improving_flag(true);
+        complete_solution.set_feasible_flag(true);
         complete_solution.set_ties_flag(false);
     }
 
@@ -48,16 +48,13 @@ namespace cpp_module {
     }
 
 // Check if the current solution is admissible
-    auto Scheduler::check_if_solution_is_admissible(double total_delay, const Departure &departure) const -> bool {
+    auto Scheduler::check_if_solution_is_feasible(const Departure &departure) const -> bool {
         if (departure.time > instance.get_trip_deadline(departure.trip_id) + TOLERANCE) {
             std::cout << "Deadline for vehicle " << departure.trip_id << " exceeded: "
                       << "Deadline: " << instance.get_trip_deadline(departure.trip_id)
                       << ", Position: " << departure.position
                       << ", Path length: " << instance.get_trip_route(departure.trip_id).size()
                       << ", Current time: " << departure.time << "\n";
-            return false;
-        }
-        if (total_delay >= get_best_total_delay()) {
             return false;
         }
         return true;
@@ -89,11 +86,8 @@ namespace cpp_module {
 
                 set_next_departure_and_push_to_queue(delay, departure);
 
-                bool schedule_is_feasible_and_improving =
-                        check_if_solution_is_admissible(complete_solution.get_total_delay(), departure);
-
-                if (!schedule_is_feasible_and_improving) {
-                    complete_solution.set_feasible_and_improving_flag(false);
+                if (!check_if_solution_is_feasible(departure)) {
+                    complete_solution.set_feasible_flag(false);
                 }
             }
         }

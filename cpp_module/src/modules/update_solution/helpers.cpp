@@ -177,8 +177,6 @@ namespace cpp_module {
         set_tie_found_flag(false);
         set_lazy_update_pq_flag(false);
         set_trip_is_late_flag(false);
-        increase_counter(ITERATION);
-        print_iteration_number();
     }
 
     auto Scheduler::initialize_priority_queue(const Conflict &conflict, Solution &solution) -> void {

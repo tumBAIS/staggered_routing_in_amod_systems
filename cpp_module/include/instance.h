@@ -17,6 +17,7 @@ namespace cpp_module {
 // Parameters
     const double CONSTR_TOLERANCE = 1e-3;
     const double TOLERANCE = 1e-6;
+    const double INFTY = std::numeric_limits<double>::max();
 
     struct Conflict {
         long arc;

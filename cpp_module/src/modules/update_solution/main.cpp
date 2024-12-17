@@ -46,7 +46,7 @@ namespace cpp_module {
             set_lazy_update_pq_flag(false);
             process_vehicle(complete_solution, departure);
             if (get_tie_found_flag() || get_trip_is_late_flag()) {
-                complete_solution.set_feasible_and_improving_flag(false);
+                complete_solution.set_feasible_flag(false);
                 return;
             }
             if (get_lazy_update_pq_flag()) {
@@ -55,10 +55,6 @@ namespace cpp_module {
             }
         }
         update_total_value_solution(complete_solution);
-        if (complete_solution.get_total_delay() >= get_best_total_delay()) {
-            increase_counter(WORSE_SOLUTIONS);
-            complete_solution.set_feasible_and_improving_flag(false);
-        }
         assert_no_vehicles_are_late(complete_solution);
     }
 }

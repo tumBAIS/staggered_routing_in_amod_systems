@@ -173,45 +173,61 @@ namespace cpp_module {
 
     auto LocalSearch::get_conflict_list(const VehicleSchedule &congested_schedule) -> std::vector<Conflict> {
         std::vector<Conflict> conflicts_list;
-        for (auto current_vehicle = 0; current_vehicle < congested_schedule.size(); current_vehicle++) {
-            bool vehicle_has_delay = check_vehicle_has_delay(congested_schedule, current_vehicle);
-            if (vehicle_has_delay) {
-                for (auto position = 0; position < congested_schedule[current_vehicle].size() - 1; position++) {
-                    long arc = instance.get_arc_at_position_in_trip_route(current_vehicle, position);
-                    double delay = congested_schedule[current_vehicle][position + 1] -
-                                   congested_schedule[current_vehicle][position] -
-                                   instance.get_arc_travel_time(arc);
-                    if (delay > TOLERANCE) {
-                        conflicting_arrivals.clear();
-                        update_current_vehicle_info(current_vehicle, congested_schedule, position);
-                        for (auto other_vehicle: instance.get_conflicting_set(arc)) {
-                            other_info.trip_id = other_vehicle;
-                            const long other_position = get_index(instance.get_trip_route(other_vehicle), arc);
-                            auto instructions_conflict = get_instructions_conflict(congested_schedule, other_position);
-                            if (instructions_conflict == InstructionsConflict::CONTINUE) {
-                                continue;
-                            } else if (instructions_conflict == InstructionsConflict::BREAK) {
-                                break;
-                            } else {
-                                conflicting_arrival.arrival = other_info.arrival_time;
-                                conflicting_arrival.vehicle = other_info.trip_id;
-                                conflicting_arrivals.push_back(conflicting_arrival);
-                            }
-                        }
-                        add_conflicts_to_conflict_list(conflicts_list, arc);
-                    }
+
+        for (auto current_vehicle = 0; current_vehicle < congested_schedule.size(); ++current_vehicle) {
+            if (!check_vehicle_has_delay(congested_schedule, current_vehicle)) {
+                continue; // Skip vehicles without delay
+            }
+
+            for (auto position = 0; position < congested_schedule[current_vehicle].size() - 1; ++position) {
+                long arc = instance.get_arc_at_position_in_trip_route(current_vehicle, position);
+
+                double delay = congested_schedule[current_vehicle][position + 1] -
+                               congested_schedule[current_vehicle][position] -
+                               instance.get_arc_travel_time(arc);
+
+                if (delay <= TOLERANCE) {
+                    continue; // Skip if delay is within tolerance
                 }
+
+                // Clear previous conflicts and update vehicle information
+                conflicting_arrivals.clear();
+                update_current_vehicle_info(current_vehicle, congested_schedule, position);
+
+                // Analyze conflicts for the current arc
+                for (auto other_vehicle: instance.get_conflicting_set(arc)) {
+                    other_info.trip_id = other_vehicle;
+
+                    const long other_position = get_index(instance.get_trip_route(other_vehicle), arc);
+                    auto instructions_conflict = get_instructions_conflict(congested_schedule, other_position);
+
+                    if (instructions_conflict == InstructionsConflict::CONTINUE) {
+                        continue;
+                    } else if (instructions_conflict == InstructionsConflict::BREAK) {
+                        break;
+                    }
+
+                    // Store conflicting arrival information
+                    conflicting_arrival.arrival = other_info.arrival_time;
+                    conflicting_arrival.vehicle = other_info.trip_id;
+                    conflicting_arrivals.push_back(conflicting_arrival);
+                }
+
+                // Add identified conflicts to the conflict list
+                add_conflicts_to_conflict_list(conflicts_list, arc);
             }
         }
+
         return conflicts_list;
     }
+
 
     // Generate an initial solution for local search
     auto LocalSearch::get_initial_solution(const std::vector<double> &arg_release_times) -> Solution {
 
         auto current_solution = scheduler.construct_solution(arg_release_times);
 
-        if (!current_solution.is_feasible_and_improving()) {
+        if (!current_solution.is_feasible()) {
             std::cout << "Initial solution is infeasible - local search stopped\n";
             return current_solution;
         }
@@ -261,7 +277,7 @@ namespace cpp_module {
         print_initial_delay(arg_solution);
 
         // If the solution is not feasible, return immediately
-        if (!arg_solution.is_feasible_and_improving()) {
+        if (!arg_solution.is_feasible()) {
             print_infeasible_message();
             return arg_solution;
         }
@@ -274,10 +290,12 @@ namespace cpp_module {
         // Iteratively improve the solution
         bool is_improved = true;
         while (is_improved) {
+            increase_counter(ITERATION);
             // Check for time limit
             if (check_if_time_limit_is_reached()) break;
 
-            scheduler.set_best_total_delay(arg_solution.get_total_delay());
+            // Store delay of the best solution found
+            set_best_total_delay(arg_solution.get_total_delay());
 
             // Identify and sort conflicts
             auto conflicts_list = get_conflict_list(arg_solution.get_schedule());
@@ -306,7 +324,7 @@ namespace cpp_module {
         new_solution.set_schedule(current_solution.get_schedule());
         new_solution.set_total_delay(current_solution.get_total_delay());
         new_solution.set_ties_flag(current_solution.get_ties_flag());
-        new_solution.set_feasible_and_improving_flag(current_solution.is_feasible_and_improving());
+        new_solution.set_feasible_flag(current_solution.is_feasible());
     }
 
     void LocalSearch::apply_staggering_to_solve_conflict(Solution &complete_solution,
@@ -376,7 +394,7 @@ namespace cpp_module {
         current_solution.set_schedule(new_solution.get_schedule());
         current_solution.set_total_delay(new_solution.get_total_delay());
         current_solution.set_ties_flag(new_solution.get_ties_flag());
-        current_solution.set_feasible_and_improving_flag(new_solution.is_feasible_and_improving());
+        current_solution.set_feasible_flag(new_solution.is_feasible());
     }
 
     auto LocalSearch::print_move(const Solution &old_solution,
@@ -430,11 +448,16 @@ namespace cpp_module {
     }
 
     auto LocalSearch::check_if_solution_is_admissible(Solution &complete_solution) -> bool {
-        if (!complete_solution.is_feasible_and_improving()) {
+        if (!complete_solution.is_feasible()) {
             return false;
         }
+
+        if (complete_solution.get_total_delay() > best_total_delay) {
+            return false;
+        }
+
         if (complete_solution.get_ties_flag()) {
-            scheduler.increase_counter(SOLUTION_WITH_TIES);
+            increase_counter(SOLUTION_WITH_TIES);
             return false;
         }
         return true;
@@ -442,7 +465,7 @@ namespace cpp_module {
 
     auto LocalSearch::solve_conflict(Conflict &conflict, Solution &new_solution) {
         // Increment explored solutions counter
-        scheduler.increase_counter(EXPLORED_SOLUTIONS);
+        increase_counter(EXPLORED_SOLUTIONS);
 
         // Initial state checks
         bool conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
@@ -465,7 +488,7 @@ namespace cpp_module {
             scheduler.set_slack_is_enough_flag(slack_is_enough);
 
             if (!scheduler.get_slack_is_enough_flag()) {
-                scheduler.increase_counter(SLACK_NOT_ENOUGH);  // For logging/debug purposes
+                increase_counter(SLACK_NOT_ENOUGH);  // For logging/debug purposes
                 break;  // Exit if no slack is sufficient
             }
 
@@ -476,7 +499,8 @@ namespace cpp_module {
             scheduler.update_existing_congested_schedule(new_solution, conflict);
 
             // Check if the solution is feasible and improving
-            if (!new_solution.is_feasible_and_improving()) {
+            if (!new_solution.is_feasible()) {
+                increase_counter(WORSE_SOLUTIONS);
                 break;  // Exit if no feasible or improving solution is found
             }
 
@@ -500,7 +524,7 @@ namespace cpp_module {
             if (check_if_time_limit_is_reached()) return false;
             bool is_admissible = check_if_solution_is_admissible(new_solution);
             if (is_admissible && scheduler.get_slack_is_enough_flag()) {
-                if (scheduler.get_iteration() % 20 == 0) {
+                if (get_iteration() % 20 == 0) {
                     new_solution = scheduler.construct_solution(new_solution.get_start_times());
                 }
                 print_move(current_solution, new_solution, conflict);

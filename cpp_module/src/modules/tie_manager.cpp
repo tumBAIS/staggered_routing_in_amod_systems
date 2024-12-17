@@ -13,7 +13,7 @@ namespace cpp_module {
         complete_solution.set_ties_flag(true);
         complete_solution.set_schedule(correct_solution.schedule);
         complete_solution.set_total_delay(correct_solution.total_delay);
-        complete_solution.set_feasible_and_improving_flag(correct_solution.schedule_is_feasible_and_improving);
+        complete_solution.set_feasible_flag(correct_solution.schedule_is_feasible_and_improving);
     }
 
 // Check if a vehicle has enough slack to solve a tie
@@ -141,7 +141,7 @@ namespace cpp_module {
 
 
         // Check if the new solution is valid
-        if (!complete_solution.is_feasible_and_improving()) {
+        if (!complete_solution.is_feasible()) {
             // Restore the previous solution
             reset_solution(complete_solution, tie.vehicle_one, correct_solution);
             return;

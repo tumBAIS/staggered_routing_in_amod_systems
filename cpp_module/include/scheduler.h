@@ -39,9 +39,7 @@ namespace cpp_module {
     enum VehicleShouldBeMarked {
         YES, NO, MAYBE
     };
-    enum CounterName {
-        WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS, ITERATION
-    };
+
 
     using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
@@ -65,7 +63,6 @@ namespace cpp_module {
         std::vector<long> last_processed_position;
         std::vector<long> number_of_reinsertions;
         std::vector<TripID> trips_to_mark;
-        double best_total_delay;
         VehicleSchedule original_schedule;
         VehicleSchedule schedule_to_restore;
         MinQueueDepartures pq_to_restore;
@@ -73,36 +70,17 @@ namespace cpp_module {
         bool tie_found{};
         bool trip_is_late{};
         std::vector<TripStatus> trip_status_list;
-        long iteration = 0;
-        long worse_solutions = 0;
-        long slack_not_enough = 0;
-        long solution_with_ties = 0;
-        long explored_solutions = 0;
         bool slack_is_enough = true;
+
     protected:
 
 
     public:
         explicit SchedulerFields(Instance &arg_instance) : TieManager(arg_instance) {
-            best_total_delay = std::numeric_limits<double>::max();
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
         }
 
-        void increase_counter(CounterName counter_name) {
-            switch (counter_name) {
-                case EXPLORED_SOLUTIONS:
-                    explored_solutions++;
-                case SLACK_NOT_ENOUGH:
-                    slack_not_enough++;
-                case SOLUTION_WITH_TIES:
-                    solution_with_ties++;
-                case WORSE_SOLUTIONS:
-                    worse_solutions++;
-                case ITERATION:
-                    iteration++;
-            }
-        }
 
         [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
             return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;
@@ -119,18 +97,6 @@ namespace cpp_module {
 
         void set_slack_is_enough_flag(bool arg_flag) {
             slack_is_enough = arg_flag;
-        }
-
-        [[nodiscard]] long get_iteration() const {
-            return iteration;
-        }
-
-        [[nodiscard]] double get_best_total_delay() const {
-            return best_total_delay;
-        }
-
-        void set_best_total_delay(double arg_delay) {
-            best_total_delay = arg_delay;
         }
 
 
@@ -300,8 +266,6 @@ namespace cpp_module {
 
         void print_departure_pushed_to_queue() const;
 
-        bool check_if_tie_in_set(const VehicleSchedule &congested_schedule, const Departure &departure);
-
         void assert_departure_is_feasible(const VehicleSchedule &congested_schedule);
 
         void assert_lazy_update_is_necessary(double other_departure) const;
@@ -410,7 +374,6 @@ namespace cpp_module {
         decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congested_schedule, double current_new_arrival,
                                          const Departure &departure);
 
-        [[nodiscard]] bool check_if_solution_is_admissible(double total_delay, const Departure &departure) const;
 
         void set_next_departure_and_push_to_queue(double delay, Departure &departure);
 
@@ -434,6 +397,8 @@ namespace cpp_module {
         bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution);
 
         bool check_if_tie_in_set(const Solution &solution, const Departure &departure);
+
+        bool check_if_solution_is_feasible(const Departure &departure) const;
     };
 
     auto get_index(const std::vector<long> &v, long k) -> long;
