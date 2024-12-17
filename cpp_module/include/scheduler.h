@@ -419,7 +419,6 @@ namespace cpp_module {
         bool check_if_other_starts_before_current(TripID other_trip_id, const VehicleSchedule &congestedSchedule,
                                                   const Departure &departure) const;
 
-        void stagger_trip(Solution &complete_solution, long vehicle, double staggering);
 
         [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
             return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;

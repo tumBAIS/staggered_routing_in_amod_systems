@@ -287,20 +287,11 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void {
-        complete_solution.increase_trip_start_time(vehicle, staggering);
-    }
-
-
     auto LocalSearch::reset_new_solution(const Solution &current_solution, Solution &new_solution,
                                          Conflict &conflict) -> void {
-        scheduler.stagger_trip(new_solution,
-                               conflict.current_trip_id,
-                               -conflict.staggering_current_vehicle);
+        new_solution.increase_trip_start_time(conflict.current_trip_id, -conflict.staggering_current_vehicle);
         conflict.staggering_current_vehicle = 0;
-        scheduler.stagger_trip(new_solution,
-                               conflict.other_trip_id,
-                               conflict.destaggering_other_vehicle);
+        new_solution.increase_trip_start_time(conflict.other_trip_id, conflict.destaggering_other_vehicle);
         conflict.destaggering_other_vehicle = 0;
         new_solution.set_schedule(current_solution.get_schedule());
         new_solution.set_total_delay(current_solution.get_total_delay());
@@ -328,7 +319,7 @@ namespace cpp_module {
 
         if (move_vehicle_one) {
             // Move only the current vehicle
-            scheduler.stagger_trip(complete_solution, conflict.current_trip_id, conflict.distance_to_cover);
+            complete_solution.increase_trip_start_time(conflict.current_trip_id, conflict.distance_to_cover);
             conflict.staggering_current_vehicle += conflict.distance_to_cover;
             assert(conflict.distance_to_cover > 0);
 
@@ -338,8 +329,8 @@ namespace cpp_module {
                                                                                     current_start_time));
             auto destaggering = conflict.distance_to_cover - staggering;
 
-            scheduler.stagger_trip(complete_solution, conflict.current_trip_id, staggering);
-            scheduler.stagger_trip(complete_solution, conflict.other_trip_id, -destaggering);
+            complete_solution.increase_trip_start_time(conflict.current_trip_id, staggering);
+            complete_solution.increase_trip_start_time(conflict.other_trip_id, -destaggering);
 
             conflict.staggering_current_vehicle += staggering;
             conflict.destaggering_other_vehicle += destaggering;
@@ -370,8 +361,8 @@ namespace cpp_module {
                                               const Solution &new_solution,
                                               Conflict &conflict) -> void {
         // Update current vehicle
-        scheduler.stagger_trip(current_solution, conflict.current_trip_id, conflict.staggering_current_vehicle);
-        scheduler.stagger_trip(current_solution, conflict.other_trip_id, -conflict.destaggering_other_vehicle);
+        current_solution.increase_trip_start_time(conflict.current_trip_id, conflict.staggering_current_vehicle);
+        current_solution.increase_trip_start_time(conflict.other_trip_id, -conflict.destaggering_other_vehicle);
         current_solution.set_schedule(new_solution.get_schedule());
         current_solution.set_total_delay(new_solution.get_total_delay());
         current_solution.set_ties_flag(new_solution.get_ties_flag());

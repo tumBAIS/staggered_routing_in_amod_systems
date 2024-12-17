@@ -14,9 +14,8 @@ namespace cpp_module {
 
 // Reset a solution to a previously correct state
     auto
-    reset_solution(Solution &complete_solution, long vehicle_one, const CorrectSolution &correct_solution,
-                   Scheduler &scheduler) -> void {
-        scheduler.stagger_trip(complete_solution, vehicle_one, -CONSTR_TOLERANCE);
+    reset_solution(Solution &complete_solution, long vehicle_one, const CorrectSolution &correct_solution) -> void {
+        complete_solution.increase_trip_start_time(vehicle_one, -CONSTR_TOLERANCE);
         complete_solution.set_ties_flag(true);
         complete_solution.set_schedule(correct_solution.schedule);
         complete_solution.set_total_delay(correct_solution.total_delay);
@@ -74,7 +73,7 @@ namespace cpp_module {
             CorrectSolution correct_solution = set_correct_solution(complete_solution);
 
             // Stagger the trip slightly to resolve the tie
-            scheduler.stagger_trip(complete_solution, tie.vehicle_one, CONSTR_TOLERANCE);
+            complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE);
 
             // Reconstruct the schedule with the updated solution
             scheduler.construct_schedule(complete_solution);
@@ -82,7 +81,7 @@ namespace cpp_module {
             // Check if the new solution is valid
             if (!complete_solution.get_feasible_and_improving_flag()) {
                 // Restore the previous solution
-                reset_solution(complete_solution, tie.vehicle_one, correct_solution, scheduler);
+                reset_solution(complete_solution, tie.vehicle_one, correct_solution);
                 return;
             }
 
