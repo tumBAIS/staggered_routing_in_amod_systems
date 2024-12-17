@@ -40,7 +40,7 @@ namespace cpp_module {
     }
 
 
-    auto LocalSearch::create_conflict(long arc, double delay, TripInfo &trip_info,
+    auto LocalSearch::create_conflict(long arc, double delay, const TripInfo &trip_info,
                                       const TripInfo &conflicting_trip_info) -> Conflict {
         return Conflict{
                 .arc = arc,
@@ -84,27 +84,6 @@ namespace cpp_module {
     }
 
 
-    auto LocalSearch::add_conflicts_to_conflict_list(TripInfo &trip_info,
-                                                     std::vector<TripInfo> &conflicting_trips_info_list,
-                                                     std::vector<Conflict> &conflicts_list,
-                                                     long arc,
-                                                     double arc_delay) -> void {
-        // Sort the list of conflicting trips by their comparison criteria
-        std::sort(conflicting_trips_info_list.begin(),
-                  conflicting_trips_info_list.end(),
-                  compare_conflicting_trips_info);
-
-        long vehicles_on_arc = 1;
-
-        // Add each conflicting trip to the conflict list
-        for (const auto &conflicting_trip_info: conflicting_trips_info_list) {
-            ++vehicles_on_arc;
-            Conflict conflict = create_conflict(arc, arc_delay, trip_info, conflicting_trip_info);
-            conflicts_list.push_back(conflict);
-        }
-    }
-
-
     auto LocalSearch::get_trip_info_struct(long current_trip,
                                            const Solution &solution,
                                            long position) -> TripInfo {
@@ -126,6 +105,42 @@ namespace cpp_module {
         return travel_time_trip - fft_trip > TOLERANCE;
     }
 
+    auto LocalSearch::find_conflicts_on_arc(long arc,
+                                            double arc_delay,
+                                            const Solution &solution,
+                                            const TripInfo &trip_info,
+                                            const std::vector<long> &conflicting_set)
+    -> std::vector<Conflict> {
+        std::vector<Conflict> conflicts_list;
+        std::vector<TripInfo> conflicting_trips_info_list;
+
+        // Analyze conflicts for the current arc
+        for (auto other_trip: conflicting_set) {
+            if (other_trip == trip_info.trip_id) {
+                continue; // Skip the same trip
+            }
+
+            const long other_position = get_index(instance.get_trip_route(other_trip), arc);
+            auto conflicting_trip_info = get_trip_info_struct(other_trip, solution, other_position);
+            auto instructions_conflict = get_instructions_conflict(trip_info, conflicting_trip_info);
+
+            if (instructions_conflict == InstructionsConflict::CONTINUE) {
+                continue;
+            } else if (instructions_conflict == InstructionsConflict::BREAK) {
+                break;
+            }
+
+            conflicting_trips_info_list.push_back(conflicting_trip_info);
+        }
+
+        // Create conflicts based on the collected conflicting trips
+        for (const auto &conflicting_trip_info: conflicting_trips_info_list) {
+            conflicts_list.push_back(create_conflict(arc, arc_delay, trip_info, conflicting_trip_info));
+        }
+
+        return conflicts_list;
+    }
+
     auto LocalSearch::get_conflicts_list(const Solution &solution) -> std::vector<Conflict> {
         std::vector<Conflict> conflicts_list;
 
@@ -145,33 +160,16 @@ namespace cpp_module {
                     continue; // Skip if delay is within tolerance
                 }
 
-                // Clear previous conflicts and update vehicle information
-                std::vector<TripInfo> conflicting_trips_info_list;
+                // Gather trip information and find conflicts for the current arc
                 auto trip_info = get_trip_info_struct(trip_id, solution, position);
+                auto conflicting_set = instance.get_conflicting_set(arc);
 
-                // Analyze conflicts for the current arc
-                for (auto other_trip: instance.get_conflicting_set(arc)) {
-                    if (other_trip == trip_id) continue;
-                    const long other_position = get_index(instance.get_trip_route(other_trip), arc);
-                    auto conflicting_trip_info = get_trip_info_struct(other_trip, solution, other_position);
-                    auto instructions_conflict = get_instructions_conflict(trip_info, conflicting_trip_info);
-
-                    if (instructions_conflict == InstructionsConflict::CONTINUE) {
-                        continue;
-                    } else if (instructions_conflict == InstructionsConflict::BREAK) {
-                        break;
-                    }
-
-                    // Store conflicting arrival information
-                    conflicting_trips_info_list.push_back(conflicting_trip_info);
-                }
-
-                // Add identified conflicts to the conflict list
-                add_conflicts_to_conflict_list(trip_info, conflicting_trips_info_list, conflicts_list, arc, arc_delay);
+                auto arc_conflicts = find_conflicts_on_arc(arc, arc_delay, solution, trip_info, conflicting_set);
+                conflicts_list.insert(conflicts_list.end(), arc_conflicts.begin(), arc_conflicts.end());
             }
         }
-        sort_conflicts(conflicts_list);
 
+        sort_conflicts(conflicts_list);
         return conflicts_list;
     }
 

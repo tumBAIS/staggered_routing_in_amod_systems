@@ -46,19 +46,6 @@ namespace cpp_module {
         Counters counters;
 
 
-        static bool compare_conflicting_trips_info(const TripInfo &a, const TripInfo &b) {
-
-            // Check if arrivals are within the tolerance
-            if (std::abs(a.departure_time - b.departure_time) <= TOLERANCE) {
-                // If arrivals are within tolerance, compare by trip ID
-                return a.trip_id < b.trip_id;
-            }
-
-            // Otherwise, compare by arrival time
-            return a.departure_time < b.departure_time;
-        }
-
-
         [[nodiscard]] long get_iteration() const {
             return counters.iteration;
         }
@@ -151,11 +138,12 @@ namespace cpp_module {
         static InstructionsConflict get_instructions_conflict(const TripInfo &trip_info, const TripInfo &other_info);
 
         static Conflict
-        create_conflict(long arc, double delay, TripInfo &trip_info, const TripInfo &conflicting_trip_info);
+        create_conflict(long arc, double delay, const TripInfo &trip_info, const TripInfo &conflicting_trip_info);
 
-        static void
-        add_conflicts_to_conflict_list(TripInfo &trip_info, std::vector<TripInfo> &conflicting_trips_info_list,
-                                       std::vector<Conflict> &conflicts_list, long arc, double arc_delay);
+
+        std::vector<Conflict>
+        find_conflicts_on_arc(long arc, double arc_delay, const Solution &solution, const TripInfo &trip_info,
+                              const std::vector<long> &conflicting_set);
     };
 
 
