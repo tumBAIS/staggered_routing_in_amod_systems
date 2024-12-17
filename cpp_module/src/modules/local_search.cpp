@@ -9,10 +9,10 @@
 namespace cpp_module {
 
 
-    auto check_if_time_limit_is_reached(const double start_search_clock, double max_time_optimization) -> bool {
+    auto LocalSearch::check_if_time_limit_is_reached() -> bool {
         auto time_now = clock() / (double) CLOCKS_PER_SEC;
         auto duration = (time_now - start_search_clock);
-        if (duration > max_time_optimization) {
+        if (duration > instance.get_max_time_optimization()) {
             std::cout << "STOPPING LOCAL SEARCH - MAX TIME LIMIT REACHED \n";
             return true;
         }
@@ -275,9 +275,7 @@ namespace cpp_module {
         bool is_improved = true;
         while (is_improved) {
             // Check for time limit
-            if (check_if_time_limit_is_reached(get_start_search_clock(), instance.get_max_time_optimization())) {
-                break;
-            }
+            if (check_if_time_limit_is_reached()) break;
 
             scheduler.set_best_total_delay(arg_solution.get_total_delay());
 
@@ -454,14 +452,8 @@ namespace cpp_module {
             // Check if the time limit for the search is reached
             auto current_trip_start_time = new_solution.get_trip_start_time(conflict.current_trip_id);
             auto other_trip_start_time = new_solution.get_trip_start_time(conflict.other_trip_id);
-            bool time_limit_reached = check_if_time_limit_is_reached(
-                    get_start_search_clock(),
-                    instance.get_max_time_optimization()
-            );
+            if (check_if_time_limit_is_reached()) break;  // Exit the loop if time limit is reached
 
-            if (time_limit_reached) {
-                break;  // Exit the loop if time limit is reached
-            }
 
             // Check if there is enough slack to solve the conflict
             bool slack_is_enough = check_if_possible_to_solve_conflict(
@@ -505,11 +497,7 @@ namespace cpp_module {
                 continue;
             }
             solve_conflict(conflict, new_solution);
-            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
-                                                                     instance.get_max_time_optimization());
-            if (time_limit_reached) {
-                return false;
-            }
+            if (check_if_time_limit_is_reached()) return false;
             bool is_admissible = check_if_solution_is_admissible(new_solution);
             if (is_admissible && scheduler.get_slack_is_enough_flag()) {
                 if (scheduler.get_iteration() % 20 == 0) {

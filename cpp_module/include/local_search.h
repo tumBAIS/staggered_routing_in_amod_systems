@@ -113,6 +113,8 @@ namespace cpp_module {
         static void print_initial_delay(const Solution &arg_solution);
 
         static auto print_infeasible_message() -> void;
+
+        bool check_if_time_limit_is_reached();
     };
 
 
