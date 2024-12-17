@@ -78,7 +78,7 @@ namespace cpp_module {
                                                        start_search_clock(get_current_time_in_seconds()) {}
 
 
-        void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
+        static void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
 
         void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
 

@@ -259,7 +259,6 @@ namespace cpp_module {
     public:
         explicit Scheduler(Instance &arg_instance) : SchedulerFields(arg_instance) {}
 
-        auto construct_schedule(Solution &complete_solution) -> void;
 
         auto update_existing_congested_schedule(Solution &complete_solution,
                                                 const Conflict &conflict) -> void;
@@ -338,8 +337,6 @@ namespace cpp_module {
                                                            const Departure &departure) const;
 
         void print_delay_computed(double delay) const;
-
-        Solution construct_solution(const std::vector<double> &start_times);
 
         void initialize_scheduler(const std::vector<double> &release_times);
 
@@ -428,6 +425,11 @@ namespace cpp_module {
             return start_time - instance.get_trip_release_time(trip_id);
         }
 
+        Solution construct_solution(std::vector<Time> &arg_start_times);
+
+        Solution construct_solution_and_solve_ties(const std::vector<double> &start_times);
+
+        Solution construct_solution(const std::vector<Time> &arg_start_times);
     };
 
     auto get_index(const std::vector<long> &v, long k) -> long;
