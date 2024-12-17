@@ -79,127 +79,116 @@ namespace cpp_module {
     }
 
     auto
-    LocalSearch::create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const -> Conflict {
+    LocalSearch::create_conflict(long arc, double delay, TripInfo &trip_info,
+                                 TripInfo &conflicting_trip_info) -> Conflict {
         return Conflict{
-                arc,
-                current_vehicle_info.trip_id,
-                sorted_arrival.vehicle,
-                delay,
-                sorted_arrival.arrival - current_vehicle_info.departure_time + CONSTR_TOLERANCE,
-                0.0,
-                0.0
+                .arc=arc,
+                .current_trip_id=trip_info.trip_id,
+                .other_trip_id=conflicting_trip_info.trip_id,
+                .delay_conflict=delay,
+                .distance_to_cover=conflicting_trip_info.arrival_time - trip_info.departure_time + CONSTR_TOLERANCE,
+                .staggering_current_vehicle=0.0,
+                .destaggering_other_vehicle=0.0
         };
     }
 
-    auto LocalSearch::get_instructions_conflict(const VehicleSchedule &congested_schedule,
-                                                long other_position) -> InstructionsConflict {
-        if (other_info.trip_id == current_vehicle_info.trip_id) {
+    auto LocalSearch::get_instructions_conflict(const TripInfo &trip_info,
+                                                const TripInfo &other_info) -> InstructionsConflict {
+        // Check conditions for overlap and non-overlap
+        bool other_before_no_overlap = other_info.latest_arrival_time <= trip_info.earliest_departure_time;
+        bool other_before_with_overlap = other_info.earliest_departure_time <= trip_info.earliest_departure_time &&
+                                         trip_info.earliest_departure_time <= other_info.latest_arrival_time;
+        bool other_after_with_overlap = trip_info.earliest_departure_time <= other_info.earliest_departure_time &&
+                                        other_info.earliest_departure_time <= trip_info.latest_departure_time;
+        bool other_after_no_overlap = other_info.earliest_departure_time >= trip_info.latest_departure_time;
+
+        // Decision-making logic
+        if (other_before_no_overlap) {
             return InstructionsConflict::CONTINUE;
         }
 
-        other_info.earliest_departure_time = instance.get_trip_arc_earliest_departure_time(other_info.trip_id,
-                                                                                           other_position);
-        other_info.earliest_arrival_time = instance.get_trip_arc_earliest_departure_time(other_info.trip_id,
-                                                                                         other_position + 1);
-        other_info.latest_departure_time = instance.get_trip_arc_latest_departure_time(other_info.trip_id,
-                                                                                       other_position);
-        other_info.latest_arrival_time = instance.get_trip_arc_latest_departure_time(other_info.trip_id,
-                                                                                     other_position + 1);
+        if (other_before_with_overlap || other_after_with_overlap) {
+            bool current_conflicts_with_other = other_info.departure_time <= trip_info.departure_time &&
+                                                trip_info.departure_time < other_info.arrival_time;
+            return current_conflicts_with_other ? InstructionsConflict::ADD_CONFLICT
+                                                : InstructionsConflict::CONTINUE;
+        }
 
-        bool other_comes_before_and_cannot_overlap =
-                other_info.latest_arrival_time <= current_vehicle_info.earliest_departure_time;
-        bool other_comes_before_and_can_overlap =
-                other_info.earliest_departure_time <= current_vehicle_info.earliest_departure_time &&
-                current_vehicle_info.earliest_departure_time <= other_info.latest_arrival_time;
-        bool other_comes_after_and_can_overlap =
-                current_vehicle_info.earliest_departure_time <= other_info.earliest_departure_time &&
-                other_info.earliest_departure_time <= current_vehicle_info.latest_departure_time;
-        bool other_comes_after_and_cannot_overlap =
-                other_info.earliest_departure_time >= current_vehicle_info.latest_departure_time;
-
-        if (other_comes_before_and_cannot_overlap) {
-            return InstructionsConflict::CONTINUE;
-        } else if (other_comes_before_and_can_overlap || other_comes_after_and_can_overlap) {
-            other_info.departure_time = congested_schedule[other_info.trip_id][other_position];
-            other_info.arrival_time = congested_schedule[other_info.trip_id][other_position + 1];
-            bool current_conflicts_with_other =
-                    other_info.departure_time <= current_vehicle_info.departure_time &&
-                    current_vehicle_info.departure_time < other_info.arrival_time;
-            if (current_conflicts_with_other) {
-                return InstructionsConflict::ADD_CONFLICT;
-            }
-            return InstructionsConflict::CONTINUE;
-        } else if (other_comes_after_and_cannot_overlap) {
+        if (other_after_no_overlap) {
             return InstructionsConflict::BREAK;
-        } else {
-            throw std::invalid_argument("get_instructions_conflict: unspecified case!");
         }
+
+        // Fallback for unspecified cases
+        throw std::invalid_argument("get_instructions_conflict: unspecified case!");
     }
 
-    auto LocalSearch::add_conflicts_to_conflict_list(std::vector<Conflict> &conflicts_list, long arc) -> void {
-        std::sort(conflicting_arrivals.begin(), conflicting_arrivals.end(), compare_conflicting_arrivals);
+
+    auto
+    LocalSearch::add_conflicts_to_conflict_list(TripInfo &trip_info,
+                                                std::vector<TripInfo> &conflicting_trips_info_list,
+                                                std::vector<Conflict> &conflicts_list, long arc) -> void {
+        std::sort(conflicting_trips_info_list.begin(),
+                  conflicting_trips_info_list.end(),
+                  compare_conflicting_trips_info);
         long vehicles_on_arc = 1;
-        for (auto sorted_arrival: conflicting_arrivals) {
+        for (auto conflicting_trip_info: conflicting_trips_info_list) {
             vehicles_on_arc++;
             double conflict_delay = compute_delay_on_arc(vehicles_on_arc, instance, arc);
-            Conflict conflict = create_conflict(arc, conflict_delay, sorted_arrival);
+            Conflict conflict = create_conflict(arc, conflict_delay, trip_info, conflicting_trip_info);
             conflicts_list.push_back(conflict);
         }
     }
 
-    auto LocalSearch::update_current_vehicle_info(long current_vehicle,
-                                                  const VehicleSchedule &congested_schedule,
-                                                  long position) -> void {
-        current_vehicle_info.trip_id = current_vehicle;
-        current_vehicle_info.departure_time = congested_schedule[current_vehicle][position];
-        current_vehicle_info.arrival_time = congested_schedule[current_vehicle][position + 1];
-        current_vehicle_info.earliest_departure_time = instance.get_trip_arc_earliest_departure_time(current_vehicle,
-                                                                                                     position);
-        current_vehicle_info.latest_departure_time = instance.get_trip_arc_latest_departure_time(current_vehicle,
-                                                                                                 position);
-        current_vehicle_info.earliest_arrival_time = instance.get_trip_arc_earliest_departure_time(current_vehicle,
-                                                                                                   position + 1);
-        current_vehicle_info.latest_arrival_time = instance.get_trip_arc_latest_departure_time(current_vehicle,
-                                                                                               position + 1);
+    auto LocalSearch::get_trip_info_struct(long current_trip,
+                                           const Solution &solution,
+                                           long position) -> TripInfo {
+        TripInfo trip_info{
+                .trip_id=current_trip,
+                .departure_time=solution.get_trip_arc_departure(current_trip, position),
+                .arrival_time= solution.get_trip_arc_departure(current_trip, position + 1),
+                .earliest_departure_time= instance.get_trip_arc_earliest_departure_time(current_trip, position),
+                .latest_departure_time=instance.get_trip_arc_latest_departure_time(current_trip, position),
+                .latest_arrival_time=instance.get_trip_arc_latest_departure_time(current_trip, position + 1)
+        };
+        return trip_info;
     }
 
-    auto LocalSearch::check_vehicle_has_delay(const VehicleSchedule &congested_schedule,
-                                              long current_vehicle) -> bool {
-        const double free_flow_travel_time_vehicle = instance.get_trip_free_flow_time(current_vehicle);
-        const double congested_time_vehicle =
-                congested_schedule[current_vehicle].back() - congested_schedule[current_vehicle].front();
-        return congested_time_vehicle - free_flow_travel_time_vehicle > TOLERANCE;
+    auto LocalSearch::check_vehicle_has_delay(const Solution &solution,
+                                              long trip_id) -> bool {
+        const double fft_trip = instance.get_trip_free_flow_time(trip_id);
+        const double travel_time_trip = solution.get_trip_arrival(trip_id) - solution.get_trip_start_time(trip_id);
+        return travel_time_trip - fft_trip > TOLERANCE;
     }
 
-    auto LocalSearch::get_conflict_list(const VehicleSchedule &congested_schedule) -> std::vector<Conflict> {
+    auto LocalSearch::get_conflicts_list(const Solution &solution) -> std::vector<Conflict> {
         std::vector<Conflict> conflicts_list;
 
-        for (auto current_vehicle = 0; current_vehicle < congested_schedule.size(); ++current_vehicle) {
-            if (!check_vehicle_has_delay(congested_schedule, current_vehicle)) {
+        for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
+            if (!check_vehicle_has_delay(solution, trip_id)) {
                 continue; // Skip vehicles without delay
             }
 
-            for (auto position = 0; position < congested_schedule[current_vehicle].size() - 1; ++position) {
-                long arc = instance.get_arc_at_position_in_trip_route(current_vehicle, position);
+            for (auto position = 0; position < instance.get_trip_route_size(trip_id) - 1; ++position) {
+                long arc = instance.get_arc_at_position_in_trip_route(trip_id, position);
 
-                double delay = congested_schedule[current_vehicle][position + 1] -
-                               congested_schedule[current_vehicle][position] -
-                               instance.get_arc_travel_time(arc);
+                double arc_delay = solution.get_trip_arc_departure(trip_id, position + 1) -
+                                   solution.get_trip_arc_departure(trip_id, position) -
+                                   instance.get_arc_travel_time(arc);
 
-                if (delay <= TOLERANCE) {
+                if (arc_delay <= TOLERANCE) {
                     continue; // Skip if delay is within tolerance
                 }
 
                 // Clear previous conflicts and update vehicle information
-                conflicting_arrivals.clear();
-                update_current_vehicle_info(current_vehicle, congested_schedule, position);
+                std::vector<TripInfo> conflicting_trips_info_list;
+                auto trip_info = get_trip_info_struct(trip_id, solution, position);
 
                 // Analyze conflicts for the current arc
-                for (auto other_vehicle: instance.get_conflicting_set(arc)) {
-                    other_info.trip_id = other_vehicle;
-
-                    const long other_position = get_index(instance.get_trip_route(other_vehicle), arc);
-                    auto instructions_conflict = get_instructions_conflict(congested_schedule, other_position);
+                for (auto other_trip: instance.get_conflicting_set(arc)) {
+                    if (other_trip == trip_id) continue;
+                    const long other_position = get_index(instance.get_trip_route(other_trip), arc);
+                    auto conflicting_trip_info = get_trip_info_struct(other_trip, solution, other_position);
+                    auto instructions_conflict = get_instructions_conflict(trip_info, conflicting_trip_info);
 
                     if (instructions_conflict == InstructionsConflict::CONTINUE) {
                         continue;
@@ -208,13 +197,11 @@ namespace cpp_module {
                     }
 
                     // Store conflicting arrival information
-                    conflicting_arrival.arrival = other_info.arrival_time;
-                    conflicting_arrival.vehicle = other_info.trip_id;
-                    conflicting_arrivals.push_back(conflicting_arrival);
+                    conflicting_trips_info_list.push_back(conflicting_trip_info);
                 }
 
                 // Add identified conflicts to the conflict list
-                add_conflicts_to_conflict_list(conflicts_list, arc);
+                add_conflicts_to_conflict_list(trip_info, conflicting_trips_info_list, conflicts_list, arc);
             }
         }
 
@@ -298,7 +285,7 @@ namespace cpp_module {
             set_best_total_delay(arg_solution.get_total_delay());
 
             // Identify and sort conflicts
-            auto conflicts_list = get_conflict_list(arg_solution.get_schedule());
+            auto conflicts_list = get_conflicts_list(arg_solution);
             sort_conflicts(conflicts_list);
 
             // Stop if no conflicts remain

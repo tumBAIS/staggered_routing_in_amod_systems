@@ -24,6 +24,16 @@ namespace cpp_module {
         } event_type;
         long reinsertion_number;
     };
+    
+    struct Conflict {
+        long arc;
+        long current_trip_id;
+        long other_trip_id;
+        double delay_conflict;
+        double distance_to_cover;
+        double staggering_current_vehicle;
+        double destaggering_other_vehicle;
+    };
 
     struct CompareDepartures {
         bool operator()(Departure const &e1, Departure const &e2) {

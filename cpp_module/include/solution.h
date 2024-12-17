@@ -67,6 +67,10 @@ namespace cpp_module {
             return schedule[trip_id][position];
         }
 
+        [[nodiscard]] const Time &get_trip_arrival(TripID trip_id) const {
+            return schedule[trip_id].back();
+        }
+
         [[nodiscard]] double get_total_delay() const {
             return total_delay;
         }

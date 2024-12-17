@@ -13,12 +13,11 @@ namespace cpp_module {
 
     private:
         Scheduler scheduler;
-        struct VehicleInfo {
+        struct TripInfo {
             long trip_id;
             double departure_time;
             double arrival_time;
             double earliest_departure_time;
-            double earliest_arrival_time;
             double latest_departure_time;
             double latest_arrival_time;
         };
@@ -34,12 +33,7 @@ namespace cpp_module {
             long explored_solutions = 0;
             long iteration = 0;
         };
-
-        struct ConflictingArrival {
-            long vehicle;
-            double arrival;
-        };
-
+        
         enum class InstructionsConflict {
             CONTINUE,
             ADD_CONFLICT,
@@ -47,31 +41,23 @@ namespace cpp_module {
         };
 
         const Instance &instance;
-        VehicleInfo current_vehicle_info{};
-        VehicleInfo other_info{};
-        ConflictingArrival conflicting_arrival{};
-        std::vector<ConflictingArrival> conflicting_arrivals;
         double start_search_clock;
         double best_total_delay = INFTY;
         Counters counters;
 
 
-        static bool compare_conflicting_arrivals(const ConflictingArrival &a, const ConflictingArrival &b) {
-            return a.arrival < b.arrival;
+        static bool compare_conflicting_trips_info(const TripInfo &a, const TripInfo &b) {
+
+            // Check if arrivals are within the tolerance
+            if (std::abs(a.arrival_time - b.arrival_time) <= TOLERANCE) {
+                // If arrivals are within tolerance, compare by trip ID
+                return a.trip_id < b.trip_id;
+            }
+
+            // Otherwise, compare by arrival time
+            return a.arrival_time < b.arrival_time;
         }
 
-        std::vector<Conflict> get_conflict_list(const VehicleSchedule &congested_schedule);
-
-        bool check_vehicle_has_delay(const VehicleSchedule &congested_schedule, long current_vehicle);
-
-        void
-        update_current_vehicle_info(long current_vehicle, const VehicleSchedule &congested_schedule, long position);
-
-        void add_conflicts_to_conflict_list(std::vector<Conflict> &conflicts_list, long arc);
-
-        InstructionsConflict get_instructions_conflict(const VehicleSchedule &congested_schedule, long other_position);
-
-        Conflict create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const;
 
         [[nodiscard]] long get_iteration() const {
             return counters.iteration;
@@ -155,6 +141,19 @@ namespace cpp_module {
         static auto print_infeasible_message() -> void;
 
         bool check_if_time_limit_is_reached();
+
+        bool check_vehicle_has_delay(const Solution &solution, long trip_id);
+
+        std::vector<Conflict> get_conflicts_list(const Solution &solution);
+
+        TripInfo get_trip_info_struct(long current_trip, const Solution &solution, long position);
+
+        InstructionsConflict get_instructions_conflict(const TripInfo &trip_info, const TripInfo &other_info);
+
+        static Conflict create_conflict(long arc, double delay, TripInfo &trip_info, TripInfo &conflicting_trip_info);
+
+        void add_conflicts_to_conflict_list(TripInfo &trip_info, std::vector<TripInfo> &conflicting_trips_info_list,
+                                            std::vector<Conflict> &conflicts_list, long arc);
     };
 
 

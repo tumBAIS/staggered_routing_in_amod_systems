@@ -19,16 +19,6 @@ namespace cpp_module {
     const double TOLERANCE = 1e-6;
     const double INFTY = std::numeric_limits<double>::max();
 
-    struct Conflict {
-        long arc;
-        long current_trip_id;
-        long other_trip_id;
-        double delay_conflict;
-        double distance_to_cover;
-        double staggering_current_vehicle;
-        double destaggering_other_vehicle;
-    };
-
 
     class Instance {
     private:
