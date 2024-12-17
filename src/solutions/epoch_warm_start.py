@@ -52,7 +52,7 @@ def get_epoch_warm_start(
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
         print("Improving warm start using local search...")
 
-        cpp_solution = cpp_local_search.run(epoch_status_quo.release_times, epoch_status_quo.staggering_applicable)
+        cpp_solution = cpp_local_search.run(epoch_status_quo.release_times)
         congested_schedule = cpp_solution.get_schedule()
         print("Local search completed.")
     else:

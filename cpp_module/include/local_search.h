@@ -105,10 +105,12 @@ namespace cpp_module {
         get_initial_solution(const std::vector<double> &arg_release_times,
                              const std::vector<double> &arg_remaining_time_slack,
                              const std::vector<double> &arg_staggering_applied);
-        
+
         auto compute_staggering_applied(const std::vector<Time> &arg_start_times);
 
-        Solution run(std::vector<Time> &arg_start_times, const std::vector<double> &arg_remaining_time_slack);
+        Solution run(std::vector<Time> &arg_start_times);
+
+        auto compute_remaining_time_slack(const std::vector<Time> &arg_start_times);
     };
 
 

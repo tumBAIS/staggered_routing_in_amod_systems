@@ -188,6 +188,7 @@ namespace cpp_module {
             return release_times[trip_id];
         }
 
+
         [[nodiscard]] const long &get_number_of_trips() const {
             return number_of_trips;
         }

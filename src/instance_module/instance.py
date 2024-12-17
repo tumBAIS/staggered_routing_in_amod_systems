@@ -32,10 +32,9 @@ class Instance:
     travel_times_arcs: list[float]
     deadlines: list[Time]
     start_solution_time: float = 0
-    max_staggering_applicable: Optional[list[Staggering]] = None
 
     def __post_init__(self):
-        self.set_max_staggering_applicable()
+        self.max_staggering_applicable = self.get_max_staggering_applicable()
         self.conflicting_sets = self.initialize_conflicting_sets()
         self.earliest_departure_times = self.initialize_earliest_departure_times()
         self.latest_departure_times = self.initialize_latest_departure_times()
@@ -54,7 +53,7 @@ class Instance:
     def get_lb_travel_time(self) -> float:
         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
 
-    def set_max_staggering_applicable(self):
+    def get_max_staggering_applicable(self) -> list[float]:
         """
         Calculate the maximum staggering applicable for each vehicle's trip route
         based on input staggering cap, travel times, deadlines, and release times.
@@ -62,10 +61,7 @@ class Instance:
         if self.deadlines is None:
             raise ValueError("Deadlines are not set. Cannot calculate max staggering applicable.")
 
-        if self.max_staggering_applicable is not None:
-            raise ValueError("max_staggering_applicable is already set. Cannot override it.")
-
-        self.max_staggering_applicable = []
+        max_staggering_applicable = []
 
         for vehicle, path in enumerate(self.trip_routes):
             # Calculate total travel time for the trip
@@ -79,7 +75,8 @@ class Instance:
 
             # The maximum staggering applicable is the minimum of the two limits
             max_staggering = min(staggering_cap_limit, deadline_limit)
-            self.max_staggering_applicable.append(max_staggering)
+            max_staggering_applicable.append(max_staggering)
+        return max_staggering_applicable
 
     def print_info_arcs_utilized(self):
         """
@@ -135,11 +132,12 @@ class Instance:
             trip_departure_times = [deadline]
 
             # Calculate latest departure times for each arc in reverse order
-            for arc in reversed(route[:-1]):
+            for arc in reversed(route[1:-1]):
                 nominal_time = self.travel_times_arcs[arc]
                 last_time = trip_departure_times[0]  # Get the last computed time (at the front of the list)
                 trip_departure_times.insert(0, last_time - nominal_time)
-
+            max_staggered_departure = self.earliest_departure_times[trip][0] + self.max_staggering_applicable[trip]
+            trip_departure_times.insert(0, max_staggered_departure)
             # Add the calculated times for the current trip to the result
             latest_departure_times.append(trip_departure_times)
 
