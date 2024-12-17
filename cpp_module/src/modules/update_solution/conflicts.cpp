@@ -115,7 +115,7 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::check_if_tie_in_set(const VehicleSchedule &congested_schedule, const Departure &departure) -> bool {
+    auto Scheduler::check_if_tie_in_set(const Solution &solution, const Departure &departure) -> bool {
         for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
             if (departure.trip_id != other_trip_id) {
                 const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
@@ -131,7 +131,7 @@ namespace cpp_module {
                            departure.position,
                            other_position,
                            departure.arc_id};
-                bool tie_on_arc = check_if_vehicles_have_tie(congested_schedule, tie);
+                bool tie_on_arc = check_tie(solution, tie);
                 if (tie_on_arc) {
                     return true;
                 }

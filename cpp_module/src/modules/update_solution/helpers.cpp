@@ -24,7 +24,7 @@ namespace cpp_module {
                                             const Departure &departure) -> void {
         update_vehicles_on_arc_of_conflicting_set(complete_solution, vehicles_on_arc, departure);
         if (get_lazy_update_pq_flag()) { return; }
-        set_tie_found_flag(check_if_tie_in_set(complete_solution.get_schedule(), departure));
+        set_tie_found_flag(check_if_tie_in_set(complete_solution, departure));
         if (get_tie_found_flag()) {
             return;
         }

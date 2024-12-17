@@ -39,18 +39,17 @@ namespace cpp_module {
 
         bool check_arc_ties(ArcID arc_id, Solution &complete_solution);
 
-        void check_if_solution_has_ties(Solution &complete_solution);
+        auto check_if_solution_has_ties(Solution &complete_solution) -> bool;
 
         static void print_tie_solved(const Tie &tie);
 
         static auto reset_solution(Solution &complete_solution, long vehicle_one,
                                    const CorrectSolution &correct_solution) -> void;
 
-        static auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool;
-
-        static bool check_slack_to_solve_tie(double slack_vehicle);
 
         static CorrectSolution set_correct_solution(const Solution &complete_solution);
+
+        static bool check_tie(const Solution &solution, const Tie &tie);
 
     };
 }

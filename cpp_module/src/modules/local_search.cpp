@@ -246,41 +246,56 @@ namespace cpp_module {
         return time_slack_trips;
     }
 
-    auto LocalSearch::print_start(const Solution &arg_solution) -> void {
+    auto LocalSearch::print_initial_delay(const Solution &arg_solution) -> void {
         std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
                   << " sec of delay\n";
     }
 
+    auto LocalSearch::print_infeasible_message() -> void {
+        std::cout << "Solution is infeasible -- stopping local search.\n";
+    }
+
     auto LocalSearch::run(std::vector<Time> &arg_start_times) -> Solution {
-        // Improve value of solution
-
+        // Get the initial solution and print its delay
         auto arg_solution = get_initial_solution(arg_start_times);
+        print_initial_delay(arg_solution);
 
-        print_start(arg_solution);
-
+        // If the solution is not feasible, return immediately
         if (!arg_solution.is_feasible_and_improving()) {
+            print_infeasible_message();
             return arg_solution;
         }
 
-        check_if_solution_has_ties(arg_solution);
-
-        if (arg_solution.get_ties_flag()) {
+        // Resolve ties if any exist in the solution
+        if (check_if_solution_has_ties(arg_solution)) {
             scheduler.solve_solution_ties(arg_solution);
         }
 
+        // Iteratively improve the solution
         bool is_improved = true;
-        while (is_improved) { // Initially set to true
-            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
-                                                                     instance.get_max_time_optimization());
-            if (time_limit_reached) { break; }
+        while (is_improved) {
+            // Check for time limit
+            if (check_if_time_limit_is_reached(get_start_search_clock(), instance.get_max_time_optimization())) {
+                break;
+            }
+
             scheduler.set_best_total_delay(arg_solution.get_total_delay());
+
+            // Identify and sort conflicts
             auto conflicts_list = get_conflict_list(arg_solution.get_schedule());
             sort_conflicts(conflicts_list);
-            if (conflicts_list.empty()) { break; }
+
+            // Stop if no conflicts remain
+            if (conflicts_list.empty()) {
+                break;
+            }
+
+            // Attempt to improve the solution
             is_improved = improve_solution(conflicts_list, arg_solution);
         }
-        auto solution = scheduler.construct_solution(arg_solution.get_start_times());
-        return solution;
+
+        // Construct the final solution and return it
+        return scheduler.construct_solution(arg_solution.get_start_times());
     }
 
 

@@ -110,7 +110,9 @@ namespace cpp_module {
 
         Solution get_initial_solution(const std::vector<double> &arg_release_times);
 
-        static void print_start(const Solution &arg_solution);
+        static void print_initial_delay(const Solution &arg_solution);
+
+        static auto print_infeasible_message() -> void;
     };
 
 

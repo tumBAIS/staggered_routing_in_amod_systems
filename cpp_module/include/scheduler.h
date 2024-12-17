@@ -429,6 +429,11 @@ namespace cpp_module {
 
 
         Solution construct_solution_and_solve_ties(const std::vector<double> &start_times);
+
+
+        bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution);
+
+        bool check_if_tie_in_set(const Solution &solution, const Departure &departure);
     };
 
     auto get_index(const std::vector<long> &v, long k) -> long;
