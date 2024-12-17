@@ -67,10 +67,6 @@ def compute_solution_metrics(instance: Instance, release_times: List[float],
     )
 
 
-def print_epoch_status_header(epoch_instance: EpochInstance, epoch_size: int) -> None:
-    """Print header for the current epoch's status quo computation."""
-
-
 def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:
     """Create a CPP instance for the given epoch."""
     return cpp.cpp_instance(

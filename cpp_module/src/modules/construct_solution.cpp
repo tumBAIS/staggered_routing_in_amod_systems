@@ -5,7 +5,7 @@
 
 namespace cpp_module {
 
- 
+
 // Find the index of an element in a vector
     auto get_index(const std::vector<long> &vec, long value) -> long {
         auto it = std::find(vec.begin(), vec.end(), value);
@@ -71,8 +71,9 @@ namespace cpp_module {
     }
 
 // Construct the schedule
-    auto Scheduler::construct_schedule(Solution &complete_solution) -> void {
+    auto Scheduler::construct_solution(const std::vector<Time> &arg_start_times) -> Solution {
         // Initialize scheduler and complete solution
+        Solution complete_solution(arg_start_times, instance);
         initialize_scheduler(complete_solution.get_start_times());
         initialize_complete_solution(complete_solution);
 
@@ -96,6 +97,9 @@ namespace cpp_module {
                 }
             }
         }
+
+        return complete_solution;
+
     }
 
 } // namespace cpp_module

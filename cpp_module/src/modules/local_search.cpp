@@ -29,6 +29,7 @@ namespace cpp_module {
         return false;
     }
 
+
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void {
         if (!conflicts_in_schedule.empty()) {
             std::sort(conflicts_in_schedule.begin(),
@@ -206,14 +207,9 @@ namespace cpp_module {
     }
 
     // Generate an initial solution for local search
-    auto LocalSearch::get_initial_solution(
-            const std::vector<double> &arg_release_times,
-            const std::vector<double> &arg_remaining_time_slack,
-            const std::vector<double> &arg_staggering_applied
-    ) -> Solution {
+    auto LocalSearch::get_initial_solution(const std::vector<double> &arg_release_times) -> Solution {
 
-        Solution current_solution(arg_release_times, instance);
-        scheduler.construct_schedule(current_solution);
+        auto current_solution = scheduler.construct_solution(arg_release_times);
 
         if (!current_solution.get_feasible_and_improving_flag()) {
             std::cout << "Initial solution is infeasible - local search stopped\n";
@@ -253,9 +249,7 @@ namespace cpp_module {
     auto LocalSearch::run(std::vector<Time> &arg_start_times) -> Solution {
         // Improve value of solution
 
-        auto staggering_applied = compute_staggering_applied(arg_start_times);
-        auto time_slack = compute_remaining_time_slack(arg_start_times);
-        auto arg_solution = get_initial_solution(arg_start_times, time_slack, staggering_applied);
+        auto arg_solution = get_initial_solution(arg_start_times);
 
 
         std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
@@ -282,8 +276,8 @@ namespace cpp_module {
             if (conflicts_list.empty()) { break; }
             is_improved = improve_solution(conflicts_list, arg_solution);
         }
-        scheduler.construct_schedule(arg_solution);
-        return arg_solution;
+        auto solution = scheduler.construct_solution(arg_solution.get_start_times());
+        return solution;
     }
 
 
@@ -501,7 +495,7 @@ namespace cpp_module {
             bool is_admissible = check_if_solution_is_admissible(new_solution);
             if (is_admissible && scheduler.get_slack_is_enough_flag()) {
                 if (scheduler.get_iteration() % 20 == 0) {
-                    scheduler.construct_schedule(new_solution);
+                    new_solution = scheduler.construct_solution(new_solution.get_start_times());
                 }
                 print_move(current_solution, new_solution, conflict);
                 update_current_solution(current_solution, new_solution, conflict);

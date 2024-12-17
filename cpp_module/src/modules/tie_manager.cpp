@@ -76,7 +76,8 @@ namespace cpp_module {
             complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE);
 
             // Reconstruct the schedule with the updated solution
-            scheduler.construct_schedule(complete_solution);
+            complete_solution = scheduler.construct_solution(complete_solution.get_start_times());
+
 
             // Check if the new solution is valid
             if (!complete_solution.get_feasible_and_improving_flag()) {

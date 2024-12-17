@@ -9,9 +9,9 @@
 namespace cpp_module {
 
 // Construct a solution based on the start times
-    auto Scheduler::construct_solution(const std::vector<double> &start_times) -> Solution {
-        Solution complete_solution(start_times, instance);
-        construct_schedule(complete_solution);
+    auto Scheduler::construct_solution_and_solve_ties(const std::vector<double> &start_times) -> Solution {
+        //TODO: remove
+        Solution complete_solution = construct_solution(start_times);
         check_if_solution_has_ties(instance, complete_solution);
         if (complete_solution.get_ties_flag()) {
             solve_solution_ties(instance, complete_solution, *this);
@@ -79,8 +79,8 @@ PYBIND11_MODULE(cpp_module, m) {
     // Scheduler class bindings
     py::class_<cpp_module::Scheduler>(m, "cpp_scheduler")
             .def(py::init<cpp_module::Instance &>(), py::arg("cpp_instance"))
-            .def("construct_schedule", &cpp_module::Scheduler::construct_schedule)
-            .def("construct_solution", &cpp_module::Scheduler::construct_solution, py::arg("start_times"));
+            .def("construct_solution", &cpp_module::Scheduler::construct_solution_and_solve_ties,
+                 py::arg("start_times"));
 
 
     // Solution class bindings
