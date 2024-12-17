@@ -85,8 +85,7 @@ def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
     model.set_flag_update(False)
     cpp_parameters = [solver_params.algorithm_time_limit]
     cpp_solution = cpp_local_search.run(model.get_cb_release_times(),
-                                        model.get_cb_remaining_time_slack(),
-                                        model.get_cb_staggering_applied())
+                                        model.get_cb_remaining_time_slack())
     congested_schedule = cpp_solution.get_schedule()
     delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
     assert_schedule(model, congested_schedule, delays_on_arcs, instance)

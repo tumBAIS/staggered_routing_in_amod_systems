@@ -226,12 +226,25 @@ namespace cpp_module {
         return current_solution;
     }
 
+    auto LocalSearch::compute_staggering_applied(const std::vector<Time> &arg_start_times) {
+        // Allocate space for the results
+        std::vector<Time> staggering_applied(arg_start_times.size());
+
+        for (TripID trip_id = 0; trip_id < arg_start_times.size(); trip_id++) {
+            // Calculate the staggering for each trip
+            staggering_applied[trip_id] = arg_start_times[trip_id] - instance.get_trip_release_time(trip_id);
+        }
+
+        // Return the results
+        return staggering_applied;
+    }
+
     auto LocalSearch::run(std::vector<Time> &arg_start_times,
-                          const std::vector<double> &arg_remaining_time_slack,
-                          const std::vector<double> &arg_staggering_applied) -> Solution {
+                          const std::vector<double> &arg_remaining_time_slack) -> Solution {
         // Improve value of solution
 
-        auto arg_solution = get_initial_solution(arg_start_times, arg_remaining_time_slack, arg_staggering_applied);
+        auto staggering_applied = compute_staggering_applied(arg_start_times);
+        auto arg_solution = get_initial_solution(arg_start_times, arg_remaining_time_slack, staggering_applied);
 
 
         std::cout << "Local search received a solution with " << std::round(arg_solution.get_total_delay())
