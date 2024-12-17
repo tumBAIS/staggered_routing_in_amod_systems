@@ -110,10 +110,8 @@ def get_epoch_solution(
     epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
                                             cpp_local_search)
     model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
-    optimization_measures = run_model(
-        model, simplified_instance, epoch_warm_start, simplified_status_quo, solver_params,
-        cpp_local_search
-    )
+    optimization_measures = run_model(model, simplified_instance, epoch_warm_start, solver_params,
+                                      cpp_local_search)
     model_solution = get_epoch_model_solution(
         model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params
     )

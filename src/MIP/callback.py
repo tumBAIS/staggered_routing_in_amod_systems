@@ -40,18 +40,14 @@ def update_remaining_time_for_optimization(model: StaggeredRoutingModel, instanc
         model.terminate()
 
 
-def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance, status_quo: Solution) -> None:
+def get_callback_solution(model: StaggeredRoutingModel, instance: EpochInstance) -> None:
     """Retrieve the current solution during a callback and update model attributes."""
-    model.set_cb_release_times([model.get_continuous_var_cb(vehicle, path[0], "departure")
-                                for vehicle, path in enumerate(instance.trip_routes)])
+    model.set_cb_start_times([model.get_continuous_var_cb(vehicle, path[0], "departure")
+                              for vehicle, path in enumerate(instance.trip_routes)])
     model.set_cb_total_delay(sum(model.get_continuous_var_cb(vehicle, arc, "delay")
                                  for vehicle, path in enumerate(instance.trip_routes) for arc in path)
                              )
-    model.set_cb_staggering_applied([
-        release_time - status_quo.congested_schedule[vehicle][0]
-        for vehicle, release_time in enumerate(model.get_cb_release_times())
-    ])
-    model.set_cb_remaining_time_slack(get_staggering_applicable(instance, model.get_cb_staggering_applied()))
+
     model.set_flag_update(True)
 
 
@@ -83,7 +79,7 @@ def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
                            cpp_local_search: cpp.cpp_local_search) -> HeuristicSolution:
     """Generate a heuristic solution using the local search module."""
     model.set_flag_update(False)
-    cpp_solution = cpp_local_search.run(model.get_cb_release_times())
+    cpp_solution = cpp_local_search.run(model.get_cb_start_times())
     congested_schedule = cpp_solution.get_schedule()
     delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
     assert_schedule(model, congested_schedule, delays_on_arcs, instance)
@@ -148,7 +144,7 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
             suspend_procedure(heuristic_solution, model, instance)
 
 
-def callback(instance: EpochInstance, status_quo: Solution, solver_params: SolverParameters,
+def callback(instance: EpochInstance, solver_params: SolverParameters,
              cpp_local_search: cpp.cpp_local_search) -> Callable:
     """Define the callback function for Gurobi.
     """
@@ -159,7 +155,7 @@ def callback(instance: EpochInstance, status_quo: Solution, solver_params: Solve
             update_remaining_time_for_optimization(model, instance, solver_params)
 
         if where == grb.GRB.Callback.MIPSOL:
-            get_callback_solution(model, instance, status_quo)
+            get_callback_solution(model, instance)
             model.set_improvement_clock()
             model.set_best_upper_bound(model.get_cb_total_delay())
 
