@@ -19,6 +19,53 @@ namespace cpp_module {
         complete_solution.set_ties_flag(false);
     }
 
+    auto
+    Scheduler::compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double {
+        while (!arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time) {
+            arrivals_on_arc.pop();
+        }
+        return static_cast<double>(arrivals_on_arc.size()) + 1.0;
+    }
+
+    auto Scheduler::compute_delay_on_arc(const double &vehicles_on_arc,
+                                         const Instance &arg_instance,
+                                         const long arc) -> double {
+        if (arc == 0) {
+            return 0.0;
+        }
+
+        // Pre-allocate vector for delays
+        std::vector<double> delays_at_pieces;
+        delays_at_pieces.reserve(arg_instance.get_number_of_pieces_delay_function() + 1);
+
+        // Initialize delay calculation
+        double height_prev_piece = 0.0;
+        delays_at_pieces.push_back(0.0);
+
+        // Loop through each piece of the delay function
+        for (std::size_t i = 0; i < arg_instance.get_number_of_pieces_delay_function(); ++i) {
+            double threshold_capacity = arg_instance.get_piece_threshold(i) * arg_instance.get_arc_capacity(arc);
+            double slope = (arg_instance.get_arc_travel_time(arc) * arg_instance.get_piece_slope(i)) /
+                           arg_instance.get_arc_capacity(arc);
+
+            // Calculate delay for the current piece if vehicles exceed threshold capacity
+            if (vehicles_on_arc > threshold_capacity) {
+                double delay_current_piece = height_prev_piece + slope * (vehicles_on_arc - threshold_capacity);
+                delays_at_pieces.push_back(delay_current_piece);
+            }
+
+            // Update the height for the next piece
+            if (i < arg_instance.get_number_of_pieces_delay_function() - 1) {
+                double next_threshold_capacity =
+                        arg_instance.get_piece_threshold(i + 1) * arg_instance.get_arc_capacity(arc);
+                height_prev_piece += slope * (next_threshold_capacity - threshold_capacity);
+            }
+        }
+
+        // Return the maximum delay calculated across all pieces
+        return *std::max_element(delays_at_pieces.begin(), delays_at_pieces.end());
+    }
+
 // Initialize the scheduler
     auto Scheduler::initialize_scheduler(const std::vector<double> &release_times) -> void {
         // Reset priority queues and counters, and initialize priority queue for departures
@@ -48,7 +95,7 @@ namespace cpp_module {
     }
 
 // Check if the current solution is admissible
-    auto Scheduler::check_if_solution_is_feasible(const Departure &departure) const -> bool {
+    auto Scheduler::check_if_solution_is_feasible(const Departure &departure) const -> auto {
         if (departure.time > instance.get_trip_deadline(departure.trip_id) + TOLERANCE) {
             std::cout << "Deadline for vehicle " << departure.trip_id << " exceeded: "
                       << "Deadline: " << instance.get_trip_deadline(departure.trip_id)

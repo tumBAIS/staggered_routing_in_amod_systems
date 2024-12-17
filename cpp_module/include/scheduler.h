@@ -24,7 +24,7 @@ namespace cpp_module {
         } event_type;
         long reinsertion_number;
     };
-    
+
     struct Conflict {
         long arc;
         long current_trip_id;
@@ -408,16 +408,16 @@ namespace cpp_module {
 
         bool check_if_tie_in_set(const Solution &solution, const Departure &departure);
 
-        bool check_if_solution_is_feasible(const Departure &departure) const;
+        [[nodiscard]] auto check_if_solution_is_feasible(const Departure &departure) const;
+
+        static double compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time);
+
+        static double compute_delay_on_arc(const double &vehicles_on_arc, const Instance &arg_instance, long arc);
     };
 
     auto get_index(const std::vector<long> &v, long k) -> long;
 
-    auto compute_delay_on_arc(const double &vehicles_on_arc, const Instance &instance, long arc) -> double;
-
     auto _assert_solution_is_correct(Solution &new_solution, Scheduler &scheduler) -> void;
-
-    auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double;
 
 
 }

@@ -21,12 +21,13 @@ namespace cpp_module {
 
 
     auto compare_conflicts(const Conflict &a, const Conflict &b) -> bool {
-        if (a.delay_conflict > b.delay_conflict) {
-            return true;
-        } else if (a.delay_conflict == b.delay_conflict) {
-            return a.current_trip_id > b.current_trip_id;
+        // Compare delays with tolerance
+        if (std::abs(a.delay_conflict - b.delay_conflict) > TOLERANCE) {
+            return a.delay_conflict > b.delay_conflict; // Higher delay comes first
         }
-        return false;
+
+        // If delays are equal within tolerance, compare trip IDs
+        return a.current_trip_id > b.current_trip_id; // Larger trip ID comes first
     }
 
 
@@ -38,57 +39,17 @@ namespace cpp_module {
         }
     }
 
-    auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double {
-        while (!arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time) {
-            arrivals_on_arc.pop();
-        }
-        return static_cast<double>(arrivals_on_arc.size()) + 1.0;
-    }
 
-    auto compute_delay_on_arc(const double &vehicles_on_arc,
-                              const Instance &arg_instance,
-                              const long arc) -> double {
-        if (arc == 0) {
-            return 0.0;
-        }
-
-        std::vector<double> delays_at_pieces;
-        delays_at_pieces.reserve(arg_instance.get_number_of_pieces_delay_function() + 1);
-
-        double height_prev_piece = 0.0;
-        delays_at_pieces.push_back(0.0);
-
-        for (std::size_t i = 0; i < arg_instance.get_number_of_pieces_delay_function(); ++i) {
-            const double threshold_capacity = arg_instance.get_piece_threshold(i) * arg_instance.get_arc_capacity(arc);
-            const double slope = arg_instance.get_arc_travel_time(arc) * arg_instance.get_piece_slope(i) /
-                                 arg_instance.get_arc_capacity(arc);
-
-            if (vehicles_on_arc > threshold_capacity) {
-                double delay_current_piece = height_prev_piece + slope * (vehicles_on_arc - threshold_capacity);
-                delays_at_pieces.push_back(delay_current_piece);
-            }
-
-            if (i < arg_instance.get_number_of_pieces_delay_function() - 1) {
-                double next_threshold_capacity =
-                        arg_instance.get_piece_threshold(i + 1) * arg_instance.get_arc_capacity(arc);
-                height_prev_piece += slope * (next_threshold_capacity - threshold_capacity);
-            }
-        }
-
-        return *std::max_element(delays_at_pieces.begin(), delays_at_pieces.end());
-    }
-
-    auto
-    LocalSearch::create_conflict(long arc, double delay, TripInfo &trip_info,
-                                 TripInfo &conflicting_trip_info) -> Conflict {
+    auto LocalSearch::create_conflict(long arc, double delay, TripInfo &trip_info,
+                                      const TripInfo &conflicting_trip_info) -> Conflict {
         return Conflict{
-                .arc=arc,
-                .current_trip_id=trip_info.trip_id,
-                .other_trip_id=conflicting_trip_info.trip_id,
-                .delay_conflict=delay,
-                .distance_to_cover=conflicting_trip_info.arrival_time - trip_info.departure_time + CONSTR_TOLERANCE,
-                .staggering_current_vehicle=0.0,
-                .destaggering_other_vehicle=0.0
+                .arc = arc,
+                .current_trip_id = trip_info.trip_id,
+                .other_trip_id = conflicting_trip_info.trip_id,
+                .delay_conflict = delay,
+                .distance_to_cover = (conflicting_trip_info.arrival_time - trip_info.departure_time) + CONSTR_TOLERANCE,
+                .staggering_current_vehicle = 0.0,
+                .destaggering_other_vehicle = 0.0
         };
     }
 
@@ -123,21 +84,26 @@ namespace cpp_module {
     }
 
 
-    auto
-    LocalSearch::add_conflicts_to_conflict_list(TripInfo &trip_info,
-                                                std::vector<TripInfo> &conflicting_trips_info_list,
-                                                std::vector<Conflict> &conflicts_list, long arc) -> void {
+    auto LocalSearch::add_conflicts_to_conflict_list(TripInfo &trip_info,
+                                                     std::vector<TripInfo> &conflicting_trips_info_list,
+                                                     std::vector<Conflict> &conflicts_list,
+                                                     long arc,
+                                                     double arc_delay) -> void {
+        // Sort the list of conflicting trips by their comparison criteria
         std::sort(conflicting_trips_info_list.begin(),
                   conflicting_trips_info_list.end(),
                   compare_conflicting_trips_info);
+
         long vehicles_on_arc = 1;
-        for (auto conflicting_trip_info: conflicting_trips_info_list) {
-            vehicles_on_arc++;
-            double conflict_delay = compute_delay_on_arc(vehicles_on_arc, instance, arc);
-            Conflict conflict = create_conflict(arc, conflict_delay, trip_info, conflicting_trip_info);
+
+        // Add each conflicting trip to the conflict list
+        for (const auto &conflicting_trip_info: conflicting_trips_info_list) {
+            ++vehicles_on_arc;
+            Conflict conflict = create_conflict(arc, arc_delay, trip_info, conflicting_trip_info);
             conflicts_list.push_back(conflict);
         }
     }
+
 
     auto LocalSearch::get_trip_info_struct(long current_trip,
                                            const Solution &solution,
@@ -201,9 +167,10 @@ namespace cpp_module {
                 }
 
                 // Add identified conflicts to the conflict list
-                add_conflicts_to_conflict_list(trip_info, conflicting_trips_info_list, conflicts_list, arc);
+                add_conflicts_to_conflict_list(trip_info, conflicting_trips_info_list, conflicts_list, arc, arc_delay);
             }
         }
+        sort_conflicts(conflicts_list);
 
         return conflicts_list;
     }
@@ -286,7 +253,6 @@ namespace cpp_module {
 
             // Identify and sort conflicts
             auto conflicts_list = get_conflicts_list(arg_solution);
-            sort_conflicts(conflicts_list);
 
             // Stop if no conflicts remain
             if (conflicts_list.empty()) {

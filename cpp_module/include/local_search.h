@@ -33,7 +33,7 @@ namespace cpp_module {
             long explored_solutions = 0;
             long iteration = 0;
         };
-        
+
         enum class InstructionsConflict {
             CONTINUE,
             ADD_CONFLICT,
@@ -49,13 +49,13 @@ namespace cpp_module {
         static bool compare_conflicting_trips_info(const TripInfo &a, const TripInfo &b) {
 
             // Check if arrivals are within the tolerance
-            if (std::abs(a.arrival_time - b.arrival_time) <= TOLERANCE) {
+            if (std::abs(a.departure_time - b.departure_time) <= TOLERANCE) {
                 // If arrivals are within tolerance, compare by trip ID
                 return a.trip_id < b.trip_id;
             }
 
             // Otherwise, compare by arrival time
-            return a.arrival_time < b.arrival_time;
+            return a.departure_time < b.departure_time;
         }
 
 
@@ -148,12 +148,14 @@ namespace cpp_module {
 
         TripInfo get_trip_info_struct(long current_trip, const Solution &solution, long position);
 
-        InstructionsConflict get_instructions_conflict(const TripInfo &trip_info, const TripInfo &other_info);
+        static InstructionsConflict get_instructions_conflict(const TripInfo &trip_info, const TripInfo &other_info);
 
-        static Conflict create_conflict(long arc, double delay, TripInfo &trip_info, TripInfo &conflicting_trip_info);
+        static Conflict
+        create_conflict(long arc, double delay, TripInfo &trip_info, const TripInfo &conflicting_trip_info);
 
-        void add_conflicts_to_conflict_list(TripInfo &trip_info, std::vector<TripInfo> &conflicting_trips_info_list,
-                                            std::vector<Conflict> &conflicts_list, long arc);
+        static void
+        add_conflicts_to_conflict_list(TripInfo &trip_info, std::vector<TripInfo> &conflicting_trips_info_list,
+                                       std::vector<Conflict> &conflicts_list, long arc, double arc_delay);
     };
 
 
