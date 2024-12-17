@@ -59,7 +59,6 @@ namespace cpp_module {
 
         Conflict create_conflict(long arc, double delay, ConflictingArrival &sorted_arrival) const;
 
-
         [[nodiscard]] double get_start_search_clock() const {
             return start_search_clock;
         }

@@ -64,8 +64,6 @@ namespace cpp_module {
         enum InstructionConflictingSet {
             CONTINUE, EVALUATE, BREAK
         };
-//        Departure departure{}; //TODO: this must be removed
-//        Departure other_trip_departure{};
 
 
     private:
@@ -418,21 +416,20 @@ namespace cpp_module {
 
         void set_next_departure_and_push_to_queue(double delay, Departure &departure);
 
-        bool check_if_other_starts_before_current(const TripID other_trip_id, const VehicleSchedule &congestedSchedule,
+        bool check_if_other_starts_before_current(TripID other_trip_id, const VehicleSchedule &congestedSchedule,
                                                   const Departure &departure) const;
 
         void stagger_trip(Solution &complete_solution, long vehicle, double staggering);
+
+        [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
+            return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;
+        }
+
+        [[nodiscard]] double get_trip_staggering_applied(TripID trip_id, Time start_time) const {
+            return start_time - instance.get_trip_release_time(trip_id);
+        }
+
     };
-
-    auto apply_staggering_to_solve_conflict(Solution &complete_solution,
-                                            Conflict &conflict) -> void;
-
-    static auto reset_new_solution(const Solution &current_solution, Solution &new_solution,
-                                   Conflict &conflict) -> void;
-
-    static auto update_current_solution(Solution &current_solution,
-                                        const Solution &new_solution,
-                                        Conflict &conflict) -> void;
 
     auto get_index(const std::vector<long> &v, long k) -> long;
 
@@ -444,12 +441,10 @@ namespace cpp_module {
 
     auto _assert_solution_is_correct(Solution &new_solution, Scheduler &scheduler) -> void;
 
-    auto improve_towards_solution_quality(const Instance &instance, Solution &current_solution,
-                                          Scheduler &scheduler) -> void;
 
     auto compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double;
 
     auto check_if_vehicles_have_tie(const VehicleSchedule &congested_schedule, const Tie &tie) -> bool;
 
-    auto initialize_conflicting_sets_for_construct_schedule(Instance &instance) -> void;
+
 }

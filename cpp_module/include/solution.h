@@ -71,16 +71,6 @@ namespace cpp_module {
             return schedule[trip_id][position];
         }
 
-
-        [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id) const {
-            return remaining_time_slack[trip_id];
-        }
-
-        [[nodiscard]] double get_trip_staggering_applied(TripID trip_id) const {
-            return staggering_applied[trip_id];
-        }
-
-
         [[nodiscard]] double get_total_delay() const {
             return total_delay;
         }

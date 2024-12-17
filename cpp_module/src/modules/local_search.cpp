@@ -313,29 +313,61 @@ namespace cpp_module {
         new_solution.set_feasible_and_improving_flag(current_solution.get_feasible_and_improving_flag());
     }
 
-    auto LocalSearch::apply_staggering_to_solve_conflict(Solution &complete_solution,
-                                                         Conflict &conflict) -> void {
+    void LocalSearch::apply_staggering_to_solve_conflict(Solution &complete_solution,
+                                                         Conflict &conflict) {
         assert(conflict.distance_to_cover > 0);
+
+        // Retrieve current and other vehicle start times
+        auto current_start_time = complete_solution.get_trip_start_time(conflict.current_trip_id);
+        auto other_start_time = complete_solution.get_trip_start_time(conflict.other_trip_id);
+
+        // Calculate conditions for moving vehicles
         bool move_vehicle_one =
-                conflict.distance_to_cover < complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id);
+                conflict.distance_to_cover <
+                scheduler.get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time) + TOLERANCE;
+
         bool move_both_vehicles =
-                conflict.distance_to_cover < complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id) +
-                                             complete_solution.get_trip_staggering_applied(conflict.other_trip_id);
+                conflict.distance_to_cover <
+                scheduler.get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time) +
+                scheduler.get_trip_staggering_applied(conflict.other_trip_id, other_start_time) + TOLERANCE;
+
         if (move_vehicle_one) {
+            // Move only the current vehicle
             scheduler.stagger_trip(complete_solution, conflict.current_trip_id, conflict.distance_to_cover);
             conflict.staggering_current_vehicle += conflict.distance_to_cover;
             assert(conflict.distance_to_cover > 0);
+
         } else if (move_both_vehicles) {
-            // Distance can be covered removing staggering to other vehicle
-            auto staggering = std::max(0.0, complete_solution.get_trip_remaining_time_slack(conflict.current_trip_id));
+            // Distance can be covered by removing staggering from the other vehicle
+            auto staggering = std::max(0.0, scheduler.get_trip_remaining_time_slack(conflict.current_trip_id,
+                                                                                    current_start_time));
             auto destaggering = conflict.distance_to_cover - staggering;
+
             scheduler.stagger_trip(complete_solution, conflict.current_trip_id, staggering);
             scheduler.stagger_trip(complete_solution, conflict.other_trip_id, -destaggering);
+
             conflict.staggering_current_vehicle += staggering;
             conflict.destaggering_other_vehicle += destaggering;
+
             assert(staggering > 0 || destaggering > 0);
+
         } else {
-            throw std::invalid_argument("Applying staggering to solve conflict - undefined case");
+            // Throw a descriptive error with current values
+            std::ostringstream error_message;
+            error_message << "Undefined case in applying staggering to solve conflict:\n"
+                          << "Conflict Details:\n"
+                          << "  Distance to Cover: " << conflict.distance_to_cover << "\n"
+                          << "  Current Trip ID: " << conflict.current_trip_id << "\n"
+                          << "  Other Trip ID: " << conflict.other_trip_id << "\n"
+                          << "  Current Trip Slack: "
+                          << scheduler.get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time)
+                          << "\n"
+                          << "  Other Trip Staggering Applied: "
+                          << scheduler.get_trip_staggering_applied(conflict.other_trip_id, other_start_time) << "\n"
+                          << "  Tolerance: " << TOLERANCE << "\n"
+                          << "  Slack is enough: " << scheduler.get_slack_is_enough_flag() << "\n";
+
+            throw std::invalid_argument(error_message.str());
         }
     }
 
@@ -394,7 +426,7 @@ namespace cpp_module {
     auto LocalSearch::check_if_possible_to_solve_conflict(const double &distance_to_cover,
                                                           const double &slack_vehicle_one,
                                                           const double &staggering_applied_vehicle_two) {
-        if (slack_vehicle_one + staggering_applied_vehicle_two > distance_to_cover) {
+        if (slack_vehicle_one + staggering_applied_vehicle_two + TOLERANCE > distance_to_cover) {
             return true;
         }
 
@@ -413,32 +445,59 @@ namespace cpp_module {
     }
 
     auto LocalSearch::solve_conflict(Conflict &conflict, Solution &new_solution) {
+        // Increment explored solutions counter
         scheduler.increase_counter(EXPLORED_SOLUTIONS);
+
+        // Initial state checks
         bool conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
+
+
         while (conflict_is_not_solved) {
-            bool time_limit_reached = check_if_time_limit_is_reached(get_start_search_clock(),
-                                                                     instance.get_max_time_optimization());
+            // Check if the time limit for the search is reached
+            auto current_trip_start_time = new_solution.get_trip_start_time(conflict.current_trip_id);
+            auto other_trip_start_time = new_solution.get_trip_start_time(conflict.other_trip_id);
+            bool time_limit_reached = check_if_time_limit_is_reached(
+                    get_start_search_clock(),
+                    instance.get_max_time_optimization()
+            );
+
             if (time_limit_reached) {
-                break;
+                break;  // Exit the loop if time limit is reached
             }
-            auto slack_is_enough = check_if_possible_to_solve_conflict(conflict.distance_to_cover,
-                                                                       new_solution.get_trip_remaining_time_slack(
-                                                                               conflict.current_trip_id),
-                                                                       new_solution.get_trip_staggering_applied(
-                                                                               conflict.other_trip_id));
+
+            // Check if there is enough slack to solve the conflict
+            bool slack_is_enough = check_if_possible_to_solve_conflict(
+                    conflict.distance_to_cover,
+                    scheduler.get_trip_remaining_time_slack(conflict.current_trip_id, current_trip_start_time),
+                    scheduler.get_trip_staggering_applied(conflict.other_trip_id, other_trip_start_time)
+            );
+
             scheduler.set_slack_is_enough_flag(slack_is_enough);
 
             if (!scheduler.get_slack_is_enough_flag()) {
-                scheduler.increase_counter(SLACK_NOT_ENOUGH); // Printing purposes
-                break;
+                scheduler.increase_counter(SLACK_NOT_ENOUGH);  // For logging/debug purposes
+                break;  // Exit if no slack is sufficient
             }
+
+            // Apply staggering to solve the conflict
             apply_staggering_to_solve_conflict(new_solution, conflict);
+
+            // Update the schedule with the new solution
             scheduler.update_existing_congested_schedule(new_solution, conflict);
-            if (!new_solution.get_feasible_and_improving_flag()) { break; }
+
+            // Check if the solution is feasible and improving
+            if (!new_solution.get_feasible_and_improving_flag()) {
+                break;  // Exit if no feasible or improving solution is found
+            }
+
+            // Update the distance to cover after applying the changes
             update_distance_to_cover(new_solution, conflict);
+
+            // Re-evaluate if the conflict is solved
             conflict_is_not_solved = conflict.distance_to_cover > CONSTR_TOLERANCE;
         }
     }
+
 
     auto LocalSearch::improve_solution(const std::vector<Conflict> &conflicts_list,
                                        Solution &current_solution) -> bool {

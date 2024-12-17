@@ -58,27 +58,46 @@ namespace cpp_module {
     }
 
 // Resolve a tie by staggering a vehicle
-    auto solve_tie(Solution &complete_solution, const Tie &tie, Scheduler &scheduler) -> void {
+    void solve_tie(Solution &complete_solution, const Tie &tie, Scheduler &scheduler) {
+        // Check if the tie exists
         bool has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
-        bool slack_is_enough = check_slack_to_solve_tie(
-                complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
 
+        // Check the initial slack condition
+        auto vehicle_one_start_time = complete_solution.get_trip_start_time(tie.vehicle_one);
+        bool slack_is_enough = check_slack_to_solve_tie(
+                scheduler.get_trip_remaining_time_slack(tie.vehicle_one, vehicle_one_start_time)
+        );
+
+        // Continue solving the tie as long as conditions hold
         while (has_tie && slack_is_enough) {
+            // Save the current state in case we need to reset
             CorrectSolution correct_solution = set_correct_solution(complete_solution);
+
+            // Stagger the trip slightly to resolve the tie
             scheduler.stagger_trip(complete_solution, tie.vehicle_one, CONSTR_TOLERANCE);
+
+            // Reconstruct the schedule with the updated solution
             scheduler.construct_schedule(complete_solution);
 
+            // Check if the new solution is valid
             if (!complete_solution.get_feasible_and_improving_flag()) {
+                // Restore the previous solution
                 reset_solution(complete_solution, tie.vehicle_one, correct_solution, scheduler);
                 return;
             }
 
+            // Print a message indicating the tie has been solved
             print_tie_solved(tie);
+
+            // Update tie and slack conditions for the next iteration
             has_tie = check_if_vehicles_have_tie(complete_solution.get_schedule(), tie);
+            vehicle_one_start_time = complete_solution.get_trip_start_time(tie.vehicle_one);
             slack_is_enough = check_slack_to_solve_tie(
-                    complete_solution.get_trip_remaining_time_slack(tie.vehicle_one));
+                    scheduler.get_trip_remaining_time_slack(tie.vehicle_one, vehicle_one_start_time)
+            );
         }
     }
+
 
 // Check if there are any ties on a given arc
     auto check_arc_ties(const Instance &instance, ArcID arc_id, Solution &complete_solution) -> bool {
