@@ -220,9 +220,6 @@ namespace cpp_module {
             return current_solution;
         }
 
-        current_solution.set_remaining_time_slack(arg_remaining_time_slack);
-        current_solution.set_staggering_applied(arg_staggering_applied);
-
         return current_solution;
     }
 
@@ -292,8 +289,6 @@ namespace cpp_module {
 
     auto Scheduler::stagger_trip(Solution &complete_solution, long vehicle, double staggering) -> void {
         complete_solution.increase_trip_start_time(vehicle, staggering);
-        complete_solution.increase_staggering_applied(vehicle, staggering);
-        complete_solution.increase_remaining_time_slack(vehicle, -staggering); // Staggering is negative
     }
 
 

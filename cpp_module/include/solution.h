@@ -24,8 +24,6 @@ namespace cpp_module {
         VehicleSchedule schedule;
         VehicleSchedule delays_on_arcs;
         std::vector<double> start_times;
-        std::vector<double> remaining_time_slack;
-        std::vector<double> staggering_applied;
         double total_delay;
         double lb_travel_time;
         bool is_feasible_and_improving;
@@ -36,8 +34,6 @@ namespace cpp_module {
         explicit Solution(const std::vector<double> &arg_start_times, const Instance &instance)
                 : schedule(arg_start_times.size()),
                   delays_on_arcs(arg_start_times.size()),
-                  staggering_applied(arg_start_times.size(), 0.0),
-                  remaining_time_slack(arg_start_times.size(), std::numeric_limits<double>::max()),
                   start_times(arg_start_times),
                   total_delay(0.0),
                   lb_travel_time(instance.get_lb_travel_time()),
@@ -121,14 +117,6 @@ namespace cpp_module {
             schedule[trip_id][position] = time;
         }
 
-        void set_remaining_time_slack(const std::vector<double> &arg_time_slacks) {
-            remaining_time_slack = arg_time_slacks;
-        }
-
-        void set_staggering_applied(const std::vector<double> &arg_staggering_applied) {
-            staggering_applied = arg_staggering_applied;
-        }
-
         void set_feasible_and_improving_flag(bool arg_flag) {
             is_feasible_and_improving = arg_flag;
         }
@@ -145,14 +133,6 @@ namespace cpp_module {
 
         void increase_trip_start_time(TripID trip_id, double amount) {
             start_times[trip_id] += amount;
-        }
-
-        void increase_staggering_applied(TripID trip_id, double amount) {
-            staggering_applied[trip_id] += amount;
-        }
-
-        void increase_remaining_time_slack(TripID trip_id, double amount) {
-            remaining_time_slack[trip_id] += amount;
         }
 
     };
