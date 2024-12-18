@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 from queue import PriorityQueue
 from input_data import ACTIVATE_ASSERTIONS, MIN_SET_CAPACITY, TOLERANCE
-from instance_module.instance import Instance
+from problem.instance import Instance
 from utils.aliases import *
 from functools import total_ordering
 

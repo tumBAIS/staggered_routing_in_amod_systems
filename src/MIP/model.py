@@ -6,19 +6,18 @@ from typing import Optional
 import cpp_module as cpp
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution, HeuristicSolution
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution, HeuristicSolution
 from MIP.support import (
     set_gurobi_parameters,
-    compute_iis_if_not_solved,
-    get_final_optimization_measures,
-    OptimizationMeasures
+    compute_iis_if_not_solved
 )
 from MIP.integer_variables import add_conflict_variables
 from MIP.continuous_variables import add_continuous_variables
 from MIP.constraints import add_conflict_constraints
 from MIP.callback import callback
 from MIP.warm_start import set_warm_start_model
+from utils.aliases import OptimizationMeasures
 
 # Define the path for temporary files
 path_to_temp = Path(__file__).parent.parent.parent / "temp"
@@ -114,13 +113,11 @@ def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParame
     return min(total_remaining_time, epoch_remaining_time) > 0
 
 
-def run_model(
-        model: StaggeredRoutingModel,
-        instance: EpochInstance,
-        warm_start: HeuristicSolution | Solution,
-        solver_params: SolverParameters,
-        cpp_local_search: cpp.cpp_local_search
-) -> Optional[OptimizationMeasures]:
+def run_model(model: StaggeredRoutingModel,
+              instance: EpochInstance,
+              warm_start: HeuristicSolution | Solution,
+              solver_params: SolverParameters,
+              cpp_local_search: cpp.cpp_local_search) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
     print("=" * 50)
     print("Starting Model Optimization".center(50))
@@ -160,4 +157,6 @@ def run_model(
     print("Optimization completed successfully.")
     print("=" * 50)
 
-    return get_final_optimization_measures(model, instance)
+    if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
+        return model.get_final_optimization_metrics(instance.start_solution_time)
+    return None

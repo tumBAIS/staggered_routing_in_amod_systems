@@ -3,8 +3,8 @@ from congestion_model.core import (
     get_free_flow_schedule,
     get_total_travel_time,
 )
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution
 from MIP import StaggeredRoutingModel
 
 

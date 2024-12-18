@@ -1,5 +1,5 @@
-from utils.classes import Solution
-from instance_module.epoch_instance import EpochInstance
+from problem.solution import Solution
+from problem.epoch_instance import EpochInstance
 
 
 def merge_arcs_on_paths_where_no_conflicts_can_happen(instance: EpochInstance, status_quo: Solution) -> None:

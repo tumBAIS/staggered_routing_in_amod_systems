@@ -14,6 +14,7 @@ Schedule = list[Time]
 Schedules = list[Schedule]
 UndividedConflictingSets = list[list[list[int]]]
 ConflictingSets = list[list[int]]
+OptimizationMeasures = dict[str, list[float]]
 
 # Aliases for routes generation.
 RoutesFile = list[dict]

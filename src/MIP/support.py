@@ -10,19 +10,12 @@ import gurobipy as grb
 from typing import Optional
 
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution, HeuristicSolution
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution, HeuristicSolution
 from MIP import StaggeredRoutingModel
 
 # Define the path for results
 path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
-
-
-@dataclasses.dataclass
-class OptimizationMeasures:
-    lower_bound_list: list[float]
-    upper_bound_list: list[float]
-    optimality_gap_list: list[float]
 
 
 def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
@@ -60,39 +53,3 @@ def _delete_solution_external_file(instance: EpochInstance) -> None:
     file_to_delete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
     if os.path.isfile(file_to_delete):
         os.remove(file_to_delete)
-
-
-def load_initial_solution(instance: EpochInstance) -> HeuristicSolution:
-    """Load the initial solution from an external file."""
-    file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
-    with open(file_path, "rb") as infile:
-        initial_solution: HeuristicSolution = pickle.load(infile)
-    _delete_solution_external_file(instance)
-    return initial_solution
-
-
-def get_final_optimization_measures(model: StaggeredRoutingModel, instance: EpochInstance) -> (
-        Optional)[OptimizationMeasures]:
-    """Retrieve final optimization measures if the model was successfully solved."""
-    if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
-        model.store_lower_bound()
-        model.store_upper_bound()
-        model.store_optimality_gap()
-        model.store_optimization_time(instance.start_solution_time)
-
-        return OptimizationMeasures(
-            lower_bound_list=model.get_lower_bound_list(),
-            upper_bound_list=model.get_upper_bound_list(),
-            optimality_gap_list=model.get_optimality_gap_list(),
-        )
-    return None
-
-
-def save_solution_in_external_file(solution: HeuristicSolution | Solution,
-                                   instance: EpochInstance) -> None:
-    """Save the heuristic solution to an external file."""
-    os.makedirs(path_to_results, exist_ok=True)
-    file_path = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
-    with open(file_path, "wb") as outfile:
-        pickle.dump(solution, outfile)
-        print("Saved heuristic solution in external file.")

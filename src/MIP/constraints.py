@@ -1,6 +1,6 @@
 from MIP import StaggeredRoutingModel
 from input_data import USE_GUROBI_INDICATORS
-from instance_module.instance import Instance
+from problem.instance import Instance
 
 
 def get_x_and_y_points_pwl_function(instance: Instance, arc: int) -> \

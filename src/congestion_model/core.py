@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import cpp_module as cpp
 from input_data import SolverParameters
-from instance_module.instance import Instance
-from instance_module.epoch_instance import EpochInstance
+from problem.instance import Instance
+from problem.epoch_instance import EpochInstance
 from utils.aliases import *
 from input_data import TOLERANCE
 

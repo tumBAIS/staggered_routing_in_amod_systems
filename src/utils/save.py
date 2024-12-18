@@ -5,8 +5,9 @@ import os
 import shutil
 from pathlib import Path
 from input_data import SolverParameters
-from instance_module.instance import Instance
-from utils.classes import Solution, OptimizationMeasures
+from problem.instance import Instance
+from problem.solution import Solution
+from utils.aliases import *
 
 
 def transform_path_to_string(path: Path) -> str:
@@ -26,7 +27,7 @@ def transform_path_to_string(path: Path) -> str:
 
 def save_experiment(instance: Instance, status_quo: Solution,
                     solution: Solution, solver_params: SolverParameters,
-                    optimization_measures_list: list[OptimizationMeasures]):
+                    optimization_measures_list: list[dict]):
     """
     Save experiment results to JSON files.
 

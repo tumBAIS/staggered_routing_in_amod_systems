@@ -2,9 +2,9 @@ import datetime
 import pandas as pd
 
 from input_data import TOLERANCE
-from instance_module.epoch_instance import EpochInstances
-from instance_module.instance import Instance
-from utils.classes import Solution
+from problem.epoch_instance import EpochInstances
+from problem.instance import Instance
+from problem.solution import Solution
 
 
 def print_conflicting_sets_info(instance: Instance):

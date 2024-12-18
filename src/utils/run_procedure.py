@@ -1,13 +1,12 @@
 # Import necessary modules and functions
-import copy
 
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
-from instance_module.instance import get_instance
-from instance_module.epoch_instance import get_epoch_instances
+from problem.instance import get_instance
+from problem.epoch_instance import get_epoch_instances
 from solutions.status_quo import get_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution
-from instance_module.update_epoch_instance import update_next_epoch_instance
+from update_epoch.update_epoch_instance import update_next_epoch_instance
 from processing.simplify import simplify_system
 from utils.prints import print_insights_algorithm
 from utils.save import save_experiment

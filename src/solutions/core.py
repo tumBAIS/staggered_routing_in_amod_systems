@@ -1,18 +1,18 @@
-import MIP.support
 import utils.prints
 from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
 from solutions.status_quo import compute_solution_metrics
 from congestion_model.core import get_total_travel_time
-from instance_module.instance import Instance
+from problem.instance import Instance
 from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
 from solutions.epoch_warm_start import get_epoch_warm_start
 from solutions.model_solution import get_epoch_model_solution
-from utils.classes import Solution
+from problem.solution import Solution
 from typing import Optional
-from instance_module.epoch_instance import EpochInstance
+from problem.epoch_instance import EpochInstance
 from solutions.status_quo import get_cpp_epoch_instance
 import cpp_module as cpp
+from utils.aliases import *
 
 
 def print_header_offline_solution() -> None:
@@ -64,7 +64,7 @@ def get_offline_solution(
 
 
 def print_comparison_between_solution_and_status_quo(epoch_status_quo: Solution, epoch_solution: Solution,
-                                                     epoch_instance) -> None:
+                                                     epoch_instance: EpochInstance) -> None:
     """
     Prints information about the computed epoch solution, including delay reduction.
     """
@@ -96,7 +96,7 @@ def get_epoch_solution(
         epoch_instance: EpochInstance,
         epoch_status_quo: Solution,
         solver_params: SolverParameters,
-) -> tuple[Solution, Optional[MIP.support.OptimizationMeasures]]:
+) -> tuple[Solution, Optional[OptimizationMeasures]]:
     """
     Computes the solution for a single epoch, mapping it back to the full system.
     """

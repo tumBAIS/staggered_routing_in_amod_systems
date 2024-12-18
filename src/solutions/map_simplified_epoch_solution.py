@@ -7,8 +7,8 @@ from congestion_model.core import (
     get_total_delay,
     get_delays_on_arcs,
 )
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution
 
 
 def map_simplified_epoch_solution(
@@ -50,7 +50,7 @@ def map_simplified_epoch_solution(
     delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
 
     # Update epoch timing and print summary
-    epoch_instance.clock_end_epoch = datetime.datetime.now().timestamp()
+    epoch_instance.set_clock_end_epoch()
 
     print("=" * 50)
     print(f"Mapping completed successfully -- Final Delay: {total_delay}.".center(50))

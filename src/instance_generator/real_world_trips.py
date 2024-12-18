@@ -7,7 +7,7 @@ import osmnx as osm
 from shapely.geometry import Point
 
 from input_data import InstanceParameters
-from problem.network import Network
+from future_problem.network import Network
 import matplotlib.pyplot as plt
 import networkx as nx
 import warnings

@@ -1,5 +1,5 @@
 from MIP import StaggeredRoutingModel
-from instance_module.instance import Instance
+from problem.instance import Instance
 from collections import namedtuple
 from input_data import TOLERANCE
 

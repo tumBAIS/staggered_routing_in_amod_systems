@@ -4,7 +4,7 @@ import conflicting_sets.split
 import utils.prints
 from conflicting_sets.time_bounds import TimeBound, get_initial_latest_arrival_times, get_arc_based_time_bounds, \
     split_time_bounds_on_arcs, arrange_bounds_by_vehicle, get_undivided_conflicting_sets
-from instance_module.instance import Instance
+from problem.instance import Instance
 from utils.aliases import *
 from input_data import TOLERANCE, CONSTR_TOLERANCE
 

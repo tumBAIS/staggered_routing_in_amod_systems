@@ -4,10 +4,9 @@ from typing import Callable
 import gurobipy as grb
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
-from utils.classes import HeuristicSolution
+from problem.solution import HeuristicSolution
 from utils.aliases import Schedules
-from instance_module.epoch_instance import EpochInstance
-from MIP.support import save_solution_in_external_file
+from problem.epoch_instance import EpochInstance
 from congestion_model.core import get_delays_on_arcs
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
@@ -118,16 +117,6 @@ def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solut
                                           heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle], "cb")
 
 
-def suspend_procedure(heuristic_solution: HeuristicSolution, model: StaggeredRoutingModel,
-                      instance: EpochInstance) -> None:
-    """Save the heuristic solution and terminate the model if needed."""
-    save_solution_in_external_file(heuristic_solution, instance)
-    new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
-    if new_lower_bound > model.get_best_lower_bound():
-        model.set_best_lower_bound(new_lower_bound)
-    model.terminate()
-
-
 def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution,
                            instance: EpochInstance) -> None:
     """Apply the heuristic solution to the model if it improves the current solution."""
@@ -141,7 +130,10 @@ def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: Heu
         model.update()
         if solution_value == 1e+100:
             print("Heuristic solution not accepted - terminating model.")
-            suspend_procedure(heuristic_solution, model, instance)
+            new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
+            if new_lower_bound > model.get_best_lower_bound():
+                model.set_best_lower_bound(new_lower_bound)
+            model.terminate()
 
 
 def callback(instance: EpochInstance, solver_params: SolverParameters,

@@ -1,9 +1,7 @@
 from __future__ import annotations
-import itertools
-import gurobipy as grb
-from utils.classes import Solution, HeuristicSolution
+from problem.solution import Solution, HeuristicSolution
 from MIP import StaggeredRoutingModel
-from instance_module.instance import Instance
+from problem.instance import Instance
 
 
 def set_warm_start_model(model: StaggeredRoutingModel,

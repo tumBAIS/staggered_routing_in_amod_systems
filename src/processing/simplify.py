@@ -2,11 +2,11 @@ from __future__ import annotations
 import copy
 
 from congestion_model.conflict_binaries import get_conflict_binaries
-from instance_module.epoch_instance import EpochInstance
+from problem.epoch_instance import EpochInstance
 from processing.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_conflicts_can_happen
 from processing.remove_not_utilized_arcs import remove_not_utilized_arcs
-from instance_module.instance import Instance
-from utils.classes import Solution
+from problem.instance import Instance
+from problem.solution import Solution
 from input_data import TOLERANCE
 
 

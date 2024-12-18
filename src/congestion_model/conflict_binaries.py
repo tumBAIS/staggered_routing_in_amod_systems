@@ -1,7 +1,7 @@
 import itertools
 from dataclasses import dataclass
 
-from utils.classes import Binaries
+from problem.solution import Binaries
 from utils.aliases import *
 from input_data import CONSTR_TOLERANCE, TOLERANCE
 

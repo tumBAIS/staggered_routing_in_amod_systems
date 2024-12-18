@@ -3,9 +3,9 @@ from typing import List
 from input_data import SolverParameters, ACTIVATE_ASSERTIONS
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
-from utils.classes import Solution
-from instance_module.epoch_instance import EpochInstance
-from instance_module.instance import Instance
+from problem.solution import Solution
+from problem.epoch_instance import EpochInstance
+from problem.instance import Instance
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from congestion_model.core import (get_congested_schedule,
                                    get_free_flow_schedule,

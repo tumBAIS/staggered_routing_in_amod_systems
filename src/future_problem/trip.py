@@ -4,8 +4,8 @@ import random
 import numpy as np
 import shapely as shp
 from input_data import InstanceParameters
-from problem.network import Network
-from problem.route import TripRoutes, TripRoute
+from future_problem.network import Network
+from future_problem.route import TripRoutes, TripRoute
 from utils.aliases import *
 import time
 from typing import Optional

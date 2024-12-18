@@ -1,7 +1,7 @@
 import json
-from problem.trip import Trips
+from future_problem.trip import Trips
 import cpp_module as cpp
-from problem.network import Network
+from future_problem.network import Network
 from pathlib import Path
 import os
 

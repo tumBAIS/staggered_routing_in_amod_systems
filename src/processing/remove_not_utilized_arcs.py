@@ -1,6 +1,6 @@
 from input_data import ACTIVATE_ASSERTIONS
-from instance_module.instance import Instance
-from instance_module.epoch_instance import EpochInstance
+from problem.instance import Instance
+from problem.epoch_instance import EpochInstance
 
 
 def _get_vehicles_utilizing_arcs(instance: Instance) -> list[list[int]]:

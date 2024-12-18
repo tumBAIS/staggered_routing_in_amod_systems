@@ -1,6 +1,6 @@
-from utils.classes import Solution
-from instance_module.instance import Instance
-from input_data import FIX_MODEL, TOLERANCE, CONSTR_TOLERANCE, ACTIVATE_ASSERTIONS
+from problem.solution import Solution
+from problem.instance import Instance
+from input_data import FIX_MODEL, TOLERANCE
 from MIP import StaggeredRoutingModel
 
 

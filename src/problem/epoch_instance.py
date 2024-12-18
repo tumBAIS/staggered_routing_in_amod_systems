@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import datetime
-from instance_module.instance import Instance
+from problem.instance import Instance
 from input_data import SolverParameters, InstanceParameters
 from typing import Optional
 
@@ -31,8 +31,12 @@ class EpochInstance(Instance):
         self.start_solution_time = datetime.datetime.now().timestamp()
         self.max_staggering_applicable = max_staggering_applicable  # TODO: avoid this override.
         self.clock_start_epoch = None
+        self.clock_end_epoch = None
         self.removed_vehicles = []
         self.removed_arcs = []
+
+    def set_clock_end_epoch(self):
+        self.clock_end_epoch = datetime.datetime.now().timestamp()
 
     def update_conflicting_sets_after_trip_removal(self) -> None:
         """

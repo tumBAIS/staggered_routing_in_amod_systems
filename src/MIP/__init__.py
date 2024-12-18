@@ -4,12 +4,13 @@ import itertools
 from typing import Optional, Iterator
 from input_data import TOLERANCE, CONSTR_TOLERANCE
 import numpy as np
-from instance_module.instance import Instance
+from problem.instance import Instance
 from input_data import SolverParameters
 import datetime
 
 import gurobipy as grb
 from utils.tools import SuppressOutput
+from utils.aliases import *
 
 
 class StaggeredRoutingModel(grb.Model):
@@ -501,3 +502,14 @@ class StaggeredRoutingModel(grb.Model):
 
     def set_improvement_clock(self):
         self._improvement_clock = datetime.datetime.now().timestamp()
+
+    def get_final_optimization_metrics(self, start_solution_time) -> OptimizationMeasures:
+        self.store_lower_bound()
+        self.store_upper_bound()
+        self.store_optimality_gap()
+        self.store_optimization_time(start_solution_time)
+        return {
+            "lower_bounds_list": self._lower_bounds_list,
+            "upper_bounds_list": self._upper_bounds_list,
+            "optimality_gaps_list": self._optimality_gaps_list,
+        }

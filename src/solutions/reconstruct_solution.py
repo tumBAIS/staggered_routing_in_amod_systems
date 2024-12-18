@@ -1,8 +1,8 @@
 import utils.prints
 from input_data import ACTIVATE_ASSERTIONS, TOLERANCE
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution
-from instance_module.instance import Instance
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution
+from problem.instance import Instance
 from utils.aliases import *
 from congestion_model.core import (
     get_delays_on_arcs,

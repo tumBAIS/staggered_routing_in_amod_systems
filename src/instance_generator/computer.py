@@ -11,8 +11,8 @@ import instance_generator.shortcuts
 import utils.tools
 from instance_generator import real_world_graphs as real_world_graphs, real_world_trips as real_world_trips
 from methods import scheduler as sq
-from problem.network import Network
-from problem.trip import Trips
+from future_problem.network import Network
+from future_problem.trip import Trips
 from input_data import InstanceParameters
 
 

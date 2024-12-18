@@ -4,11 +4,11 @@ import datetime
 from collections import Counter
 
 from input_data import SolverParameters, ACTIVATE_ASSERTIONS, CONSTR_TOLERANCE
-from instance_module.epoch_instance import EpochInstance
-from instance_module.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, \
+from problem.epoch_instance import EpochInstance
+from update_epoch.next_epoch_departures_computer import NextEpochDeparturesComputer, NextEpochDeparture, \
     VehicleStatus
-from utils.classes import Solution
-import instance_module.instance
+from problem.solution import Solution
+import problem.instance
 
 
 def get_departure_in_next_epoch(
@@ -27,7 +27,7 @@ def get_departure_in_next_epoch(
 
 def get_max_staggering_applicable_next_epoch(
         departure: NextEpochDeparture,
-        global_instance: instance_module.instance.Instance,
+        global_instance: problem.instance.Instance,
         next_epoch_instance: EpochInstance,
         original_vehicle_id: int,
         solver_params: SolverParameters
@@ -51,7 +51,7 @@ def add_departures_to_next_epoch(
         next_epoch_departures: list[NextEpochDeparture],
         current_epoch_instance: EpochInstance,
         next_epoch_instance: EpochInstance,
-        global_instance: instance_module.instance.Instance,
+        global_instance: problem.instance.Instance,
         solver_params: SolverParameters
 ) -> None:
     """Add departures to the next epoch instance."""
@@ -120,7 +120,7 @@ def update_next_epoch_instance(
         current_epoch_instance: EpochInstance,
         current_epoch_status_quo: Solution,
         next_epoch_instance: EpochInstance,
-        global_instance: instance_module.instance.Instance,
+        global_instance: problem.instance.Instance,
         solver_params: SolverParameters
 ) -> None:
     """Update the next epoch instance based on the current epoch."""

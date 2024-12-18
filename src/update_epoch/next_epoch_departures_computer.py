@@ -5,8 +5,8 @@ from collections import namedtuple
 from enum import Enum
 
 from input_data import SolverParameters
-from instance_module.epoch_instance import EpochInstance
-from utils.classes import Solution
+from problem.epoch_instance import EpochInstance
+from problem.solution import Solution
 
 
 class NextEpochDeparturesComputer:
