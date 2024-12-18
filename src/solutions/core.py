@@ -47,10 +47,8 @@ def get_offline_solution(
         delays_on_arcs=solution_metrics.delays_on_arcs,
         free_flow_schedule=solution_metrics.free_flow_schedule,
         release_times=solution_metrics.release_times,
-        staggering_applicable=instance.max_staggering_applicable[:],
         total_delay=solution_metrics.total_delay,
         congested_schedule=solution_metrics.congested_schedule,
-        staggering_applied=[0.0] * len(solution_metrics.congested_schedule),
         total_travel_time=get_total_travel_time(solution_metrics.congested_schedule),
         binaries=None,
     )
