@@ -7,7 +7,9 @@ from utils.classes import Solution
 from congestion_model.core import (
     get_free_flow_schedule,
     get_total_travel_time,
-    get_delays_on_arcs)
+    get_delays_on_arcs,
+    get_staggering_applicable,
+)
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
@@ -67,6 +69,7 @@ def get_epoch_warm_start(
         congested_schedule[vehicle][0] - release_time
         for vehicle, release_time in enumerate(epoch_status_quo.release_times)
     ]
+    staggering_applicable = get_staggering_applicable(epoch_instance, staggering_applied)
     delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
     total_delay = sum(sum(delays) for delays in delays_on_arcs)
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
@@ -78,8 +81,10 @@ def get_epoch_warm_start(
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,
         release_times=release_times,
+        staggering_applicable=staggering_applicable,
         binaries=binaries,
         free_flow_schedule=free_flow_schedule,
+        staggering_applied=staggering_applied,
         total_travel_time=total_travel_time,
         vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
     )
