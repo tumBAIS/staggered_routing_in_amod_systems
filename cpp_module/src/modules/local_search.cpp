@@ -403,7 +403,7 @@ namespace cpp_module {
             return false;
         }
 
-        if (complete_solution.get_total_delay() > get_best_total_delay()) {
+        if (complete_solution.get_total_delay() > best_total_delay) {
             return false;
         }
 
