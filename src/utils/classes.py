@@ -23,6 +23,8 @@ class Solution:
     free_flow_schedule: list[list[float]]
     congested_schedule: list[list[float]]
     release_times: list[float]
+    staggering_applicable: list[float]
+    staggering_applied: list[float]
     total_delay: float
     total_travel_time: float
     vehicles_utilizing_arcs: Optional[list[list[int]]] = None
@@ -34,7 +36,9 @@ class Solution:
         self.congested_schedule.pop(trip)
         assert sum(self.delays_on_arcs[trip]) < TOLERANCE, "Vehicle has non-zero delays on arcs."
         self.delays_on_arcs.pop(trip)
+        self.staggering_applicable.pop(trip)
         self.free_flow_schedule.pop(trip)
+        self.staggering_applied.pop(trip)
 
     def remove_trip_at_position_entry_from_solution(self, trip, position):
         """ Used during simplification: removes entries where delay cannot occur """

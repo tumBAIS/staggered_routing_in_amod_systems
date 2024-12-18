@@ -7,6 +7,7 @@ from utils.aliases import *
 from congestion_model.core import (
     get_delays_on_arcs,
     get_free_flow_schedule,
+    get_staggering_applicable,
     get_total_delay,
     get_total_travel_time,
     get_congested_schedule,
@@ -94,6 +95,9 @@ def reconstruct_solution(
     delays_on_arcs = get_delays_on_arcs(global_instance, congested_schedule)
     free_flow_schedule = get_free_flow_schedule(global_instance, congested_schedule)
     release_times = [schedule[0] for schedule in congested_schedule]
+    staggering_applied = [schedule[0] - global_release for schedule, global_release in
+                          zip(congested_schedule, global_instance.release_times)]
+    staggering_applicable = get_staggering_applicable(global_instance, staggering_applied)
     total_delay = get_total_delay(free_flow_schedule, congested_schedule)
     total_travel_time = get_total_travel_time(congested_schedule)
 
@@ -106,8 +110,10 @@ def reconstruct_solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
         release_times=release_times,
+        staggering_applicable=staggering_applicable,
         total_delay=total_delay,
         congested_schedule=congested_schedule,
+        staggering_applied=staggering_applied,
         total_travel_time=total_travel_time,
         binaries=binaries,
     )
