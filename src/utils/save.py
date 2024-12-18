@@ -107,16 +107,12 @@ def save_experiment(instance: Instance, status_quo: Solution,
             json.dump(output_data, f, ensure_ascii=False, indent=3)
 
 
-def _round_instance_data(instance, status_quo, solution, i):
+def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
     """Round numerical data in the instance, status quo, and solution for cleaner output."""
     instance.max_staggering_applicable[i] = round(instance.max_staggering_applicable[i], 2)
     instance.deadlines[i] = round(instance.deadlines[i], 2)
     status_quo.release_times[i] = round(status_quo.release_times[i], 2)
-    status_quo.staggering_applicable[i] = round(status_quo.staggering_applicable[i], 2)
-    status_quo.staggering_applied[i] = round(status_quo.staggering_applied[i], 2)
     solution.release_times[i] = round(solution.release_times[i], 2)
-    solution.staggering_applicable[i] = round(solution.staggering_applicable[i], 2)
-    solution.staggering_applied[i] = round(solution.staggering_applied[i], 2)
 
     for j in range(len(status_quo.congested_schedule[i])):
         status_quo.congested_schedule[i][j] = round(status_quo.congested_schedule[i][j], 2)

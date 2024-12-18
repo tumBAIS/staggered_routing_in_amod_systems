@@ -23,26 +23,21 @@ def map_simplified_epoch_solution(
     computes the updated schedules and delays, and returns the full epoch solution.
     """
     print("\n" + "=" * 50)
-    print("Mapping Simplified Solution to Full Instance".center(50))
+    print(
+        f"Mapping Simplified Solution to Full Instance -- Initial Delay: {simplified_epoch_solution.total_delay}".center(
+            50))
     print("=" * 50)
 
     # Extract initial release times and removed vehicles for mapping
     release_times_epoch = epoch_instance.release_times
     removed_vehicles = epoch_instance.removed_vehicles
-
+    min_release_time = min(release_times_epoch)
     # Reinsert removed vehicles into the schedule
-    staggering_applied = simplified_epoch_solution.staggering_applied[:]
-    staggering_applicable = simplified_epoch_solution.staggering_applicable[:]
-    for vehicle in sorted(removed_vehicles):
-        staggering_applied.insert(vehicle, 0)
-        staggering_applicable.insert(vehicle, 0)
-    print(f"Reinserted {len(removed_vehicles)} removed vehicles.")
+    staggered_release_times = [x + min_release_time for x in simplified_epoch_solution.release_times]
+    for trip_id in sorted(removed_vehicles):
+        staggered_release_times.insert(trip_id, release_times_epoch[trip_id])
 
-    # Calculate staggered release times for all vehicles
-    staggered_release_times = [
-        release_time + staggering
-        for release_time, staggering in zip(release_times_epoch, staggering_applied)
-    ]
+    print(f"Reinserted {len(removed_vehicles)} removed vehicles.")
 
     # Compute the full congested schedule
     congested_schedule = get_congested_schedule(epoch_instance, staggered_release_times, solver_params)
@@ -58,7 +53,7 @@ def map_simplified_epoch_solution(
     epoch_instance.clock_end_epoch = datetime.datetime.now().timestamp()
 
     print("=" * 50)
-    print("Mapping completed successfully.".center(50))
+    print(f"Mapping completed successfully -- Final Delay: {total_delay}.".center(50))
     print("=" * 50)
 
     # Create and return the mapped epoch solution
@@ -67,9 +62,7 @@ def map_simplified_epoch_solution(
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,
         release_times=staggered_release_times,
-        staggering_applicable=staggering_applicable,
         free_flow_schedule=free_flow_schedule,
-        staggering_applied=staggering_applied,
         total_travel_time=total_travel_time,
         vehicles_utilizing_arcs=simplified_epoch_solution.vehicles_utilizing_arcs,
     )
