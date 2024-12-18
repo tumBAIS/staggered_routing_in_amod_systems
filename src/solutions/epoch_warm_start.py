@@ -4,8 +4,6 @@ from input_data import TOLERANCE
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from congestion_model.core import (
-    get_free_flow_schedule,
-    get_total_travel_time,
     get_delays_on_arcs)
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
@@ -33,7 +31,7 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
 
 def get_epoch_warm_start(
         epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters,
-        cpp_local_search: cpp.LocalSearch
+        cpp_local_search: cpp.LocalSearch, cpp_instance: cpp.cpp_instance
 ) -> Solution:
     """
     Computes the warm start solution for the given epoch.
@@ -50,7 +48,6 @@ def get_epoch_warm_start(
         print("Improving warm start using local search...")
 
         cpp_solution = cpp_local_search.run(epoch_status_quo.release_times)
-        congested_schedule = cpp_solution.get_schedule()
         print("Local search completed.")
     else:
         if not _is_time_left_for_optimization(epoch_instance, solver_params):
@@ -60,25 +57,22 @@ def get_epoch_warm_start(
         return epoch_status_quo
 
     # Compute necessary metrics for the warm start solution
-    release_times = [schedule[0] for schedule in congested_schedule]
-    free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
-    staggering_applied = [
-        congested_schedule[vehicle][0] - release_time
-        for vehicle, release_time in enumerate(epoch_status_quo.release_times)
-    ]
-    delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
-    total_delay = sum(sum(delays) for delays in delays_on_arcs)
+    congested_schedule = cpp_solution.get_schedule()
+    total_delay = cpp_solution.get_total_delay()
+    total_travel_time = cpp_solution.get_total_travel_time()
+    start_times = cpp_solution.get_start_times()
+    delays_on_arcs = get_delays_on_arcs(epoch_instance,
+                                        congested_schedule)  # TODO: if you use cpp_instance here, it miscomputes delays
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
-    total_travel_time = get_total_travel_time(congested_schedule)
 
     # Construct the warm start solution
     warm_start = Solution(
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,
-        release_times=release_times,
+        release_times=start_times,
         binaries=binaries,
-        free_flow_schedule=free_flow_schedule,
+        free_flow_schedule=cpp_instance.get_free_flow_schedule(start_times),
         total_travel_time=total_travel_time,
         vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
     )

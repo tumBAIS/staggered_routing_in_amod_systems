@@ -58,7 +58,8 @@ def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp
     )
 
 
-def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> Solution:
+def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> \
+        (Solution, cpp.cpp_instance):
     """Compute the status quo solution for the current epoch."""
     cpp_epoch_instance = get_cpp_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
@@ -89,4 +90,4 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
     )
 
     status_quo.print_congestion_info()
-    return status_quo
+    return status_quo, cpp_epoch_instance

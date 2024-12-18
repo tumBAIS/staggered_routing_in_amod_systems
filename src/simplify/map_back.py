@@ -1,19 +1,14 @@
 from input_data import SolverParameters
-from congestion_model.core import (
-    get_congested_schedule,
-    get_free_flow_schedule,
-    get_total_travel_time,
-    get_total_delay,
-    get_delays_on_arcs,
-)
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
+import cpp_module as cpp
 
 
 def map_simplified_epoch_solution(
         epoch_instance: EpochInstance,
         simplified_epoch_solution: Solution,
         solver_params: SolverParameters,
+        cpp_epoch_instance: cpp.cpp_instance
 ) -> Solution:
     """
     Maps the simplified epoch solution back to the full instance, including removed vehicles.
@@ -36,29 +31,25 @@ def map_simplified_epoch_solution(
     print(f"Reinserted {len(removed_vehicles)} removed vehicles.")
 
     # Compute the full congested schedule
-    congested_schedule = get_congested_schedule(epoch_instance, staggered_release_times, solver_params)
+    cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
+    cpp_solution = cpp_scheduler.construct_solution(staggered_release_times)
+
     print("Full congested schedule computed.")
 
     # Compute additional metrics
-    free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
-    total_delay = get_total_delay(free_flow_schedule, congested_schedule)
-    total_travel_time = get_total_travel_time(congested_schedule)
-    delays_on_arcs = get_delays_on_arcs(epoch_instance, congested_schedule)
-
-    # Update epoch timing and print summary
     epoch_instance.set_clock_end_epoch()
 
     print("=" * 50)
-    print(f"Mapping completed successfully -- Final Delay: {total_delay}.".center(50))
+    print(f"Mapping completed successfully -- Final Delay: {cpp_solution.get_total_delay()}.".center(50))
     print("=" * 50)
 
     # Create and return the mapped epoch solution
     return Solution(
-        total_delay=total_delay,
-        congested_schedule=congested_schedule,
-        delays_on_arcs=delays_on_arcs,
+        total_delay=cpp_solution.get_total_delay(),
+        congested_schedule=cpp_solution.get_schedule(),
+        delays_on_arcs=cpp_solution.get_delays_on_arcs(),
         release_times=staggered_release_times,
-        free_flow_schedule=free_flow_schedule,
-        total_travel_time=total_travel_time,
+        free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(cpp_solution.get_start_times()),
+        total_travel_time=cpp_solution.get_total_travel_time(),
         vehicles_utilizing_arcs=simplified_epoch_solution.vehicles_utilizing_arcs,
     )

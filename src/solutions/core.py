@@ -1,7 +1,6 @@
 import utils.prints
 from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
-from congestion_model.core import get_total_travel_time
 from problem.instance import Instance
 from simplify.map_back import map_simplified_epoch_solution
 from solutions.epoch_warm_start import get_epoch_warm_start
@@ -92,6 +91,7 @@ def get_epoch_solution(
         epoch_instance: EpochInstance,
         epoch_status_quo: Solution,
         solver_params: SolverParameters,
+        cpp_epoch_instance: cpp.cpp_instance
 ) -> tuple[Solution, Optional[OptimizationMeasures]]:
     """
     Computes the solution for a single epoch, mapping it back to the full system.
@@ -102,7 +102,7 @@ def get_epoch_solution(
     cpp_simplified_epoch_instance = get_cpp_instance(simplified_instance, solver_params)
     cpp_local_search = cpp.LocalSearch(cpp_simplified_epoch_instance)
     epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
-                                            cpp_local_search)
+                                            cpp_local_search, cpp_simplified_epoch_instance)
     model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
     optimization_measures = run_model(model, simplified_instance, epoch_warm_start, solver_params,
                                       cpp_local_search)
@@ -111,7 +111,7 @@ def get_epoch_solution(
     )
 
     # Map the solution back to the full system
-    epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params)
+    epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params, cpp_epoch_instance)
     print_comparison_between_solution_and_status_quo(epoch_status_quo, epoch_solution, epoch_instance)
 
     return epoch_solution, optimization_measures

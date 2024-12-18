@@ -8,7 +8,7 @@ from congestion_model.core import (
     get_delays_on_arcs,
     get_free_flow_schedule,
     get_total_delay,
-    get_total_travel_time,
+    PY_get_total_travel_time,
     get_congested_schedule,
 )
 from congestion_model.conflict_binaries import get_conflict_binaries
@@ -95,7 +95,7 @@ def reconstruct_solution(
     free_flow_schedule = get_free_flow_schedule(global_instance, congested_schedule)
     release_times = [schedule[0] for schedule in congested_schedule]
     total_delay = get_total_delay(free_flow_schedule, congested_schedule)
-    total_travel_time = get_total_travel_time(congested_schedule)
+    total_travel_time = PY_get_total_travel_time(congested_schedule)
 
     # Update conflicting sets and binaries
     add_conflicting_sets_to_instance(global_instance, free_flow_schedule)

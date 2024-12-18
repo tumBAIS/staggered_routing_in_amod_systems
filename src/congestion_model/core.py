@@ -67,10 +67,5 @@ def get_delays_on_arcs(instance: Instance | EpochInstance,
     return delays_on_arcs
 
 
-def get_total_travel_time(vehicle_schedule: list[Schedule]) -> float:
+def PY_get_total_travel_time(vehicle_schedule: list[Schedule]) -> float:
     return sum([schedule[-1] - schedule[0] for schedule in vehicle_schedule])
-
-
-def get_staggering_applicable(instance: EpochInstance, staggering_applied: list[float]) -> list[float]:
-    return [v_max_staggering_applicable - v_staggering_applied for v_max_staggering_applicable, v_staggering_applied in
-            zip(instance.max_staggering_applicable, staggering_applied)]

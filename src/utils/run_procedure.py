@@ -31,14 +31,15 @@ def run_procedure(source: str) -> None:
         epoch_instance.print_start(solver_params.epoch_size)
 
         # Get the status quo for the current epoch
-        epoch_status_quo = get_epoch_status_quo(epoch_instance, solver_params)
+        epoch_status_quo, cpp_epoch_instance = get_epoch_status_quo(epoch_instance, solver_params)
 
         # Simplify the system for the current epoch
         simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
         # Solve for the current epoch
 
         epoch_solution, optimization_measures = get_epoch_solution(simplified_instance, simplified_status_quo,
-                                                                   epoch_instance, epoch_status_quo, solver_params)
+                                                                   epoch_instance, epoch_status_quo, solver_params,
+                                                                   cpp_epoch_instance)
         epoch_solutions.append(epoch_solution)
         optimization_measures_list.append(optimization_measures)
         # Update the instance for the next epoch if not the last one

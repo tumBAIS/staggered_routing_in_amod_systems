@@ -114,12 +114,7 @@ namespace cpp_module {
 
         bool improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution);
 
-
-        auto compute_staggering_applied(const std::vector<Time> &arg_start_times);
-
         Solution run(std::vector<Time> &arg_start_times);
-
-        auto compute_remaining_time_slack(const std::vector<Time> &arg_start_times);
 
         Solution get_initial_solution(const std::vector<double> &arg_release_times);
 

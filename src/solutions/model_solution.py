@@ -1,7 +1,7 @@
 from input_data import SolverParameters
 from congestion_model.core import (
     get_free_flow_schedule,
-    get_total_travel_time,
+    PY_get_total_travel_time,
 )
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
@@ -53,8 +53,7 @@ def get_epoch_model_solution(
     congested_schedule = get_model_schedule(model, epoch_instance.trip_routes)
     delays_on_arcs = get_model_delay_on_arcs(model, epoch_instance.trip_routes)
     free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
-    staggering_applied = get_staggering_applied(release_times, epoch_status_quo.release_times)
-    total_travel_time = get_total_travel_time(congested_schedule)
+    total_travel_time = PY_get_total_travel_time(congested_schedule)
 
     # Construct and return the model solution
     return Solution(

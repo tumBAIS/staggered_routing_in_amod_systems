@@ -26,7 +26,6 @@ class Solution:
     total_travel_time: float
     vehicles_utilizing_arcs: Optional[list[list[int]]] = None
     binaries: Optional[Binaries] = None  # type: ignore
-    nothing_to_optimize: bool = False
 
     def remove_trip(self, trip):
         self.release_times.pop(trip)
