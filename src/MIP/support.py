@@ -1,17 +1,10 @@
 from __future__ import annotations
 
 import os
-import pickle
 import datetime
-import dataclasses
 from utils.tools import SuppressOutput
-
-import gurobipy as grb
-from typing import Optional
-
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP
 from problem.epoch_instance import EpochInstance
-from problem.solution import Solution, HeuristicSolution
 from MIP import StaggeredRoutingModel
 
 # Define the path for results
@@ -46,10 +39,3 @@ def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:
     model.computeIIS()
     model.write(f"{path_to_results}/unsolvedModel.ilp")
     raise RuntimeError("Model could not be solved.")
-
-
-def _delete_solution_external_file(instance: EpochInstance) -> None:
-    """Delete the external file storing the initial solution."""
-    file_to_delete = f"{path_to_results}/initialSolution_{instance.clock_start_epoch}.p"
-    if os.path.isfile(file_to_delete):
-        os.remove(file_to_delete)

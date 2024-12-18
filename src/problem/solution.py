@@ -64,11 +64,3 @@ class Solution:
         print(f"Congestion Delay:          {congestion_delay_percentage:.2f}% of travel time")
         print(f"TomTom Congestion Index:   {tomtom_congestion_index:.2f}%")
         print("--------------------------------------")
-
-
-@dataclass
-class HeuristicSolution:
-    congested_schedule: Schedules
-    binaries: Binaries
-    delays_on_arcs: Schedules
-    total_delay: float

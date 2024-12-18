@@ -1,6 +1,5 @@
 import itertools
 from dataclasses import dataclass
-from typing import List
 
 from problem.solution import Binaries
 from utils.aliases import *
@@ -95,7 +94,7 @@ def process_vehicle_pair(binaries: Binaries, vehicle_pair: VehiclePair) -> None:
     update_gamma(binaries, vehicle_pair)
 
 
-def get_conflict_binaries(conflicting_sets: List[List[int]], shortest_paths: List[List[int]],
+def get_conflict_binaries(conflicting_sets: list[list[int]], shortest_paths: list[list[int]],
                           congested_schedule: Schedules, print_variables=False) -> Binaries:
     if print_variables:
         print("Computing conflicting binaries ...", end="")
@@ -134,7 +133,7 @@ def get_conflict_binaries(conflicting_sets: List[List[int]], shortest_paths: Lis
     return binaries
 
 
-def derive_flows(instance, gammas) -> List[List[int]]:
+def derive_flows(instance, gammas) -> list[list[int]]:
     flows = []
     for vehicle, path in enumerate(instance.trip_routes):
         vehicle_flows = []

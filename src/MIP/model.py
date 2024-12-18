@@ -7,7 +7,7 @@ import cpp_module as cpp
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
 from problem.epoch_instance import EpochInstance
-from problem.solution import Solution, HeuristicSolution
+from problem.solution import Solution
 from MIP.support import (
     set_gurobi_parameters,
     compute_iis_if_not_solved
@@ -115,7 +115,7 @@ def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParame
 
 def run_model(model: StaggeredRoutingModel,
               instance: EpochInstance,
-              warm_start: HeuristicSolution | Solution,
+              warm_start: Solution,
               solver_params: SolverParameters,
               cpp_local_search: cpp.cpp_local_search) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""

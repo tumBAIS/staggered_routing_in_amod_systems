@@ -1,11 +1,11 @@
 from __future__ import annotations
-from problem.solution import Solution, HeuristicSolution
+from problem.solution import Solution
 from MIP import StaggeredRoutingModel
 from problem.instance import Instance
 
 
 def set_warm_start_model(model: StaggeredRoutingModel,
-                         warm_start: Solution | HeuristicSolution,
+                         warm_start: Solution,
                          instance: Instance) -> None:
     """Set initial values for binary variables in the warm start model."""
     for arc in model.get_list_conflicting_arcs():

@@ -4,10 +4,9 @@ from typing import Callable
 import gurobipy as grb
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
-from problem.solution import HeuristicSolution
 from utils.aliases import Schedules
 from problem.epoch_instance import EpochInstance
-from congestion_model.core import get_delays_on_arcs
+from problem.solution import Binaries
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 from MIP import StaggeredRoutingModel
@@ -73,67 +72,46 @@ def assert_schedule(model: StaggeredRoutingModel, congested_schedule: Schedules,
                                                                              f"of vehicle {vehicle}.")
 
 
-def get_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
-                           solver_params: SolverParameters,
-                           cpp_local_search: cpp.cpp_local_search) -> HeuristicSolution:
-    """Generate a heuristic solution using the local search module."""
-    model.set_flag_update(False)
-    cpp_solution = cpp_local_search.run(model.get_cb_start_times())
-    congested_schedule = cpp_solution.get_schedule()
-    delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
-    assert_schedule(model, congested_schedule, delays_on_arcs, instance)
-    binaries = get_conflict_binaries(instance.conflicting_sets, instance.trip_routes, congested_schedule)
-    total_delay = sum(sum(delays_on_arc_vehicle) for delays_on_arc_vehicle in delays_on_arcs)
-
-    return HeuristicSolution(
-        congested_schedule=congested_schedule,
-        delays_on_arcs=delays_on_arcs,
-        binaries=binaries,
-        total_delay=total_delay
-    )
-
-
-def set_heuristic_continuous_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution,
+def set_heuristic_continuous_variables(model: StaggeredRoutingModel, schedule: Schedules, delays_on_arcs: Schedules,
                                        instance: EpochInstance) -> None:
     """Set continuous variables in the model based on the heuristic solution."""
     for vehicle, route in enumerate(instance.trip_routes):
         for position, arc in enumerate(route):
-            model.set_continuous_var(vehicle, arc, "departure",
-                                     heuristic_solution.congested_schedule[vehicle][position], "cb")
-            model.set_continuous_var(vehicle, arc, "delay", heuristic_solution.delays_on_arcs[vehicle][position],
-                                     "cb")
+            model.set_continuous_var(vehicle, arc, "departure", schedule[vehicle][position], "cb")
+            model.set_continuous_var(vehicle, arc, "delay", delays_on_arcs[vehicle][position], "cb")
 
 
-def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution) -> None:
+def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_binaries: Binaries) -> None:
     """Set binary variables in the model based on the heuristic solution."""
     for arc in model.get_list_conflicting_arcs():
         for first_vehicle, second_vehicle in model.get_arc_conflicting_pairs(arc):
-            if heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle] != -1:
+            if heuristic_binaries.gamma[arc][first_vehicle][second_vehicle] != -1:
                 model.set_conflicting_var(first_vehicle, second_vehicle, arc, "alpha",
-                                          heuristic_solution.binaries.alpha[arc][first_vehicle][second_vehicle], "cb")
+                                          heuristic_binaries.alpha[arc][first_vehicle][second_vehicle], "cb")
                 model.set_conflicting_var(first_vehicle, second_vehicle, arc, "beta",
-                                          heuristic_solution.binaries.beta[arc][first_vehicle][second_vehicle], "cb")
+                                          heuristic_binaries.beta[arc][first_vehicle][second_vehicle], "cb")
                 model.set_conflicting_var(first_vehicle, second_vehicle, arc, "gamma",
-                                          heuristic_solution.binaries.gamma[arc][first_vehicle][second_vehicle], "cb")
+                                          heuristic_binaries.gamma[arc][first_vehicle][second_vehicle], "cb")
 
 
-def set_heuristic_solution(model: StaggeredRoutingModel, heuristic_solution: HeuristicSolution,
-                           instance: EpochInstance) -> None:
+def set_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
+                           heuristic_solution: cpp.cpp_solution) -> None:
     """Apply the heuristic solution to the model if it improves the current solution."""
-    solution_is_improving = model.get_cb_total_delay() - heuristic_solution.total_delay > TOLERANCE
-    if solution_is_improving:
-        print("Setting heuristic solution in callback...")
-        set_heuristic_binary_variables(model, heuristic_solution)
-        set_heuristic_continuous_variables(model, heuristic_solution, instance)
-        solution_value = model.cbUseSolution()
-        print(f"Heuristic solution accepted with value {solution_value:.0f}")
-        model.update()
-        if solution_value == 1e+100:
-            print("Heuristic solution not accepted - terminating model.")
-            new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
-            if new_lower_bound > model.get_best_lower_bound():
-                model.set_best_lower_bound(new_lower_bound)
-            model.terminate()
+    print("Setting heuristic solution in callback...")
+    schedule = heuristic_solution.get_schedule()
+    delays_on_arcs = heuristic_solution.get_delays_on_arcs()
+    heuristic_binaries = get_conflict_binaries(instance.conflicting_sets, instance.trip_routes, schedule)
+    set_heuristic_binary_variables(model, heuristic_binaries)
+    set_heuristic_continuous_variables(model, schedule, delays_on_arcs, instance)
+    solution_value = model.cbUseSolution()
+    print(f"Heuristic solution accepted with value {solution_value:.0f}")
+    model.update()
+    if solution_value == 1e+100:
+        print("Heuristic solution not accepted - terminating model.")
+        new_lower_bound = model.cbGet(grb.GRB.Callback.MIP_OBJBND)
+        if new_lower_bound > model.get_best_lower_bound():
+            model.set_best_lower_bound(new_lower_bound)
+        model.terminate()
 
 
 def callback(instance: EpochInstance, solver_params: SolverParameters,
@@ -152,7 +130,13 @@ def callback(instance: EpochInstance, solver_params: SolverParameters,
             model.set_best_upper_bound(model.get_cb_total_delay())
 
         if where == grb.GRB.Callback.MIPNODE and model.get_flag_update():
-            heuristic_solution = get_heuristic_solution(model, instance, solver_params, cpp_local_search)
-            set_heuristic_solution(model, heuristic_solution, instance)
+            model.set_flag_update(False)
+            heuristic_solution = cpp_local_search.run(model.get_cb_start_times())
+            if is_solution_improving(model, heuristic_solution):
+                set_heuristic_solution(model, instance, heuristic_solution)
 
     return call_local_search
+
+
+def is_solution_improving(model: StaggeredRoutingModel, heuristic_solution: cpp.cpp_solution) -> bool:
+    return model.get_cb_total_delay() - heuristic_solution.get_total_delay() > TOLERANCE
