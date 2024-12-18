@@ -40,34 +40,7 @@ def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_util
                     f"Duplicate values in vehicles utilizing arcs for arc {arc}."
 
 
-@dataclasses.dataclass
-class StatusQuoMetrics:
-    """Metrics related to the status quo solution."""
-    congested_schedule: List[List[float]]
-    free_flow_schedule: List[List[float]]
-    delays_on_arcs: List[List[float]]
-    release_times: List[float]
-    total_delay: float
-
-
-def compute_solution_metrics(instance: Instance, release_times: List[float],
-                             solver_params: SolverParameters) -> StatusQuoMetrics:
-    """Compute metrics for a solution, including schedules and delays."""
-    congested_schedule = get_congested_schedule(instance, release_times, solver_params)
-    free_flow_schedule = get_free_flow_schedule(instance, congested_schedule)
-    delays_on_arcs = get_delays_on_arcs(instance, congested_schedule)
-    total_delay = get_total_delay(free_flow_schedule, congested_schedule)
-
-    return StatusQuoMetrics(
-        congested_schedule=congested_schedule,
-        free_flow_schedule=free_flow_schedule,
-        delays_on_arcs=delays_on_arcs,
-        release_times=release_times,
-        total_delay=total_delay,
-    )
-
-
-def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParameters) -> cpp.cpp_instance:
+def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp.cpp_instance:
     """Create a CPP instance for the given epoch."""
     return cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
@@ -87,7 +60,7 @@ def get_cpp_epoch_instance(instance: EpochInstance, solver_params: SolverParamet
 
 def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> Solution:
     """Compute the status quo solution for the current epoch."""
-    cpp_epoch_instance = get_cpp_epoch_instance(epoch_instance, solver_params)
+    cpp_epoch_instance = get_cpp_instance(epoch_instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)
 

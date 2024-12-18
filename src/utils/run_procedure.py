@@ -7,7 +7,7 @@ from problem.epoch_instance import get_epoch_instances
 from solutions.status_quo import get_epoch_status_quo
 from solutions.core import get_offline_solution, get_epoch_solution
 from update_epoch.update_epoch_instance import update_next_epoch_instance
-from processing.simplify import simplify_system
+from simplify.simplify import simplify_system
 from utils.prints import print_insights_algorithm
 from utils.save import save_experiment
 
@@ -20,7 +20,7 @@ def run_procedure(source: str) -> None:
     instance_params, solver_params = get_input_data(source)
     instance = get_instance(instance_params)
     epoch_instances = get_epoch_instances(instance, solver_params)
-    complete_status_quo = get_offline_solution(instance, instance.release_times, solver_params)
+    complete_status_quo = get_offline_solution(instance, solver_params)
 
     # Initialize a list to store solutions for each epoch
     epoch_solutions = []

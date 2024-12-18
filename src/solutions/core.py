@@ -1,16 +1,15 @@
 import utils.prints
 from input_data import SolverParameters, TOLERANCE
 from MIP.model import construct_model, run_model
-from solutions.status_quo import compute_solution_metrics
 from congestion_model.core import get_total_travel_time
 from problem.instance import Instance
-from solutions.map_simplified_epoch_solution import map_simplified_epoch_solution
+from simplify.map_back import map_simplified_epoch_solution
 from solutions.epoch_warm_start import get_epoch_warm_start
 from solutions.model_solution import get_epoch_model_solution
 from problem.solution import Solution
 from typing import Optional
 from problem.epoch_instance import EpochInstance
-from solutions.status_quo import get_cpp_epoch_instance
+from solutions.status_quo import get_cpp_instance
 import cpp_module as cpp
 from utils.aliases import *
 
@@ -26,30 +25,27 @@ def print_header_offline_solution() -> None:
 
 
 def get_offline_solution(
-        instance: Instance, release_times: list[float], solver_params: SolverParameters
+        instance: Instance, solver_params: SolverParameters
 ) -> Solution:
     """
     Computes the offline global solution, which serves as a baseline for comparison.
 
-    Args:
-        instance: The problem instance.
-        release_times: List of vehicle release times.
-        solver_params: Solver parameters.
-
-    Returns:
-        Solution: The computed offline solution.
     """
     print_header_offline_solution()
-
-    solution_metrics = compute_solution_metrics(instance, release_times, solver_params)
+    cpp_instance = get_cpp_instance(instance, solver_params)
+    cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
+    cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)
+    delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
+    start_times = cpp_status_quo.get_start_times()
+    free_flow_schedule = cpp_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
 
     offline_solution = Solution(
-        delays_on_arcs=solution_metrics.delays_on_arcs,
-        free_flow_schedule=solution_metrics.free_flow_schedule,
-        release_times=solution_metrics.release_times,
-        total_delay=solution_metrics.total_delay,
-        congested_schedule=solution_metrics.congested_schedule,
-        total_travel_time=get_total_travel_time(solution_metrics.congested_schedule),
+        delays_on_arcs=delays_on_arcs,
+        free_flow_schedule=free_flow_schedule,
+        release_times=start_times,
+        total_delay=cpp_status_quo.get_total_delay(),
+        congested_schedule=cpp_status_quo.get_schedule(),
+        total_travel_time=cpp_status_quo.get_total_travel_time(),
         binaries=None,
     )
 
@@ -103,7 +99,7 @@ def get_epoch_solution(
     # Handle case in which nothing should be optimized.
     if len(simplified_status_quo.congested_schedule) == 0:
         return epoch_status_quo, None
-    cpp_simplified_epoch_instance = get_cpp_epoch_instance(simplified_instance, solver_params)
+    cpp_simplified_epoch_instance = get_cpp_instance(simplified_instance, solver_params)
     cpp_local_search = cpp.LocalSearch(cpp_simplified_epoch_instance)
     epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
                                             cpp_local_search)

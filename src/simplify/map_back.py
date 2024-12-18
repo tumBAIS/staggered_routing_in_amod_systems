@@ -1,4 +1,3 @@
-import datetime
 from input_data import SolverParameters
 from congestion_model.core import (
     get_congested_schedule,
@@ -18,9 +17,6 @@ def map_simplified_epoch_solution(
 ) -> Solution:
     """
     Maps the simplified epoch solution back to the full instance, including removed vehicles.
-
-    This function reinserts removed vehicles into the schedule, adjusts release times,
-    computes the updated schedules and delays, and returns the full epoch solution.
     """
     print("\n" + "=" * 50)
     print(

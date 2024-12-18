@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from gurobipy import Model
 from typing import Optional
 from utils.aliases import *
 from input_data import TOLERANCE
 
 
 class Binaries:
-    def __init__(self, alpha: dict[int:dict[int:dict[int:int]]],
-                 beta: dict[int:dict[int:dict[int:int]]],
-                 gamma: dict[int:dict[int:dict[int:int]]]):
+    def __init__(self, alpha: ConflictVarsDict,
+                 beta: ConflictVarsDict,
+                 gamma: ConflictVarsDict):
         self.alpha = alpha
         self.beta = beta
         self.gamma = gamma
