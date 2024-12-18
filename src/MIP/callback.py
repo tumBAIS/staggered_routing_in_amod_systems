@@ -4,11 +4,11 @@ from typing import Callable
 import gurobipy as grb
 
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
-from utils.classes import HeuristicSolution
+from utils.classes import Solution, HeuristicSolution
 from utils.aliases import Schedules
 from instance_module.epoch_instance import EpochInstance
 from MIP.support import save_solution_in_external_file
-from congestion_model.core import get_delays_on_arcs
+from congestion_model.core import get_delays_on_arcs, get_staggering_applicable
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 from MIP import StaggeredRoutingModel
