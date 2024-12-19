@@ -7,7 +7,6 @@ import cpp_module as cpp
 def map_simplified_epoch_solution(
         epoch_instance: EpochInstance,
         simplified_epoch_solution: Solution,
-        solver_params: SolverParameters,
         cpp_epoch_instance: cpp.cpp_instance
 ) -> Solution:
     """
@@ -51,5 +50,4 @@ def map_simplified_epoch_solution(
         start_times=staggered_release_times,
         free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(cpp_solution.get_start_times()),
         total_travel_time=cpp_solution.get_total_travel_time(),
-        vehicles_utilizing_arcs=simplified_epoch_solution.vehicles_utilizing_arcs,
     )

@@ -6,6 +6,7 @@ from congestion_model.core import (
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from MIP import StaggeredRoutingModel
+import cpp_module as cpp
 
 
 def get_model_start_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
@@ -39,6 +40,7 @@ def get_epoch_model_solution(
         epoch_status_quo: Solution,
         epoch_warm_start: Solution,
         solver_params: SolverParameters,
+        cpp_epoch_instance: cpp.cpp_instance
 ) -> Solution:
     """
     Compute the epoch model solution from the optimized model.
@@ -48,20 +50,16 @@ def get_epoch_model_solution(
         return epoch_warm_start if solver_params.warm_start else epoch_status_quo
 
     # Retrieve results from the model
-    total_delay = model.get_objective_value()
     start_times = get_model_start_times(model, epoch_instance.trip_routes)
-    congested_schedule = get_model_schedule(model, epoch_instance.trip_routes)
-    delays_on_arcs = get_model_delay_on_arcs(model, epoch_instance.trip_routes)
-    free_flow_schedule = PY_get_free_flow_schedule(epoch_instance, congested_schedule)
-    total_travel_time = PY_get_total_travel_time(congested_schedule)
+    cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
+    solution = cpp_scheduler.construct_solution(start_times)
 
     # Construct and return the model solution
     return Solution(
-        delays_on_arcs=delays_on_arcs,
-        free_flow_schedule=free_flow_schedule,
-        start_times=start_times,
-        total_delay=total_delay,
-        congested_schedule=congested_schedule,
-        vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
-        total_travel_time=total_travel_time,
+        delays_on_arcs=solution.get_delays_on_arcs(),
+        free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(solution.get_start_times()),
+        start_times=solution.get_start_times(),
+        total_delay=solution.get_total_delay(),
+        congested_schedule=solution.get_schedule(),
+        total_travel_time=solution.get_total_travel_time(),
     )

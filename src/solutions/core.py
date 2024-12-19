@@ -95,22 +95,60 @@ def get_epoch_solution(
     """
     Computes the solution for a single epoch, mapping it back to the full system.
     """
-    # Handle case in which nothing should be optimized.
-    if len(simplified_status_quo.congested_schedule) == 0:
+    # Handle the case where no optimization is required.
+    if not simplified_status_quo.congested_schedule:
         return epoch_status_quo, None
+
+    # Prepare the simplified instance for optimization.
     cpp_simplified_epoch_instance = get_cpp_instance(simplified_instance, solver_params)
     cpp_local_search = cpp.LocalSearch(cpp_simplified_epoch_instance)
-    epoch_warm_start = get_epoch_warm_start(simplified_instance, simplified_status_quo, solver_params,
-                                            cpp_local_search, cpp_simplified_epoch_instance)
-    model = construct_model(simplified_instance, simplified_status_quo, epoch_warm_start, solver_params)
-    optimization_measures = run_model(model, simplified_instance, epoch_warm_start, solver_params,
-                                      cpp_local_search)
-    model_solution = get_epoch_model_solution(
-        model, simplified_instance, simplified_status_quo, epoch_warm_start, solver_params
+
+    # Generate warm start for optimization.
+    epoch_warm_start = get_epoch_warm_start(
+        simplified_instance,
+        simplified_status_quo,
+        solver_params,
+        cpp_local_search,
+        cpp_simplified_epoch_instance
     )
 
-    # Map the solution back to the full system
-    epoch_solution = map_simplified_epoch_solution(epoch_instance, model_solution, solver_params, cpp_epoch_instance)
-    print_comparison_between_solution_and_status_quo(epoch_status_quo, epoch_solution, epoch_instance)
+    # Construct and solve the optimization model.
+    model = construct_model(
+        simplified_instance,
+        simplified_status_quo,
+        epoch_warm_start,
+        solver_params
+    )
+    optimization_measures = run_model(
+        model,
+        simplified_instance,
+        epoch_warm_start,
+        solver_params,
+        cpp_local_search
+    )
+
+    # Extract the solution from the optimization model.
+    model_solution = get_epoch_model_solution(
+        model,
+        simplified_instance,
+        simplified_status_quo,
+        epoch_warm_start,
+        solver_params,
+        cpp_simplified_epoch_instance
+    )
+
+    # Map the solution back to the full system.
+    epoch_solution = map_simplified_epoch_solution(
+        epoch_instance,
+        model_solution,
+        cpp_epoch_instance
+    )
+
+    # Compare and log the results.
+    print_comparison_between_solution_and_status_quo(
+        epoch_status_quo,
+        epoch_solution,
+        epoch_instance
+    )
 
     return epoch_solution, optimization_measures

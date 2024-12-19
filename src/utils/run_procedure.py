@@ -41,11 +41,12 @@ def run_procedure(source: str) -> None:
 
         # Simplify the system for the current epoch
         simplified_instance, simplified_status_quo = simplify_system(epoch_instance, epoch_status_quo)
-        # Solve for the current epoch
 
+        # Solve for the current epoch
         epoch_solution, optimization_measures = get_epoch_solution(simplified_instance, simplified_status_quo,
                                                                    epoch_instance, epoch_status_quo, solver_params,
                                                                    cpp_epoch_instance)
+
         previous_epoch_trips = epoch_solution.get_previous_epoch_trips(epoch_instance, solver_params, epoch_id)
 
         # Store epoch info

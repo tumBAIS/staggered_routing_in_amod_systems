@@ -80,7 +80,6 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
         total_delay=cpp_status_quo.get_total_delay(),
         congested_schedule=cpp_status_quo.get_schedule(),
         total_travel_time=cpp_status_quo.get_total_travel_time(),
-        vehicles_utilizing_arcs=vehicles_utilizing_arcs,
         binaries=binaries,
     )
 

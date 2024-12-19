@@ -73,7 +73,6 @@ def get_epoch_warm_start(
         binaries=binaries,
         free_flow_schedule=cpp_instance.get_free_flow_schedule(start_times),
         total_travel_time=total_travel_time,
-        vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
     )
 
     # Print final metrics

@@ -25,7 +25,6 @@ class Solution:
     start_times: list[float]
     total_delay: float
     total_travel_time: float
-    vehicles_utilizing_arcs: Optional[list[list[int]]] = None
     binaries: Optional[Binaries] = None  # type: ignore
 
     def remove_trip(self, trip):

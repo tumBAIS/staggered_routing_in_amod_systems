@@ -51,6 +51,8 @@ class Instance:
 
         for trip, route in enumerate(self.trip_routes):
             for arc in route:
+                if arc == 0:
+                    continue
                 conflicting_sets[arc].append(trip)
         return conflicting_sets
 
@@ -86,7 +88,7 @@ class Instance:
             trip_departure_times = [release_time]
 
             # Calculate earliest departure times for each arc in the route
-            for arc in route[:-1]:
+            for arc in route:
                 nominal_time = self.travel_times_arcs[arc]
                 last_time = trip_departure_times[-1]
                 trip_departure_times.append(last_time + nominal_time)
@@ -111,7 +113,7 @@ class Instance:
             trip_departure_times = [deadline]
 
             # Calculate latest departure times for each arc in reverse order
-            for arc in reversed(route[1:-1]):
+            for arc in reversed(route[1:]):
                 nominal_time = self.travel_times_arcs[arc]
                 last_time = trip_departure_times[0]  # Get the last computed time (at the front of the list)
                 trip_departure_times.insert(0, last_time - nominal_time)
