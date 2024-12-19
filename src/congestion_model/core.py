@@ -8,8 +8,8 @@ from utils.aliases import *
 from input_data import TOLERANCE
 
 
-def get_free_flow_schedule(instance: Instance | EpochInstance,
-                           congested_schedule: list[Schedule]) -> list[Schedule]:
+def PY_get_free_flow_schedule(instance: Instance,
+                              congested_schedule: Schedules) -> list[Schedule]:
     free_flow_schedule = [[schedule[0]] for schedule in congested_schedule]
 
     for vehicle, path in enumerate(instance.trip_routes):
@@ -43,7 +43,7 @@ def get_congested_schedule(instance: Instance,
     return schedule
 
 
-def get_total_delay(free_flow_schedule: list[Schedule], congested_schedule: list[Schedule]) -> float:
+def PY_get_total_delay(free_flow_schedule: list[Schedule], congested_schedule: list[Schedule]) -> float:
     total_delay = sum(
         congested_schedule[vehicle][-1] - congested_schedule[vehicle][0] -
         (free_flow_schedule[vehicle][-1] - free_flow_schedule[vehicle][0])
@@ -52,8 +52,7 @@ def get_total_delay(free_flow_schedule: list[Schedule], congested_schedule: list
     return total_delay
 
 
-def get_delays_on_arcs(instance: Instance | EpochInstance,
-                       congested_schedule: list[Schedule]) -> list[Schedule]:
+def PY_get_delays_on_arcs(instance: Instance, congested_schedule: list[Schedule]) -> list[Schedule]:
     delays_on_arcs = [
         [
             congested_schedule[vehicle][position + 1] - congested_schedule[vehicle][position] -

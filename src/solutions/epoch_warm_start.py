@@ -4,7 +4,7 @@ from input_data import TOLERANCE
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from congestion_model.core import (
-    get_delays_on_arcs)
+    PY_get_delays_on_arcs)
 from congestion_model.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 
@@ -61,8 +61,8 @@ def get_epoch_warm_start(
     total_delay = cpp_solution.get_total_delay()
     total_travel_time = cpp_solution.get_total_travel_time()
     start_times = cpp_solution.get_start_times()
-    delays_on_arcs = get_delays_on_arcs(epoch_instance,
-                                        congested_schedule)  # TODO: if you use cpp_instance here, it miscomputes delays
+    delays_on_arcs = PY_get_delays_on_arcs(epoch_instance,
+                                           congested_schedule)  # TODO: if you use cpp_instance here, it miscomputes delays
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
 
     # Construct the warm start solution

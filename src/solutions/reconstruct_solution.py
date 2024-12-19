@@ -5,9 +5,9 @@ from problem.solution import Solution
 from problem.instance import Instance
 from utils.aliases import *
 from congestion_model.core import (
-    get_delays_on_arcs,
-    get_free_flow_schedule,
-    get_total_delay,
+    PY_get_delays_on_arcs,
+    PY_get_free_flow_schedule,
+    PY_get_total_delay,
     PY_get_total_travel_time,
     get_congested_schedule,
 )
@@ -91,10 +91,10 @@ def reconstruct_solution(
     _assert_congested_schedule_is_correct(global_instance, congested_schedule, solver_params)
 
     # Compute delays, free flow schedule, and other metrics
-    delays_on_arcs = get_delays_on_arcs(global_instance, congested_schedule)
-    free_flow_schedule = get_free_flow_schedule(global_instance, congested_schedule)
+    delays_on_arcs = PY_get_delays_on_arcs(global_instance, congested_schedule)
+    free_flow_schedule = PY_get_free_flow_schedule(global_instance, congested_schedule)
     release_times = [schedule[0] for schedule in congested_schedule]
-    total_delay = get_total_delay(free_flow_schedule, congested_schedule)
+    total_delay = PY_get_total_delay(free_flow_schedule, congested_schedule)
     total_travel_time = PY_get_total_travel_time(congested_schedule)
 
     # Update conflicting sets and binaries

@@ -49,6 +49,7 @@ def run_procedure(source: str) -> None:
                                        solver_params)
 
     # Reconstruct the complete solution from all epochs
+
     reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, instance, solver_params)
 
     # Print insights and save the results

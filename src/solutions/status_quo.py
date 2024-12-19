@@ -7,11 +7,6 @@ from problem.solution import Solution
 from problem.epoch_instance import EpochInstance
 from problem.instance import Instance
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
-from congestion_model.core import (get_congested_schedule,
-                                   get_free_flow_schedule,
-                                   get_delays_on_arcs,
-                                   get_total_delay,
-                                   )
 
 
 def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> List[List[int]]:

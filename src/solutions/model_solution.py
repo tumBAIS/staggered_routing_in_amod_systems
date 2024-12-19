@@ -1,6 +1,6 @@
 from input_data import SolverParameters
 from congestion_model.core import (
-    get_free_flow_schedule,
+    PY_get_free_flow_schedule,
     PY_get_total_travel_time,
 )
 from problem.epoch_instance import EpochInstance
@@ -8,7 +8,7 @@ from problem.solution import Solution
 from MIP import StaggeredRoutingModel
 
 
-def get_model_release_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
+def get_model_start_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
     """Retrieve the release times from the model for each vehicle."""
     return [model.get_continuous_var_value(vehicle, path[0], "departure") for vehicle, path in enumerate(paths)]
 
@@ -49,17 +49,17 @@ def get_epoch_model_solution(
 
     # Retrieve results from the model
     total_delay = model.get_objective_value()
-    release_times = get_model_release_times(model, epoch_instance.trip_routes)
+    start_times = get_model_start_times(model, epoch_instance.trip_routes)
     congested_schedule = get_model_schedule(model, epoch_instance.trip_routes)
     delays_on_arcs = get_model_delay_on_arcs(model, epoch_instance.trip_routes)
-    free_flow_schedule = get_free_flow_schedule(epoch_instance, congested_schedule)
+    free_flow_schedule = PY_get_free_flow_schedule(epoch_instance, congested_schedule)
     total_travel_time = PY_get_total_travel_time(congested_schedule)
 
     # Construct and return the model solution
     return Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
-        release_times=release_times,
+        release_times=start_times,
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,
