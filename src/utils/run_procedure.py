@@ -3,9 +3,8 @@
 from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
 from problem.instance import get_instance
-from solutions.status_quo import get_epoch_status_quo
+from solutions.status_quo import get_epoch_status_quo, get_cpp_instance
 from solutions.core import get_offline_solution, get_epoch_solution
-from update_epoch.update_epoch_instance import update_next_epoch_instance
 from simplify.simplify import simplify_system
 from utils.prints import print_insights_algorithm
 from utils.save import save_experiment
@@ -20,7 +19,8 @@ def run_procedure(source: str) -> None:
     instance_params, solver_params = get_input_data(source)
     instance = get_instance(instance_params)
     # epoch_instances = get_epoch_instances(instance, solver_params)
-    complete_status_quo = get_offline_solution(instance, solver_params)
+    cpp_instance = get_cpp_instance(instance, solver_params)
+    complete_status_quo = get_offline_solution(instance, cpp_instance)
 
     # Initialize a list to store solutions for each epoch
     epoch_solutions = []
@@ -55,7 +55,7 @@ def run_procedure(source: str) -> None:
 
     # Reconstruct the complete solution from all epochs
 
-    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, instance, solver_params)
+    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, cpp_instance, instance)
 
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)

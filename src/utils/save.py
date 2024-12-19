@@ -112,8 +112,8 @@ def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
     """Round numerical data in the instance, status quo, and solution for cleaner output."""
     instance.max_staggering_applicable[i] = round(instance.max_staggering_applicable[i], 2)
     instance.deadlines[i] = round(instance.deadlines[i], 2)
-    status_quo.release_times[i] = round(status_quo.release_times[i], 2)
-    solution.release_times[i] = round(solution.release_times[i], 2)
+    status_quo.start_times[i] = round(status_quo.start_times[i], 2)
+    solution.start_times[i] = round(solution.start_times[i], 2)
 
     for j in range(len(status_quo.congested_schedule[i])):
         status_quo.congested_schedule[i][j] = round(status_quo.congested_schedule[i][j], 2)

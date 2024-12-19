@@ -24,7 +24,7 @@ def map_simplified_epoch_solution(
     removed_vehicles = epoch_instance.removed_vehicles
     min_release_time = min(release_times_epoch)
     # Reinsert removed vehicles into the schedule
-    staggered_release_times = [x + min_release_time for x in simplified_epoch_solution.release_times]
+    staggered_release_times = [x + min_release_time for x in simplified_epoch_solution.start_times]
     for trip_id in sorted(removed_vehicles):
         staggered_release_times.insert(trip_id, release_times_epoch[trip_id])
 
@@ -48,7 +48,7 @@ def map_simplified_epoch_solution(
         total_delay=cpp_solution.get_total_delay(),
         congested_schedule=cpp_solution.get_schedule(),
         delays_on_arcs=cpp_solution.get_delays_on_arcs(),
-        release_times=staggered_release_times,
+        start_times=staggered_release_times,
         free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(cpp_solution.get_start_times()),
         total_travel_time=cpp_solution.get_total_travel_time(),
         vehicles_utilizing_arcs=simplified_epoch_solution.vehicles_utilizing_arcs,

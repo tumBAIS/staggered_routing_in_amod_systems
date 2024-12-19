@@ -59,7 +59,7 @@ def get_epoch_model_solution(
     return Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
-        release_times=start_times,
+        start_times=start_times,
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         vehicles_utilizing_arcs=epoch_status_quo.vehicles_utilizing_arcs,

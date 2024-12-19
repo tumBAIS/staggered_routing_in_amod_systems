@@ -22,14 +22,14 @@ class Solution:
     delays_on_arcs: list[list[float]]
     free_flow_schedule: list[list[float]]
     congested_schedule: list[list[float]]
-    release_times: list[float]
+    start_times: list[float]
     total_delay: float
     total_travel_time: float
     vehicles_utilizing_arcs: Optional[list[list[int]]] = None
     binaries: Optional[Binaries] = None  # type: ignore
 
     def remove_trip(self, trip):
-        self.release_times.pop(trip)
+        self.start_times.pop(trip)
         self.congested_schedule.pop(trip)
         assert sum(self.delays_on_arcs[trip]) < TOLERANCE, "Vehicle has non-zero delays on arcs."
         self.delays_on_arcs.pop(trip)
@@ -42,7 +42,7 @@ class Solution:
         assert self.delays_on_arcs[trip][position] < TOLERANCE, "Vehicle has delay on the first arc."
         self.delays_on_arcs[trip].pop(position)
         if self.congested_schedule[trip]:
-            self.release_times[trip] = self.congested_schedule[trip][0]
+            self.start_times[trip] = self.congested_schedule[trip][0]
 
     def remove_trip_arcs_between_indices(self, vehicle, start_idx, end_idx):
         del self.congested_schedule[vehicle][start_idx + 1:end_idx + 1]

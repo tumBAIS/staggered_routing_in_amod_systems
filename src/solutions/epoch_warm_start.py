@@ -47,7 +47,7 @@ def get_epoch_warm_start(
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
         print("Improving warm start using local search...")
 
-        cpp_solution = cpp_local_search.run(epoch_status_quo.release_times)
+        cpp_solution = cpp_local_search.run(epoch_status_quo.start_times)
         print("Local search completed.")
     else:
         if not _is_time_left_for_optimization(epoch_instance, solver_params):
@@ -61,8 +61,7 @@ def get_epoch_warm_start(
     total_delay = cpp_solution.get_total_delay()
     total_travel_time = cpp_solution.get_total_travel_time()
     start_times = cpp_solution.get_start_times()
-    delays_on_arcs = PY_get_delays_on_arcs(epoch_instance,
-                                           congested_schedule)  # TODO: if you use cpp_instance here, it miscomputes delays
+    delays_on_arcs = cpp_solution.get_delays_on_arcs()
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
 
     # Construct the warm start solution
@@ -70,7 +69,7 @@ def get_epoch_warm_start(
         total_delay=total_delay,
         congested_schedule=congested_schedule,
         delays_on_arcs=delays_on_arcs,
-        release_times=start_times,
+        start_times=start_times,
         binaries=binaries,
         free_flow_schedule=cpp_instance.get_free_flow_schedule(start_times),
         total_travel_time=total_travel_time,

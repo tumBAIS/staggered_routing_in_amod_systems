@@ -5,15 +5,12 @@ from problem.solution import Solution
 from problem.instance import Instance
 from utils.aliases import *
 from congestion_model.core import (
-    PY_get_delays_on_arcs,
-    PY_get_free_flow_schedule,
-    PY_get_total_delay,
-    PY_get_total_travel_time,
     get_congested_schedule,
 )
 from congestion_model.conflict_binaries import get_conflict_binaries
 from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from input_data import SolverParameters
+import cpp_module as cpp
 
 
 def _merge_schedules(existing_schedule: list[float], new_schedule: list[float]) -> list[float]:
@@ -80,34 +77,31 @@ def _print_not_matching_schedules(
 
 def reconstruct_solution(
         epoch_instances: list[EpochInstance],
-        epoch_status_quo_list: list[Solution],
-        global_instance: Instance,
-        solver_params: SolverParameters
-) -> Solution:
+        epoch_solutions: list[Solution],
+        cpp_instance: cpp.cpp_instance,
+        instance: Instance) -> Solution:
     """Reconstruct the global solution from epoch solutions."""
     # Reconstruct the global schedule
     utils.prints.print_unified_solution_construction_start()
-    congested_schedule = _reconstruct_schedule(epoch_instances, epoch_status_quo_list, global_instance)
-    _assert_congested_schedule_is_correct(global_instance, congested_schedule, solver_params)
+    reconstructed_start_times = [0.0 for _ in range(cpp_instance.get_number_of_trips())]
 
-    # Compute delays, free flow schedule, and other metrics
-    delays_on_arcs = PY_get_delays_on_arcs(global_instance, congested_schedule)
-    free_flow_schedule = PY_get_free_flow_schedule(global_instance, congested_schedule)
-    release_times = [schedule[0] for schedule in congested_schedule]
-    total_delay = PY_get_total_delay(free_flow_schedule, congested_schedule)
-    total_travel_time = PY_get_total_travel_time(congested_schedule)
+    for epoch_id, epoch_instance in enumerate(epoch_instances):
+        epoch_start_times = epoch_solutions[epoch_id].start_times
+        for epoch_trip_id, start_time in enumerate(epoch_start_times):
+            original_trip_id = epoch_instance.get_trip_original_id(epoch_trip_id)
+            reconstructed_start_times[original_trip_id] = start_time
 
-    # Update conflicting sets and binaries
-    add_conflicting_sets_to_instance(global_instance, free_flow_schedule)
-    binaries = get_conflict_binaries(global_instance.conflicting_sets, global_instance.trip_routes, congested_schedule)
+    cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
+    cpp_solution = cpp_scheduler.construct_solution(reconstructed_start_times)
+    free_flow_schedule = cpp_instance.get_free_flow_schedule(reconstructed_start_times)
+    add_conflicting_sets_to_instance(instance, free_flow_schedule)
 
     # Return the reconstructed solution
     return Solution(
-        delays_on_arcs=delays_on_arcs,
+        delays_on_arcs=cpp_solution.get_delays_on_arcs(),
         free_flow_schedule=free_flow_schedule,
-        release_times=release_times,
-        total_delay=total_delay,
-        congested_schedule=congested_schedule,
-        total_travel_time=total_travel_time,
-        binaries=binaries,
+        start_times=cpp_solution.get_start_times(),
+        total_delay=cpp_solution.get_total_delay(),
+        congested_schedule=cpp_solution.get_schedule(),
+        total_travel_time=cpp_solution.get_total_travel_time(),
     )

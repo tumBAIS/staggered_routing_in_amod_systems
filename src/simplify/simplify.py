@@ -14,12 +14,12 @@ def adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution)
     """
     Adjust release times and deadlines to set the minimum release time to zero.
     """
-    min_release_time = min(status_quo.release_times)
+    min_release_time = min(status_quo.start_times)
     if min_release_time <= TOLERANCE:
         return
 
-    for vehicle in range(len(status_quo.release_times)):
-        status_quo.release_times[vehicle] -= min_release_time
+    for vehicle in range(len(status_quo.start_times)):
+        status_quo.start_times[vehicle] -= min_release_time
         instance.deadlines[vehicle] -= min_release_time
         instance.release_times[vehicle] -= min_release_time
 

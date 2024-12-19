@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import copy
 import datetime
 from problem.instance import Instance
-from input_data import SolverParameters, InstanceParameters, TOLERANCE
 from typing import Optional
+from input_data import SolverParameters, CONSTR_TOLERANCE, TOLERANCE
 
 
 class EpochInstance(Instance):
@@ -15,12 +14,10 @@ class EpochInstance(Instance):
             instance: Instance,
             trip_original_ids: list[int],
             trip_ids_from_previous_epoch: Optional[list[int]],
-            last_position_for_reconstruction: list[Optional[int]],  # Assuming last positions keyed by vehicle ID
     ) -> None:
 
         self.epoch_id = epoch_id
         self.trip_original_ids = trip_original_ids
-        self.last_position_for_reconstruction = last_position_for_reconstruction
         self.clock_start_epoch = datetime.datetime.now().timestamp()
         self.clock_end_epoch = None
         self.removed_vehicles = []
@@ -29,7 +26,7 @@ class EpochInstance(Instance):
         trip_routes = [instance.trip_routes[i] for i in trip_original_ids]
         release_times = [instance.release_times[i] for i in trip_original_ids]
         max_staggering_applicable = [
-            0 if trip_ids_from_previous_epoch and trip_id in trip_ids_from_previous_epoch else
+            100 * CONSTR_TOLERANCE if trip_ids_from_previous_epoch and trip_id in trip_ids_from_previous_epoch else
             instance.max_staggering_applicable[trip_id]
             for trip_id in trip_original_ids
         ]
@@ -92,8 +89,9 @@ class EpochInstance(Instance):
               f"time offset: {self.epoch_id * epoch_size * 60} [sec]".center(60))
         print("=" * 60)
 
-    def get_trip_original_id(self, trip_id):
-        return self.trip_original_ids[trip_id]
+    def get_trip_original_id(self, epoch_trip_id) -> int:
+        """ Map the index of the epoch trip (non simplified) to the global instance trip id"""
+        return self.trip_original_ids[epoch_trip_id]
 
     def get_trip_id_before_simplification(self, simplified_trip_id: int) -> int:
         """
@@ -273,5 +271,4 @@ def get_epoch_instance(
         instance=instance,
         trip_original_ids=trip_ids_in_epoch,
         trip_ids_from_previous_epoch=trips_from_previous_epoch,
-        last_position_for_reconstruction=[None for _ in trip_ids_in_epoch]
     )

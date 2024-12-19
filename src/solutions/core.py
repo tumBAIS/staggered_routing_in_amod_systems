@@ -24,14 +24,13 @@ def print_header_offline_solution() -> None:
 
 
 def get_offline_solution(
-        instance: Instance, solver_params: SolverParameters
+        instance: Instance, cpp_instance: cpp.cpp_instance
 ) -> Solution:
     """
     Computes the offline global solution, which serves as a baseline for comparison.
 
     """
     print_header_offline_solution()
-    cpp_instance = get_cpp_instance(instance, solver_params)
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)
     delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
@@ -41,7 +40,7 @@ def get_offline_solution(
     offline_solution = Solution(
         delays_on_arcs=delays_on_arcs,
         free_flow_schedule=free_flow_schedule,
-        release_times=start_times,
+        start_times=start_times,
         total_delay=cpp_status_quo.get_total_delay(),
         congested_schedule=cpp_status_quo.get_schedule(),
         total_travel_time=cpp_status_quo.get_total_travel_time(),
