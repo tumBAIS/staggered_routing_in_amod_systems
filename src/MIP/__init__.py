@@ -15,7 +15,7 @@ from utils.aliases import *
 
 class StaggeredRoutingModel(grb.Model):
 
-    def __init__(self, initial_total_delay, solver_params, start_solution_time):
+    def __init__(self, initial_total_delay, solver_params: SolverParameters):
         with SuppressOutput():
             super().__init__("staggered_routing")
         # Optimization Metrics
@@ -23,13 +23,13 @@ class StaggeredRoutingModel(grb.Model):
         self._optimality_gaps_list = [100.0]
         self._lower_bounds_list = [0.0]
         self._upper_bounds_list = [initial_total_delay]
-        self._optimization_times_list = [self.get_elapsed_time(start_solution_time)]
+        self._optimization_times_list = [self.get_elapsed_time(solver_params.start_algorithm_clock)]
         self._flag_update = False
         self._best_lower_bound = 0
         self._best_upper_bound = float("inf")
         self._improvement_clock = datetime.datetime.now().timestamp()
         self._remaining_time_for_optimization = None
-        self.set_remaining_time_for_optimization(solver_params, start_solution_time)
+        self.set_remaining_time_for_optimization(solver_params)
         # Info on constraints
         self._num_big_m_constraints = 0
         # Variables
@@ -175,9 +175,9 @@ class StaggeredRoutingModel(grb.Model):
     def set_cb_total_delay(self, arg_value):
         self._cb_total_delay = arg_value
 
-    def set_remaining_time_for_optimization(self, solver_params: SolverParameters, start_solution_time) -> None:
+    def set_remaining_time_for_optimization(self, solver_params: SolverParameters) -> None:
         total_optimization_time = solver_params.algorithm_time_limit
-        elapsed_time = datetime.datetime.now().timestamp() - start_solution_time
+        elapsed_time = datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
         self._remaining_time_for_optimization = total_optimization_time - elapsed_time
 
     def get_remaining_time_for_optimization(self) -> float:

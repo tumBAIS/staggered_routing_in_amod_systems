@@ -47,7 +47,7 @@ def construct_model(
 
     # Initialize the model with relevant parameters
     print("Initializing the optimization model...")
-    model = StaggeredRoutingModel(status_quo.total_delay, solver_params, instance.start_solution_time)
+    model = StaggeredRoutingModel(status_quo.total_delay, solver_params)
     print("Model initialized successfully.")
 
     # Check optimization and time constraints
@@ -105,7 +105,7 @@ def _continue_solving(model: StaggeredRoutingModel, instance: EpochInstance, sol
 def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> bool:
     """Checks if there is enough remaining time to continue optimization."""
     total_remaining_time = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time
+            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
     )
     epoch_remaining_time = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
@@ -158,5 +158,5 @@ def run_model(model: StaggeredRoutingModel,
     print("=" * 50)
 
     if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
-        return model.get_final_optimization_metrics(instance.start_solution_time)
+        return model.get_final_optimization_metrics(solver_params.start_algorithm_clock)
     return None

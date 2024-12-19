@@ -15,7 +15,7 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
                           solver_params: SolverParameters) -> None:
     """Set Gurobi solver parameters based on time and optimization settings."""
     total_time_remaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time
+            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
     )
     epoch_time_remaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch

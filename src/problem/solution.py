@@ -4,7 +4,8 @@ from dataclasses import dataclass
 
 from typing import Optional
 from utils.aliases import *
-from input_data import TOLERANCE
+from input_data import TOLERANCE, SolverParameters
+from problem.epoch_instance import EpochInstance
 
 
 class Binaries:
@@ -63,3 +64,14 @@ class Solution:
         print(f"Congestion Delay:          {congestion_delay_percentage:.2f}% of travel time")
         print(f"TomTom Congestion Index:   {tomtom_congestion_index:.2f}%")
         print("--------------------------------------")
+
+    def get_previous_epoch_trips(self, instance: EpochInstance, solver_params: SolverParameters, epoch_id) -> (
+            list)[int]:
+        """Look at the congested schedule and everyone whose schedule goes into new epoch, you return it"""
+        start_time_next_epoch = solver_params.epoch_size * 60 * (epoch_id + 1)
+        trips_from_previous_epoch = []
+        for trip, schedule in enumerate(self.congested_schedule):
+            if schedule[-1] > start_time_next_epoch:
+                trips_from_previous_epoch.append(instance.get_trip_original_id(trip))  # Original IDs
+
+        return trips_from_previous_epoch

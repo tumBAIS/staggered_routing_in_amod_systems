@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import json
 import os
 from dataclasses import dataclass, field
@@ -35,10 +36,9 @@ class Instance:
     node_based_trip_routes: list[list[int]]
     travel_times_arcs: list[float]
     deadlines: list[Time]
-    start_solution_time: float = 0
+    max_staggering_applicable: list[float]
 
     def __post_init__(self):
-        self.max_staggering_applicable = self.get_max_staggering_applicable()
         self.conflicting_sets = self.initialize_conflicting_sets()
         self.earliest_departure_times = self.initialize_earliest_departure_times()
         self.latest_departure_times = self.initialize_latest_departure_times()
@@ -56,31 +56,6 @@ class Instance:
 
     def get_lb_travel_time(self) -> float:
         return sum(self.travel_times_arcs[arc] for path in self.trip_routes for arc in path)
-
-    def get_max_staggering_applicable(self) -> list[float]:
-        """
-        Calculate the maximum staggering applicable for each vehicle's trip route
-        based on input staggering cap, travel times, deadlines, and release times.
-        """
-        if self.deadlines is None:
-            raise ValueError("Deadlines are not set. Cannot calculate max staggering applicable.")
-
-        max_staggering_applicable = []
-
-        for vehicle, path in enumerate(self.trip_routes):
-            # Calculate total travel time for the trip
-            travel_time = sum(self.travel_times_arcs[arc] for arc in path)
-
-            # Calculate max staggering based on staggering cap
-            staggering_cap_limit = self.instance_params.staggering_cap / 100 * travel_time
-
-            # Calculate max staggering based on deadlines
-            deadline_limit = self.deadlines[vehicle] - (travel_time + self.release_times[vehicle])
-
-            # The maximum staggering applicable is the minimum of the two limits
-            max_staggering = min(staggering_cap_limit, deadline_limit)
-            max_staggering_applicable.append(max_staggering)
-        return max_staggering_applicable
 
     def print_info_arcs_utilized(self):
         """
@@ -161,11 +136,42 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
     graph = import_graph(instance_params)
     set_arcs_nominal_travel_times_and_capacities(graph, instance_params)
     trip_routes, travel_times_arcs, capacities_arcs = get_arc_based_paths_with_features(trips_data.routes, graph)
+    max_staggering_applicable = get_max_staggering_applicable(trip_routes, travel_times_arcs, trips_data.release_time,
+                                                              trips_data.deadline, instance_params)
     instance = Instance(instance_params=instance_params, deadlines=trips_data.deadline,
                         trip_routes=trip_routes, travel_times_arcs=travel_times_arcs, capacities_arcs=capacities_arcs,
-                        node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time)
+                        node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time,
+                        max_staggering_applicable=max_staggering_applicable)
     instance.print_info_arcs_utilized()
     return instance
+
+
+def get_max_staggering_applicable(trip_routes: list[list[int]],
+                                  travel_times_arcs: list[float],
+                                  release_times: list[float],
+                                  deadlines: list[float],
+                                  instance_params: InstanceParameters) -> list[float]:
+    """
+    Calculate the maximum staggering applicable for each vehicle's trip route
+    based on input staggering cap, travel times, deadlines, and release times.
+    """
+    # TODO: move this into instance generation
+    max_staggering_applicable = []
+
+    for vehicle, path in enumerate(trip_routes):
+        # Calculate total travel time for the trip
+        travel_time = sum(travel_times_arcs[arc] for arc in path)
+
+        # Calculate max staggering based on staggering cap
+        staggering_cap_limit = instance_params.staggering_cap / 100 * travel_time
+
+        # Calculate max staggering based on deadlines
+        deadline_limit = deadlines[vehicle] - (travel_time + release_times[vehicle])
+
+        # The maximum staggering applicable is the minimum of the two limits
+        max_staggering = min(staggering_cap_limit, deadline_limit)
+        max_staggering_applicable.append(max_staggering)
+    return max_staggering_applicable
 
 
 def import_trips_data(instance_parameters: InstanceParameters) -> TripsData:

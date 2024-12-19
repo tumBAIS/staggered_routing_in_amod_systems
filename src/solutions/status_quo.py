@@ -24,7 +24,7 @@ def get_vehicles_utilizing_arcs(arc_based_shortest_paths: List[List[int]]) -> Li
 def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_utilizing_arcs: List[List[int]]) -> None:
     """Validate that trips and conflicting sets do not have duplicates."""
     if ACTIVATE_ASSERTIONS:
-        assert sorted(set(epoch_instance.vehicles_original_ids)) == sorted(epoch_instance.vehicles_original_ids), \
+        assert sorted(set(epoch_instance.trip_original_ids)) == sorted(epoch_instance.trip_original_ids), \
             "Duplicate vehicle IDs found in epoch."
 
         for arc, conflicting_set in enumerate(epoch_instance.conflicting_sets):

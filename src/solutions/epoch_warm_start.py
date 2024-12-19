@@ -14,7 +14,7 @@ def _compute_remaining_time(instance: EpochInstance, solver_params: SolverParame
     Calculates the remaining time for optimization based on algorithm and epoch limits.
     """
     algorithm_time_remaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - instance.start_solution_time
+            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
     )
     epoch_time_remaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch

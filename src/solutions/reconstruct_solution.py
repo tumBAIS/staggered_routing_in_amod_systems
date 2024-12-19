@@ -39,7 +39,7 @@ def _reconstruct_schedule(
     reconstructed_schedule = [[] for _ in range(len(global_instance.trip_routes))]
 
     for epoch_id, epoch_instance in enumerate(epoch_instances):
-        for vehicle_epoch_id, vehicle_global_id in enumerate(epoch_instance.vehicles_original_ids):
+        for vehicle_epoch_id, vehicle_global_id in enumerate(epoch_instance.trip_original_ids):
             last_position = epoch_instance.last_position_for_reconstruction[vehicle_epoch_id]
             new_schedule = epoch_status_quo_list[epoch_id].congested_schedule[vehicle_epoch_id][:last_position]
             reconstructed_schedule[vehicle_global_id] = _merge_schedules(reconstructed_schedule[vehicle_global_id],

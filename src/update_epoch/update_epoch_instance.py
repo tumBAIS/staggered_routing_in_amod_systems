@@ -17,12 +17,13 @@ def get_departure_in_next_epoch(
         solver_params: SolverParameters
 ) -> tuple[int, float] | tuple[None, None]:
     """Find the first departure that occurs in the next epoch."""
-    is_in_next_epoch = lambda x: x / 60 > solver_params.epoch_size * (current_epoch_instance.epoch_id + 1)
-    return next(
-        ((position, departure) for position, departure in enumerate(schedule[:-1]) if
-         is_in_next_epoch(schedule[position + 1])),
-        (None, None)
-    )
+    next_epoch_start = solver_params.epoch_size * (current_epoch_instance.epoch_id + 1) * 60
+
+    for position, departure in enumerate(schedule[:-1]):
+        if schedule[position + 1] > next_epoch_start:
+            return position, departure
+
+    return None, None
 
 
 def get_max_staggering_applicable_next_epoch(
@@ -56,7 +57,7 @@ def add_departures_to_next_epoch(
 ) -> None:
     """Add departures to the next epoch instance."""
     for departure in next_epoch_departures:
-        original_vehicle_id = current_epoch_instance.vehicles_original_ids[departure.vehicle]
+        original_vehicle_id = current_epoch_instance.trip_original_ids[departure.vehicle]
         max_staggering_applicable = get_max_staggering_applicable_next_epoch(
             departure, global_instance, next_epoch_instance, original_vehicle_id, solver_params
         )
@@ -65,7 +66,7 @@ def add_departures_to_next_epoch(
         path_to_append = global_instance.trip_routes[original_vehicle_id][-len_path_next_epoch:]
         len_current_path = len(current_epoch_instance.trip_routes[departure.vehicle]) - len_path_next_epoch
 
-        next_epoch_instance.vehicles_original_ids.append(original_vehicle_id)
+        next_epoch_instance.trip_original_ids.append(original_vehicle_id)
         next_epoch_instance.max_staggering_applicable.append(max_staggering_applicable)
         next_epoch_instance.release_times.append(departure.time)
         next_epoch_instance.deadlines.append(global_instance.deadlines[original_vehicle_id])
@@ -84,7 +85,7 @@ def get_next_epoch_departures_active_vehicles(
     departures = []
     for vehicle_epoch_id, schedule in enumerate(current_epoch_status_quo.congested_schedule):
         position, time = get_departure_in_next_epoch(current_epoch_instance, schedule, solver_params)
-        if time is not None:
+        if time:
             vehicle_status_list[vehicle_epoch_id] = VehicleStatus.ACTIVE
             arc = current_epoch_instance.trip_routes[vehicle_epoch_id][position]
             departures.append(NextEpochDeparture(vehicle=vehicle_epoch_id, position=position, time=time, arc=arc))
