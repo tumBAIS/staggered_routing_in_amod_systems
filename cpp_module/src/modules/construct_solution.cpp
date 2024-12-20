@@ -110,7 +110,7 @@ namespace cpp_module {
 // Get the next departure from the priority queue
     auto Scheduler::get_next_departure(Solution &complete_solution) -> Departure {
         auto departure = get_and_pop_departure_from_pq();
-        complete_solution.set_trip_arc_departure(departure.trip_id, departure.position, departure.time);
+        complete_solution.set_trip_arc_departure_time(departure.trip_id, departure.position, departure.time);
         return departure;
     }
 

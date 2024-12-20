@@ -1,4 +1,3 @@
-from input_data import SolverParameters
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 import cpp_module as cpp

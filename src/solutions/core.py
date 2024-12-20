@@ -33,6 +33,8 @@ def get_offline_solution(
     print_header_offline_solution()
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)
+    cpp_instance.set_release_times(cpp_status_quo.get_start_times())
+    instance.set_release_times(cpp_status_quo.get_start_times())
     delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
     start_times = cpp_status_quo.get_start_times()
     free_flow_schedule = cpp_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())

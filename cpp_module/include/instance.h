@@ -2,6 +2,7 @@
 #include <vector>
 #include <limits>
 #include <stdexcept> // For std::out_of_range
+#include <../lib/json.hpp>
 
 namespace cpp_module {
 
@@ -73,6 +74,24 @@ namespace cpp_module {
 
             add_total_free_flow_time_vehicles();
         }
+ 
+        static Instance from_json(const nlohmann::json &json_obj) {
+            return Instance{
+                    json_obj["trip_routes"].get<std::vector<std::vector<TripID>>>(),
+                    json_obj["travel_time_arcs"].get<std::vector<double>>(),
+                    json_obj["nominal_capacities_arcs"].get<std::vector<long>>(),
+                    json_obj["list_of_slopes"].get<std::vector<double>>(),
+                    json_obj["list_of_thresholds"].get<std::vector<double>>(),
+                    json_obj["parameters"].get<std::vector<double>>(),
+                    json_obj["release_times"].get<std::vector<double>>(),
+                    json_obj["deadlines"].get<std::vector<double>>(),
+                    json_obj["conflicting_sets"].get<ConflictingSets>(),
+                    json_obj["earliest_times"].get<VehicleSchedule>(),
+                    json_obj["latest_times"].get<VehicleSchedule>(),
+                    json_obj["lb_travel_time"].get<double>(),
+            };
+        }
+
 
         // Add total free-flow travel time for each vehicle in the instance
         auto add_total_free_flow_time_vehicles() -> void {
@@ -115,6 +134,10 @@ namespace cpp_module {
 
         [[nodiscard]] const ConflictingSet &get_conflicting_set(ArcID arc_id) const {
             return conflicting_sets[arc_id];
+        }
+
+        [[nodiscard]] const bool &is_conflicting_set_empty(ArcID arc_id) const {
+            return conflicting_sets[arc_id].empty();
         }
 
         [[nodiscard]] const double &get_arc_travel_time(ArcID arc_id) const {
@@ -172,6 +195,10 @@ namespace cpp_module {
 
         [[nodiscard]] const std::vector<Time> &get_release_times() const {
             return release_times;
+        }
+
+        void set_release_times(const std::vector<Time> &arg_release_times) {
+            release_times = arg_release_times;
         }
 
 

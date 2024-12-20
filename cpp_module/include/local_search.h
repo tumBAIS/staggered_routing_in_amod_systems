@@ -42,21 +42,19 @@ namespace cpp_module {
 
         const Instance &instance;
         double start_search_clock;
-        double best_total_delay = INFTY;
         Counters counters;
+        bool improvement_found_flag = false;
 
+        [[nodiscard]] bool get_improvement_is_found() const {
+            return improvement_found_flag;
+        }
+
+        void set_improvement_is_found(bool arg_flag) {
+            improvement_found_flag = arg_flag;
+        }
 
         [[nodiscard]] long get_iteration() const {
             return counters.iteration;
-        }
-
-
-        [[nodiscard]] double get_best_total_delay() const {
-            return best_total_delay;
-        }
-
-        void set_best_total_delay(double arg_delay) {
-            best_total_delay = arg_delay;
         }
 
 
@@ -94,29 +92,20 @@ namespace cpp_module {
 
         static void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
 
-        void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
-
         static void
         update_current_solution(Solution &current_solution, const Solution &new_solution, Conflict &conflict);
 
         static void print_move(const Solution &old_solution, const Solution &new_solution, const Conflict &conflict);
 
-
-        static auto
-        check_if_possible_to_solve_conflict(const double &distance_to_cover, const double &slack_vehicle_one,
-                                            const double &staggering_applied_vehicle_two);
-
         void update_distance_to_cover(const Solution &complete_solution, Conflict &conflict);
 
         bool check_if_solution_is_admissible(Solution &complete_solution);
 
-        auto solve_conflict(Conflict &conflict, Solution &new_solution);
+        auto solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution;
 
-        bool improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution);
+        auto improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution) -> Solution;
 
         Solution run(std::vector<Time> &arg_start_times);
-
-        Solution get_initial_solution(const std::vector<double> &arg_release_times);
 
         static void print_initial_delay(const Solution &arg_solution);
 
@@ -139,6 +128,8 @@ namespace cpp_module {
         std::vector<Conflict>
         find_conflicts_on_arc(long arc, double arc_delay, const Solution &solution, const TripInfo &trip_info,
                               const std::vector<long> &conflicting_set);
+
+        bool check_if_possible_to_solve_conflict(const Conflict &conflict, const Solution &solution);
     };
 
 

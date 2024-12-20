@@ -2,60 +2,36 @@
 #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #endif
 
+#include "../lib/json.hpp"
 #include "catch.hpp"
-#include "scheduler.h"
+#include "local_search.h"
 
-namespace cpp_module {
+using json = nlohmann::json;
+using namespace cpp_module;
 
-
-    TEST_CASE("Scheduler constructs solution correctly", "[scheduler]") {
-        // Create an Instance object
-        // Assuming Instance needs some parameters, we're providing hypothetical ones
-        // Create example data for each parameter of the Instance constructor
-
-        // Example arc-based shortest paths
-        std::vector<std::vector<long>> arcBasedShortestPaths = {
-                {1, 3, 0},
-                {2, 3, 0}
-        };
-
-        // Example nominal travel times for arcs
-        std::vector<double> nominalTravelTimesArcs = {0, 5.0, 7.5, 6.0};
-
-        // Example nominal capacities for arcs
-        std::vector<long> nominalCapacitiesArcs = {100, 150, 200, 250};
-
-        // Example list of slopes
-        std::vector<double> list_of_slopes = {0.5};
-
-        // Example list of thresholds
-        std::vector<double> list_of_thresholds = {10.0};
-
-        // Example parameters
-        std::vector<double> parameters = {100};
-
-        // Example release times
-        std::vector<double> release_times = {0.0, 1.0};
-
-        // Constructing the Instance
-        cpp_module::Instance testInstance(
-                arcBasedShortestPaths,
-                nominalTravelTimesArcs,
-                nominalCapacitiesArcs,
-                list_of_slopes,
-                list_of_thresholds,
-                parameters,
-                release_times
-        );
-
-        // Create a Scheduler object using the Instance
-        cpp_module::Scheduler testScheduler(testInstance);
-
-        // Define start times for the construct_solution method
-
-        // Run construct_solution method
-        SECTION("Testing construct_solution with valid start times") {
-            testScheduler.construct_solution(testInstance.release_times);
-        }
+auto load_json(const std::string &file_path) -> json {
+    // Open the JSON file
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Unable to open file for reading: " + file_path);
     }
-};
+
+    // Parse the JSON object
+    nlohmann::json json_obj;
+    file >> json_obj;  // Load JSON data from file
+    file.close();
+    std::cout << "JSON file successfully loaded from " << file_path << std::endl;  // Print success message
+
+    return json_obj;
+}
+
+
+TEST_CASE("Local search validation") {
+    std::cout << "Current working directory: "
+              << std::filesystem::current_path() << std::endl;
+    std::string file_path = "../../catch2_tests/files_for_testing/test_ls.json";
+    auto json_obj = load_json(file_path);
+    Instance instance = Instance::from_json(json_obj);
+    LocalSearch local_search(instance);
+    auto solution = local_search.run(const_cast<std::vector<Time> &>(instance.get_release_times()));
+}

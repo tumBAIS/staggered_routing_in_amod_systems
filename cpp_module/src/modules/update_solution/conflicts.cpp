@@ -6,12 +6,31 @@
 
 namespace cpp_module {
 
+// Helper function to check if a time comparison is within tolerance
+    bool Scheduler::is_within_tolerance(double time1, double time2) {
+        return std::abs(time1 - time2) <= TOLERANCE;
+    }
+
+// Helper function to determine if one trip comes before another
+    bool
+    Scheduler::comes_before(double earlier_time, double later_time, long earlier_trip_id, long later_trip_id) {
+        return earlier_time < later_time - TOLERANCE ||
+               (is_within_tolerance(earlier_time, later_time) && earlier_trip_id < later_trip_id);
+    }
+
+// Helper function to determine if one trip comes after another
+    bool
+    Scheduler::comes_after(double earlier_time, double later_time, long earlier_trip_id, long later_trip_id) {
+        return earlier_time > later_time + TOLERANCE ||
+               (is_within_tolerance(earlier_time, later_time) && earlier_trip_id > later_trip_id);
+    }
+
+// Main function using the helpers
     auto Scheduler::check_if_trips_within_conflicting_set_can_conflict(
             const long other_trip_id,
             const long other_position,
             const Departure &departure
-    ) const -> InstructionConflictingSet {
-
+    ) const -> Instruction {
 
         // Fetch the earliest departure and latest arrival times for the current trip
         double current_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
@@ -29,20 +48,26 @@ namespace cpp_module {
                 other_trip_id, other_position + 1
         );
 
-        // Determine overlap conditions using TOLERANCE
-        bool other_comes_before_and_does_not_overlap =
-                other_latest_arrival_time < current_earliest_departure_time - TOLERANCE;
+        // Determine overlap conditions
+        bool other_comes_before_and_does_not_overlap = comes_before(other_latest_arrival_time,
+                                                                    current_earliest_departure_time, other_trip_id,
+                                                                    departure.trip_id);
 
         bool other_comes_before_and_overlaps =
-                other_earliest_departure_time <= current_earliest_departure_time + TOLERANCE &&
-                current_earliest_departure_time < other_latest_arrival_time + TOLERANCE;
+                comes_before(other_earliest_departure_time, current_earliest_departure_time, other_trip_id,
+                             departure.trip_id) &&
+                !comes_before(other_latest_arrival_time, current_earliest_departure_time, other_trip_id,
+                              departure.trip_id);
 
         bool other_comes_after_and_overlaps =
-                current_earliest_departure_time <= other_earliest_departure_time + TOLERANCE &&
-                other_earliest_departure_time < current_latest_arrival_time + TOLERANCE;
+                comes_after(other_earliest_departure_time, current_earliest_departure_time, other_trip_id,
+                            departure.trip_id) &&
+                comes_before(current_earliest_departure_time, other_latest_arrival_time, departure.trip_id,
+                             other_trip_id);
 
-        bool other_comes_after_and_does_not_overlap =
-                other_earliest_departure_time > current_latest_arrival_time + TOLERANCE;
+        bool other_comes_after_and_does_not_overlap = comes_after(other_earliest_departure_time,
+                                                                  current_latest_arrival_time, other_trip_id,
+                                                                  departure.trip_id);
 
         // Determine the appropriate instruction
         if (other_comes_before_and_does_not_overlap) {
@@ -57,88 +82,75 @@ namespace cpp_module {
     }
 
 
-    auto Scheduler::update_vehicles_on_arc_of_conflicting_set(Solution &solution,
-                                                              double &vehicles_on_arc,
-                                                              const Departure &departure) -> void {
+    auto Scheduler::get_flow_on_arc(Solution &initial_solution,
+                                    Solution &new_solution,
+                                    const Departure &departure) -> double {
+        double flow_on_arc = 1.0;
+
         for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
             if (other_trip_id == departure.trip_id) {
-                continue;
+                continue; // Skip the current trip
             }
-            const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
-            const InstructionConflictingSet instruction = check_if_trips_within_conflicting_set_can_conflict(
+
+            long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+            Instruction instruction = check_if_trips_within_conflicting_set_can_conflict(
                     other_trip_id, other_position, departure);
+
             if (instruction == CONTINUE) {
                 continue;
             } else if (instruction == BREAK) {
                 break;
             }
 
-            const bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
-            const bool other_vehicle_is_not_active = !other_vehicle_is_active;
-            const double other_departure = solution.get_trip_arc_departure(other_trip_id, other_position);
-            const double other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
-            const bool current_conflicts_with_other = check_conflict_with_other_vehicle(other_trip_id,
-                                                                                        other_departure,
-                                                                                        other_arrival, departure);
-            if (other_vehicle_is_not_active) {
-                if (current_conflicts_with_other) { vehicles_on_arc++; }
-                VehicleShouldBeMarked should_mark = check_if_other_should_be_marked(other_trip_id,
-                                                                                    other_position,
-                                                                                    current_conflicts_with_other,
-                                                                                    departure);
-                if (should_mark == YES) {
-                    mark_vehicle(other_trip_id, other_departure, other_position, departure); // O(log n) -> pq.push
-                    set_lazy_update_pq_flag(true); //marked vehicle starting before
-                    assert_lazy_update_is_necessary(other_departure);
-                    print_lazy_update_priority_queue();
-                } else if (should_mark == MAYBE) {
+            bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
+            double other_departure_time = new_solution.get_trip_arc_departure(other_trip_id, other_position);
+            double other_arrival = new_solution.get_trip_arc_departure(other_trip_id, other_position + 1);
+
+            bool current_conflicts_with_other = check_conflict_with_other_vehicle(
+                    other_trip_id, other_departure_time, other_arrival, departure);
+
+            if (!other_vehicle_is_active) {
+                // Handle inactive vehicles
+                if (current_conflicts_with_other) {
+                    flow_on_arc++;
+                }
+
+                MarkInstruction mark_instruction = check_if_other_should_be_marked(
+                        initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure);
+
+                if (mark_instruction == MARK) {
+                    // Mark immediately
+                    mark_trip(other_trip_id, other_departure_time, other_position);
+                    set_lazy_update_pq_flag(true);
+                } else if (mark_instruction == WAIT) {
+                    // Wait to mark
                     insert_trip_to_mark(other_trip_id);
                 }
-            } else if (other_vehicle_is_active) {
-                bool other_is_processed_on_this_arc = other_position <= get_trip_last_processed_position(other_trip_id);
-                const bool other_is_first = check_if_other_is_first_in_current_schedule(other_trip_id, other_departure,
-                                                                                        departure);
-                const bool other_is_not_first = !other_is_first;
+            } else {
+                // Handle active vehicles
+                bool other_is_processed_on_this_arc =
+                        (other_position <= get_trip_last_processed_position(other_trip_id));
+
+                bool other_is_first = check_if_other_is_first(
+                        other_trip_id, other_departure_time, departure);
+
                 if (other_is_processed_on_this_arc) {
-                    if (other_is_not_first) {
-                        reinsert_other_in_queue(solution, other_trip_id, other_position, other_departure,
-                                                departure.arc_id);
+                    if (!other_is_first) {
+                        reinsert_other_in_queue(
+                                initial_solution, new_solution, other_trip_id, other_position, other_departure_time);
                         continue;
                     }
+
                     if (current_conflicts_with_other) {
-                        vehicles_on_arc++;
+                        flow_on_arc++;
                     }
                 }
-                assert_other_starts_after_if_has_to_be_processed_on_this_arc_next(other_trip_id, other_position,
-                                                                                  other_departure);
             }
         }
+
+        return flow_on_arc;
     }
 
-    auto Scheduler::check_if_tie_in_set(const Solution &solution, const Departure &departure) -> bool {
-        for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
-            if (departure.trip_id != other_trip_id) {
-                const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
-                const InstructionConflictingSet instruction = check_if_trips_within_conflicting_set_can_conflict(
-                        other_trip_id, other_position, departure);
-                if (instruction == CONTINUE) {
-                    continue;
-                } else if (instruction == BREAK) {
-                    break;
-                }
-                Tie tie = {departure.trip_id,
-                           other_trip_id,
-                           departure.position,
-                           other_position,
-                           departure.arc_id};
-                bool tie_on_arc = check_tie(solution, tie);
-                if (tie_on_arc) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
     auto Scheduler::check_if_vehicle_is_late(const double current_vehicle_new_arrival,
                                              const Departure &departure) const -> bool {
@@ -149,18 +161,24 @@ namespace cpp_module {
         return false;
     }
 
-    auto Scheduler::check_conflict_with_other_vehicle(const long other_vehicle,
+    auto Scheduler::check_conflict_with_other_vehicle(const long other_trip_id,
                                                       const double other_departure,
                                                       const double other_arrival,
                                                       const Departure &departure) -> bool {
-        // Given the change, check if vehicle conflict
-        bool current_conflicts_with_other = other_departure <= departure.time && departure.time < other_arrival;
-        if (other_departure == departure.time) {
-            if (departure.trip_id < other_vehicle) {
-                // Correctly break tie
+        // Check if there is a conflict using TOLERANCE
+        bool current_conflicts_with_other =
+                other_departure - TOLERANCE <= departure.time &&
+                departure.time < other_arrival + TOLERANCE;
+
+        // Handle tie-breaking when departure times are within TOLERANCE
+        if (std::abs(other_departure - departure.time) <= TOLERANCE) {
+            if (departure.trip_id < other_trip_id) {
+                // Break tie in favor of the trip with the smaller trip_id
                 return false;
             }
         }
+
         return current_conflicts_with_other;
     }
+
 }

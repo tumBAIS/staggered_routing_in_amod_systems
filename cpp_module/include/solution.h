@@ -27,7 +27,7 @@ namespace cpp_module {
         double total_delay;
         double lb_travel_time;
         bool is_feasible_flag;
-        bool has_ties;
+        bool has_ties_flag;
 
     public:
         // Constructor
@@ -38,7 +38,7 @@ namespace cpp_module {
                   total_delay(0.0),
                   lb_travel_time(instance.get_lb_travel_time()),
                   is_feasible_flag(true),
-                  has_ties(false) {
+                  has_ties_flag(false) {
 
             for (TripID trip_id = 0; trip_id < arg_start_times.size(); ++trip_id) {
                 schedule[trip_id].resize(instance.get_trip_route(trip_id).size());
@@ -88,8 +88,8 @@ namespace cpp_module {
             return schedule[trip_id];
         }
 
-        [[nodiscard]]bool get_ties_flag() const {
-            return has_ties;
+        [[nodiscard]]bool has_ties() const {
+            return has_ties_flag;
         }
 
         [[nodiscard]]bool is_feasible() const {
@@ -117,7 +117,7 @@ namespace cpp_module {
             schedule = arg_schedule;
         }
 
-        void set_trip_arc_departure(TripID trip_id, Position position, Time time) {
+        void set_trip_arc_departure_time(TripID trip_id, Position position, Time time) {
             schedule[trip_id][position] = time;
         }
 
@@ -126,7 +126,7 @@ namespace cpp_module {
         }
 
         void set_ties_flag(bool arg_flag) {
-            has_ties = arg_flag;
+            has_ties_flag = arg_flag;
         }
 
         // Other methods

@@ -91,6 +91,7 @@ namespace cpp_module {
                 // Resolve ties as long as conditions hold
                 while (check_tie(complete_solution, tie) &&
                        enough_slack_to_solve_tie(vehicle_one, complete_solution)) {
+                    complete_solution.set_ties_flag(true);
                     solve_tie(complete_solution, tie);
                 }
             }
@@ -116,13 +117,14 @@ namespace cpp_module {
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
-        complete_solution.set_ties_flag(false);
-
-        for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
-            if (instance.get_conflicting_set(arc_id).empty()) {
-                continue;
+        while (complete_solution.has_ties()) {
+            complete_solution.set_ties_flag(false);
+            for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
+                if (instance.get_conflicting_set(arc_id).empty()) {
+                    continue;
+                }
+                solve_arc_ties(arc_id, complete_solution);
             }
-            solve_arc_ties(arc_id, complete_solution);
         }
     }
 
@@ -133,7 +135,7 @@ namespace cpp_module {
         CorrectSolution correct_solution = set_correct_solution(complete_solution);
 
         // Stagger the trip slightly to resolve the tie
-        complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE);
+        complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE + TOLERANCE);
 
         // Reconstruct the schedule with the updated solution
         //TODO: use update solution here

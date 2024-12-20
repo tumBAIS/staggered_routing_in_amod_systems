@@ -98,6 +98,9 @@ class Instance:
 
         return earliest_departure_times
 
+    def set_release_times(self, arg_release_times):
+        self.release_times = arg_release_times
+
     def initialize_latest_departure_times(self):
         """
         Initializes the latest departure times for each trip based on the deadlines

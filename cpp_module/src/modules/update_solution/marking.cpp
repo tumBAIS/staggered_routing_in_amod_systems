@@ -6,158 +6,150 @@
 
 namespace cpp_module {
 
-    auto Scheduler::reinsert_other_in_queue(Solution &solution,
+    auto Scheduler::reinsert_other_in_queue(Solution &initial_solution,
+                                            Solution &new_solution,
                                             const long other_trip_id,
                                             const long other_position,
-                                            const double other_departure,
-                                            const long arc) -> void {
-        print_reinsertion_vehicle(arc, other_trip_id, other_departure);
-        reset_other_schedule_to_reinsertion_time(solution, other_trip_id, other_position);
+                                            const double other_departure_time) -> void {
+        reset_other_schedule_to_reinsertion_time(initial_solution, new_solution, other_trip_id, other_position);
         set_trip_last_processed_position(other_trip_id, other_position - 1);
-        Departure other_trip_departure{};
-        other_trip_departure.trip_id = other_trip_id;
-        other_trip_departure.arc_id = arc;
-        other_trip_departure.time = other_departure;
-        other_trip_departure.position = other_position;
-        other_trip_departure.event_type = Departure::TRAVEL;
         increase_trip_reinsertions(other_trip_id);
-        other_trip_departure.reinsertion_number = get_trip_reinsertions(other_trip_id);
+        auto other_trip_departure = get_departure(other_departure_time, other_trip_id,
+                                                  other_position, TRAVEL,
+                                                  get_trip_reinsertions(other_trip_id));
         insert_departure_in_pq(other_trip_departure);
     }
 
-    auto Scheduler::decide_on_vehicles_maybe_to_mark(const VehicleSchedule &congested_schedule,
-                                                     const double current_new_arrival,
-                                                     const Departure &departure) -> void {
+    void Scheduler::mark_waiting_trips(Solution &initial_solution,
+                                       const Solution &new_solution,
+                                       double current_new_arrival,
+                                       const Departure &departure) {
         for (long other_trip_id: get_trips_to_mark()) {
-            auto should_mark = check_if_should_mark_given_current_arrival_time(
-                    other_trip_id, current_new_arrival, departure);  // O(1)
-            if (should_mark) {
-                const long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
-                const double other_departure = congested_schedule[other_trip_id][other_position];
-                mark_vehicle(other_trip_id, other_departure, other_position, departure);
-                assert_no_vehicles_departing_before_are_marked(other_trip_id, congested_schedule);
+            if (check_mark_waiting_trip(initial_solution, other_trip_id, current_new_arrival, departure)) {
+                long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+                double other_departure_time = new_solution.get_trip_arc_departure(other_trip_id, other_position);
+                mark_trip(other_trip_id, other_departure_time, other_position);
             }
         }
     }
 
-    auto check_type_of_mark(const bool other_always_first,
-                            const bool switch_other_with_current_order,
-                            const bool switch_current_with_other_order,
-                            const bool current_always_first,
-                            const bool current_conflicts_with_other,
-                            const bool other_overlapped_with_current) -> VehicleShouldBeMarked {
-        if (other_always_first) {
-            return VehicleShouldBeMarked::NO;
-        } else if (switch_other_with_current_order) {
-            if (!other_overlapped_with_current && !current_conflicts_with_other) {
-                return VehicleShouldBeMarked::NO;
-            } else {
-                return VehicleShouldBeMarked::YES;
-            }
-        } else if (switch_current_with_other_order || current_always_first) {
-            return VehicleShouldBeMarked::MAYBE;
-        } else {
-            throw std::invalid_argument("Check if other should be marked: undefined case");
-        }
-    }
-
-    auto Scheduler::check_if_other_should_be_marked(const long other_vehicle,
+    auto Scheduler::check_if_other_should_be_marked(const Solution &initial_solution,
+                                                    const long other_trip_id,
                                                     const long other_position,
                                                     const bool current_conflicts_with_other,
-                                                    const Departure &departure) -> VehicleShouldBeMarked {
-        assert_other_is_not_active(other_vehicle);
-        // Read info of other vehicle in original schedule (makes sense: it's not marked)
-        auto other_original_departure = get_original_trip_departure_at_position(other_vehicle, other_position);
-        auto current_original_departure = get_original_trip_departure_at_position(departure.trip_id,
+                                                    const Departure &departure) -> MarkInstruction {
+
+        // Fetch original schedule information
+        auto other_original_departure = initial_solution.get_trip_arc_departure(other_trip_id, other_position);
+        auto current_original_departure = initial_solution.get_trip_arc_departure(departure.trip_id,
                                                                                   departure.position);
-        auto current_original_arrival = get_original_trip_departure_at_position(departure.trip_id,
+        auto current_original_arrival = initial_solution.get_trip_arc_departure(departure.trip_id,
                                                                                 departure.position + 1);
-        auto other_was_originally_first = check_if_other_is_first_in_original_schedule(other_vehicle,
-                                                                                       other_original_departure,
-                                                                                       current_original_departure,
-                                                                                       departure);
-        auto other_overlapped_with_current = check_if_other_overlapped_with_current(other_vehicle,
-                                                                                    other_original_departure,
-                                                                                    current_original_departure,
-                                                                                    current_original_arrival,
-                                                                                    departure);
-        bool other_is_first_now = check_if_other_is_first_in_current_schedule(other_vehicle, other_original_departure,
-                                                                              departure);
+
+        // Determine original and current order relationships
+        auto other_was_originally_first = check_if_other_was_first(
+                other_trip_id, other_original_departure, current_original_departure, departure);
+
+        auto other_overlapped_with_current = check_if_other_had_conflict_with_current(
+                other_trip_id, other_original_departure, current_original_departure, current_original_arrival,
+                departure);
+
+        bool other_is_first_now = check_if_other_is_first(other_trip_id, other_original_departure,
+                                                          departure);
         bool current_was_originally_first = !other_was_originally_first;
         bool current_is_first_now = !other_is_first_now;
-        // So far we can be sure to not mark the other conflict only if before and after the change was coming before
+
+        // Calculate key states
         bool other_always_first = other_was_originally_first && other_is_first_now;
         bool switch_other_with_current_order = current_was_originally_first && other_is_first_now;
         bool switch_current_with_other_order = other_was_originally_first && current_is_first_now;
         bool current_always_first = current_was_originally_first && current_is_first_now;
-        return check_type_of_mark(other_always_first, switch_other_with_current_order,
-                                  switch_current_with_other_order, current_always_first,
-                                  current_conflicts_with_other, other_overlapped_with_current);
+
+        // Determine mark instruction
+        if (other_always_first) {
+            return MarkInstruction::NOT_MARK;
+        }
+
+        if (switch_other_with_current_order) {
+            if (!other_overlapped_with_current && !current_conflicts_with_other) {
+                return MarkInstruction::NOT_MARK;
+            }
+            return MarkInstruction::MARK;
+        }
+
+        if (switch_current_with_other_order || current_always_first) {
+            return MarkInstruction::WAIT;
+        }
+
+        throw std::invalid_argument("Check if other should be marked: undefined case");
     }
 
-    auto Scheduler::check_if_should_mark_given_current_arrival_time(const TripID other_trip_id,
-                                                                    const double current_vehicle_new_arrival,
-                                                                    const Departure &departure) -> bool {
-        assert_other_is_not_active(other_trip_id);
-        auto other_position = get_index(instance.get_trip_route(other_trip_id),
-                                        departure.arc_id);
-        auto other_original_departure = get_original_trip_departure_at_position(other_trip_id, other_position);
-        auto other_original_arrival = get_original_trip_departure_at_position(other_trip_id, other_position + 1);
-        auto current_original_departure = get_original_trip_departure_at_position(departure.trip_id,
+
+    auto Scheduler::check_mark_waiting_trip(Solution &initial_solution,
+                                            const TripID other_trip_id,
+                                            const double current_new_arrival,
+                                            const Departure &departure) -> bool {
+        // Fetch positions and timing details
+        auto other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+        auto other_original_departure = initial_solution.get_trip_arc_departure(other_trip_id, other_position);
+        auto other_original_arrival = initial_solution.get_trip_arc_departure(other_trip_id, other_position + 1);
+        auto current_original_departure = initial_solution.get_trip_arc_departure(departure.trip_id,
                                                                                   departure.position);
-        auto current_original_arrival = get_original_trip_departure_at_position(departure.trip_id,
+        auto current_original_arrival = initial_solution.get_trip_arc_departure(departure.trip_id,
                                                                                 departure.position + 1);
 
-        auto current_overlapped_with_other = check_if_current_overlapped_with_other(other_trip_id,
-                                                                                    other_original_departure,
-                                                                                    current_original_departure,
-                                                                                    other_original_arrival,
-                                                                                    departure);
-        auto other_overlapped_with_current = check_if_other_overlapped_with_current(other_trip_id,
-                                                                                    other_original_departure,
-                                                                                    current_original_departure,
-                                                                                    current_original_arrival,
-                                                                                    departure);
+        // Check for conflicts between trips
+        auto current_had_conflict_with_other = check_if_current_had_conflict_with_other(
+                other_trip_id, other_original_departure, current_original_departure,
+                other_original_arrival, departure
+        );
+        auto other_had_conflict_with_current = check_if_other_had_conflict_with_current(
+                other_trip_id, other_original_departure, current_original_departure,
+                current_original_arrival, departure
+        );
+        auto other_has_conflict_with_current = check_if_other_has_conflict_with_current(
+                other_trip_id, other_original_departure, current_new_arrival, departure
+        );
 
-        auto other_overlaps_now_with_current = check_if_other_overlaps_now_with_current(other_trip_id,
-                                                                                        other_original_departure,
-                                                                                        current_vehicle_new_arrival,
-                                                                                        departure);
+        // Determine the order of trips
+        bool other_was_first = check_if_other_was_first(
+                other_trip_id, other_original_departure, current_original_departure, departure
+        );
+        bool other_is_first = check_if_other_is_first(other_trip_id, other_original_departure, departure);
 
-        bool other_is_originally_first = check_if_other_is_first_in_original_schedule(other_trip_id,
-                                                                                      other_original_departure,
-                                                                                      current_original_departure,
-                                                                                      departure);
+        // Logical flags for conditions
+        bool current_did_not_conflict_with_other = !current_had_conflict_with_other;
+        bool other_does_not_conflict_with_current = !other_has_conflict_with_current;
+        bool current_was_first = !other_was_first;
+        bool current_is_first = !other_is_first;
 
-        bool other_is_first_now = check_if_other_is_first_in_current_schedule(other_trip_id, other_original_departure,
-                                                                              departure);
+        // Evaluate conditions
+        bool switch_current_with_other_order =
+                (other_was_first && current_is_first) || (current_was_first && other_is_first);
+        bool current_always_first = current_was_first && current_is_first;
+        bool trips_conflicts_never = current_did_not_conflict_with_other && other_does_not_conflict_with_current;
+        bool other_conflicts_always = other_had_conflict_with_current && other_has_conflict_with_current;
 
-        bool current_did_not_overlap_with_other = !current_overlapped_with_other;
-        bool other_does_not_overlap_with_current = !other_overlaps_now_with_current;
-        bool current_is_originally_first = !other_is_originally_first;
-        bool current_starts_first_now = !other_is_first_now;
-
-        bool switch_current_with_other_order = other_is_originally_first && current_starts_first_now;
-        bool vehicles_never_overlapped = current_did_not_overlap_with_other && other_does_not_overlap_with_current;
-        bool current_always_first = current_is_originally_first && current_starts_first_now;
-        bool other_always_overlaps = other_overlapped_with_current && other_overlaps_now_with_current;
-        return check_conditions_to_mark(switch_current_with_other_order, vehicles_never_overlapped,
-                                        current_always_first, other_always_overlaps);
+        // Decision logic
+        if (switch_current_with_other_order) {
+            return !trips_conflicts_never;
+        } else if (current_always_first) {
+            return !other_conflicts_always;
+        } else {
+            throw std::invalid_argument("Undefined case in check_mark_waiting_trip");
+        }
     }
 
-    auto Scheduler::mark_vehicle(const long other_vehicle,
-                                 const double other_departure,
-                                 const long other_position,
-                                 const Departure &departure) -> void {
-        Departure other_trip_departure{};
-        assert_other_is_not_active(other_vehicle);
-        other_trip_departure.trip_id = other_vehicle;
-        other_trip_departure.arc_id = departure.arc_id;
-        other_trip_departure.time = other_departure;
-        other_trip_departure.position = other_position;
-        other_trip_departure.reinsertion_number = 0;
-        other_trip_departure.event_type = Departure::ACTIVATION;
-        set_trip_status(other_vehicle, STAGING);
-        insert_departure_in_pq(other_trip_departure);
+
+    auto Scheduler::mark_trip(const long other_trip_id,
+                              const double other_departure_time,
+                              const long other_position) -> void {
+        auto other_departure = get_departure(other_departure_time,
+                                             other_trip_id,
+                                             other_position,
+                                             ACTIVATION,
+                                             0);
+        set_trip_status(other_trip_id, STAGING);
+        insert_departure_in_pq(other_departure);
     }
 }

@@ -13,7 +13,7 @@ namespace cpp_module {
         //TODO: remove
         Solution complete_solution = construct_solution(start_times);
         check_if_solution_has_ties(complete_solution);
-        if (complete_solution.get_ties_flag()) {
+        if (complete_solution.has_ties()) {
             solve_solution_ties(complete_solution);
         }
         return complete_solution;
@@ -73,6 +73,7 @@ PYBIND11_MODULE(cpp_module, m) {
             .def("get_list_of_thresholds", &cpp_module::Instance::get_list_of_thresholds)
             .def("get_parameters", &cpp_module::Instance::get_parameters)
             .def("get_release_times", &cpp_module::Instance::get_release_times)
+            .def("set_release_times", &cpp_module::Instance::set_release_times, py::arg("release_times"))
             .def("get_trip_release_time", &cpp_module::Instance::get_trip_release_time)
             .def("get_number_of_trips", &cpp_module::Instance::get_number_of_trips)
             .def("get_free_flow_schedule", &cpp_module::Instance::get_free_flow_schedule, py::arg("start_times"));

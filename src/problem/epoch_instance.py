@@ -257,7 +257,7 @@ def get_epoch_instance(
     last_trip_in_epoch = next(
         (idx for idx, start_time in enumerate(instance.release_times) if start_time > last_time_epoch),
         len(instance.release_times) - 1
-    ) - 1
+    )
 
     # Combine trip IDs from the previous epoch and current epoch
     trip_ids_in_epoch = sorted(

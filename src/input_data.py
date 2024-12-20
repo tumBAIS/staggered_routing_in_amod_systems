@@ -9,6 +9,7 @@ import datetime
 from typing import Optional
 
 # Global configuration parameters
+SAVE_CPP = True  # Saves files to run catch2 tests in cpp_module
 ACTIVATE_ASSERTIONS = False
 FIX_MODEL = False
 USE_GUROBI_INDICATORS = False
@@ -70,6 +71,7 @@ class SolverParameters:
     warm_start: bool
     improve_warm_start: bool
     local_search_callback: bool
+    simplify: bool
     instance_parameters: InstanceParameters
     set_of_experiments: Optional[str]
     verbose_model: bool
@@ -80,7 +82,8 @@ class SolverParameters:
                                                                                    f"OPT{'YES' if self.optimize else 'NO'}_"
                                                                                    f"WARM{'YES' if self.warm_start else 'NO'}_"
                                                                                    f"IWARM{'YES' if self.improve_warm_start else 'NO'}_"
-                                                                                   f"CBLS{'YES' if self.local_search_callback else 'NO'}")
+                                                                                   f"CBLS{'YES' if self.local_search_callback else 'NO'}_"
+                                                                                   f"SPLFY{'YES' if self.simplify else 'NO'}")
 
     def get_string_mode(self) -> str:
         if self.epoch_size == 60:
@@ -131,7 +134,7 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
     solver_params = SolverParameters(epoch_size=60, optimize=True, algorithm_time_limit=1000,
                                      epoch_time_limit=1000,
                                      warm_start=True, improve_warm_start=True, local_search_callback=True,
-                                     instance_parameters=instance_params, set_of_experiments="local",
+                                     simplify=True, instance_parameters=instance_params, set_of_experiments="local",
                                      verbose_model=True)
     return instance_params, solver_params
 

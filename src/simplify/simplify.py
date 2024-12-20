@@ -7,7 +7,7 @@ from simplify.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_c
 from simplify.remove_not_utilized_arcs import remove_not_utilized_arcs
 from problem.instance import Instance
 from problem.solution import Solution
-from input_data import TOLERANCE
+from input_data import TOLERANCE, SolverParameters
 
 
 def adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution) -> None:
@@ -81,12 +81,15 @@ def remove_final_paths(instance: EpochInstance, status_quo: Solution) -> None:
 
 def simplify_system(
         not_simplified_instance: EpochInstance,
-        not_simplified_status_quo: Solution
+        not_simplified_status_quo: Solution,
+        solver_params: SolverParameters
 ) -> tuple[EpochInstance, Solution]:
     """
     Simplify the system by preprocessing paths, merging arcs, and removing unused arcs.
     """
     print("\nSimplifying system...")
+    if not solver_params.simplify:
+        return not_simplified_instance, not_simplified_status_quo
 
     # Create deep copies of the instance and status quo to avoid modifying the originals
     status_quo, instance = copy.deepcopy((not_simplified_status_quo, not_simplified_instance))
