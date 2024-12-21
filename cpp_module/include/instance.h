@@ -74,7 +74,7 @@ namespace cpp_module {
 
             add_total_free_flow_time_vehicles();
         }
- 
+
         static Instance from_json(const nlohmann::json &json_obj) {
             return Instance{
                     json_obj["trip_routes"].get<std::vector<std::vector<TripID>>>(),
@@ -136,7 +136,7 @@ namespace cpp_module {
             return conflicting_sets[arc_id];
         }
 
-        [[nodiscard]] const bool &is_conflicting_set_empty(ArcID arc_id) const {
+        [[nodiscard]] bool is_conflicting_set_empty(ArcID arc_id) const {
             return conflicting_sets[arc_id].empty();
         }
 
