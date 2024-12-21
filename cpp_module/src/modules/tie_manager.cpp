@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <queue>
 #include "scheduler.h"
 
 namespace cpp_module {

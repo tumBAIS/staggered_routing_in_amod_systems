@@ -11,7 +11,6 @@
 
 namespace cpp_module {
 
-
     const double UNUSED_VALUE = -1;
     enum DepartureType {
         TRAVEL, ACTIVATION
@@ -266,10 +265,6 @@ namespace cpp_module {
         void solve_tie(Solution &complete_solution, const Tie &tie);
 
         void solve_solution_ties(Solution &complete_solution);
-
-
-        Solution construct_solution_and_solve_ties(const std::vector<double> &start_times);
-
 
         bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution);
 

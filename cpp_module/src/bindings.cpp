@@ -6,21 +6,6 @@
 #include <pybind11/stl.h>
 #include "local_search.h"
 
-namespace cpp_module {
-
-// Construct a solution based on the start times
-    auto Scheduler::construct_solution_and_solve_ties(const std::vector<double> &start_times) -> Solution {
-        //TODO: remove
-        Solution complete_solution = construct_solution(start_times);
-        check_if_solution_has_ties(complete_solution);
-        if (complete_solution.has_ties()) {
-            solve_solution_ties(complete_solution);
-        }
-        return complete_solution;
-    }
-
-
-} // namespace cpp_module
 
 namespace py = pybind11;
 
@@ -81,7 +66,7 @@ PYBIND11_MODULE(cpp_module, m) {
     // Scheduler class bindings
     py::class_<cpp_module::Scheduler>(m, "cpp_scheduler")
             .def(py::init<cpp_module::Instance &>(), py::arg("cpp_instance"))
-            .def("construct_solution", &cpp_module::Scheduler::construct_solution_and_solve_ties,
+            .def("construct_solution", &cpp_module::Scheduler::construct_solution,
                  py::arg("start_times"));
 
 

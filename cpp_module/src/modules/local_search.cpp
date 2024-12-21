@@ -227,18 +227,6 @@ namespace cpp_module {
     }
 
 
-    auto LocalSearch::reset_new_solution(const Solution &current_solution, Solution &new_solution,
-                                         Conflict &conflict) -> void {
-        new_solution.increase_trip_start_time(conflict.current_trip_id, -conflict.staggering_current_vehicle);
-        conflict.staggering_current_vehicle = 0;
-        new_solution.increase_trip_start_time(conflict.other_trip_id, conflict.destaggering_other_vehicle);
-        conflict.destaggering_other_vehicle = 0;
-        new_solution.set_schedule(current_solution.get_schedule());
-        new_solution.set_total_delay(current_solution.get_total_delay());
-        new_solution.set_ties_flag(current_solution.has_ties());
-        new_solution.set_feasible_flag(current_solution.is_feasible());
-    }
-
     void Scheduler::apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict) {
         assert(conflict.distance_to_cover > 0);
 
@@ -295,17 +283,6 @@ namespace cpp_module {
         }
     }
 
-    auto LocalSearch::update_current_solution(Solution &current_solution,
-                                              const Solution &new_solution,
-                                              Conflict &conflict) -> void {
-        // Update current vehicle
-        current_solution.increase_trip_start_time(conflict.current_trip_id, conflict.staggering_current_vehicle);
-        current_solution.increase_trip_start_time(conflict.other_trip_id, -conflict.destaggering_other_vehicle);
-        current_solution.set_schedule(new_solution.get_schedule());
-        current_solution.set_total_delay(new_solution.get_total_delay());
-        current_solution.set_ties_flag(new_solution.has_ties());
-        current_solution.set_feasible_flag(new_solution.is_feasible());
-    }
 
     auto LocalSearch::print_move(const Solution &old_solution,
                                  const Solution &new_solution,

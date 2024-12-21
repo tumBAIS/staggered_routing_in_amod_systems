@@ -89,17 +89,8 @@ namespace cpp_module {
                                                        instance(arg_instance),
                                                        start_search_clock(get_current_time_in_seconds()) {}
 
-
-        static void reset_new_solution(const Solution &current_solution, Solution &new_solution, Conflict &conflict);
-
-        static void
-        update_current_solution(Solution &current_solution, const Solution &new_solution, Conflict &conflict);
-
         static void print_move(const Solution &old_solution, const Solution &new_solution, const Conflict &conflict);
 
-        void update_distance_to_cover(const Solution &complete_solution, Conflict &conflict);
-
-        bool check_if_solution_is_admissible(Solution &complete_solution);
 
         auto solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution;
 
