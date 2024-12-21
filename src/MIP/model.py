@@ -117,7 +117,9 @@ def run_model(model: StaggeredRoutingModel,
               instance: EpochInstance,
               warm_start: Solution,
               solver_params: SolverParameters,
-              cpp_local_search: cpp.cpp_local_search) -> Optional[OptimizationMeasures]:
+              cpp_local_search: cpp.cpp_local_search,
+              cpp_simplified_epoch_instance: cpp.cpp_instance,
+              ) -> Optional[OptimizationMeasures]:
     """Runs the optimization model with the specified parameters."""
     print("=" * 50)
     print("Starting Model Optimization".center(50))
@@ -144,7 +146,7 @@ def run_model(model: StaggeredRoutingModel,
     print("Optimizing the model...")
     if solver_params.local_search_callback:
         print("Using local search callback during optimization.")
-        model.optimize(callback(instance, solver_params, cpp_local_search))
+        model.optimize(callback(instance, solver_params, cpp_local_search, cpp_simplified_epoch_instance))
     else:
         model.optimize()
 

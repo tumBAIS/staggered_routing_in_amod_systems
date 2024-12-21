@@ -1,12 +1,10 @@
 from input_data import SolverParameters
-from congestion_model.core import (
-    PY_get_free_flow_schedule,
-    PY_get_total_travel_time,
-)
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from MIP import StaggeredRoutingModel
 import cpp_module as cpp
+import math
+from input_data import CONSTR_TOLERANCE, TOLERANCE
 
 
 def get_model_start_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
