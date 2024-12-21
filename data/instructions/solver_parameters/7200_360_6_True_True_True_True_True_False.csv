@@ -1,0 +1,2 @@
+algorithm_time_limit,epoch_time_limit,epoch_size,optimize,warm_start,improve_warm_start,local_search_callback,simplify,verbose_model
+7200,360,6,True,True,True,True,True,False
