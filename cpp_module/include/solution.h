@@ -7,7 +7,7 @@
 #include "instance.h"
 
 // Define a macro to enable or disable range checks
-#define ENABLE_RANGE_CHECKS_SOLUTION
+//#define ENABLE_RANGE_CHECKS_SOLUTION
 // Print a message during compilation if the macro is defined
 #ifdef ENABLE_RANGE_CHECKS_SOLUTION
 #pragma message("ENABLE_RANGE_CHECKS_SOLUTION is defined: Range checks will be included in the code.")

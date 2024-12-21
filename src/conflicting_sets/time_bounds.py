@@ -74,7 +74,7 @@ def split_time_bounds_on_arcs(instance: Instance, time_bounds_on_arcs: list[list
         bounds_split = []
 
         for vehicle_bounds in sorted(time_bounds, key=lambda x: x.earliest_departure):
-            if vehicle_bounds.earliest_departure >= max_latest_arrival:
+            if vehicle_bounds.earliest_departure > max_latest_arrival + TOLERANCE:
                 if bounds_split:
                     bounds_on_arcs_split[arc].append(bounds_split)
                 bounds_split = []
@@ -226,7 +226,7 @@ def get_conflicting_latest_arrivals(
     return [
         arrival
         for arrival in arc_based_arrivals[earliest_departure.arc]
-        if arrival.latest_arrival > earliest_departure.earliest_departure + TOLERANCE
+        if arrival.latest_arrival > earliest_departure.earliest_departure - TOLERANCE
     ]
 
 
@@ -316,7 +316,7 @@ def get_earliest_arrival_time(
 
     min_delay = compute_delay_on_arc(
         earliest_departure.arc, instance, min_vehicles_on_arc
-    ) if min_vehicles_on_arc > arc_capacity_threshold else 0
+    ) if min_vehicles_on_arc >= arc_capacity_threshold else 0
 
     earliest_arrival_time = (
             earliest_departure.earliest_departure + min_delay + instance.travel_times_arcs[earliest_departure.arc]
@@ -453,12 +453,15 @@ def get_initial_latest_arrival_times(instance: Instance, ff_schedule: Schedules)
     ensuring they respect the vehicle's deadline and account for available slack time.
     """
     assert len(instance.deadlines) == len(ff_schedule), "Mismatch in deadlines and free-flow schedule length."
-    assert all(
-        deadline + TOLERANCE >= schedule[-1] for deadline, schedule in zip(instance.deadlines, ff_schedule)
-    ), "Deadlines are inconsistent with schedules."
+    for idx, (deadline, schedule) in enumerate(zip(instance.deadlines, ff_schedule)):
+        if deadline + TOLERANCE < schedule[-1]:
+            raise ValueError(
+                f"Deadline inconsistency detected at index {idx}: "
+                f"deadline ({deadline}) + TOLERANCE ({TOLERANCE}) < schedule[-1] ({schedule[-1]})."
+            )
 
-    return [[schedule[position] + instance.deadlines[vehicle] - schedule[-1] for position, _ in
-             enumerate(schedule[:])] for vehicle, schedule in enumerate(ff_schedule)]
+    return [[instance.earliest_departure_times[trip_id][position] + instance.travel_times_arcs[arc] for position, arc in
+             enumerate(route)] for trip_id, route in enumerate(instance.trip_routes)]
 
 
 def get_undivided_conflicting_sets(

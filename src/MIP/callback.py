@@ -92,11 +92,12 @@ def set_heuristic_binary_variables(model: StaggeredRoutingModel, heuristic_binar
 
 
 def set_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance,
-                           heuristic_solution: cpp.cpp_solution) -> None:
+                           heuristic_solution: cpp.cpp_solution,
+                           cpp_simplified_epoch_instance: cpp.cpp_instance) -> None:
     """Apply the heuristic solution to the model if it improves the current solution."""
     print("Setting heuristic solution in callback...")
     schedule = heuristic_solution.get_schedule()
-    delays_on_arcs = heuristic_solution.get_delays_on_arcs()
+    delays_on_arcs = heuristic_solution.get_delays_on_arcs(cpp_simplified_epoch_instance)
     heuristic_binaries = get_conflict_binaries(instance.conflicting_sets, instance.trip_routes, schedule)
     set_heuristic_binary_variables(model, heuristic_binaries)
     set_heuristic_continuous_variables(model, schedule, delays_on_arcs, instance)
@@ -112,7 +113,8 @@ def set_heuristic_solution(model: StaggeredRoutingModel, instance: EpochInstance
 
 
 def callback(instance: EpochInstance, solver_params: SolverParameters,
-             cpp_local_search: cpp.cpp_local_search) -> Callable:
+             cpp_local_search: cpp.cpp_local_search,
+             cpp_simplified_epoch_instance: cpp.cpp_instance) -> Callable:
     """Define the callback function for Gurobi.
     """
 
@@ -130,7 +132,7 @@ def callback(instance: EpochInstance, solver_params: SolverParameters,
             model.set_flag_update(False)
             heuristic_solution = cpp_local_search.run(model.get_cb_start_times())
             if is_solution_improving(model, heuristic_solution):
-                set_heuristic_solution(model, instance, heuristic_solution)
+                set_heuristic_solution(model, instance, heuristic_solution, cpp_simplified_epoch_instance)
 
     return call_local_search
 

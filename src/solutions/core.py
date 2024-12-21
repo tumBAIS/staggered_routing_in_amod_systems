@@ -126,7 +126,8 @@ def get_epoch_solution(
         simplified_instance,
         epoch_warm_start,
         solver_params,
-        cpp_local_search
+        cpp_local_search,
+        cpp_simplified_epoch_instance
     )
 
     # Extract the solution from the optimization model.
@@ -136,12 +137,11 @@ def get_epoch_solution(
         simplified_status_quo,
         epoch_warm_start,
         solver_params,
-        cpp_simplified_epoch_instance
+        cpp_simplified_epoch_instance,
     )
 
     # Map the solution back to the full system.
     epoch_solution = map_simplified_epoch_solution(
-        epoch_instance,
         model_solution,
         cpp_epoch_instance,
         solver_params

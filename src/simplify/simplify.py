@@ -94,10 +94,10 @@ def simplify_system(
     # Create deep copies of the instance and status quo to avoid modifying the originals
     status_quo, instance = copy.deepcopy((not_simplified_status_quo, not_simplified_instance))
 
-    # Remove initial parts of paths without conflicts
-    remove_initial_paths(instance, status_quo)
-    not_simplified_instance.removed_vehicles = instance.removed_vehicles[:]
-    print(f" Removed vehicles: {len(instance.removed_vehicles)}, Remaining: {len(instance.trip_routes)}")
+    # # Remove initial parts of paths without conflicts
+    # remove_initial_paths(instance, status_quo)
+    # not_simplified_instance.removed_vehicles = instance.removed_vehicles[:]
+    # print(f" Removed vehicles: {len(instance.removed_vehicles)}, Remaining: {len(instance.trip_routes)}")
 
     # Check if all vehicles have been removed
     if not instance.trip_routes:
@@ -120,9 +120,6 @@ def simplify_system(
         status_quo.congested_schedule
     )
     print(" Updated conflict binaries.")
-
-    adjust_release_times_and_deadlines(instance, status_quo)
-    print(" Adjusted release times and deadlines.")
 
     print("System simplification complete.\n")
     return instance, status_quo

@@ -1,17 +1,28 @@
 from input_data import SolverParameters
-from congestion_model.core import (
-    PY_get_free_flow_schedule,
-    PY_get_total_travel_time,
-)
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from MIP import StaggeredRoutingModel
 import cpp_module as cpp
+import math
+from input_data import CONSTR_TOLERANCE, TOLERANCE
 
 
 def get_model_start_times(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[float]:
     """Retrieve the release times from the model for each vehicle."""
-    return [model.get_continuous_var_value(vehicle, path[0], "departure") for vehicle, path in enumerate(paths)]
+    start_times = []
+    for vehicle, path in enumerate(paths):
+        start_time = model.get_continuous_var_value(vehicle, path[0], "departure")
+        floor_time = math.floor(start_time)
+        ceil_time = math.ceil(start_time)
+
+        if abs(start_time - floor_time) <= CONSTR_TOLERANCE + TOLERANCE:
+            start_times.append(floor_time)
+        elif abs(start_time - ceil_time) <= CONSTR_TOLERANCE + TOLERANCE:
+            start_times.append(ceil_time)
+        else:
+            start_times.append(start_time)
+
+    return start_times
 
 
 def get_model_schedule(model: StaggeredRoutingModel, paths: list[list[int]]) -> list[list[float]]:
