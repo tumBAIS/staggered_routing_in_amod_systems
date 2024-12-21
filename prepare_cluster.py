@@ -125,7 +125,9 @@ PRESETS = {
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
+        "simplify": True,
         "local_search_callback": True  # end solver params
+
     },
     "staggering_analysis": {
         "day_list": [1],  # start instance params
@@ -140,6 +142,7 @@ PRESETS = {
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
+        "simplify": True,
         "local_search_callback": True  # end solver params
     },
     "algo_performance_paper": {
@@ -155,6 +158,7 @@ PRESETS = {
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
+        "simplify": True,
         "local_search_callback": True  # end solver params
     },
     "staggering_analysis_paper": {
@@ -170,6 +174,7 @@ PRESETS = {
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
+        "simplify": True,
         "local_search_callback": True  # end solver params
     },
 }
@@ -281,6 +286,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     warm_start = PRESETS[preset_name]["warm_start"]
     improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
     local_search_callback = PRESETS[preset_name]["local_search_callback"]
+    simplify = PRESETS[preset_name]["simplify"]
     verbose_model = False
 
     pretty_print_experiment_parameters(PRESETS[preset_name], network_name, number_of_trips,
@@ -355,6 +361,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
             "warm_start": warm_start,
             "improve_warm_start": improve_warm_start,
             "local_search_callback": local_search_callback,
+            "simplify": simplify,
             "verbose_model": verbose_model
         }
 
