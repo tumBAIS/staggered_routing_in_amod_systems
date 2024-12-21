@@ -86,7 +86,7 @@ def get_epoch_warm_start(
     total_delay = cpp_solution.get_total_delay()
     total_travel_time = cpp_solution.get_total_travel_time()
     start_times = cpp_solution.get_start_times()
-    delays_on_arcs = cpp_solution.get_delays_on_arcs()
+    delays_on_arcs = cpp_solution.get_delays_on_arcs(cpp_instance)
     binaries = get_conflict_binaries(epoch_instance.conflicting_sets, epoch_instance.trip_routes, congested_schedule)
 
     # Construct the warm start solution

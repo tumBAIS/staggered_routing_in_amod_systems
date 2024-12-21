@@ -1,16 +1,22 @@
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 import cpp_module as cpp
+from input_data import SolverParameters
 
 
 def map_simplified_epoch_solution(
         epoch_instance: EpochInstance,
         simplified_epoch_solution: Solution,
-        cpp_epoch_instance: cpp.cpp_instance
+        cpp_epoch_instance: cpp.cpp_instance,
+        solver_parameters: SolverParameters,
 ) -> Solution:
     """
     Maps the simplified epoch solution back to the full instance, including removed vehicles.
     """
+
+    if not solver_parameters.simplify:
+        return simplified_epoch_solution
+
     print("\n" + "=" * 50)
     print(
         f"Mapping Simplified Solution to Full Instance -- Initial Delay: {simplified_epoch_solution.total_delay}".center(
@@ -34,9 +40,6 @@ def map_simplified_epoch_solution(
 
     print("Full congested schedule computed.")
 
-    # Compute additional metrics
-    epoch_instance.set_clock_end_epoch()
-
     print("=" * 50)
     print(f"Mapping completed successfully -- Final Delay: {cpp_solution.get_total_delay()}.".center(50))
     print("=" * 50)
@@ -45,7 +48,7 @@ def map_simplified_epoch_solution(
     return Solution(
         total_delay=cpp_solution.get_total_delay(),
         congested_schedule=cpp_solution.get_schedule(),
-        delays_on_arcs=cpp_solution.get_delays_on_arcs(),
+        delays_on_arcs=cpp_solution.get_delays_on_arcs(cpp_epoch_instance),
         start_times=staggered_release_times,
         free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(cpp_solution.get_start_times()),
         total_travel_time=cpp_solution.get_total_travel_time(),

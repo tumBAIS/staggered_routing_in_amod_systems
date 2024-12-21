@@ -1,8 +1,6 @@
 from __future__ import annotations
 from typing import Callable
-
 import gurobipy as grb
-
 from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.aliases import Schedules
 from problem.epoch_instance import EpochInstance

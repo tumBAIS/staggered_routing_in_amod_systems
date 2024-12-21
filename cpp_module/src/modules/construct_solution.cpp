@@ -129,7 +129,6 @@ namespace cpp_module {
                                                                      departure.time);
                 const auto delay = compute_delay_on_arc(vehicles_on_arc, instance, departure.arc_id);
 
-                complete_solution.set_delay_on_arc(delay, departure.trip_id, departure.position);
                 complete_solution.increase_total_delay(delay);
 
                 set_next_departure_and_push_to_queue(delay, departure);

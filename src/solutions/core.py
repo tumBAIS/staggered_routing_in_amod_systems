@@ -35,7 +35,7 @@ def get_offline_solution(
     cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)
     cpp_instance.set_release_times(cpp_status_quo.get_start_times())
     instance.set_release_times(cpp_status_quo.get_start_times())
-    delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
+    delays_on_arcs = cpp_status_quo.get_delays_on_arcs(cpp_instance)
     start_times = cpp_status_quo.get_start_times()
     free_flow_schedule = cpp_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
 
@@ -143,10 +143,12 @@ def get_epoch_solution(
     epoch_solution = map_simplified_epoch_solution(
         epoch_instance,
         model_solution,
-        cpp_epoch_instance
+        cpp_epoch_instance,
+        solver_params
     )
 
     # Compare and log the results.
+    epoch_instance.set_clock_end_epoch()
     print_comparison_between_solution_and_status_quo(
         epoch_status_quo,
         epoch_solution,

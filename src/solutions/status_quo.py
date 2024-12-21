@@ -61,7 +61,7 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
     cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)
     cpp_epoch_instance.set_release_times(cpp_status_quo.get_start_times())
     epoch_instance.set_release_times(cpp_status_quo.get_start_times())
-    delays_on_arcs = cpp_status_quo.get_delays_on_arcs()
+    delays_on_arcs = cpp_status_quo.get_delays_on_arcs(cpp_epoch_instance)
     free_flow_schedule = cpp_epoch_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
     add_conflicting_sets_to_instance(epoch_instance, free_flow_schedule)
 

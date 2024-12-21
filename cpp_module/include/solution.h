@@ -22,7 +22,6 @@ namespace cpp_module {
 
     private:
         VehicleSchedule schedule;
-        VehicleSchedule delays_on_arcs;
         std::vector<double> start_times;
         double total_delay;
         double lb_travel_time;
@@ -33,7 +32,6 @@ namespace cpp_module {
         // Constructor
         explicit Solution(const std::vector<double> &arg_start_times, const Instance &instance)
                 : schedule(arg_start_times.size()),
-                  delays_on_arcs(arg_start_times.size()),
                   start_times(arg_start_times),
                   total_delay(0.0),
                   lb_travel_time(instance.get_lb_travel_time()),
@@ -42,17 +40,12 @@ namespace cpp_module {
 
             for (TripID trip_id = 0; trip_id < arg_start_times.size(); ++trip_id) {
                 schedule[trip_id].resize(instance.get_trip_route(trip_id).size());
-                delays_on_arcs[trip_id] = std::vector<double>(instance.get_trip_route(trip_id).size(), 0.0);
             }
         }
 
         // Getters
         [[nodiscard]] const VehicleSchedule &get_schedule() const {
             return schedule;
-        }
-
-        [[nodiscard]] const VehicleSchedule &get_delays_on_arcs() const {
-            return delays_on_arcs;
         }
 
         [[nodiscard]] const std::vector<double> &get_start_times() const {
@@ -96,17 +89,30 @@ namespace cpp_module {
             return is_feasible_flag;
         }
 
-        // Setters
-        void set_delay_on_arc(double delay, int trip_id, int position) {
-#ifdef ENABLE_RANGE_CHECKS_SOLUTION
-            if (trip_id < 0 || static_cast<size_t>(trip_id) >= delays_on_arcs.size()) {
-                throw std::out_of_range("Trip ID is out of range.");
+        [[nodiscard]] VehicleSchedule get_delays_on_arcs(const Instance &instance) const {
+            // Initialize delays_on_arcs with the number of trips in the instance
+            VehicleSchedule delays_on_arcs(instance.get_number_of_trips());
+
+            // Iterate through each trip
+            for (int trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
+                auto route_size = instance.get_trip_route_size(trip_id);
+
+                // Calculate delays for all arcs in the trip route
+                for (int position = 0; position < route_size - 1; ++position) {
+                    auto arc = instance.get_arc_at_position_in_trip_route(trip_id, position);
+                    double departure_current = get_trip_arc_departure(trip_id, position);
+                    double departure_next = get_trip_arc_departure(trip_id, position + 1);
+                    double travel_time = instance.get_arc_travel_time(arc);
+
+                    double delay_on_arc = departure_next - departure_current - travel_time;
+                    delays_on_arcs[trip_id].push_back(delay_on_arc);
+                }
+
+                // Add a dummy arc with zero delay
+                delays_on_arcs[trip_id].push_back(0.0);
             }
-            if (position < 0 || static_cast<size_t>(position) >= delays_on_arcs[trip_id].size()) {
-                throw std::out_of_range("Position is out of range.");
-            }
-#endif
-            delays_on_arcs[trip_id][position] = delay;
+
+            return delays_on_arcs;
         }
 
         void set_total_delay(double arg_total_delay) {

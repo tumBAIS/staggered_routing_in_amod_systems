@@ -13,7 +13,6 @@ class Scheduler:
         self.network = network
         self.cpp_solver_params = None
         self.cpp_instance = self.get_cpp_instance()
-        self.save_cpp_instance_to_json("cpp_module/catch2_tests/instancesForTest/cpp_instance.json")
         self.cpp_scheduler = self._get_cpp_scheduler()
         if save_cpp_instance:
             self.save_cpp_instance_for_debugging()
@@ -86,24 +85,6 @@ class Scheduler:
     @staticmethod
     def initialize_latest_departures(trip_routes):
         return [[float("inf") for _ in route] for route in trip_routes]
-
-    def save_cpp_instance_to_json(self, filename):
-        # Construct a dictionary from the cpp_instance data using getter methods
-        instance_data = {
-            "set_of_vehicle_paths": self.cpp_instance.get_trip_routes(),
-            "travel_times_arcs": self.cpp_instance.get_travel_times_arcs(),
-            "capacities_arcs": self.cpp_instance.get_capacities_arcs(),
-            "list_of_slopes": self.cpp_instance.get_list_of_slopes(),
-            "list_of_thresholds": self.cpp_instance.get_list_of_thresholds(),
-            "parameters": self.cpp_instance.get_parameters(),
-            "release_times": self.cpp_instance.get_release_times()
-        }
-
-        # Serialize the dictionary to a JSON string
-        with open(filename, 'w') as f:
-            json.dump(instance_data, f, indent=4)
-
-        print(f"Data saved to {filename}")
 
     def _get_cpp_scheduler(self):
         return cpp.cpp_scheduler(cpp_instance=self.cpp_instance)

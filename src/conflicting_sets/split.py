@@ -19,7 +19,10 @@ def update_vehicle_paths_in_conflicting_set(instance: Instance, arc: int) -> Non
     last_arc_created = len(instance.travel_times_arcs) - 1
     for vehicle in instance.conflicting_sets[last_arc_created]:
         # Replace the old arc with the new arc in the vehicle's path
-        old_arc_index = instance.trip_routes[vehicle].index(arc)
+        try:
+            old_arc_index = instance.trip_routes[vehicle].index(arc)
+        except ValueError:
+            raise ValueError
         instance.trip_routes[vehicle][old_arc_index] = last_arc_created
 
 
