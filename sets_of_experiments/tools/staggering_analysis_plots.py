@@ -36,11 +36,11 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             lambda x: [v / 60 for v in x] if isinstance(x, list) else x  # Convert lists to minutes
         )
 
-        # Process solution_total_delay to ensure non-decreasing order
-        data.sort_values("instance_parameters_staggering_cap", inplace=True)
-        for i in range(1, len(data)):
-            if data.iloc[i]["solution_total_delay"] > data.iloc[i - 1]["solution_total_delay"]:
-                data.iloc[i, data.columns.get_loc("solution_total_delay")] = data.iloc[i - 1]["solution_total_delay"]
+        # # Process solution_total_delay to ensure non-decreasing order
+        # data.sort_values("instance_parameters_staggering_cap", inplace=True)
+        # for i in range(1, len(data)):
+        #     if data.iloc[i]["solution_total_delay"] > data.iloc[i - 1]["solution_total_delay"]:
+        #         data.iloc[i, data.columns.get_loc("solution_total_delay")] = data.iloc[i - 1]["solution_total_delay"]
 
     # Step 2: Define a helper function for generating the plots
     def generate_plots(data, label):

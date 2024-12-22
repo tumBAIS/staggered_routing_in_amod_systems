@@ -143,6 +143,9 @@ namespace cpp_module {
 
     auto LocalSearch::get_conflicts_list(const Solution &solution) -> std::vector<Conflict> {
         std::vector<Conflict> conflicts_list;
+        size_t total_size = instance.get_number_of_trips() * instance.get_number_of_arcs();
+        conflicts_list.reserve(total_size); // Preallocate memory for the expected number of elements
+
 
         for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
             if (!check_vehicle_has_delay(solution, trip_id)) {

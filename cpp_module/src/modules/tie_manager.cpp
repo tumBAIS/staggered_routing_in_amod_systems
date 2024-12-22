@@ -34,24 +34,15 @@ namespace cpp_module {
                   << " - Arc " << tie.arc << '\n';
     }
 
-// Check if there is a tie between two vehicles
     auto TieManager::check_tie(const Solution &solution, const Tie &tie) -> bool {
-        bool depart_at_same_time =
-                std::abs(solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one)
-                         - solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two)) <
-                CONSTR_TOLERANCE - TOLERANCE;
+        auto dep_v1_pos1 = solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one);
+        auto dep_v2_pos2 = solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two);
+        auto dep_v1_pos1_next = solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one + 1);
+        auto dep_v2_pos2_next = solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two + 1);
 
-        bool vehicle_one_arrives_at_departure =
-                std::abs(solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two) -
-                         solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one + 1)) <
-                CONSTR_TOLERANCE - TOLERANCE;
-
-        bool vehicle_two_arrives_at_departure =
-                std::abs(solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one)
-                         - solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two + 1)) <
-                CONSTR_TOLERANCE - TOLERANCE;
-
-        return depart_at_same_time || vehicle_one_arrives_at_departure || vehicle_two_arrives_at_departure;
+        return (std::abs(dep_v1_pos1 - dep_v2_pos2) < CONSTR_TOLERANCE - TOLERANCE) ||
+               (std::abs(dep_v2_pos2 - dep_v1_pos1_next) < CONSTR_TOLERANCE - TOLERANCE) ||
+               (std::abs(dep_v1_pos1 - dep_v2_pos2_next) < CONSTR_TOLERANCE - TOLERANCE);
     }
 
 

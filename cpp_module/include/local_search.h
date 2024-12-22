@@ -53,10 +53,6 @@ namespace cpp_module {
             improvement_found_flag = arg_flag;
         }
 
-        [[nodiscard]] long get_iteration() const {
-            return counters.iteration;
-        }
-
 
         static auto get_current_time_in_seconds() -> double {
             using Clock = std::chrono::high_resolution_clock;

@@ -5,6 +5,7 @@ import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from tabulate import tabulate
+import datetime
 
 # Define paths relative to the current script location
 path_to_data = Path(__file__).parent / "data"
@@ -242,14 +243,17 @@ def get_set_of_experiments_name(
         else:
             return str(algo_mode_list).replace(" ", "")
 
+    # Get current date in DDMMYY format
+    date_prefix = datetime.datetime.now().strftime("%d%m%y")
+
     name = (
-        f"{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
+        f"{date_prefix}_{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
         f"_{format_algo_mode_list(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
         f"OPT{'YES' if optimize else 'NO'}_"
         f"WARM{'YES' if warm_start else 'NO'}_IWARM{'YES' if improve_warm_start else 'NO'}_"
-        f"CBLS{'YES' if local_search_callback else 'NO'}"
+        f"CBLS{'YES' if local_search_callback else 'NO'}_SMPLFY{'YES' if local_search_callback else 'NO'}"
     )
 
     # CUSTOM RULES
