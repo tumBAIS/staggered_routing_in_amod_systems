@@ -323,6 +323,4 @@ namespace cpp_module {
         Solution update_existing_congested_schedule(Solution &initial_solution, Conflict &conflict);
     };
 
-    auto get_index(const std::vector<long> &v, long k) -> long;
-
 }

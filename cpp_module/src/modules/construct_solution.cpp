@@ -6,12 +6,6 @@
 namespace cpp_module {
 
 
-// Find the index of an element in a vector
-    auto get_index(const std::vector<long> &vec, long value) -> long {
-        auto it = std::find(vec.begin(), vec.end(), value);
-        return (it != vec.end()) ? static_cast<long>(it - vec.begin()) : -1;
-    }
-
 // Initialize the solution object
     auto initialize_complete_solution(Solution &complete_solution) -> void {
         complete_solution.set_total_delay(0);

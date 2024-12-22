@@ -120,7 +120,7 @@ namespace cpp_module {
                 continue; // Skip the same trip
             }
 
-            const long other_position = get_index(instance.get_trip_route(other_trip), arc);
+            const long other_position = instance.get_arc_position_in_trip_route(arc, other_trip);
             auto conflicting_trip_info = get_trip_info_struct(other_trip, solution, other_position);
             auto instructions_conflict = get_instructions_conflict(trip_info, conflicting_trip_info);
 

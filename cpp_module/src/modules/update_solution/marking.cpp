@@ -26,7 +26,7 @@ namespace cpp_module {
                                        const Departure &departure) {
         for (long other_trip_id: get_trips_to_mark()) {
             if (check_mark_waiting_trip(initial_solution, other_trip_id, current_new_arrival, departure)) {
-                long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+                long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
                 double other_departure_time = new_solution.get_trip_arc_departure(other_trip_id, other_position);
                 mark_trip(other_trip_id, other_departure_time, other_position);
             }
@@ -90,7 +90,7 @@ namespace cpp_module {
                                             const double current_new_arrival,
                                             const Departure &departure) -> bool {
         // Fetch positions and timing details
-        auto other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+        auto other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
         auto other_original_departure = initial_solution.get_trip_arc_departure(other_trip_id, other_position);
         auto other_original_arrival = initial_solution.get_trip_arc_departure(other_trip_id, other_position + 1);
         auto current_original_departure = initial_solution.get_trip_arc_departure(departure.trip_id,

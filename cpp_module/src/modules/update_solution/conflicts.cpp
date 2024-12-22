@@ -91,7 +91,7 @@ namespace cpp_module {
                 continue; // Skip the current trip
             }
 
-            long other_position = get_index(instance.get_trip_route(other_trip_id), departure.arc_id);
+            long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
             Instruction instruction = check_if_trips_within_conflicting_set_can_conflict(
                     other_trip_id, other_position, departure);
 

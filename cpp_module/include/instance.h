@@ -4,6 +4,14 @@
 #include <stdexcept> // For std::out_of_range
 #include <../lib/json.hpp>
 
+// Define a macro to enable or disable range checks
+//#define ENABLE_RANGE_CHECKS_INSTANCE
+// Print a message during compilation if the macro is defined
+#ifdef ENABLE_RANGE_CHECKS_INSTANCE
+#pragma message("ENABLE_RANGE_CHECKS_INSTANCE is defined: Range checks will be included in the code.")
+#endif
+
+
 namespace cpp_module {
 
 // Data types
@@ -46,7 +54,7 @@ namespace cpp_module {
         // Constructor
         Instance(
                 const std::vector<std::vector<TripID>> &arg_arc_based_shortest_paths,
-                const ArcPositionMap &arg_arc_position_in_routes_map,
+                ArcPositionMap arg_arc_position_in_routes_map,
                 const std::vector<Time> &arg_nominal_travel_times_arcs,
                 const std::vector<long> &arg_nominal_capacities_arcs,
                 const std::vector<double> &arg_list_of_slopes,
@@ -60,7 +68,7 @@ namespace cpp_module {
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
-                  arc_position_in_routes_map(arg_arc_position_in_routes_map),
+                  arc_position_in_routes_map(std::move(arg_arc_position_in_routes_map)),
                   travel_times_arcs(arg_nominal_travel_times_arcs),
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
                   conflicting_sets(std::move(arg_conflicting_sets)),
@@ -108,6 +116,25 @@ namespace cpp_module {
         }
 
         // Getters
+        // Find the index of an element in a vector
+        [[nodiscard]] Position get_arc_position_in_trip_route(ArcID arc_id, TripID trip_id) const {
+#ifdef ENABLE_RANGE_CHECKS_INSTANCE
+            if (arc_id >= arc_position_in_routes_map.size()) {
+                throw std::out_of_range("ArcID is out of range in arc_position_in_routes_map");
+            }
+#endif
+            const auto &trip_map = arc_position_in_routes_map[arc_id];
+            auto trip_it = trip_map.find(trip_id);
+#ifdef ENABLE_RANGE_CHECKS_INSTANCE
+            if (trip_it != trip_map.end()) {
+                return trip_it->second;
+            }
+
+            throw std::out_of_range("TripID not found in the map for the given ArcID");
+#endif
+            return trip_it->second;
+        }
+
         [[nodiscard]] const std::vector<std::vector<TripID>> &get_trip_routes() const {
             return trip_routes;
         }

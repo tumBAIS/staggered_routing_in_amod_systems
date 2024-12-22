@@ -49,11 +49,11 @@ namespace cpp_module {
 // Check if there are any ties on a given arc
     auto TieManager::check_arc_ties(ArcID arc_id, Solution &complete_solution) -> bool {
         for (auto vehicle_one: instance.get_conflicting_set(arc_id)) {
-            long position_one = get_index(instance.get_trip_route(vehicle_one), arc_id);
+            long position_one = instance.get_arc_position_in_trip_route(arc_id, vehicle_one);
 
             for (auto vehicle_two: instance.get_conflicting_set(arc_id)) {
                 if (vehicle_one < vehicle_two) {
-                    long position_two = get_index(instance.get_trip_route(vehicle_two), arc_id);
+                    long position_two = instance.get_arc_position_in_trip_route(arc_id, vehicle_two);
                     Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
                     if (check_tie(complete_solution, tie)) {
                         return true;
@@ -69,12 +69,12 @@ namespace cpp_module {
         const auto &conflicting_set = instance.get_conflicting_set(arc_id);
 
         for (auto vehicle_one: conflicting_set) {
-            long position_one = get_index(instance.get_trip_route(vehicle_one), arc_id);
+            long position_one = instance.get_arc_position_in_trip_route(arc_id, vehicle_one);
 
             for (auto vehicle_two: conflicting_set) {
                 if (vehicle_one == vehicle_two) continue;  // Skip identical vehicles
 
-                long position_two = get_index(instance.get_trip_route(vehicle_two), arc_id);
+                long position_two = instance.get_arc_position_in_trip_route(arc_id, vehicle_two);
 
                 Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
 
