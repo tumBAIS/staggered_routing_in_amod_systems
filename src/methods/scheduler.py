@@ -58,6 +58,7 @@ class Scheduler:
         # Create and return the C++ instance
         return cpp.cpp_instance(
             set_of_vehicle_paths=trip_routes,
+            arc_position_in_routes_map=self.get_arc_position_in_routes_map(travel_times_arcs, trip_routes),
             travel_times_arcs=travel_times_arcs,
             capacities_arcs=capacities_arcs,
             list_of_slopes=list_of_slopes,
@@ -70,6 +71,20 @@ class Scheduler:
             earliest_departures=self.initialize_earliest_departures(trip_routes),
             latest_departures=self.initialize_latest_departures(trip_routes),
         )
+
+    @staticmethod
+    def get_arc_position_in_routes_map(travel_times_arcs, trip_routes) -> list[dict[int, int]]:
+        # TODO: remove
+        """Maps the arc to the position in the trip routes. Used for efficient operations of local search"""
+        arc_to_pos_map = [dict() for _ in range(len(travel_times_arcs))]  # size of arcs
+
+        for trip, route in enumerate(trip_routes):
+            for position, arc in enumerate(route):
+                if arc == 0:
+                    continue
+                arc_to_pos_map[arc][trip] = position
+
+        return arc_to_pos_map
 
     def initialize_deadlines(self):
         return [float('inf')] * len(self.trips.deadlines)

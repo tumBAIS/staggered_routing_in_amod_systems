@@ -28,6 +28,7 @@ PYBIND11_MODULE(cpp_module, m) {
     // Instance class bindings
     py::class_<cpp_module::Instance>(m, "cpp_instance")
             .def(py::init<const std::vector<std::vector<long>> &,
+                         const cpp_module::ArcPositionMap &,
                          const std::vector<double> &,
                          const std::vector<long> &,
                          const std::vector<double> &,
@@ -40,6 +41,7 @@ PYBIND11_MODULE(cpp_module, m) {
                          const cpp_module::VehicleSchedule &,
                          const double &>(),
                  py::arg("set_of_vehicle_paths"),
+                 py::arg("arc_position_in_routes_map"),
                  py::arg("travel_times_arcs"),
                  py::arg("capacities_arcs"),
                  py::arg("list_of_slopes"),

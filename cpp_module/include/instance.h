@@ -15,6 +15,7 @@ namespace cpp_module {
     using ConflictingSet = std::vector<TripID>;
     using ConflictingSets = std::vector<ConflictingSet>;
     using TripRoute = std::vector<ArcID>;
+    using ArcPositionMap = std::vector<std::unordered_map<TripID, Position>>;
 // Parameters
     const double CONSTR_TOLERANCE = 1e-3;
     const double TOLERANCE = 1e-6;
@@ -25,6 +26,7 @@ namespace cpp_module {
     private:
         // Attributes
         const std::vector<std::vector<TripID>> trip_routes;
+        const ArcPositionMap arc_position_in_routes_map;
         const std::vector<Time> travel_times_arcs;
         const std::vector<long> nominal_capacities_arcs;
         std::vector<Time> deadlines;
@@ -44,6 +46,7 @@ namespace cpp_module {
         // Constructor
         Instance(
                 const std::vector<std::vector<TripID>> &arg_arc_based_shortest_paths,
+                const ArcPositionMap &arg_arc_position_in_routes_map,
                 const std::vector<Time> &arg_nominal_travel_times_arcs,
                 const std::vector<long> &arg_nominal_capacities_arcs,
                 const std::vector<double> &arg_list_of_slopes,
@@ -57,6 +60,7 @@ namespace cpp_module {
                 double arg_lb_travel_time
         )
                 : trip_routes(arg_arc_based_shortest_paths),
+                  arc_position_in_routes_map(arg_arc_position_in_routes_map),
                   travel_times_arcs(arg_nominal_travel_times_arcs),
                   nominal_capacities_arcs(arg_nominal_capacities_arcs),
                   conflicting_sets(std::move(arg_conflicting_sets)),
@@ -78,6 +82,7 @@ namespace cpp_module {
         static Instance from_json(const nlohmann::json &json_obj) {
             return Instance{
                     json_obj["trip_routes"].get<std::vector<std::vector<TripID>>>(),
+                    json_obj["arc_position_in_routes_map"].get<ArcPositionMap>(),
                     json_obj["travel_time_arcs"].get<std::vector<double>>(),
                     json_obj["nominal_capacities_arcs"].get<std::vector<long>>(),
                     json_obj["list_of_slopes"].get<std::vector<double>>(),

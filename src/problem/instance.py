@@ -17,7 +17,8 @@ from instance_generator import InstanceComputer
 from problem.paths import get_arc_based_paths_with_features
 
 from input_data import InstanceParameters, SPEED_KPH
-from utils.aliases import Time, ConflictingSets
+from utils.aliases import Time, ConflictingSets, TripID, Position
+from typing import Optional
 
 
 @dataclass
@@ -37,6 +38,7 @@ class Instance:
     travel_times_arcs: list[float]
     deadlines: list[Time]
     max_staggering_applicable: list[float]
+    arc_position_in_routes_map: Optional[list[dict[TripID, Position]]] = None
 
     def __post_init__(self):
         self.conflicting_sets = self.initialize_conflicting_sets()
@@ -44,6 +46,7 @@ class Instance:
         self.latest_departure_times = self.initialize_latest_departure_times()
         self.min_delay_on_arcs = self.initialize_min_delay_on_arcs()
         self.max_delay_on_arcs = self.initialize_max_delay_on_arcs()
+        self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
 
     def initialize_conflicting_sets(self) -> ConflictingSets:
         num_arcs = len(self.travel_times_arcs)
@@ -133,6 +136,21 @@ class Instance:
     def initialize_max_delay_on_arcs(self):
         return [[self.latest_departure_times[trip][position] - self.earliest_departure_times[trip][position] for
                  position, arc in enumerate(route)] for trip, route in enumerate(self.trip_routes)]
+
+    def get_arc_position_in_routes_map(self) -> list[dict[TripID, Position]]:
+        """Maps the arc to the position in the trip routes. Used for efficient operations of local search"""
+        arc_to_pos_map = [dict() for _ in range(len(self.travel_times_arcs))]  # size of arcs
+
+        for trip, route in enumerate(self.trip_routes):
+            for position, arc in enumerate(route):
+                if arc == 0:
+                    continue
+                arc_to_pos_map[arc][trip] = position
+
+        return arc_to_pos_map
+
+    def update_arc_position_in_routes_map(self) -> None:
+        self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
 
 
 def get_instance(instance_params: InstanceParameters) -> Instance:

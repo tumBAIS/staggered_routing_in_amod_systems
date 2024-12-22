@@ -60,4 +60,6 @@ def remove_not_utilized_arcs(instance: EpochInstance) -> list[int]:
     _remove_arcs(instance, arcs_to_remove)
     _update_trip_routes(instance, arcs_to_remove)
 
+    instance.update_arc_position_in_routes_map()
+
     return arcs_to_remove

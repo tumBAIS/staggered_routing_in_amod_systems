@@ -39,6 +39,7 @@ def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp
     """Create a CPP instance for the given epoch."""
     return cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
+        arc_position_in_routes_map=instance.arc_position_in_routes_map,
         travel_times_arcs=instance.travel_times_arcs,
         capacities_arcs=instance.capacities_arcs,
         list_of_slopes=instance.instance_params.list_of_slopes,
