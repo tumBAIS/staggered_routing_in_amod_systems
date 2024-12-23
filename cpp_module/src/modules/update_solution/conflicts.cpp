@@ -97,13 +97,19 @@ namespace cpp_module {
                                     const Departure &departure) -> double {
         double flow_on_arc = 1.0;
 
-        for (auto other_trip_id: instance.get_conflicting_set(departure.arc_id)) {
+        // Avoid copying the conflicting set
+        const auto &conflicting_set = instance.get_conflicting_set(departure.arc_id);
+
+        for (const auto &other_trip_id: conflicting_set) {
             if (other_trip_id == departure.trip_id) {
                 continue; // Skip the current trip
             }
 
+            // Cache the position of the arc in the conflicting trip's route
             long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
-            Tie tie = {
+
+            // Prepare Tie object only if needed
+            Tie tie{
                     departure.trip_id,
                     other_trip_id,
                     departure.position,
@@ -111,11 +117,13 @@ namespace cpp_module {
                     departure.arc_id
             };
 
+            // Check if there's a tie and exit early if necessary
             if (check_tie(new_solution, tie)) {
                 new_solution.set_ties_flag(true);
                 return UNUSED_VALUE;
             }
 
+            // Pass parameters by reference to avoid copies
             flow_on_arc += process_conflicting_trip(
                     initial_solution,
                     new_solution,
@@ -124,6 +132,7 @@ namespace cpp_module {
                     other_position
             );
 
+            // Break computation if the flag is set
             if (get_break_flow_computation_flag()) {
                 set_break_flow_computation_flag(false);
                 break;
@@ -132,6 +141,7 @@ namespace cpp_module {
 
         return flow_on_arc;
     }
+
 
     double Scheduler::process_conflicting_trip(Solution &initial_solution,
                                                Solution &new_solution,

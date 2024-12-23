@@ -17,11 +17,11 @@ namespace cpp_module {
             bool operator()(const Conflict &a, const Conflict &b) const {
                 // Compare delays with tolerance
                 if (std::abs(a.delay - b.delay) > TOLERANCE) {
-                    return a.delay > b.delay; // Higher delay comes first
+                    return a.delay < b.delay; // Higher delay comes first
                 }
 
                 // If delays are equal within tolerance, compare trip IDs
-                return a.current_trip_id > b.current_trip_id; // Larger trip ID comes first
+                return a.current_trip_id < b.current_trip_id; // Larger trip ID comes first
             }
         };
 

@@ -9,7 +9,7 @@ import datetime
 from typing import Optional
 
 # Global configuration parameters
-SAVE_CPP = False  # Saves files to run catch2 tests in cpp_module
+SAVE_CPP = True  # Saves files to run catch2 tests in cpp_module
 ACTIVATE_ASSERTIONS = False
 FIX_MODEL = False
 USE_GUROBI_INDICATORS = False

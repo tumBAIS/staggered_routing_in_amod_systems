@@ -35,6 +35,7 @@ def save_json_for_cpp(instance: EpochInstance, solver_parameters: SolverParamete
     os.makedirs(path_to_cpp_dir, exist_ok=True)
     output = {
         "trip_routes": instance.trip_routes,
+        "arc_position_in_routes_map": instance.arc_position_in_routes_map,
         "travel_time_arcs": instance.travel_times_arcs,
         "nominal_capacities_arcs": instance.capacities_arcs,
         "list_of_slopes": instance.instance_params.list_of_slopes,

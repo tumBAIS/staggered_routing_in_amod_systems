@@ -166,7 +166,7 @@ namespace cpp_module {
             return trip_routes[trip_id][position];
         }
 
-        [[nodiscard]] const ConflictingSet &get_conflicting_set(ArcID arc_id) const {
+        [[nodiscard]] inline const ConflictingSet &get_conflicting_set(ArcID arc_id) const noexcept {
             return conflicting_sets[arc_id];
         }
 

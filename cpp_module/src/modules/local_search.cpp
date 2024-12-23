@@ -64,7 +64,7 @@ namespace cpp_module {
         // Fallback for unspecified cases
         throw std::invalid_argument("get_instructions_conflict: unspecified case!");
     }
-    
+
     auto LocalSearch::get_trip_info_struct(long current_trip,
                                            const Solution &solution,
                                            long position) -> TripInfo {
@@ -353,7 +353,7 @@ namespace cpp_module {
 
             if (conflict.has_delay()) {
                 //Check if it is still most urgent conflict
-                if (!conflicts_queue.empty() && conflicts_queue.top().delay > conflict.delay) {
+                if (!conflicts_queue.empty() && conflicts_queue.top().delay > conflict.delay + TOLERANCE) {
                     conflicts_queue.push(conflict);
                     continue;
                 }
@@ -361,7 +361,7 @@ namespace cpp_module {
 
             auto old_delay = best_known_solution.get_total_delay(); // Print purposes
             best_known_solution = solve_conflict(conflict, best_known_solution);
-            if (best_known_solution.get_total_delay() < old_delay) {
+            if (best_known_solution.get_total_delay() < old_delay - TOLERANCE) {
                 print_move(best_known_solution, old_delay, conflict);
                 conflict.update(best_known_solution, instance);
                 if (conflict.has_delay()) {
