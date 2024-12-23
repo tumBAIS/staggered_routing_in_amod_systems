@@ -5,8 +5,7 @@ import utils.prints
 from conflicting_sets.time_bounds import TimeBound, get_initial_latest_arrival_times, get_arc_based_time_bounds, \
     split_time_bounds_on_arcs, arrange_bounds_by_vehicle, get_undivided_conflicting_sets
 from problem.instance import Instance
-from utils.aliases import *
-from input_data import TOLERANCE, CONSTR_TOLERANCE
+from input_data import CONSTR_TOLERANCE
 
 
 def get_max_delay_on_arcs(vehicle_based_time_bounds: list[list[TimeBound]]) -> list[list[float]]:
@@ -46,7 +45,7 @@ def get_latest_departure_times(vehicle_based_time_bounds: list[list[TimeBound]])
     ]
 
 
-def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: Schedules) -> None:
+def add_conflicting_sets_to_instance(instance: Instance) -> None:
     """
     Add undivided conflicting sets and update time-related properties in the instance.
 
@@ -61,7 +60,7 @@ def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: Schedules)
 
     # Initialize latest arrival times
     print("Initializing latest arrival times...", end=" ")
-    known_latest_arrival_times = get_initial_latest_arrival_times(instance, ff_schedule)
+    known_latest_arrival_times = get_initial_latest_arrival_times(instance)
     print("done.")
 
     # Iteratively refine time bounds until convergence
@@ -70,7 +69,7 @@ def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: Schedules)
     while True:
         iteration += 1
         print(f"  Iteration {iteration}: Computing arc-based time bounds...", end=" ")
-        arc_based_time_bounds = get_arc_based_time_bounds(instance, known_latest_arrival_times, ff_schedule)
+        arc_based_time_bounds = get_arc_based_time_bounds(instance, known_latest_arrival_times)
         bounds_on_arcs_split = split_time_bounds_on_arcs(instance, arc_based_time_bounds)
         vehicle_based_time_bounds = arrange_bounds_by_vehicle(arc_based_time_bounds, instance.trip_routes)
         print("done.")
@@ -102,6 +101,7 @@ def add_conflicting_sets_to_instance(instance: Instance, ff_schedule: Schedules)
     # Split conflicting sets
     print("Splitting conflicting sets...", end=" ")
     conflicting_sets.split.split_conflicting_sets(instance, undivided_conflicting_sets)
+    instance.update_arc_position_in_routes_map()
     print("done.")
 
     # Measure and display execution time

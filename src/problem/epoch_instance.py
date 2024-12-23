@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import datetime
+
+import conflicting_sets.schedule_utilities
 from problem.instance import Instance
 from typing import Optional
 from input_data import SolverParameters, CONSTR_TOLERANCE, TOLERANCE
@@ -266,9 +268,11 @@ def get_epoch_instance(
     )
 
     # Generate the EpochInstance
-    return EpochInstance(
+    epoch_instance = EpochInstance(
         epoch_id=epoch_id,
         instance=instance,
         trip_original_ids=trip_ids_in_epoch,
         trip_ids_from_previous_epoch=trips_from_previous_epoch,
     )
+    conflicting_sets.schedule_utilities.add_conflicting_sets_to_instance(epoch_instance)
+    return epoch_instance

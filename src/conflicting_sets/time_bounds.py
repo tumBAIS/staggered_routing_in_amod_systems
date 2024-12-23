@@ -131,7 +131,6 @@ def compute_delay_on_arc(arc: int, instance: Instance, vehicles_on_arc: int) -> 
 
 
 def get_earliest_departures_list_and_pq(
-        free_flow_schedule: Schedules,
         instance: Instance,
         known_latest_arrival_times,
 ) -> tuple[list[list[TimeBound]], PriorityQueue]:
@@ -143,9 +142,12 @@ def get_earliest_departures_list_and_pq(
     arc_based_earliest_departures = [[] for _ in instance.travel_times_arcs]
 
     # Populate the arc-based earliest departures and priority queue
-    for vehicle, schedule in enumerate(free_flow_schedule):
-        for position, earliest_departure in enumerate(schedule):
-            arc = instance.trip_routes[vehicle][position]
+    for vehicle, earliest_departure_times in enumerate(instance.earliest_departure_times):
+        for position, earliest_departure in enumerate(earliest_departure_times):
+            try:
+                arc = instance.trip_routes[vehicle][position]
+            except IndexError:
+                raise IndexError()
             latest_arrival = known_latest_arrival_times[vehicle][position]
             earliest_arrival = earliest_departure + instance.travel_times_arcs[arc]
             latest_departure = (
@@ -366,14 +368,13 @@ def get_latest_arrival_time(
 def get_arc_based_time_bounds(
         instance: Instance,
         known_latest_arrival_times: Schedules,
-        free_flow_schedule: Schedules
 ) -> list[list[TimeBound]]:
     """
     Computes time bounds for all arcs in the network based on earliest and latest departures and arrivals.
     """
     # Initialize data structures
     arc_based_time_bounds: list[list[TimeBound]] = [[] for _ in instance.travel_times_arcs]
-    arc_based_earliest_departures, edpq = get_earliest_departures_list_and_pq(free_flow_schedule, instance,
+    arc_based_earliest_departures, edpq = get_earliest_departures_list_and_pq(instance,
                                                                               known_latest_arrival_times)
 
     while not edpq.empty():
@@ -447,18 +448,11 @@ def get_arc_based_time_bounds(
     return arc_based_time_bounds
 
 
-def get_initial_latest_arrival_times(instance: Instance, ff_schedule: Schedules) -> list[list[float]]:
+def get_initial_latest_arrival_times(instance: Instance) -> list[list[float]]:
     """
     The function calculates the latest arrival times for each vehicle at each stop,
     ensuring they respect the vehicle's deadline and account for available slack time.
     """
-    assert len(instance.deadlines) == len(ff_schedule), "Mismatch in deadlines and free-flow schedule length."
-    for idx, (deadline, schedule) in enumerate(zip(instance.deadlines, ff_schedule)):
-        if deadline + TOLERANCE < schedule[-1]:
-            raise ValueError(
-                f"Deadline inconsistency detected at index {idx}: "
-                f"deadline ({deadline}) + TOLERANCE ({TOLERANCE}) < schedule[-1] ({schedule[-1]})."
-            )
 
     return [[instance.earliest_departure_times[trip_id][position] + instance.travel_times_arcs[arc] for position, arc in
              enumerate(route)] for trip_id, route in enumerate(instance.trip_routes)]

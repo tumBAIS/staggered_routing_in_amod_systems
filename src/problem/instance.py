@@ -13,6 +13,7 @@ import pandas as pd
 from networkx import DiGraph
 from networkx.readwrite import json_graph
 
+import conflicting_sets.schedule_utilities
 from instance_generator import InstanceComputer
 from problem.paths import get_arc_based_paths_with_features
 
@@ -91,12 +92,11 @@ class Instance:
             trip_departure_times = [release_time]
 
             # Calculate earliest departure times for each arc in the route
-            for arc in route:
+            for arc in route[:-1]:
                 nominal_time = self.travel_times_arcs[arc]
                 last_time = trip_departure_times[-1]
                 trip_departure_times.append(last_time + nominal_time)
 
-            # Add the calculated times for the current trip to the result
             earliest_departure_times.append(trip_departure_times)
 
         return earliest_departure_times
@@ -167,6 +167,7 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
                         node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time,
                         max_staggering_applicable=max_staggering_applicable)
     instance.print_info_arcs_utilized()
+    conflicting_sets.schedule_utilities.add_conflicting_sets_to_instance(instance)
     return instance
 
 

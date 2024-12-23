@@ -7,8 +7,6 @@ from utils.aliases import *
 from congestion_model.core import (
     get_congested_schedule,
 )
-from congestion_model.conflict_binaries import get_conflict_binaries
-from conflicting_sets.schedule_utilities import add_conflicting_sets_to_instance
 from input_data import SolverParameters
 import cpp_module as cpp
 
@@ -94,7 +92,6 @@ def reconstruct_solution(
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_solution = cpp_scheduler.construct_solution(reconstructed_start_times)
     free_flow_schedule = cpp_instance.get_free_flow_schedule(reconstructed_start_times)
-    add_conflicting_sets_to_instance(instance, free_flow_schedule)
 
     # Return the reconstructed solution
     return Solution(
