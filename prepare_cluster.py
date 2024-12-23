@@ -222,7 +222,7 @@ def get_set_of_experiments_name(
         seed_list: list[int], list_of_slopes: list[float], list_of_thresholds: list[float],
         staggering_cap: list[int], deadline_factor: int, algorithm_time_limit: int,
         optimize: bool, warm_start: bool,
-        improve_warm_start: bool, local_search_callback: bool) -> str:
+        improve_warm_start: bool, local_search_callback: bool, simplify: bool) -> str:
     # Format the string based on the arguments and convert to uppercase
 
     def format_stag_cap(stag_cap):
@@ -253,7 +253,7 @@ def get_set_of_experiments_name(
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
         f"OPT{'YES' if optimize else 'NO'}_"
         f"WARM{'YES' if warm_start else 'NO'}_IWARM{'YES' if improve_warm_start else 'NO'}_"
-        f"CBLS{'YES' if local_search_callback else 'NO'}_SMPLFY{'YES' if local_search_callback else 'NO'}"
+        f"CBLS{'YES' if local_search_callback else 'NO'}_SMPLFY{'YES' if simplify else 'NO'}"
     )
 
     # CUSTOM RULES
@@ -300,8 +300,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
                                                      number_of_trips, add_shortcuts, day_list, max_flow_allowed_list,
                                                      seed_list, list_of_slopes, list_of_thresholds, staggering_cap_list,
                                                      deadline_factor, algorithm_time_limit, optimize, warm_start,
-                                                     improve_warm_start,
-                                                     local_search_callback)
+                                                     improve_warm_start, local_search_callback, simplify)
 
     # Cluster parameters
     job_title = set_of_experiments
