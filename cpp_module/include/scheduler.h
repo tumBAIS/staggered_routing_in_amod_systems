@@ -49,13 +49,30 @@ namespace cpp_module {
     };
 
 
+    // Template class for reservable priority queue
+    template<typename T, typename Compare>
+    class ReservablePriorityQueue : public std::priority_queue<T, std::vector<T>, Compare> {
+    public:
+        // Reserve memory for the underlying container
+        void reserve(size_t capacity) {
+            this->c.reserve(capacity);
+        }
+
+        // Clear the queue
+        void clear() {
+            this->c.clear();
+        }
+    };
+
+
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 
     class SchedulerFields : public TieManager {
 
 
     public:
-        using MinQueueDepartures = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
+        using MinQueueDepartures = ReservablePriorityQueue<Departure, CompareDepartures>;
+        using MinQueueArrivals = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
 
         enum TripStatus {
             INACTIVE, STAGING, ACTIVE
@@ -64,7 +81,7 @@ namespace cpp_module {
 
     private:
         MinQueueDepartures pq_departures;
-        std::vector<MinQueueDepartures> arrivals_on_arcs;
+        std::vector<MinQueueArrivals> arrivals_on_arcs;
         std::vector<long> last_processed_position;
         std::vector<long> number_of_reinsertions;
         std::vector<TripID> trips_to_mark;
@@ -79,9 +96,10 @@ namespace cpp_module {
         explicit SchedulerFields(Instance &arg_instance) : TieManager(arg_instance) {
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
+            clear_and_reserve_pq_departures();
         }
 
-        [[nodiscard]] bool get_break_flow_computation_flag() {
+        [[nodiscard]] bool get_break_flow_computation_flag() const {
             return break_flow_computation_flag;
         }
 
@@ -102,7 +120,7 @@ namespace cpp_module {
     protected:
 
 
-        [[nodiscard]]   MinQueueDepartures &get_arrivals_on_arc(ArcID arc_id) {
+        [[nodiscard]]   MinQueueArrivals &get_arrivals_on_arc(ArcID arc_id) {
             return arrivals_on_arcs[arc_id];
         }
 
@@ -145,12 +163,20 @@ namespace cpp_module {
             return pq_departures.empty();
         }
 
-        void clear_departures_pq() {
-            pq_departures = MinQueueDepartures();
+        // Helper function to clear and reserve a vector
+        template<typename T>
+        void clear_and_reserve(T &vec, std::size_t size) {
+            vec.clear();
+            vec.reserve(size);
+        }
+
+        // Clear and reserve necessary vectors
+        void clear_and_reserve_pq_departures() {
+            clear_and_reserve(pq_departures, instance.get_number_of_trips());
         }
 
         void clear_arrivals_on_arcs() {
-            arrivals_on_arcs = std::vector<MinQueueDepartures>(instance.get_number_of_arcs());
+            arrivals_on_arcs = std::vector<MinQueueArrivals>(instance.get_number_of_arcs());
         }
 
         void set_lazy_update_pq_flag(bool arg_flag) {
@@ -274,8 +300,6 @@ namespace cpp_module {
 
         [[nodiscard]] auto check_if_solution_is_feasible(const Departure &departure) const;
 
-        static double compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time);
-
         static double compute_delay_on_arc(const double &vehicles_on_arc, const Instance &arg_instance, long arc);
 
         Departure get_departure(double arg_time, TripID trip_id, Position arg_position, DepartureType arg_type,
@@ -338,6 +362,7 @@ namespace cpp_module {
         double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
                                         TripID other_trip_id, Position other_position);
 
+        double compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time);
     };
 
 }

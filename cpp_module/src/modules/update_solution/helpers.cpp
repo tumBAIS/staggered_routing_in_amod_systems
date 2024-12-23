@@ -168,7 +168,7 @@ namespace cpp_module {
 
 
     auto Scheduler::initialize_scheduler_for_update_solution() -> void {
-        clear_departures_pq();
+        clear_and_reserve_pq_departures();
         set_lazy_update_pq_flag(false);
         initialize_status_vehicles();
     }

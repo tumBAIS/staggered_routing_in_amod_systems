@@ -14,7 +14,7 @@ namespace cpp_module {
     }
 
     auto
-    Scheduler::compute_vehicles_on_arc(MinQueueDepartures &arrivals_on_arc, const double &departure_time) -> double {
+    Scheduler::compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time) -> double {
         while (!arrivals_on_arc.empty() && arrivals_on_arc.top().time <= departure_time) {
             arrivals_on_arc.pop();
         }
@@ -63,7 +63,7 @@ namespace cpp_module {
 // Initialize the scheduler
     auto Scheduler::initialize_scheduler(const std::vector<double> &release_times) -> void {
         // Reset priority queues and counters, and initialize priority queue for departures
-        clear_departures_pq();
+        clear_and_reserve_pq_departures();
         clear_arrivals_on_arcs();
         Departure departure{};
 
