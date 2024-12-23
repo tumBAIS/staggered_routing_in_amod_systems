@@ -60,9 +60,6 @@ namespace cpp_module {
         enum TripStatus {
             INACTIVE, STAGING, ACTIVE
         };
-        enum Instruction {
-            CONTINUE, EVALUATE, BREAK
-        };
 
 
     private:
@@ -71,10 +68,9 @@ namespace cpp_module {
         std::vector<long> last_processed_position;
         std::vector<long> number_of_reinsertions;
         std::vector<TripID> trips_to_mark;
-        VehicleSchedule schedule_to_restore;
-        MinQueueDepartures pq_to_restore;
         bool lazy_update_pq{};
         std::vector<TripStatus> trip_status_list;
+        bool break_flow_computation_flag = false;
 
     protected:
 
@@ -85,6 +81,14 @@ namespace cpp_module {
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
         }
 
+        [[nodiscard]] bool get_break_flow_computation_flag() {
+            return break_flow_computation_flag;
+        }
+
+
+        void set_break_flow_computation_flag(bool arg_flag) {
+            break_flow_computation_flag = arg_flag;
+        }
 
         [[nodiscard]] double get_trip_remaining_time_slack(TripID trip_id, Time start_time) const {
             return instance.get_trip_arc_latest_departure_time(trip_id, 0) - start_time;
@@ -204,9 +208,9 @@ namespace cpp_module {
         [[nodiscard]] bool
         check_if_vehicle_is_late(double current_vehicle_new_arrival, const Departure &departure) const;
 
-        [[nodiscard]] Instruction
+        [[nodiscard]] bool
         check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position,
-                                                           const Departure &departure) const;
+                                                           const Departure &departure);
 
 
         void initialize_scheduler(const std::vector<double> &release_times);
@@ -332,7 +336,8 @@ namespace cpp_module {
                                        bool current_conflicts_with_other, const Departure &departure);
 
         double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
-                                        TripID other_trip_id);
+                                        TripID other_trip_id, Position other_position);
+
     };
 
 }

@@ -23,7 +23,7 @@ namespace cpp_module {
     using ConflictingSet = std::vector<TripID>;
     using ConflictingSets = std::vector<ConflictingSet>;
     using TripRoute = std::vector<ArcID>;
-    using ArcPositionMap = std::vector<std::unordered_map<TripID, Position>>;
+    using ArcPositionMap = std::vector<std::vector<Position>>;
 // Parameters
     const double CONSTR_TOLERANCE = 1e-3;
     const double TOLERANCE = 1e-6;
@@ -118,21 +118,7 @@ namespace cpp_module {
         // Getters
         // Find the index of an element in a vector
         [[nodiscard]] Position get_arc_position_in_trip_route(ArcID arc_id, TripID trip_id) const {
-#ifdef ENABLE_RANGE_CHECKS_INSTANCE
-            if (arc_id >= arc_position_in_routes_map.size()) {
-                throw std::out_of_range("ArcID is out of range in arc_position_in_routes_map");
-            }
-#endif
-            const auto &trip_map = arc_position_in_routes_map[arc_id];
-            auto trip_it = trip_map.find(trip_id);
-#ifdef ENABLE_RANGE_CHECKS_INSTANCE
-            if (trip_it != trip_map.end()) {
-                return trip_it->second;
-            }
-
-            throw std::out_of_range("TripID not found in the map for the given ArcID");
-#endif
-            return trip_it->second;
+            return arc_position_in_routes_map[arc_id][trip_id];
         }
 
         [[nodiscard]] const std::vector<std::vector<TripID>> &get_trip_routes() const {

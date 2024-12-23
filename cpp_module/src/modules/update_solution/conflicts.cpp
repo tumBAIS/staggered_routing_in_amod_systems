@@ -29,7 +29,7 @@ namespace cpp_module {
             const long other_trip_id,
             const long other_position,
             const Departure &departure
-    ) const -> Instruction {
+    ) -> bool {
 
         // Fetch the earliest departure and latest arrival times for the current trip
         double current_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
@@ -48,33 +48,44 @@ namespace cpp_module {
         );
 
         // Determine overlap conditions
-        bool other_comes_before_and_does_not_overlap = comes_before(other_latest_arrival_time,
-                                                                    current_earliest_departure_time, other_trip_id,
-                                                                    departure.trip_id);
+        bool other_comes_before_and_does_not_overlap = comes_before(
+                other_latest_arrival_time,
+                current_earliest_departure_time,
+                other_trip_id,
+                departure.trip_id
+        );
 
         bool other_comes_before_and_overlaps =
-                comes_before(other_earliest_departure_time, current_earliest_departure_time, other_trip_id,
-                             departure.trip_id) &&
-                !comes_before(other_latest_arrival_time, current_earliest_departure_time, other_trip_id,
-                              departure.trip_id);
+                comes_before(
+                        other_earliest_departure_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                ) &&
+                !comes_before(
+                        other_latest_arrival_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                );
 
         bool other_comes_after_and_overlaps =
-                comes_after(other_earliest_departure_time, current_earliest_departure_time, other_trip_id,
-                            departure.trip_id) &&
-                comes_before(current_earliest_departure_time, other_latest_arrival_time, departure.trip_id,
-                             other_trip_id);
+                comes_after(
+                        other_earliest_departure_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                ) &&
+                comes_before(
+                        current_earliest_departure_time, other_latest_arrival_time, departure.trip_id, other_trip_id
+                );
 
-        bool other_comes_after_and_does_not_overlap = comes_after(other_earliest_departure_time,
-                                                                  current_latest_arrival_time, other_trip_id,
-                                                                  departure.trip_id);
+        bool other_comes_after_and_does_not_overlap = comes_after(
+                other_earliest_departure_time,
+                current_latest_arrival_time,
+                other_trip_id,
+                departure.trip_id
+        );
 
         // Determine the appropriate instruction
         if (other_comes_before_and_does_not_overlap) {
-            return CONTINUE;
+            return false;
         } else if (other_comes_before_and_overlaps || other_comes_after_and_overlaps) {
-            return EVALUATE;
+            return true;
         } else if (other_comes_after_and_does_not_overlap) {
-            return BREAK;
+            set_break_flow_computation_flag(true);
+            return false;
         } else {
             throw std::invalid_argument("Comparing vehicle bounds: undefined case!");
         }
@@ -91,7 +102,32 @@ namespace cpp_module {
                 continue; // Skip the current trip
             }
 
-            flow_on_arc += process_conflicting_trip(initial_solution, new_solution, departure, other_trip_id);
+            long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
+            Tie tie = {
+                    departure.trip_id,
+                    other_trip_id,
+                    departure.position,
+                    other_position,
+                    departure.arc_id
+            };
+
+            if (check_tie(new_solution, tie)) {
+                new_solution.set_ties_flag(true);
+                return UNUSED_VALUE;
+            }
+
+            flow_on_arc += process_conflicting_trip(
+                    initial_solution,
+                    new_solution,
+                    departure,
+                    other_trip_id,
+                    other_position
+            );
+
+            if (get_break_flow_computation_flag()) {
+                set_break_flow_computation_flag(false);
+                break;
+            }
         }
 
         return flow_on_arc;
@@ -100,15 +136,10 @@ namespace cpp_module {
     double Scheduler::process_conflicting_trip(Solution &initial_solution,
                                                Solution &new_solution,
                                                const Departure &departure,
-                                               TripID other_trip_id) {
-        long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
-        Instruction instruction = check_if_trips_within_conflicting_set_can_conflict(
-                other_trip_id, other_position, departure);
-
-        if (instruction == CONTINUE) {
-            return 0.0; // Skip processing this trip
-        } else if (instruction == BREAK) {
-            return 0.0; // End the loop early
+                                               TripID other_trip_id,
+                                               Position other_position) {
+        if (!check_if_trips_within_conflicting_set_can_conflict(other_trip_id, other_position, departure)) {
+            return 0.0;
         }
 
         bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
@@ -119,13 +150,18 @@ namespace cpp_module {
                 other_trip_id, other_departure_time, other_arrival, departure);
 
         if (!other_vehicle_is_active) {
-            return handle_inactive_vehicle(initial_solution, other_trip_id, other_position,
-                                           current_conflicts_with_other, departure);
+            return handle_inactive_vehicle(
+                    initial_solution, other_trip_id, other_position,
+                    current_conflicts_with_other, departure
+            );
         } else {
-            return handle_active_vehicle(initial_solution, new_solution, other_trip_id, other_position,
-                                         other_departure_time, current_conflicts_with_other, departure);
+            return handle_active_vehicle(
+                    initial_solution, new_solution, other_trip_id, other_position,
+                    other_departure_time, current_conflicts_with_other, departure
+            );
         }
     }
+
 
     double Scheduler::handle_inactive_vehicle(Solution &initial_solution,
                                               TripID other_trip_id,

@@ -31,7 +31,7 @@ namespace cpp_module {
         auto flow_on_arc = get_flow_on_arc(initial_solution, new_solution, departure);
 
         // Exit early if lazy update flag is set
-        if (get_lazy_update_pq_flag()) {
+        if (get_lazy_update_pq_flag() || new_solution.has_ties()) {
             return UNUSED_VALUE;
         }
 

@@ -73,10 +73,10 @@ class Scheduler:
         )
 
     @staticmethod
-    def get_arc_position_in_routes_map(travel_times_arcs, trip_routes) -> list[dict[int, int]]:
-        # TODO: remove
+    def get_arc_position_in_routes_map(travel_times_arcs, trip_routes) -> list[list[int]]:
         """Maps the arc to the position in the trip routes. Used for efficient operations of local search"""
-        arc_to_pos_map = [dict() for _ in range(len(travel_times_arcs))]  # size of arcs
+        arc_to_pos_map = [[-1 for _ in range(len(trip_routes))] for _ in
+                          range(len(travel_times_arcs))]  # size of arcs
 
         for trip, route in enumerate(trip_routes):
             for position, arc in enumerate(route):
