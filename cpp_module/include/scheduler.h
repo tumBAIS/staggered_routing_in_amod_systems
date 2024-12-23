@@ -321,6 +321,18 @@ namespace cpp_module {
         void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
 
         Solution update_existing_congested_schedule(Solution &initial_solution, Conflict &conflict);
+
+        double
+        handle_active_vehicle(Solution &initial_solution, Solution &new_solution, TripID other_trip_id,
+                              long other_position,
+                              double other_departure_time, bool current_conflicts_with_other,
+                              const Departure &departure);
+
+        double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
+                                       bool current_conflicts_with_other, const Departure &departure);
+
+        double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
+                                        TripID other_trip_id);
     };
 
 }

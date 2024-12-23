@@ -91,63 +91,95 @@ namespace cpp_module {
                 continue; // Skip the current trip
             }
 
-            long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
-            Instruction instruction = check_if_trips_within_conflicting_set_can_conflict(
-                    other_trip_id, other_position, departure);
-
-            if (instruction == CONTINUE) {
-                continue;
-            } else if (instruction == BREAK) {
-                break;
-            }
-
-            bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
-            double other_departure_time = new_solution.get_trip_arc_departure(other_trip_id, other_position);
-            double other_arrival = new_solution.get_trip_arc_departure(other_trip_id, other_position + 1);
-
-            bool current_conflicts_with_other = check_conflict_with_other_vehicle(
-                    other_trip_id, other_departure_time, other_arrival, departure);
-
-            if (!other_vehicle_is_active) {
-                // Handle inactive vehicles
-                if (current_conflicts_with_other) {
-                    flow_on_arc++;
-                }
-
-                MarkInstruction mark_instruction = check_if_other_should_be_marked(
-                        initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure);
-
-                if (mark_instruction == MARK) {
-                    // Mark immediately
-                    mark_trip(other_trip_id, other_departure_time, other_position);
-                    set_lazy_update_pq_flag(true);
-                } else if (mark_instruction == WAIT) {
-                    // Wait to mark
-                    insert_trip_to_mark(other_trip_id);
-                }
-            } else {
-                // Handle active vehicles
-                bool other_is_processed_on_this_arc =
-                        (other_position <= get_trip_last_processed_position(other_trip_id));
-
-                bool other_is_first = check_if_other_is_first(
-                        other_trip_id, other_departure_time, departure);
-
-                if (other_is_processed_on_this_arc) {
-                    if (!other_is_first) {
-                        reinsert_other_in_queue(
-                                initial_solution, new_solution, other_trip_id, other_position, other_departure_time);
-                        continue;
-                    }
-
-                    if (current_conflicts_with_other) {
-                        flow_on_arc++;
-                    }
-                }
-            }
+            flow_on_arc += process_conflicting_trip(initial_solution, new_solution, departure, other_trip_id);
         }
 
         return flow_on_arc;
+    }
+
+    double Scheduler::process_conflicting_trip(Solution &initial_solution,
+                                               Solution &new_solution,
+                                               const Departure &departure,
+                                               TripID other_trip_id) {
+        long other_position = instance.get_arc_position_in_trip_route(departure.arc_id, other_trip_id);
+        Instruction instruction = check_if_trips_within_conflicting_set_can_conflict(
+                other_trip_id, other_position, departure);
+
+        if (instruction == CONTINUE) {
+            return 0.0; // Skip processing this trip
+        } else if (instruction == BREAK) {
+            return 0.0; // End the loop early
+        }
+
+        bool other_vehicle_is_active = get_trip_status(other_trip_id) == ACTIVE;
+        double other_departure_time = new_solution.get_trip_arc_departure(other_trip_id, other_position);
+        double other_arrival = new_solution.get_trip_arc_departure(other_trip_id, other_position + 1);
+
+        bool current_conflicts_with_other = check_conflict_with_other_vehicle(
+                other_trip_id, other_departure_time, other_arrival, departure);
+
+        if (!other_vehicle_is_active) {
+            return handle_inactive_vehicle(initial_solution, other_trip_id, other_position,
+                                           current_conflicts_with_other, departure);
+        } else {
+            return handle_active_vehicle(initial_solution, new_solution, other_trip_id, other_position,
+                                         other_departure_time, current_conflicts_with_other, departure);
+        }
+    }
+
+    double Scheduler::handle_inactive_vehicle(Solution &initial_solution,
+                                              TripID other_trip_id,
+                                              long other_position,
+                                              bool current_conflicts_with_other,
+                                              const Departure &departure) {
+        double flow_increment = 0.0;
+
+        if (current_conflicts_with_other) {
+            flow_increment += 1.0;
+        }
+
+        MarkInstruction mark_instruction = check_if_other_should_be_marked(
+                initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure);
+
+        if (mark_instruction == MARK) {
+            mark_trip(other_trip_id, initial_solution.get_trip_arc_departure(other_trip_id, other_position),
+                      other_position);
+            set_lazy_update_pq_flag(true);
+        } else if (mark_instruction == WAIT) {
+            insert_trip_to_mark(other_trip_id);
+        }
+
+        return flow_increment;
+    }
+
+    double Scheduler::handle_active_vehicle(Solution &initial_solution,
+                                            Solution &new_solution,
+                                            TripID other_trip_id,
+                                            long other_position,
+                                            double other_departure_time,
+                                            bool current_conflicts_with_other,
+                                            const Departure &departure) {
+        double flow_increment = 0.0;
+
+        bool other_is_processed_on_this_arc =
+                (other_position <= get_trip_last_processed_position(other_trip_id));
+
+        bool other_is_first = check_if_other_is_first(
+                other_trip_id, other_departure_time, departure);
+
+        if (other_is_processed_on_this_arc) {
+            if (!other_is_first) {
+                reinsert_other_in_queue(initial_solution, new_solution, other_trip_id,
+                                        other_position, other_departure_time);
+                return 0.0;
+            }
+
+            if (current_conflicts_with_other) {
+                flow_increment += 1.0;
+            }
+        }
+
+        return flow_increment;
     }
 
 
