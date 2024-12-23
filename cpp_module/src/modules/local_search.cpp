@@ -357,6 +357,8 @@ namespace cpp_module {
                     conflicts_queue.push(conflict);
                     continue;
                 }
+            } else {
+                continue;
             }
 
             auto old_delay = best_known_solution.get_total_delay(); // Print purposes

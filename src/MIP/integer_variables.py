@@ -15,29 +15,29 @@ def _get_bounds_for_binaries(
     ub_alpha = ub_beta = ub_gamma = 1
 
     # Get positions and timing bounds for the vehicles on the arc
-    pos_1 = instance.trip_routes[first_vehicle].index(arc)
-    pos_2 = instance.trip_routes[second_vehicle].index(arc)
+    arc_position_vehicle_1 = instance.trip_routes[first_vehicle].index(arc)
+    arc_position_vehicle_2 = instance.trip_routes[second_vehicle].index(arc)
 
-    e_e_1, e_l_1 = (
-        instance.earliest_departure_times[first_vehicle][pos_1],
-        instance.latest_departure_times[first_vehicle][pos_1],
+    earliest_departure_1, latest_departure_1 = (
+        instance.earliest_departure_times[first_vehicle][arc_position_vehicle_1],
+        instance.latest_departure_times[first_vehicle][arc_position_vehicle_1],
     )
-    e_e_2, e_l_2 = (
-        instance.earliest_departure_times[second_vehicle][pos_2],
-        instance.latest_departure_times[second_vehicle][pos_2],
+    earliest_departure_2, latest_departure_2 = (
+        instance.earliest_departure_times[second_vehicle][arc_position_vehicle_2],
+        instance.latest_departure_times[second_vehicle][arc_position_vehicle_2],
     )
-    l_e_2, l_l_2 = (
-        instance.earliest_departure_times[second_vehicle][pos_2 + 1],
-        instance.latest_departure_times[second_vehicle][pos_2 + 1],
+    earliest_next_departure_2, latest_next_departure_2 = (
+        instance.earliest_departure_times[second_vehicle][arc_position_vehicle_2 + 1],
+        instance.latest_departure_times[second_vehicle][arc_position_vehicle_2 + 1],
     )
 
     # Use tolerances in comparisons
-    alpha_must_be_one = e_l_2 < e_e_1 - TOLERANCE
-    beta_must_be_one = e_l_1 < l_e_2 - TOLERANCE
+    alpha_must_be_one = latest_departure_2 < earliest_departure_1 - TOLERANCE
+    beta_must_be_one = latest_departure_1 < earliest_next_departure_2 - TOLERANCE
     gamma_must_be_one = alpha_must_be_one and beta_must_be_one
 
-    alpha_must_be_zero = e_l_1 < e_e_2 - TOLERANCE
-    beta_must_be_zero = l_l_2 < e_e_1 - TOLERANCE
+    alpha_must_be_zero = latest_departure_1 < earliest_departure_2 - TOLERANCE
+    beta_must_be_zero = latest_next_departure_2 < earliest_departure_1 - TOLERANCE
 
     # Adjust bounds based on conditions
     if alpha_must_be_one:
