@@ -11,10 +11,28 @@ namespace cpp_module {
 
     class LocalSearch : public TieManager {
 
+        // Define a comparison struct
+        struct CompareConflicts {
+
+            bool operator()(const Conflict &a, const Conflict &b) const {
+                // Compare delays with tolerance
+                if (std::abs(a.delay - b.delay) > TOLERANCE) {
+                    return a.delay > b.delay; // Higher delay comes first
+                }
+
+                // If delays are equal within tolerance, compare trip IDs
+                return a.current_trip_id > b.current_trip_id; // Larger trip ID comes first
+            }
+        };
+
+        using ConflictsQueue = ReservablePriorityQueue<Conflict, CompareConflicts>;
+
+
     private:
         Scheduler scheduler;
         struct TripInfo {
             long trip_id;
+            Position position;
             double departure_time;
             double arrival_time;
             double earliest_departure_time;
@@ -85,12 +103,9 @@ namespace cpp_module {
                                                        instance(arg_instance),
                                                        start_search_clock(get_current_time_in_seconds()) {}
 
-        static void print_move(const Solution &old_solution, const Solution &new_solution, const Conflict &conflict);
-
 
         auto solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution;
 
-        auto improve_solution(const std::vector<Conflict> &conflicts_list, Solution &current_solution) -> Solution;
 
         Solution run(std::vector<Time> &arg_start_times);
 
@@ -102,14 +117,14 @@ namespace cpp_module {
 
         bool check_vehicle_has_delay(const Solution &solution, long trip_id);
 
-        std::vector<Conflict> get_conflicts_list(const Solution &solution);
+        ConflictsQueue get_conflicts_queue(const Solution &solution);
 
         TripInfo get_trip_info_struct(long current_trip, const Solution &solution, long position);
 
         static InstructionsConflict get_instructions_conflict(const TripInfo &trip_info, const TripInfo &other_info);
 
         static Conflict
-        create_conflict(long arc, double delay, const TripInfo &trip_info, const TripInfo &conflicting_trip_info);
+        create_conflict(long arc, double delay, const TripInfo &trip_info, const TripInfo &other_trip_info);
 
 
         std::vector<Conflict>
@@ -117,6 +132,10 @@ namespace cpp_module {
                               const std::vector<long> &conflicting_set);
 
         bool check_if_possible_to_solve_conflict(const Conflict &conflict, const Solution &solution);
+
+        Solution improve_solution(ConflictsQueue &conflicts_queue, Solution &best_known_solution);
+
+        void print_move(const Solution &best_known_solution, double old_delay, const Conflict &conflict);
     };
 
 

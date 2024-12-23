@@ -20,34 +20,16 @@ namespace cpp_module {
     }
 
 
-    auto compare_conflicts(const Conflict &a, const Conflict &b) -> bool {
-        // Compare delays with tolerance
-        if (std::abs(a.delay_conflict - b.delay_conflict) > TOLERANCE) {
-            return a.delay_conflict > b.delay_conflict; // Higher delay comes first
-        }
-
-        // If delays are equal within tolerance, compare trip IDs
-        return a.current_trip_id > b.current_trip_id; // Larger trip ID comes first
-    }
-
-
-    auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void {
-        if (!conflicts_in_schedule.empty()) {
-            std::sort(conflicts_in_schedule.begin(),
-                      conflicts_in_schedule.end(),
-                      compare_conflicts);
-        }
-    }
-
-
     auto LocalSearch::create_conflict(long arc, double delay, const TripInfo &trip_info,
-                                      const TripInfo &conflicting_trip_info) -> Conflict {
+                                      const TripInfo &other_trip_info) -> Conflict {
         return Conflict{
                 .arc = arc,
                 .current_trip_id = trip_info.trip_id,
-                .other_trip_id = conflicting_trip_info.trip_id,
-                .delay_conflict = delay,
-                .distance_to_cover = (conflicting_trip_info.arrival_time - trip_info.departure_time) + CONSTR_TOLERANCE,
+                .current_position = trip_info.position,
+                .other_trip_id = other_trip_info.trip_id,
+                .other_position = other_trip_info.position,
+                .delay = delay,
+                .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + CONSTR_TOLERANCE,
                 .staggering_current_vehicle = 0.0,
                 .destaggering_other_vehicle = 0.0
         };
@@ -82,13 +64,13 @@ namespace cpp_module {
         // Fallback for unspecified cases
         throw std::invalid_argument("get_instructions_conflict: unspecified case!");
     }
-
-
+    
     auto LocalSearch::get_trip_info_struct(long current_trip,
                                            const Solution &solution,
                                            long position) -> TripInfo {
         TripInfo trip_info{
                 .trip_id=current_trip,
+                .position=position,
                 .departure_time=solution.get_trip_arc_departure(current_trip, position),
                 .arrival_time= solution.get_trip_arc_departure(current_trip, position + 1),
                 .earliest_departure_time= instance.get_trip_arc_earliest_departure_time(current_trip, position),
@@ -135,16 +117,19 @@ namespace cpp_module {
 
         // Create conflicts based on the collected conflicting trips
         for (const auto &conflicting_trip_info: conflicting_trips_info_list) {
-            conflicts_list.push_back(create_conflict(arc, arc_delay, trip_info, conflicting_trip_info));
+            auto conflict = create_conflict(arc, arc_delay, trip_info, conflicting_trip_info);
+            if (conflict.distance_to_cover > TOLERANCE) {
+                conflicts_list.push_back(conflict);
+            }
         }
 
         return conflicts_list;
     }
 
-    auto LocalSearch::get_conflicts_list(const Solution &solution) -> std::vector<Conflict> {
-        std::vector<Conflict> conflicts_list;
+    auto LocalSearch::get_conflicts_queue(const Solution &solution) -> ConflictsQueue {
+        ConflictsQueue conflicts_queue;
         size_t total_size = instance.get_number_of_trips() * instance.get_number_of_arcs();
-        conflicts_list.reserve(total_size); // Preallocate memory for the expected number of elements
+        conflicts_queue.reserve(total_size); // Preallocate memory for the expected number of elements
 
 
         for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
@@ -168,12 +153,13 @@ namespace cpp_module {
                 auto conflicting_set = instance.get_conflicting_set(arc);
 
                 auto arc_conflicts = find_conflicts_on_arc(arc, arc_delay, solution, trip_info, conflicting_set);
-                conflicts_list.insert(conflicts_list.end(), arc_conflicts.begin(), arc_conflicts.end());
+                for (auto arc_conflict: arc_conflicts) {
+                    conflicts_queue.push(arc_conflict);
+                }
             }
         }
 
-        sort_conflicts(conflicts_list);
-        return conflicts_list;
+        return conflicts_queue;
     }
 
 
@@ -214,15 +200,15 @@ namespace cpp_module {
             set_improvement_is_found(false); // Local search field
 
             // Identify and sort conflicts
-            auto conflicts_list = get_conflicts_list(best_found_solution);
+            auto conflicts_queue = get_conflicts_queue(best_found_solution);
 
             // Stop if no conflicts remain
-            if (conflicts_list.empty()) {
+            if (conflicts_queue.empty()) {
                 break;
             }
 
             // Attempt to improve the solution
-            best_found_solution = improve_solution(conflicts_list, best_found_solution);
+            best_found_solution = improve_solution(conflicts_queue, best_found_solution);
         }
 
         // Construct the final solution and return it
@@ -287,10 +273,10 @@ namespace cpp_module {
     }
 
 
-    auto LocalSearch::print_move(const Solution &old_solution,
-                                 const Solution &new_solution,
+    auto LocalSearch::print_move(const Solution &best_known_solution,
+                                 double old_delay,
                                  const Conflict &conflict) -> void {
-        if (std::abs(old_solution.get_total_delay() - new_solution.get_total_delay()) > TOLERANCE) {
+        if (std::abs(best_known_solution.get_total_delay() - old_delay) > TOLERANCE) {
             std::ostringstream output;
 
             if (conflict.staggering_current_vehicle > 0) {
@@ -306,9 +292,9 @@ namespace cpp_module {
             }
 
             output << "new total delay: " << std::fixed << std::setprecision(2)
-                   << new_solution.get_total_delay()
+                   << best_known_solution.get_total_delay()
                    << "; delay improvement: "
-                   << old_solution.get_total_delay() - new_solution.get_total_delay();
+                   << old_delay - best_known_solution.get_total_delay();
 
             std::cout << output.str() << std::endl;
         }
@@ -356,19 +342,34 @@ namespace cpp_module {
     }
 
 
-    auto LocalSearch::improve_solution(const std::vector<Conflict> &conflicts_list,
-                                       Solution &current_solution) -> Solution {
-        for (auto conflict: conflicts_list) {
+    auto LocalSearch::improve_solution(ConflictsQueue &conflicts_queue,
+                                       Solution &best_known_solution) -> Solution {
+
+        while (!conflicts_queue.empty()) {
             if (check_if_time_limit_is_reached()) break;
-            if (std::abs(conflict.distance_to_cover) < TOLERANCE) {
-                continue;
+            auto conflict = conflicts_queue.top();
+            conflicts_queue.pop();
+            conflict.update(best_known_solution, instance);
+
+            if (conflict.has_delay()) {
+                //Check if it is still most urgent conflict
+                if (!conflicts_queue.empty() && conflicts_queue.top().delay > conflict.delay) {
+                    conflicts_queue.push(conflict);
+                    continue;
+                }
             }
-            auto new_solution = solve_conflict(conflict, current_solution);
-            if (get_improvement_is_found()) {
-                print_move(current_solution, new_solution, conflict);
-                return new_solution;
+
+            auto old_delay = best_known_solution.get_total_delay(); // Print purposes
+            best_known_solution = solve_conflict(conflict, best_known_solution);
+            if (best_known_solution.get_total_delay() < old_delay) {
+                print_move(best_known_solution, old_delay, conflict);
+                conflict.update(best_known_solution, instance);
+                if (conflict.has_delay()) {
+                    conflicts_queue.push(conflict);
+                }
             }
         }
-        return current_solution;
+
+        return best_known_solution;
     }
 }

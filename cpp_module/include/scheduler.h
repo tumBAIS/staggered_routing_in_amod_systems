@@ -28,11 +28,28 @@ namespace cpp_module {
     struct Conflict {
         long arc;
         long current_trip_id;
+        Position current_position;
         long other_trip_id;
-        double delay_conflict;
+        Position other_position;
+        double delay;
         double distance_to_cover;
         double staggering_current_vehicle;
         double destaggering_other_vehicle;
+
+        void update(Solution &solution, const Instance &instance) {
+            staggering_current_vehicle = 0.0;
+            destaggering_other_vehicle = 0.0;
+            auto current_departure = solution.get_trip_arc_departure(current_trip_id, current_position);
+            auto current_arrival = solution.get_trip_arc_departure(current_trip_id, current_position + 1);
+            auto other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
+            distance_to_cover = (other_arrival - current_departure) + CONSTR_TOLERANCE;
+            delay = current_arrival - current_departure - instance.get_arc_travel_time(arc);
+        }
+
+        [[nodiscard]] bool has_delay() const {
+            return delay > TOLERANCE && distance_to_cover > TOLERANCE;
+        }
+
     };
 
     struct CompareDepartures {
@@ -49,22 +66,6 @@ namespace cpp_module {
     };
 
 
-    // Template class for reservable priority queue
-    template<typename T, typename Compare>
-    class ReservablePriorityQueue : public std::priority_queue<T, std::vector<T>, Compare> {
-    public:
-        // Reserve memory for the underlying container
-        void reserve(size_t capacity) {
-            this->c.reserve(capacity);
-        }
-
-        // Clear the queue
-        void clear() {
-            this->c.clear();
-        }
-    };
-
-
     auto sort_conflicts(std::vector<Conflict> &conflicts_in_schedule) -> void;
 
     class SchedulerFields : public TieManager {
@@ -73,7 +74,6 @@ namespace cpp_module {
     public:
         using MinQueueDepartures = ReservablePriorityQueue<Departure, CompareDepartures>;
         using MinQueueArrivals = std::priority_queue<Departure, std::vector<Departure>, CompareDepartures>;
-
         enum TripStatus {
             INACTIVE, STAGING, ACTIVE
         };

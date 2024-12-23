@@ -14,6 +14,22 @@
 
 namespace cpp_module {
 
+
+    // Template class for reservable priority queue
+    template<typename T, typename Compare>
+    class ReservablePriorityQueue : public std::priority_queue<T, std::vector<T>, Compare> {
+    public:
+        // Reserve memory for the underlying container
+        void reserve(size_t capacity) {
+            this->c.reserve(capacity);
+        }
+
+        // Clear the queue
+        void clear() {
+            this->c.clear();
+        }
+    };
+
 // Data types
     using TripID = long;
     using ArcID = long;
