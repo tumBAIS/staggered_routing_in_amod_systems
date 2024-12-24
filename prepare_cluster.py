@@ -315,7 +315,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
         memory_per_cpu = "500MB"
     else:
         # LARGE EXPERIMENTS
-        minutes_per_run = 300
+        minutes_per_run = 150
         memory_per_cpu = "15G"
         cpu_per_run = 2
         node_type = "CPU_ONLY"
