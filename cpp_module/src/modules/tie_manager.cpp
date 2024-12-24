@@ -5,16 +5,6 @@
 namespace cpp_module {
 
 
-// Reset a solution to a previously correct state
-    auto TieManager::reset_solution(Solution &complete_solution, long vehicle_one,
-                                    const CorrectSolution &correct_solution) -> void {
-        complete_solution.increase_trip_start_time(vehicle_one, -CONSTR_TOLERANCE);
-        complete_solution.set_ties_flag(true);
-        complete_solution.set_schedule(correct_solution.schedule);
-        complete_solution.set_total_delay(correct_solution.total_delay);
-        complete_solution.set_feasible_flag(correct_solution.schedule_is_feasible_and_improving);
-    }
-
 // Check if a vehicle has enough slack to solve a tie
     auto Scheduler::enough_slack_to_solve_tie(TripID trip_id, const Solution &solution) -> bool {
         auto trip_start_time = solution.get_trip_start_time(trip_id);
@@ -22,10 +12,6 @@ namespace cpp_module {
         return slack_trip > CONSTR_TOLERANCE;
     }
 
-// Create a snapshot of the current solution as the correct state
-    auto TieManager::set_correct_solution(const Solution &complete_solution) -> CorrectSolution {
-        return {complete_solution.get_schedule(), complete_solution.get_total_delay(), true};
-    }
 
 // Print a message when a tie is solved
     auto TieManager::print_tie_solved(const Tie &tie) -> void {
@@ -64,25 +50,34 @@ namespace cpp_module {
         return false;
     }
 
-// Solve all ties on a specific arc
-    auto Scheduler::solve_arc_ties(ArcID arc_id, Solution &complete_solution) -> void {
+    void Scheduler::solve_arc_ties(ArcID arc_id, Solution &working_solution) {
         const auto &conflicting_set = instance.get_conflicting_set(arc_id);
 
-        for (auto vehicle_one: conflicting_set) {
+        for (const auto &vehicle_one: conflicting_set) {
             long position_one = instance.get_arc_position_in_trip_route(arc_id, vehicle_one);
 
-            for (auto vehicle_two: conflicting_set) {
+            for (const auto &vehicle_two: conflicting_set) {
                 if (vehicle_one == vehicle_two) continue;  // Skip identical vehicles
 
                 long position_two = instance.get_arc_position_in_trip_route(arc_id, vehicle_two);
-
                 Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
 
                 // Resolve ties as long as conditions hold
-                while (check_tie(complete_solution, tie) &&
-                       enough_slack_to_solve_tie(vehicle_one, complete_solution)) {
-                    complete_solution.set_ties_flag(true);
-                    solve_tie(complete_solution, tie);
+                while (check_tie(working_solution, tie) && working_solution.is_feasible()) {
+                    working_solution.set_ties_flag(true);
+
+                    if (enough_slack_to_solve_tie(vehicle_one, working_solution)) {
+                        Solution new_solution = solve_tie(working_solution, tie);
+
+                        // Validate the new solution
+                        if (!new_solution.is_feasible()) {
+                            break;  // Restore the previous solution
+                        }
+
+                        // Indicate the tie has been resolved
+                        print_tie_solved(tie);
+                        working_solution = new_solution;
+                    }
                 }
             }
         }
@@ -107,7 +102,7 @@ namespace cpp_module {
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
-        while (complete_solution.has_ties()) {
+        while (complete_solution.has_ties() && complete_solution.is_feasible()) {
             complete_solution.set_ties_flag(false);
             for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
                 if (instance.get_conflicting_set(arc_id).empty()) {
@@ -119,28 +114,17 @@ namespace cpp_module {
     }
 
     // Resolve a tie by staggering a vehicle
-    void Scheduler::solve_tie(Solution &complete_solution, const Tie &tie) {
-
-        // Save the current state in case we need to reset
-        CorrectSolution correct_solution = set_correct_solution(complete_solution);
+    auto Scheduler::solve_tie(Solution &initial_solution, const Tie &tie) -> Solution {
 
         // Stagger the trip slightly to resolve the tie
-        complete_solution.increase_trip_start_time(tie.vehicle_one, CONSTR_TOLERANCE + TOLERANCE);
+
+        auto start_times = initial_solution.copy_start_times();
+        increase_trip_start_time(start_times, tie.vehicle_one, CONSTR_TOLERANCE + TOLERANCE);
+
 
         // Reconstruct the schedule with the updated solution
         //TODO: use update solution here
-        complete_solution = construct_solution(complete_solution.get_start_times());
-
-
-        // Check if the new solution is valid
-        if (!complete_solution.is_feasible()) {
-            // Restore the previous solution
-            reset_solution(complete_solution, tie.vehicle_one, correct_solution);
-            return;
-        }
-
-        // Print a message indicating the tie has been solved
-        print_tie_solved(tie);
+        return construct_solution(start_times);
     }
 
 

@@ -52,6 +52,10 @@ namespace cpp_module {
             return start_times;
         }
 
+        [[nodiscard]] const std::vector<double> copy_start_times() const {
+            return start_times;
+        }
+
         [[nodiscard]] const Time &get_trip_start_time(TripID trip_id) const {
             return start_times[trip_id];
         }

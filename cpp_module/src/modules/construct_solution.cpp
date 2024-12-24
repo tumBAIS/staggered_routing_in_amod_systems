@@ -133,7 +133,7 @@ namespace cpp_module {
             }
         }
         check_if_solution_has_ties(complete_solution);
-        if (complete_solution.has_ties()) {
+        if (complete_solution.has_ties() && complete_solution.is_feasible()) {
             solve_solution_ties(complete_solution);
         }
         return complete_solution;

@@ -143,6 +143,10 @@ namespace cpp_module {
             return trips_to_mark;
         }
 
+        void increase_trip_start_time(std::vector<Time> start_times, TripID trip_id, double amount) {
+            start_times[trip_id] += amount;
+        }
+
 
         void insert_departure_in_pq(const Departure &arg_departure) {
             pq_departures.push(arg_departure);
@@ -290,9 +294,9 @@ namespace cpp_module {
 
         Solution construct_solution(const std::vector<Time> &arg_start_times);
 
-        void solve_arc_ties(ArcID arc_id, Solution &complete_solution);
+        void solve_arc_ties(ArcID arc_id, Solution &working_solution);
 
-        void solve_tie(Solution &complete_solution, const Tie &tie);
+        Solution solve_tie(Solution &initial_solution, const Tie &tie);
 
         void solve_solution_ties(Solution &complete_solution);
 
