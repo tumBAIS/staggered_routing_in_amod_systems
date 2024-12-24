@@ -24,7 +24,7 @@ namespace cpp_module {
                                       const TripInfo &other_trip_info) -> Conflict {
         return Conflict{
                 .arc = arc,
-                .current_trip_id = trip_info.trip_id,
+                .trip_id = trip_info.trip_id,
                 .current_position = trip_info.position,
                 .other_trip_id = other_trip_info.trip_id,
                 .other_position = other_trip_info.position,
@@ -216,98 +216,45 @@ namespace cpp_module {
     }
 
 
-    void Scheduler::apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict) {
-        assert(conflict.distance_to_cover > 0);
-
-        // Retrieve current and other vehicle start times
-        auto current_start_time = complete_solution.get_trip_start_time(conflict.current_trip_id);
-        auto other_start_time = complete_solution.get_trip_start_time(conflict.other_trip_id);
-
-        // Calculate conditions for moving vehicles
-        bool move_vehicle_one =
-                conflict.distance_to_cover <
-                get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time) + TOLERANCE;
-
-        bool move_both_vehicles =
-                conflict.distance_to_cover <
-                get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time) +
-                get_trip_staggering_applied(conflict.other_trip_id, other_start_time) + TOLERANCE;
-
-        if (move_vehicle_one) {
-            // Move only the current vehicle
-            complete_solution.increase_trip_start_time(conflict.current_trip_id, conflict.distance_to_cover);
-            conflict.staggering_current_vehicle += conflict.distance_to_cover;
-            assert(conflict.distance_to_cover > 0);
-
-        } else if (move_both_vehicles) {
-            // Distance can be covered by removing staggering from the other vehicle
-            auto staggering = std::max(0.0, get_trip_remaining_time_slack(conflict.current_trip_id,
-                                                                          current_start_time));
-            auto destaggering = conflict.distance_to_cover - staggering;
-
-            complete_solution.increase_trip_start_time(conflict.current_trip_id, staggering);
-            complete_solution.increase_trip_start_time(conflict.other_trip_id, -destaggering);
-
-            conflict.staggering_current_vehicle += staggering;
-            conflict.destaggering_other_vehicle += destaggering;
-
-            assert(staggering > 0 || destaggering > 0);
-
-        } else {
-            // Throw a descriptive error with current values
-            std::ostringstream error_message;
-            error_message << "Undefined case in applying staggering to solve conflict:\n"
-                          << "Conflict Details:\n"
-                          << "  Distance to Cover: " << conflict.distance_to_cover << "\n"
-                          << "  Current Trip ID: " << conflict.current_trip_id << "\n"
-                          << "  Other Trip ID: " << conflict.other_trip_id << "\n"
-                          << "  Current Trip Slack: "
-                          << get_trip_remaining_time_slack(conflict.current_trip_id, current_start_time)
-                          << "\n"
-                          << "  Other Trip Staggering Applied: "
-                          << get_trip_staggering_applied(conflict.other_trip_id, other_start_time) << "\n"
-                          << "  Tolerance: " << TOLERANCE << "\n";
-
-            throw std::invalid_argument(error_message.str());
-        }
-    }
-
-
     auto LocalSearch::print_move(const Solution &best_known_solution,
-                                 double old_delay,
+                                 const Solution &new_solution,
                                  const Conflict &conflict) -> void {
-        if (std::abs(best_known_solution.get_total_delay() - old_delay) > TOLERANCE) {
-            std::ostringstream output;
+        std::ostringstream output;
 
-            if (conflict.staggering_current_vehicle > 0) {
-                output << "Staggering trip " << conflict.current_trip_id
-                       << " by " << std::fixed << std::setprecision(2)
-                       << conflict.staggering_current_vehicle << "; ";
-            }
-
-            if (conflict.destaggering_other_vehicle > 0) {
-                output << "destaggering trip " << conflict.other_trip_id
-                       << " by " << std::fixed << std::setprecision(2)
-                       << conflict.destaggering_other_vehicle << "; ";
-            }
-
-            output << "new total delay: " << std::fixed << std::setprecision(2)
-                   << best_known_solution.get_total_delay()
-                   << "; delay improvement: "
-                   << old_delay - best_known_solution.get_total_delay();
-
-            std::cout << output.str() << std::endl;
+        auto staggering_applied = new_solution.get_trip_start_time(conflict.trip_id) -
+                                  best_known_solution.get_trip_start_time(conflict.trip_id);
+        if (staggering_applied > TOLERANCE) {
+            output << "Staggering trip " << conflict.trip_id
+                   << " by " << std::fixed << std::setprecision(2)
+                   << staggering_applied << "; ";
         }
+
+        auto destaggering_applied = best_known_solution.get_trip_start_time(conflict.other_trip_id) -
+                                    new_solution.get_trip_start_time(conflict.other_trip_id);
+
+        if (destaggering_applied > TOLERANCE) {
+            output << "destaggering trip " << conflict.other_trip_id
+                   << " by " << std::fixed << std::setprecision(2)
+                   << destaggering_applied << "; ";
+        }
+
+        output << "new total delay: " << std::fixed << std::setprecision(2)
+               << new_solution.get_total_delay()
+               << "; delay improvement: "
+               << best_known_solution.get_total_delay() - new_solution.get_total_delay();
+
+        std::cout << output.str() << std::endl;
+
     }
 
     auto LocalSearch::check_if_possible_to_solve_conflict(const Conflict &conflict,
                                                           const Solution &solution) -> bool {
         // Retrieve trip start times
-        auto current_trip_start_time = solution.get_trip_start_time(conflict.current_trip_id);
+        auto current_trip_start_time = solution.get_trip_start_time(conflict.trip_id);
         auto other_trip_start_time = solution.get_trip_start_time(conflict.other_trip_id);
 
         // Calculate slack and staggering
-        auto slack_vehicle_one = scheduler.get_trip_remaining_time_slack(conflict.current_trip_id,
+        auto slack_vehicle_one = scheduler.get_trip_remaining_time_slack(conflict.trip_id,
                                                                          current_trip_start_time);
         auto staggering_vehicle_two = scheduler.get_trip_staggering_applied(conflict.other_trip_id,
                                                                             other_trip_start_time);
@@ -328,10 +275,15 @@ namespace cpp_module {
         }
 
         // Generate a new solution by updating the schedule
-        auto new_solution = scheduler.update_existing_congested_schedule(initial_solution, conflict);
+        auto new_solution = scheduler.update_existing_congested_schedule(initial_solution,
+                                                                         conflict.trip_id,
+                                                                         conflict.other_trip_id,
+                                                                         conflict.distance_to_cover);
 
         // Return the new solution if it is feasible and improves the total delay
-        if (new_solution.get_total_delay() < initial_solution.get_total_delay() - TOLERANCE) {
+        if (new_solution.is_feasible() &&
+            !new_solution.has_ties() &&
+            new_solution.get_total_delay() < initial_solution.get_total_delay() - TOLERANCE) {
             set_improvement_is_found(true);
             return new_solution;
         }
@@ -361,10 +313,10 @@ namespace cpp_module {
                 continue;
             }
 
-            auto old_delay = best_known_solution.get_total_delay(); // Print purposes
-            best_known_solution = solve_conflict(conflict, best_known_solution);
-            if (best_known_solution.get_total_delay() < old_delay - TOLERANCE) {
-                print_move(best_known_solution, old_delay, conflict);
+            auto new_solution = solve_conflict(conflict, best_known_solution);
+            if (new_solution.get_total_delay() < best_known_solution.get_total_delay() - TOLERANCE) {
+                print_move(best_known_solution, new_solution, conflict);
+                best_known_solution = new_solution;
                 conflict.update(best_known_solution, instance);
                 if (conflict.has_delay()) {
                     conflicts_queue.push(conflict);

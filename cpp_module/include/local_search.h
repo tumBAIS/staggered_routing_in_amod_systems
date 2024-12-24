@@ -21,7 +21,7 @@ namespace cpp_module {
                 }
 
                 // If delays are equal within tolerance, compare trip IDs
-                return a.current_trip_id < b.current_trip_id; // Larger trip ID comes first
+                return a.trip_id < b.trip_id; // Larger trip ID comes first
             }
         };
 
@@ -135,7 +135,8 @@ namespace cpp_module {
 
         Solution improve_solution(ConflictsQueue &conflicts_queue, Solution &best_known_solution);
 
-        void print_move(const Solution &best_known_solution, double old_delay, const Conflict &conflict);
+        static void
+        print_move(const Solution &best_known_solution, const Solution &new_solution, const Conflict &conflict);
     };
 
 

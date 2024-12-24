@@ -30,30 +30,6 @@ def _is_time_left_for_optimization(instance: EpochInstance, solver_params: Solve
     return _compute_remaining_time(instance, solver_params) > TOLERANCE
 
 
-def save_json_for_cpp(instance: EpochInstance, solver_parameters: SolverParameters) -> None:
-    path_to_cpp_dir = Path(__file__).parent.parent.parent / "cpp_module/catch2_tests/files_for_testing"
-    os.makedirs(path_to_cpp_dir, exist_ok=True)
-    output = {
-        "trip_routes": instance.trip_routes,
-        "arc_position_in_routes_map": instance.arc_position_in_routes_map,
-        "travel_time_arcs": instance.travel_times_arcs,
-        "nominal_capacities_arcs": instance.capacities_arcs,
-        "list_of_slopes": instance.instance_params.list_of_slopes,
-        "list_of_thresholds": instance.instance_params.list_of_thresholds,
-        "parameters": [solver_parameters.algorithm_time_limit],
-        "release_times": instance.release_times,
-        "deadlines": instance.deadlines,
-        "conflicting_sets": instance.conflicting_sets,
-        "earliest_times": instance.earliest_departure_times,
-        "latest_times": instance.latest_departure_times,
-        "lb_travel_time": instance.get_lb_travel_time()
-    }
-
-    with open(path_to_cpp_dir / "test_ls.json", "w") as output_file:
-        json.dump(output, output_file, indent=4)
-    print(f"Saved instance file in {path_to_cpp_dir}/test_ls.json to test cpp local search.")
-
-
 def get_epoch_warm_start(
         epoch_instance: EpochInstance, epoch_status_quo: Solution, solver_params: SolverParameters,
         cpp_local_search: cpp.LocalSearch, cpp_instance: cpp.cpp_instance
@@ -72,7 +48,7 @@ def get_epoch_warm_start(
     if solver_params.improve_warm_start and _is_time_left_for_optimization(epoch_instance, solver_params):
         print("Improving warm start using local search...")
         if SAVE_CPP:
-            save_json_for_cpp(epoch_instance, solver_params)
+            epoch_instance.save_json_for_cpp("test_ls.json")
         cpp_solution = cpp_local_search.run(epoch_status_quo.start_times)
         print("Local search completed.")
     else:

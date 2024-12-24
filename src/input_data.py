@@ -132,7 +132,7 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
         deadline_factor=100, staggering_cap=25)
 
     solver_params = SolverParameters(epoch_size=60, algorithm_time_limit=1000, epoch_time_limit=1000,
-                                     optimize=False, warm_start=True, improve_warm_start=True,
+                                     optimize=True, warm_start=True, improve_warm_start=True,
                                      local_search_callback=True,
                                      simplify=True, instance_parameters=instance_params, set_of_experiments="local",
                                      verbose_model=True)

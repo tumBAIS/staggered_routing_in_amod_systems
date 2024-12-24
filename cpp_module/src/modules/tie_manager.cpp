@@ -67,7 +67,10 @@ namespace cpp_module {
                     working_solution.set_ties_flag(true);
 
                     if (enough_slack_to_solve_tie(vehicle_one, working_solution)) {
-                        Solution new_solution = solve_tie(working_solution, tie);
+                        Solution new_solution = update_existing_congested_schedule(working_solution,
+                                                                                   tie.vehicle_one,
+                                                                                   tie.vehicle_two,
+                                                                                   CONSTR_TOLERANCE + TOLERANCE);
 
                         // Validate the new solution
                         if (!new_solution.is_feasible()) {
@@ -77,6 +80,7 @@ namespace cpp_module {
                         // Indicate the tie has been resolved
                         print_tie_solved(tie);
                         working_solution = new_solution;
+                        set_tie_solved_flag(true);
                     }
                 }
             }
@@ -104,27 +108,17 @@ namespace cpp_module {
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
         while (complete_solution.has_ties() && complete_solution.is_feasible()) {
             complete_solution.set_ties_flag(false);
+            set_tie_solved_flag(false);
             for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
                 if (instance.get_conflicting_set(arc_id).empty()) {
                     continue;
                 }
                 solve_arc_ties(arc_id, complete_solution);
             }
+            if (!get_tie_solved_flag()) {
+                break;
+            }
         }
-    }
-
-    // Resolve a tie by staggering a vehicle
-    auto Scheduler::solve_tie(Solution &initial_solution, const Tie &tie) -> Solution {
-
-        // Stagger the trip slightly to resolve the tie
-
-        auto start_times = initial_solution.copy_start_times();
-        increase_trip_start_time(start_times, tie.vehicle_one, CONSTR_TOLERANCE + TOLERANCE);
-
-
-        // Reconstruct the schedule with the updated solution
-        //TODO: use update solution here
-        return construct_solution(start_times);
     }
 
 

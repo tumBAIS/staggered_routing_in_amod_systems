@@ -29,15 +29,15 @@ namespace cpp_module {
 
 
     auto Scheduler::update_existing_congested_schedule(Solution &initial_solution,
-                                                       Conflict &conflict) -> Solution {
+                                                       TripID trip_id,
+                                                       TripID other_trip_id,
+                                                       double distance_to_cover) -> Solution {
+        initialize_scheduler_for_update_solution();
+
 
         Solution new_solution(initial_solution);
 
-        apply_staggering_to_solve_conflict(new_solution, conflict);
-
-        initialize_scheduler_for_update_solution();
-
-        initialize_priority_queue(conflict, new_solution);
+        apply_staggering_to_solve_conflict(new_solution, trip_id, other_trip_id, distance_to_cover);
 
         while (!is_pq_empty()) {
 
@@ -56,10 +56,6 @@ namespace cpp_module {
             set_lazy_update_pq_flag(false);
 
             auto trip_arrival_time = process_vehicle(initial_solution, new_solution, departure);
-
-            if (new_solution.has_ties() || !new_solution.is_feasible()) {
-                return initial_solution; // TODO: returns now a feasible solution
-            }
 
             if (get_lazy_update_pq_flag()) {
 

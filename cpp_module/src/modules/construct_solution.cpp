@@ -127,9 +127,7 @@ namespace cpp_module {
 
                 set_next_departure_and_push_to_queue(delay, departure);
 
-                if (!check_if_solution_is_feasible(departure)) {
-                    complete_solution.set_feasible_flag(false);
-                }
+                complete_solution.set_feasible_flag(check_if_solution_is_feasible(departure));
             }
         }
         check_if_solution_has_ties(complete_solution);

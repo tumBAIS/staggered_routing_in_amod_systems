@@ -35,3 +35,13 @@ TEST_CASE("Local search validation") {
     LocalSearch local_search(instance);
     auto solution = local_search.run(const_cast<std::vector<Time> &>(instance.get_release_times()));
 }
+
+TEST_CASE("Offline solution validation") {
+    std::cout << "Current working directory: "
+              << std::filesystem::current_path() << std::endl;
+    std::string file_path = "../../catch2_tests/files_for_testing/test_offline_solution.json";
+    auto json_obj = load_json(file_path);
+    Instance instance = Instance::from_json(json_obj);
+    Scheduler scheduler(instance);
+    auto solution = scheduler.construct_solution(instance.get_release_times());
+}

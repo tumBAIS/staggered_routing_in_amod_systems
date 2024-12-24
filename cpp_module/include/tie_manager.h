@@ -25,10 +25,10 @@ namespace cpp_module {
 
     protected:
         Instance instance;
+        bool tie_solved_flag = false;
 
     public:
         explicit TieManager(Instance &arg_instance) : instance(arg_instance) {}
-
 
         bool check_arc_ties(ArcID arc_id, Solution &complete_solution);
 
@@ -37,6 +37,14 @@ namespace cpp_module {
         static void print_tie_solved(const Tie &tie);
 
         static bool check_tie(const Solution &solution, const Tie &tie);
+
+        [[nodiscard]] bool get_tie_solved_flag() const {
+            return tie_solved_flag;
+        }
+
+        void set_tie_solved_flag(bool arg_flag) {
+            tie_solved_flag = arg_flag;
+        }
 
     };
 }

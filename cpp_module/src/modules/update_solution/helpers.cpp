@@ -31,14 +31,13 @@ namespace cpp_module {
         auto flow_on_arc = get_flow_on_arc(initial_solution, new_solution, departure);
 
         // Exit early if lazy update flag is set
-        if (get_lazy_update_pq_flag() || new_solution.has_ties()) {
+        if (get_lazy_update_pq_flag()) {
             return UNUSED_VALUE;
         }
 
         // Check for ties in the conflicting set and update the flag
         if (check_arc_ties(departure.arc_id, new_solution)) {
             new_solution.set_ties_flag(true);
-            return UNUSED_VALUE; // Exit early if a tie is found
         }
 
         // Compute the delay due to vehicles on the arc
@@ -50,7 +49,6 @@ namespace cpp_module {
         // Check if the vehicle is late and update the flag
         if (check_if_vehicle_is_late(current_new_arrival, departure)) {
             new_solution.set_feasible_flag(false);
-            return UNUSED_VALUE; // Exit early if the vehicle is late
         }
 
         // Decide on any vehicles that may need to be marked
@@ -173,25 +171,66 @@ namespace cpp_module {
         initialize_status_vehicles();
     }
 
-    auto Scheduler::initialize_priority_queue(const Conflict &conflict, Solution &solution) -> void {
+    void
+    Scheduler::apply_staggering_to_solve_conflict(Solution &complete_solution, TripID trip_id, TripID other_trip_id,
+                                                  double distance_to_cover) {
+        assert(distance_to_cover > 0);
+
         // Helper lambda to process and insert a departure into the priority queue
-        auto process_and_insert_departure = [&](int trip_id) {
+        auto process_and_insert_departure = [&](TripID trip_id) {
             auto departure = get_departure(
-                    solution.get_trip_start_time(trip_id),
-                    trip_id, 0, TRAVEL, 0
+                    complete_solution.get_trip_start_time(trip_id), trip_id, 0, TRAVEL, 0
             );
             set_trip_last_processed_position(departure.trip_id, -1);
             set_trip_status(departure.trip_id, ACTIVE);
             insert_departure_in_pq(departure);
         };
 
-        // Process staggering and destaggering vehicles
-        if (conflict.staggering_current_vehicle != 0) {
-            process_and_insert_departure(conflict.current_trip_id);
-        }
-        if (conflict.destaggering_other_vehicle != 0) {
-            process_and_insert_departure(conflict.other_trip_id);
+        // Retrieve current and other vehicle start times
+        double current_start_time = complete_solution.get_trip_start_time(trip_id);
+        double other_start_time = complete_solution.get_trip_start_time(other_trip_id);
+
+        // Calculate conditions for moving vehicles
+        bool move_vehicle_one =
+                distance_to_cover <
+                get_trip_remaining_time_slack(trip_id, current_start_time) + TOLERANCE;
+
+        bool move_both_vehicles =
+                distance_to_cover <
+                get_trip_remaining_time_slack(trip_id, current_start_time) +
+                get_trip_staggering_applied(other_trip_id, other_start_time) + TOLERANCE;
+
+        if (move_vehicle_one) {
+            // Move only the current vehicle
+            complete_solution.increase_trip_start_time(trip_id, distance_to_cover);
+            process_and_insert_departure(trip_id);
+
+        } else if (move_both_vehicles) {
+            // Distance can be covered by removing staggering from the other vehicle
+            double staggering = std::max(0.0, get_trip_remaining_time_slack(trip_id, current_start_time));
+            double destaggering = distance_to_cover - staggering;
+
+            complete_solution.increase_trip_start_time(trip_id, staggering);
+            complete_solution.increase_trip_start_time(other_trip_id, -destaggering);
+
+            process_and_insert_departure(trip_id);
+            process_and_insert_departure(other_trip_id);
+
+        } else {
+            // Throw a descriptive error with current values
+            std::ostringstream error_message;
+            error_message << "Undefined case in applying staggering to solve conflict:\n"
+                          << "Conflict Details:\n"
+                          << "  Distance to Cover: " << distance_to_cover << "\n"
+                          << "  Current Trip ID: " << trip_id << "\n"
+                          << "  Other Trip ID: " << other_trip_id << "\n"
+                          << "  Current Trip Slack: "
+                          << get_trip_remaining_time_slack(trip_id, current_start_time) << "\n"
+                          << "  Other Trip Staggering Applied: "
+                          << get_trip_staggering_applied(other_trip_id, other_start_time) << "\n"
+                          << "  Tolerance: " << TOLERANCE << "\n";
+
+            throw std::invalid_argument(error_message.str());
         }
     }
-
 }

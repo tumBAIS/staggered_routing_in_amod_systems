@@ -27,7 +27,7 @@ namespace cpp_module {
 
     struct Conflict {
         long arc;
-        long current_trip_id;
+        long trip_id;
         Position current_position;
         long other_trip_id;
         Position other_position;
@@ -39,8 +39,8 @@ namespace cpp_module {
         void update(Solution &solution, const Instance &instance) {
             staggering_current_vehicle = 0.0;
             destaggering_other_vehicle = 0.0;
-            auto current_departure = solution.get_trip_arc_departure(current_trip_id, current_position);
-            auto current_arrival = solution.get_trip_arc_departure(current_trip_id, current_position + 1);
+            auto current_departure = solution.get_trip_arc_departure(trip_id, current_position);
+            auto current_arrival = solution.get_trip_arc_departure(trip_id, current_position + 1);
             auto other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
             distance_to_cover = (other_arrival - current_departure) + CONSTR_TOLERANCE;
             delay = current_arrival - current_departure - instance.get_arc_travel_time(arc);
@@ -143,7 +143,7 @@ namespace cpp_module {
             return trips_to_mark;
         }
 
-        void increase_trip_start_time(std::vector<Time> start_times, TripID trip_id, double amount) {
+        static void increase_trip_start_time(std::vector<Time> start_times, TripID trip_id, double amount) {
             start_times[trip_id] += amount;
         }
 
@@ -282,9 +282,6 @@ namespace cpp_module {
                                  const Departure &departure);
 
 
-        void initialize_priority_queue(const Conflict &conflict, Solution &solution);
-
-
         void set_next_departure_and_push_to_queue(double delay, Departure &departure);
 
 
@@ -295,8 +292,6 @@ namespace cpp_module {
         Solution construct_solution(const std::vector<Time> &arg_start_times);
 
         void solve_arc_ties(ArcID arc_id, Solution &working_solution);
-
-        Solution solve_tie(Solution &initial_solution, const Tie &tie);
 
         void solve_solution_ties(Solution &complete_solution);
 
@@ -350,10 +345,6 @@ namespace cpp_module {
 
         void update_total_delay_solution(Solution &current_solution, Solution &new_solution);
 
-        void apply_staggering_to_solve_conflict(Solution &complete_solution, Conflict &conflict);
-
-        Solution update_existing_congested_schedule(Solution &initial_solution, Conflict &conflict);
-
         double
         handle_active_vehicle(Solution &initial_solution, Solution &new_solution, TripID other_trip_id,
                               long other_position,
@@ -366,7 +357,13 @@ namespace cpp_module {
         double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
                                         TripID other_trip_id, Position other_position);
 
-        double compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time);
+        static double compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time);
+
+        void apply_staggering_to_solve_conflict(Solution &complete_solution, TripID trip_id, TripID other_trip_id,
+                                                double distance_to_cover);
+
+        Solution update_existing_congested_schedule(Solution &initial_solution, TripID trip_id, TripID other_trip_id,
+                                                    double distance_to_cover);
     };
 
 }

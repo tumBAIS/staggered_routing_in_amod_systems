@@ -1,5 +1,5 @@
 import utils.prints
-from input_data import SolverParameters, TOLERANCE
+from input_data import SolverParameters, TOLERANCE, SAVE_CPP
 from MIP.model import construct_model, run_model
 from problem.instance import Instance
 from simplify.map_back import map_simplified_epoch_solution
@@ -30,6 +30,8 @@ def get_offline_solution(
     Computes the offline global solution, which serves as a baseline for comparison.
 
     """
+    if SAVE_CPP:
+        instance.save_json_for_cpp("test_offline_solution.json")
     print_header_offline_solution()
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)

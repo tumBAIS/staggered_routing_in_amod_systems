@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import datetime
 import json
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import jsonpickle
 import networkx as nx
 import numpy as np
+import pathlib
 
 import pandas as pd
 from networkx import DiGraph
@@ -48,6 +48,29 @@ class Instance:
         self.min_delay_on_arcs = self.initialize_min_delay_on_arcs()
         self.max_delay_on_arcs = self.initialize_max_delay_on_arcs()
         self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
+
+    def save_json_for_cpp(self, file_name: str) -> None:
+        path_to_cpp_dir = pathlib.Path(__file__).parent.parent.parent / "cpp_module/catch2_tests/files_for_testing"
+        os.makedirs(path_to_cpp_dir, exist_ok=True)
+        output = {
+            "trip_routes": self.trip_routes,
+            "arc_position_in_routes_map": self.arc_position_in_routes_map,
+            "travel_time_arcs": self.travel_times_arcs,
+            "nominal_capacities_arcs": self.capacities_arcs,
+            "list_of_slopes": self.instance_params.list_of_slopes,
+            "list_of_thresholds": self.instance_params.list_of_thresholds,
+            "parameters": [100000],
+            "release_times": self.release_times,
+            "deadlines": self.deadlines,
+            "conflicting_sets": self.conflicting_sets,
+            "earliest_times": self.earliest_departure_times,
+            "latest_times": self.latest_departure_times,
+            "lb_travel_time": self.get_lb_travel_time()
+        }
+        # test_ls.json
+        with open(path_to_cpp_dir / file_name, "w") as output_file:
+            json.dump(output, output_file, indent=4)
+        print(f"Saved instance file in {path_to_cpp_dir}/{file_name}.")
 
     def initialize_conflicting_sets(self) -> ConflictingSets:
         num_arcs = len(self.travel_times_arcs)
