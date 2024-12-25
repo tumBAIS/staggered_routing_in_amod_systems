@@ -74,7 +74,7 @@ PYBIND11_MODULE(cpp_module, m) {
 
     // Solution class bindings
     py::class_<cpp_module::LocalSearch>(m, "LocalSearch")
-            .def(py::init<cpp_module::Instance &>(),
-                 py::arg("instance"))
+            .def(py::init<cpp_module::Instance &, bool &>(),
+                 py::arg("instance"), py::arg("verbose"))
             .def("run", &cpp_module::LocalSearch::run);
 }

@@ -41,16 +41,17 @@ namespace cpp_module {
         };
 
         enum CounterName {
-            WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, EXPLORED_SOLUTIONS, ITERATION
+            WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, ITERATION, INFEASIBLE_SOLUTIONS
         };
 
         struct Counters {
             long worse_solutions = 0;
+            long infeasible_solutions = 0;
             long slack_not_enough = 0;
             long solution_with_ties = 0;
-            long explored_solutions = 0;
             long iteration = 0;
         };
+
 
         enum class InstructionsConflict {
             CONTINUE,
@@ -59,9 +60,10 @@ namespace cpp_module {
         };
 
         const Instance &instance;
-        double start_search_clock;
+        double start_algo_global_clock; // When LS is created
         Counters counters;
         bool improvement_found_flag = false;
+        bool verbose = true;
 
         [[nodiscard]] bool get_improvement_is_found() const {
             return improvement_found_flag;
@@ -82,12 +84,12 @@ namespace cpp_module {
 
         void increase_counter(CounterName counter_name) {
             switch (counter_name) {
-                case EXPLORED_SOLUTIONS:
-                    counters.explored_solutions++;
                 case SLACK_NOT_ENOUGH:
                     counters.slack_not_enough++;
                 case SOLUTION_WITH_TIES:
                     counters.solution_with_ties++;
+                case INFEASIBLE_SOLUTIONS:
+                    counters.infeasible_solutions++;
                 case WORSE_SOLUTIONS:
                     counters.worse_solutions++;
                 case ITERATION:
@@ -95,13 +97,34 @@ namespace cpp_module {
             }
         }
 
+        [[nodiscard]] int get_counter(CounterName counter_name) const {
+            switch (counter_name) {
+                case SLACK_NOT_ENOUGH:
+                    return counters.slack_not_enough;
+                case SOLUTION_WITH_TIES:
+                    return counters.solution_with_ties;
+                case INFEASIBLE_SOLUTIONS:
+                    return counters.infeasible_solutions;
+                case WORSE_SOLUTIONS:
+                    return counters.worse_solutions;
+                case ITERATION:
+                    return counters.iteration;
+            }
+        }
+
+        void reset_counters() {
+            counters = Counters();
+        }
+
 
     public:
 
-        explicit LocalSearch(Instance &arg_instance) : TieManager(arg_instance),
-                                                       scheduler(arg_instance),
-                                                       instance(arg_instance),
-                                                       start_search_clock(get_current_time_in_seconds()) {}
+        explicit LocalSearch(Instance &arg_instance, bool arg_verbose = true) : TieManager(arg_instance),
+                                                                                scheduler(arg_instance),
+                                                                                instance(arg_instance),
+                                                                                start_algo_global_clock(
+                                                                                        get_current_time_in_seconds()),
+                                                                                verbose(arg_verbose) {}
 
 
         auto solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution;
@@ -135,8 +158,12 @@ namespace cpp_module {
 
         Solution improve_solution(ConflictsQueue &conflicts_queue, Solution &best_known_solution);
 
-        static void
+        void
         print_move(const Solution &best_known_solution, const Solution &new_solution, const Conflict &conflict);
+
+        void print_search_statistics();
+
+        void print_search_statistics(double start_algo_global_clock);
     };
 
 

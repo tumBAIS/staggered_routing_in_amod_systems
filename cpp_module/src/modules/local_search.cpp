@@ -11,7 +11,7 @@ namespace cpp_module {
 
     auto LocalSearch::check_if_time_limit_is_reached() -> bool {
         auto time_now = clock() / (double) CLOCKS_PER_SEC;
-        auto duration = (time_now - start_search_clock);
+        auto duration = (time_now - start_algo_global_clock);
         if (duration > instance.get_max_time_optimization()) {
             std::cout << "STOPPING LOCAL SEARCH - MAX TIME LIMIT REACHED \n";
             return true;
@@ -29,7 +29,7 @@ namespace cpp_module {
                 .other_trip_id = other_trip_info.trip_id,
                 .other_position = other_trip_info.position,
                 .delay = delay,
-                .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + CONSTR_TOLERANCE,
+                .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + 2 * CONSTR_TOLERANCE,
                 .staggering_current_vehicle = 0.0,
                 .destaggering_other_vehicle = 0.0
         };
@@ -172,8 +172,26 @@ namespace cpp_module {
         std::cout << "Solution is infeasible -- stopping local search.\n";
     }
 
+    auto LocalSearch::print_search_statistics(double start_run_clock) -> void {
+        auto time_now = get_current_time_in_seconds();
+        auto elapsed_time = time_now - start_run_clock;
+
+        // Print the elapsed time and search statistics in a neat format
+        std::cout << "Search Statistics\n";
+        std::cout << "-------------------\n";
+        std::cout << "Elapsed Time (seconds)  : " << std::fixed << std::setprecision(2) << elapsed_time << "\n";
+        std::cout << "Infeasible Solutions    : " << get_counter(CounterName::INFEASIBLE_SOLUTIONS) << "\n";
+        std::cout << "Slack Not Enough        : " << get_counter(CounterName::SLACK_NOT_ENOUGH) << "\n";
+        std::cout << "Solutions with Ties     : " << get_counter(CounterName::SOLUTION_WITH_TIES) << "\n";
+        std::cout << "Worse Solutions         : " << get_counter(CounterName::WORSE_SOLUTIONS) << "\n";
+        std::cout << "Iterations              : " << get_counter(CounterName::ITERATION) << "\n";
+    }
+
+
     auto LocalSearch::run(std::vector<Time> &arg_start_times) -> Solution {
         // Get the initial solution and print its delay
+        auto start_run_clock = get_current_time_in_seconds();
+        reset_counters();
         auto best_found_solution = scheduler.construct_solution(arg_start_times);
 
         print_initial_delay(best_found_solution);
@@ -192,7 +210,6 @@ namespace cpp_module {
         // Iteratively improve the solution
         set_improvement_is_found(true); // Local search field
         while (get_improvement_is_found()) {
-            increase_counter(ITERATION);
             // Check for time limit
             if (check_if_time_limit_is_reached()) break;
 
@@ -211,6 +228,10 @@ namespace cpp_module {
             best_found_solution = improve_solution(conflicts_queue, best_found_solution);
         }
 
+        if (verbose) {
+            print_search_statistics(start_run_clock);
+        }
+
         // Construct the final solution and return it
         return scheduler.construct_solution(best_found_solution.get_start_times());
     }
@@ -219,31 +240,34 @@ namespace cpp_module {
     auto LocalSearch::print_move(const Solution &best_known_solution,
                                  const Solution &new_solution,
                                  const Conflict &conflict) -> void {
-        std::ostringstream output;
+        if (verbose || get_counter(ITERATION) % 50 == 0) {
 
-        auto staggering_applied = new_solution.get_trip_start_time(conflict.trip_id) -
-                                  best_known_solution.get_trip_start_time(conflict.trip_id);
-        if (staggering_applied > TOLERANCE) {
-            output << "Staggering trip " << conflict.trip_id
-                   << " by " << std::fixed << std::setprecision(2)
-                   << staggering_applied << "; ";
+            std::ostringstream output;
+
+            auto staggering_applied = new_solution.get_trip_start_time(conflict.trip_id) -
+                                      best_known_solution.get_trip_start_time(conflict.trip_id);
+            if (staggering_applied > TOLERANCE) {
+                output << "Staggering trip " << conflict.trip_id
+                       << " by " << std::fixed << std::setprecision(2)
+                       << staggering_applied << "; ";
+            }
+
+            auto destaggering_applied = best_known_solution.get_trip_start_time(conflict.other_trip_id) -
+                                        new_solution.get_trip_start_time(conflict.other_trip_id);
+
+            if (destaggering_applied > TOLERANCE) {
+                output << "destaggering trip " << conflict.other_trip_id
+                       << " by " << std::fixed << std::setprecision(2)
+                       << destaggering_applied << "; ";
+            }
+
+            output << "new total delay: " << std::fixed << std::setprecision(2)
+                   << new_solution.get_total_delay()
+                   << "; delay improvement: "
+                   << best_known_solution.get_total_delay() - new_solution.get_total_delay();
+
+            std::cout << output.str() << std::endl;
         }
-
-        auto destaggering_applied = best_known_solution.get_trip_start_time(conflict.other_trip_id) -
-                                    new_solution.get_trip_start_time(conflict.other_trip_id);
-
-        if (destaggering_applied > TOLERANCE) {
-            output << "destaggering trip " << conflict.other_trip_id
-                   << " by " << std::fixed << std::setprecision(2)
-                   << destaggering_applied << "; ";
-        }
-
-        output << "new total delay: " << std::fixed << std::setprecision(2)
-               << new_solution.get_total_delay()
-               << "; delay improvement: "
-               << best_known_solution.get_total_delay() - new_solution.get_total_delay();
-
-        std::cout << output.str() << std::endl;
 
     }
 
@@ -265,8 +289,6 @@ namespace cpp_module {
 
 
     auto LocalSearch::solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution {
-        // Increment explored solutions counter
-        increase_counter(EXPLORED_SOLUTIONS);
 
         // Exit early if the conflict cannot be resolved
         if (!check_if_possible_to_solve_conflict(conflict, initial_solution)) {
@@ -281,15 +303,22 @@ namespace cpp_module {
                                                                          conflict.distance_to_cover);
 
         // Return the new solution if it is feasible and improves the total delay
-        if (new_solution.is_feasible() &&
-            !new_solution.has_ties() &&
-            new_solution.get_total_delay() < initial_solution.get_total_delay() - TOLERANCE) {
-            set_improvement_is_found(true);
-            return new_solution;
+        if (new_solution.is_feasible()) {
+            if (!new_solution.has_ties()) {
+                if (new_solution.get_total_delay() < initial_solution.get_total_delay() - TOLERANCE) {
+                    set_improvement_is_found(true);
+                    return new_solution;
+                } else {
+                    increase_counter(WORSE_SOLUTIONS); // Count only worse solutions
+                }
+            } else {
+                increase_counter(SOLUTION_WITH_TIES); // Count solutions with ties only
+            }
+        } else {
+            increase_counter(INFEASIBLE_SOLUTIONS); // Count infeasible solutions only
         }
 
-        // Log worse solution attempt and return the initial solution
-        increase_counter(WORSE_SOLUTIONS);
+        // Return the initial solution if no improvement was found
         return initial_solution;
     }
 
@@ -312,7 +341,7 @@ namespace cpp_module {
             } else {
                 continue;
             }
-
+            increase_counter(ITERATION);
             auto new_solution = solve_conflict(conflict, best_known_solution);
             if (new_solution.get_total_delay() < best_known_solution.get_total_delay() - TOLERANCE) {
                 print_move(best_known_solution, new_solution, conflict);

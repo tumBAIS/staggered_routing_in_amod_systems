@@ -42,7 +42,7 @@ namespace cpp_module {
             auto current_departure = solution.get_trip_arc_departure(trip_id, current_position);
             auto current_arrival = solution.get_trip_arc_departure(trip_id, current_position + 1);
             auto other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
-            distance_to_cover = (other_arrival - current_departure) + CONSTR_TOLERANCE;
+            distance_to_cover = (other_arrival - current_departure) + 2 * CONSTR_TOLERANCE;
             delay = current_arrival - current_departure - instance.get_arc_travel_time(arc);
         }
 

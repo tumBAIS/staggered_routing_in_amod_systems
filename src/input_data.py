@@ -135,7 +135,7 @@ def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParamet
                                      optimize=True, warm_start=True, improve_warm_start=True,
                                      local_search_callback=True,
                                      simplify=True, instance_parameters=instance_params, set_of_experiments="local",
-                                     verbose_model=True)
+                                     verbose_model=False)
     return instance_params, solver_params
 
 
