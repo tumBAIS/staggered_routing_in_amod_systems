@@ -25,14 +25,6 @@ namespace cpp_module {
         long reinsertion_number;
     };
 
-    struct TripInfo {
-        double earliest_departure;
-        double latest_arrival;
-        double original_departure;
-        double original_arrival;
-    };
-
-
     struct Conflict {
         long arc;
         long trip_id;
@@ -242,6 +234,11 @@ namespace cpp_module {
         [[nodiscard]] bool
         check_if_vehicle_is_late(double current_vehicle_new_arrival, const Departure &departure) const;
 
+        [[nodiscard]] bool
+        check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position,
+                                                           const Departure &departure);
+
+
         void initialize_scheduler(const std::vector<double> &release_times);
 
         Departure get_next_departure(Solution &complete_solution);
@@ -320,6 +317,10 @@ namespace cpp_module {
 
         Time process_conflicting_set(Solution &initial_solution, Solution &new_solution, const Departure &departure);
 
+        static MarkInstruction
+        check_if_other_should_be_marked(const Solution &initial_solution, long other_trip_id,
+                                        long other_position,
+                                        bool current_conflicts_with_other, const Departure &departure);
 
         void mark_trip(long other_trip_id, double other_departure_time, long other_position);
 
@@ -346,6 +347,11 @@ namespace cpp_module {
                               double other_departure_time, bool current_conflicts_with_other,
                               const Departure &departure);
 
+        double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
+                                       bool current_conflicts_with_other, const Departure &departure);
+
+        double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
+                                        TripID other_trip_id, Position other_position);
 
         static double compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time);
 
@@ -354,25 +360,6 @@ namespace cpp_module {
 
         Solution update_existing_congested_schedule(Solution &initial_solution, TripID trip_id, TripID other_trip_id,
                                                     double distance_to_cover);
-
-
-        TripInfo get_trip_info(const Solution &solution, const Departure &departure);
-
-        bool check_if_trips_within_conflicting_set_can_conflict(long other_trip_id, long other_position,
-                                                                const Departure &departure, const TripInfo &trip_info);
-
-        double process_conflicting_trip(Solution &initial_solution, Solution &new_solution, const Departure &departure,
-                                        TripID other_trip_id, Position other_position, const TripInfo &trip_info);
-
-        static MarkInstruction
-        check_if_other_should_be_marked(const Solution &initial_solution, const long other_trip_id,
-                                        const long other_position,
-                                        const bool current_conflicts_with_other, const Departure &departure,
-                                        const TripInfo &trip_info);
-
-        double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
-                                       bool current_conflicts_with_other, const Departure &departure,
-                                       const TripInfo &trip_info);
     };
 
 }
