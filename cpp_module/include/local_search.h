@@ -43,7 +43,7 @@ namespace cpp_module {
         };
 
         enum CounterName {
-            WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, SOLUTION_WITH_TIES, ITERATION, INFEASIBLE_SOLUTIONS
+            WORSE_SOLUTIONS, SLACK_NOT_ENOUGH, INFEASIBLE_SOLUTIONS, SOLUTION_WITH_TIES, ITERATION,
         };
 
         struct Counters {
@@ -86,37 +86,45 @@ namespace cpp_module {
 
         void increase_counter(CounterName counter_name) {
             switch (counter_name) {
-                case SLACK_NOT_ENOUGH:
+                case CounterName::SLACK_NOT_ENOUGH:
                     counters.slack_not_enough++;
-                case SOLUTION_WITH_TIES:
+                    break;
+                case CounterName::SOLUTION_WITH_TIES:
                     counters.solution_with_ties++;
-                case INFEASIBLE_SOLUTIONS:
+                    break;
+                case CounterName::INFEASIBLE_SOLUTIONS:
                     counters.infeasible_solutions++;
-                case WORSE_SOLUTIONS:
+                    break;
+                case CounterName::WORSE_SOLUTIONS:
                     counters.worse_solutions++;
-                case ITERATION:
+                    break;
+                case CounterName::ITERATION:
                     counters.iteration++;
+                    break;
                 default:
                     throw std::invalid_argument("Invalid CounterName provided.");
             }
         }
 
+
         [[nodiscard]] int get_counter(CounterName counter_name) const {
             switch (counter_name) {
-                case SLACK_NOT_ENOUGH:
+                case CounterName::SLACK_NOT_ENOUGH:
                     return counters.slack_not_enough;
-                case SOLUTION_WITH_TIES:
+                case CounterName::SOLUTION_WITH_TIES:
                     return counters.solution_with_ties;
-                case INFEASIBLE_SOLUTIONS:
+                case CounterName::INFEASIBLE_SOLUTIONS:
                     return counters.infeasible_solutions;
-                case WORSE_SOLUTIONS:
+                case CounterName::WORSE_SOLUTIONS:
                     return counters.worse_solutions;
-                case ITERATION:
+                case CounterName::ITERATION:
                     return counters.iteration;
                 default:
+                    // If counter_name is invalid, throw an exception
                     throw std::invalid_argument("Invalid CounterName provided.");
             }
         }
+
 
         void reset_counters() {
             counters = Counters();
