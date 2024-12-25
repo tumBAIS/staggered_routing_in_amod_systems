@@ -35,11 +35,6 @@ namespace cpp_module {
             return UNUSED_VALUE;
         }
 
-        // Check for ties in the conflicting set and update the flag
-        if (check_arc_ties(departure.arc_id, new_solution)) {
-            new_solution.set_ties_flag(true);
-        }
-
         // Compute the delay due to vehicles on the arc
         auto delay = compute_delay_on_arc(flow_on_arc, instance, departure.arc_id);
 
