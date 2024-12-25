@@ -96,6 +96,8 @@ namespace cpp_module {
                     counters.worse_solutions++;
                 case ITERATION:
                     counters.iteration++;
+                default:
+                    throw std::invalid_argument("Invalid CounterName provided.");
             }
         }
 
@@ -111,6 +113,8 @@ namespace cpp_module {
                     return counters.worse_solutions;
                 case ITERATION:
                     return counters.iteration;
+                default:
+                    throw std::invalid_argument("Invalid CounterName provided.");
             }
         }
 
