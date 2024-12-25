@@ -1,7 +1,7 @@
 //
 // Created by anton on 17/12/2024.
 //
-
+#include "random"
 
 #ifndef CPP_MODULE_TIE_MANAGER_H
 #define CPP_MODULE_TIE_MANAGER_H
@@ -10,6 +10,22 @@
 
 
 namespace cpp_module {
+
+    class RandomNumberGenerator {
+    public:
+        static double generate_random_number() {
+            // Define the range [CONSTR_TOLERANCE, 10 * CONSTR_TOLERANCE]
+            static double lower_bound = CONSTR_TOLERANCE;
+            static double upper_bound = 10 * CONSTR_TOLERANCE;
+
+            // Static random number generator and distribution
+            static std::mt19937 rng(0); // Mersenne Twister seeded with a fixed value
+            static std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
+
+            // Generate a random number
+            return dist(rng);
+        }
+    };
 
 
     struct Tie {
@@ -21,14 +37,14 @@ namespace cpp_module {
     };
 
 
-    class TieManager {
+    class TieManager : public RandomNumberGenerator {
 
     protected:
         Instance instance;
         bool tie_solved_flag = false;
 
     public:
-        explicit TieManager(Instance &arg_instance) : instance(arg_instance) {}
+        explicit TieManager(Instance &arg_instance) : RandomNumberGenerator(), instance(arg_instance) {}
 
         bool check_arc_ties(ArcID arc_id, Solution &complete_solution);
 

@@ -66,12 +66,12 @@ namespace cpp_module {
                 // Resolve ties as long as conditions hold
                 while (check_tie(working_solution, tie)) {
                     working_solution.set_ties_flag(true);
-
-                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, CONSTR_TOLERANCE + TOLERANCE)) {
+                    auto random_number = generate_random_number();
+                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, random_number)) {
                         Solution new_solution = update_existing_congested_schedule(working_solution,
                                                                                    tie.vehicle_one,
                                                                                    tie.vehicle_two,
-                                                                                   CONSTR_TOLERANCE + TOLERANCE);
+                                                                                   random_number);
 
                         // Validate the new solution
                         if (!new_solution.is_feasible()) {

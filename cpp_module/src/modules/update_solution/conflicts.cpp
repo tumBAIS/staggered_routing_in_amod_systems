@@ -219,7 +219,7 @@ namespace cpp_module {
                 other_trip_id, other_departure_time, departure);
 
         // Determine if the other trip needs to be reinserted
-        bool needs_reinsertion = false;
+        bool needs_reinsertion;
 
         if (other_is_first_in_current_schedule) {
             // Get the original departure times for the current and other trips

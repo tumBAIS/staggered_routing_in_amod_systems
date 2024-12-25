@@ -29,7 +29,7 @@ namespace cpp_module {
                 .other_trip_id = other_trip_info.trip_id,
                 .other_position = other_trip_info.position,
                 .delay = delay,
-                .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + 2 * CONSTR_TOLERANCE,
+                .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + CONSTR_TOLERANCE,
         };
     }
 
@@ -270,7 +270,8 @@ namespace cpp_module {
     }
 
     auto LocalSearch::check_if_possible_to_solve_conflict(const Conflict &conflict,
-                                                          const Solution &solution) -> bool {
+                                                          const Solution &solution,
+                                                          const double random_number) -> bool {
         // Retrieve trip start times
         auto current_trip_start_time = solution.get_trip_start_time(conflict.trip_id);
         auto other_trip_start_time = solution.get_trip_start_time(conflict.other_trip_id);
@@ -282,14 +283,15 @@ namespace cpp_module {
                                                                             other_trip_start_time);
 
         // Check if the conflict can be resolved
-        return (slack_vehicle_one + staggering_vehicle_two + TOLERANCE > conflict.distance_to_cover);
+        return (slack_vehicle_one + staggering_vehicle_two + TOLERANCE > conflict.distance_to_cover + random_number);
     }
 
 
     auto LocalSearch::solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution {
 
         // Exit early if the conflict cannot be resolved
-        if (!check_if_possible_to_solve_conflict(conflict, initial_solution)) {
+        auto random_number = generate_random_number();
+        if (!check_if_possible_to_solve_conflict(conflict, initial_solution, random_number)) {
             increase_counter(SLACK_NOT_ENOUGH);
             return initial_solution;
         }
@@ -298,7 +300,7 @@ namespace cpp_module {
         auto new_solution = scheduler.update_existing_congested_schedule(initial_solution,
                                                                          conflict.trip_id,
                                                                          conflict.other_trip_id,
-                                                                         conflict.distance_to_cover);
+                                                                         conflict.distance_to_cover + random_number);
 
         // Return the new solution if it is feasible and improves the total delay
         if (new_solution.is_feasible()) {

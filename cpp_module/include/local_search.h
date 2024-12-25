@@ -1,6 +1,7 @@
 #include "scheduler.h"
 #include "chrono"
 
+
 #ifndef CPP_MODULE_LOCAL_SEARCH_H
 #define CPP_MODULE_LOCAL_SEARCH_H
 
@@ -8,6 +9,7 @@
 
 
 namespace cpp_module {
+
 
     class LocalSearch : public TieManager {
 
@@ -126,7 +128,6 @@ namespace cpp_module {
                                                                                         get_current_time_in_seconds()),
                                                                                 verbose(arg_verbose) {}
 
-
         auto solve_conflict(Conflict &conflict, Solution &initial_solution) -> Solution;
 
 
@@ -154,7 +155,6 @@ namespace cpp_module {
         find_conflicts_on_arc(long arc, double arc_delay, const Solution &solution, const TripInfo &trip_info,
                               const std::vector<long> &conflicting_set);
 
-        bool check_if_possible_to_solve_conflict(const Conflict &conflict, const Solution &solution);
 
         Solution improve_solution(ConflictsQueue &conflicts_queue, Solution &best_known_solution);
 
@@ -164,6 +164,10 @@ namespace cpp_module {
         void print_search_statistics();
 
         void print_search_statistics(double start_algo_global_clock);
+
+        bool
+        check_if_possible_to_solve_conflict(const Conflict &conflict, const Solution &solution,
+                                            double random_number);
     };
 
 
