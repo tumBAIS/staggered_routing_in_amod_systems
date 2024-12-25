@@ -7,15 +7,17 @@
 namespace cpp_module {
 
     auto Scheduler::get_departure(double arg_time, TripID trip_id, Position arg_position, DepartureType arg_type,
-                                  int arg_reinsertion_number) -> Departure {
+                                  TimeStamp arg_timestamp) -> Departure {
         Departure departure{
                 .time = arg_time,
                 .arc_id=instance.get_arc_at_position_in_trip_route(trip_id, arg_position),
                 .trip_id= trip_id,
                 .position = arg_position,
                 .event_type=arg_type,
-                .reinsertion_number=arg_reinsertion_number
+                .timestamp=arg_timestamp
         };
+
+        set_trip_timestamp(trip_id, arg_timestamp);
         return departure;
     }
 
@@ -33,17 +35,25 @@ namespace cpp_module {
         }
     }
 
-    auto Scheduler::check_if_travel_departure_should_be_skipped(const Departure &departure) -> bool {
-        bool is_valid_travel =
-                (departure.position == get_trip_last_processed_position(departure.trip_id) + 1) &&
-                (departure.reinsertion_number == get_trip_reinsertions(departure.trip_id));
+    auto Scheduler::check_if_travel_departure_should_be_skipped(const Departure &departure) const -> bool {
+        // Retrieve the reinsertions count for the vehicle corresponding to the current departure
 
-        if (is_valid_travel) {
-            return false;
-        } else {
-            return true;
-        }
+        // Retrieve the last processed position for the vehicle corresponding to the current departure
+        Position last_processed_position_vehicle = get_trip_last_processed_position(departure.trip_id);
+
+        // Check if the departure's position is exactly one step ahead of the last processed position
+        bool is_sequential_position = (departure.position == last_processed_position_vehicle + 1);
+
+        // Check if the departure's reinsertion count matches the stored reinsertion count for the vehicle
+        bool is_matching_timestamp = (departure.timestamp == get_trip_timestamp(departure.trip_id));
+
+        // If both conditions are not met, this departure should be skipped
+        bool should_skip_departure = !(is_sequential_position && is_matching_timestamp);
+
+
+        return should_skip_departure;
     }
+
 
     auto Scheduler::check_if_departure_should_be_skipped(const Departure &departure) -> bool {
         if (is_arc_dummy(departure.arc_id)) {

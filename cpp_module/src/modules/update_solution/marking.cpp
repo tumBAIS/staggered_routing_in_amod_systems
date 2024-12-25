@@ -13,10 +13,10 @@ namespace cpp_module {
                                             const double other_departure_time) -> void {
         reset_other_schedule_to_reinsertion_time(initial_solution, new_solution, other_trip_id, other_position);
         set_trip_last_processed_position(other_trip_id, other_position - 1);
-        increase_trip_reinsertions(other_trip_id);
+
         auto other_trip_departure = get_departure(other_departure_time, other_trip_id,
                                                   other_position, TRAVEL,
-                                                  get_trip_reinsertions(other_trip_id));
+                                                  get_new_timestamp());
         insert_departure_in_pq(other_trip_departure);
     }
 
@@ -145,7 +145,7 @@ namespace cpp_module {
                                              other_trip_id,
                                              other_position,
                                              ACTIVATION,
-                                             0);
+                                             get_trip_timestamp(other_trip_id));
         set_trip_status(other_trip_id, STAGING);
         insert_departure_in_pq(other_departure);
     }

@@ -174,7 +174,8 @@ namespace cpp_module {
         // Helper lambda to process and insert a departure into the priority queue
         auto process_and_insert_departure = [&](TripID trip_id) {
             auto departure = get_departure(
-                    complete_solution.get_trip_start_time(trip_id), trip_id, 0, TRAVEL, 0
+                    complete_solution.get_trip_start_time(trip_id), trip_id, 0,
+                    TRAVEL, get_new_timestamp()
             );
             set_trip_last_processed_position(departure.trip_id, -1);
             set_trip_status(departure.trip_id, ACTIVE);

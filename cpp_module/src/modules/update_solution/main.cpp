@@ -43,9 +43,7 @@ namespace cpp_module {
 
             auto departure = get_and_pop_departure_from_pq();
 
-            const auto skip_departure = check_if_departure_should_be_skipped(departure);
-
-            if (skip_departure) continue;
+            if (check_if_departure_should_be_skipped(departure)) continue;
 
             activate_staging_vehicle(departure);
 

@@ -63,7 +63,7 @@ namespace cpp_module {
                 Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
 
                 // Resolve ties as long as conditions hold
-                while (check_tie(working_solution, tie) && working_solution.is_feasible()) {
+                while (check_tie(working_solution, tie)) {
                     working_solution.set_ties_flag(true);
 
                     if (enough_slack_to_solve_tie(vehicle_one, working_solution)) {
@@ -73,7 +73,7 @@ namespace cpp_module {
                                                                                    CONSTR_TOLERANCE + TOLERANCE);
 
                         // Validate the new solution
-                        if (!new_solution.is_feasible()) {
+                        if (!new_solution.is_feasible() or check_tie(new_solution, tie)) {
                             break;  // Restore the previous solution
                         }
 
@@ -106,7 +106,7 @@ namespace cpp_module {
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
-        while (complete_solution.has_ties() && complete_solution.is_feasible()) {
+        while (complete_solution.has_ties()) {
             complete_solution.set_ties_flag(false);
             set_tie_solved_flag(false);
             for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {

@@ -11,6 +11,7 @@
 
 namespace cpp_module {
 
+    using TimeStamp = std::chrono::system_clock::time_point;
     const double UNUSED_VALUE = -1;
     enum DepartureType {
         TRAVEL, ACTIVATION
@@ -22,7 +23,7 @@ namespace cpp_module {
         long trip_id;
         long position;
         enum DepartureType event_type;
-        long reinsertion_number;
+        TimeStamp timestamp;
     };
 
     struct TripInfo {
@@ -87,7 +88,7 @@ namespace cpp_module {
         MinQueueDepartures pq_departures;
         std::vector<MinQueueArrivals> arrivals_on_arcs;
         std::vector<long> last_processed_position;
-        std::vector<long> number_of_reinsertions;
+        std::vector<TimeStamp> trip_timestamps;
         std::vector<TripID> trips_to_mark;
         bool lazy_update_pq{};
         std::vector<TripStatus> trip_status_list;
@@ -97,7 +98,8 @@ namespace cpp_module {
 
 
     public:
-        explicit SchedulerFields(Instance &arg_instance) : TieManager(arg_instance) {
+        explicit SchedulerFields(Instance &arg_instance) : TieManager(arg_instance),
+                                                           trip_timestamps(arg_instance.get_number_of_trips()) {
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
             clear_and_reserve_pq_departures();
@@ -133,9 +135,14 @@ namespace cpp_module {
             arrivals_on_arcs[arc_id].push(arg_departure);
         }
 
+        void initialize_trip_timestamps() {
+            std::fill(trip_timestamps.begin(), trip_timestamps.end(),
+                      std::chrono::system_clock::time_point(std::chrono::system_clock::duration(0)));
+        }
+
         void initialize_status_vehicles() {
             trip_status_list = std::vector<TripStatus>(instance.get_number_of_trips(), INACTIVE);
-            number_of_reinsertions = std::vector<long>(instance.get_number_of_trips(), 0);
+            initialize_trip_timestamps();
             last_processed_position = std::vector<long>(instance.get_number_of_trips(), -1);
         }
 
@@ -200,16 +207,21 @@ namespace cpp_module {
             trip_status_list[trip_id] = arg_trip_status;
         }
 
-        [[nodiscard]] Position get_trip_last_processed_position(TripID trip_id) {
+        [[nodiscard]] Position get_trip_last_processed_position(TripID trip_id) const {
             return last_processed_position[trip_id];
         }
 
-        [[nodiscard]] long get_trip_reinsertions(TripID trip_id) {
-            return number_of_reinsertions[trip_id];
+        static TimeStamp get_new_timestamp() {
+            return std::chrono::system_clock::now();
         }
 
-        void increase_trip_reinsertions(TripID trip_id) {
-            number_of_reinsertions[trip_id]++;
+
+        [[nodiscard]] TimeStamp get_trip_timestamp(TripID trip_id) const {
+            return trip_timestamps[trip_id];
+        }
+
+        void set_trip_timestamp(TripID trip_id, TimeStamp arg_timestamp) {
+            trip_timestamps[trip_id] = arg_timestamp;
         }
 
 
@@ -248,7 +260,6 @@ namespace cpp_module {
 
         bool check_if_activation_departure_should_be_skipped(const Departure &departure);
 
-        bool check_if_travel_departure_should_be_skipped(const Departure &departure);
 
         bool check_if_departure_should_be_skipped(const Departure &departure);
 
@@ -299,9 +310,6 @@ namespace cpp_module {
         [[nodiscard]] auto check_if_solution_is_feasible(const Departure &departure) const;
 
         static double compute_delay_on_arc(const double &vehicles_on_arc, const Instance &arg_instance, long arc);
-
-        Departure get_departure(double arg_time, TripID trip_id, Position arg_position, DepartureType arg_type,
-                                int arg_reinsertion_number);
 
         Time process_vehicle(Solution &initial_solution, Solution &new_solution, Departure &departure);
 
@@ -373,6 +381,12 @@ namespace cpp_module {
         double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
                                        bool current_conflicts_with_other, const Departure &departure,
                                        const TripInfo &trip_info);
+
+        [[nodiscard]] bool check_if_travel_departure_should_be_skipped(const Departure &departure) const;
+
+        Departure
+        get_departure(double arg_time, TripID trip_id, Position arg_position, DepartureType arg_type,
+                      TimeStamp arg_timestamp);
     };
 
 }

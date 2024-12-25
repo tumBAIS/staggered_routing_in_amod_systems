@@ -131,7 +131,7 @@ namespace cpp_module {
             }
         }
         check_if_solution_has_ties(complete_solution);
-        if (complete_solution.has_ties() && complete_solution.is_feasible()) {
+        if (complete_solution.has_ties()) {
             solve_solution_ties(complete_solution);
         }
         return complete_solution;

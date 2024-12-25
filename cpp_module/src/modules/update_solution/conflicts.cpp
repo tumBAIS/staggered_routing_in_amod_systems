@@ -125,7 +125,6 @@ namespace cpp_module {
             // Check if there's a tie and exit early if necessary
             if (check_tie(new_solution, tie)) {
                 new_solution.set_ties_flag(true);
-                return UNUSED_VALUE;
             }
 
             // Pass parameters by reference to avoid copies
@@ -215,22 +214,39 @@ namespace cpp_module {
                                             const Departure &departure) {
         double flow_increment = 0.0;
 
-        bool other_is_processed_on_this_arc =
-                (other_position <= get_trip_last_processed_position(other_trip_id));
-
-        bool other_is_first = check_if_other_is_first(
+        // Check if the other trip is the first trip in the current schedule
+        bool other_is_first_in_current_schedule = check_if_other_is_first(
                 other_trip_id, other_departure_time, departure);
 
-        if (other_is_processed_on_this_arc) {
-            if (!other_is_first) {
-                reinsert_other_in_queue(initial_solution, new_solution, other_trip_id,
-                                        other_position, other_departure_time);
-                return 0.0;
-            }
+        // Determine if the other trip needs to be reinserted
+        bool needs_reinsertion = false;
 
-            if (current_conflicts_with_other) {
-                flow_increment += 1.0;
-            }
+        if (other_is_first_in_current_schedule) {
+            // Get the original departure times for the current and other trips
+            double other_original_departure = initial_solution.get_trip_arc_departure(other_trip_id, other_position);
+            double current_original_departure = initial_solution.get_trip_arc_departure(departure.trip_id,
+                                                                                        departure.position);
+
+            // Reinsertion is needed if:
+            // - The other trip was not first in the original schedule, AND
+            // - It has already been processed on this arc
+            needs_reinsertion = !check_if_other_was_first(
+                    other_trip_id, other_original_departure, current_original_departure, departure) &&
+                                get_trip_last_processed_position(other_trip_id) > other_position;
+        } else {
+            // Reinsertion is needed if the other trip has already been processed
+            needs_reinsertion = get_trip_last_processed_position(other_trip_id) > other_position;
+        }
+
+        // Reinsert the other trip into the queue if required
+        if (needs_reinsertion) {
+            reinsert_other_in_queue(initial_solution, new_solution, other_trip_id, other_position,
+                                    other_departure_time);
+        }
+
+        // If the current trip conflicts with the other trip, increment the flow
+        if (current_conflicts_with_other) {
+            flow_increment += 1.0;
         }
 
         return flow_increment;
