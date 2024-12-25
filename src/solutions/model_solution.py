@@ -51,7 +51,8 @@ def get_epoch_model_solution(
         epoch_status_quo: Solution,
         epoch_warm_start: Solution,
         solver_params: SolverParameters,
-        cpp_epoch_instance: cpp.cpp_instance
+        cpp_epoch_instance: cpp.cpp_instance,
+        start_times: list[float]
 ) -> Solution:
     """
     Compute the epoch model solution from the optimized model.
@@ -61,7 +62,6 @@ def get_epoch_model_solution(
         return epoch_warm_start if solver_params.warm_start else epoch_status_quo
 
     # Retrieve results from the model
-    start_times = get_model_start_times(model, epoch_instance.trip_routes)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
     solution = cpp_scheduler.construct_solution(start_times)
 

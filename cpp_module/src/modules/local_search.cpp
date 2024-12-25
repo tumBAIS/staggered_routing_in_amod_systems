@@ -10,7 +10,7 @@ namespace cpp_module {
 
 
     auto LocalSearch::check_if_time_limit_is_reached() -> bool {
-        auto time_now = clock() / (double) CLOCKS_PER_SEC;
+        auto time_now = get_current_time_in_seconds();
         auto duration = (time_now - start_algo_global_clock);
         if (duration > instance.get_max_time_optimization()) {
             std::cout << "STOPPING LOCAL SEARCH - MAX TIME LIMIT REACHED \n";

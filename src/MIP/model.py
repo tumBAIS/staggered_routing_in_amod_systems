@@ -4,6 +4,7 @@ from pathlib import Path
 import gurobipy as grb
 from typing import Optional
 import cpp_module as cpp
+import solutions.model_solution
 from MIP import StaggeredRoutingModel
 from input_data import SolverParameters, GUROBI_OPTIMALITY_GAP, TOLERANCE
 from problem.epoch_instance import EpochInstance
@@ -119,22 +120,23 @@ def run_model(model: StaggeredRoutingModel,
               solver_params: SolverParameters,
               cpp_local_search: cpp.cpp_local_search,
               cpp_simplified_epoch_instance: cpp.cpp_instance,
-              ) -> Optional[OptimizationMeasures]:
+              ) -> (Optional[OptimizationMeasures], list[float]):
     """Runs the optimization model with the specified parameters."""
     print("=" * 50)
     print("Starting Model Optimization".center(50))
     print("=" * 50)
 
     # Check if model should be optimized
-    if (not model.get_optimize_flag() or
-            not is_there_remaining_time(instance, solver_params) or
-            instance.instance_params.staggering_cap == 0):
+    not_solve_model_flag = not model.get_optimize_flag() or \
+                           not is_there_remaining_time(instance, solver_params) or \
+                           instance.instance_params.staggering_cap == 0
+    if (not_solve_model_flag):
         print("Optimization skipped due to one of the following reasons:")
         print(" - Optimization flag is disabled.")
         print(" - No remaining time for optimization.")
         print(" - Staggering capacity is zero.")
         print("=" * 50)
-        return None
+        return None, warm_start.start_times
 
     set_gurobi_parameters(model, instance, solver_params)
 
@@ -160,5 +162,7 @@ def run_model(model: StaggeredRoutingModel,
     print("=" * 50)
 
     if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
-        return model.get_final_optimization_metrics(solver_params.start_algorithm_clock)
-    return None
+        start_times = solutions.model_solution.get_model_start_times(model, instance.trip_routes)
+        return model.get_final_optimization_metrics(solver_params.start_algorithm_clock), start_times
+    else:
+        raise RuntimeError("Unexpected status.")

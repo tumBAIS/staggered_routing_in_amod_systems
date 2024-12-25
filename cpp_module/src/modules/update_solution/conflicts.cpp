@@ -77,6 +77,7 @@ namespace cpp_module {
         } else if (other_comes_before_and_overlaps || other_comes_after_and_overlaps) {
             return true;
         } else if (other_comes_after_and_does_not_overlap) {
+            // Leverage fact that conflicting sets are sorted by earliest departure times.
             set_break_flow_computation_flag(true);
             return false;
         } else {
@@ -166,30 +167,31 @@ namespace cpp_module {
                 other_trip_id, other_departure_time, other_arrival, departure);
 
         if (!other_vehicle_is_active) {
-            return handle_inactive_vehicle(
+            handle_inactive_vehicle(
                     initial_solution, other_trip_id, other_position,
                     current_conflicts_with_other, departure, trip_info
             );
         } else {
-            return handle_active_vehicle(
+            handle_active_vehicle(
                     initial_solution, new_solution, other_trip_id, other_position,
-                    other_departure_time, current_conflicts_with_other, departure
+                    other_departure_time, departure
             );
         }
+
+        if (current_conflicts_with_other) {
+            return 1.0;
+        }
+        return 0.0;
+
     }
 
 
-    double Scheduler::handle_inactive_vehicle(Solution &initial_solution,
-                                              TripID other_trip_id,
-                                              long other_position,
-                                              bool current_conflicts_with_other,
-                                              const Departure &departure,
-                                              const TripInfo &trip_info) {
-        double flow_increment = 0.0;
-
-        if (current_conflicts_with_other) {
-            flow_increment += 1.0;
-        }
+    auto Scheduler::handle_inactive_vehicle(Solution &initial_solution,
+                                            TripID other_trip_id,
+                                            long other_position,
+                                            bool current_conflicts_with_other,
+                                            const Departure &departure,
+                                            const TripInfo &trip_info) -> void {
 
         MarkInstruction mark_instruction = check_if_other_should_be_marked(
                 initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure, trip_info);
@@ -201,18 +203,14 @@ namespace cpp_module {
         } else if (mark_instruction == WAIT) {
             insert_trip_to_mark(other_trip_id);
         }
-
-        return flow_increment;
     }
 
-    double Scheduler::handle_active_vehicle(Solution &initial_solution,
-                                            Solution &new_solution,
-                                            TripID other_trip_id,
-                                            long other_position,
-                                            double other_departure_time,
-                                            bool current_conflicts_with_other,
-                                            const Departure &departure) {
-        double flow_increment = 0.0;
+    auto Scheduler::handle_active_vehicle(Solution &initial_solution,
+                                          Solution &new_solution,
+                                          TripID other_trip_id,
+                                          long other_position,
+                                          double other_departure_time,
+                                          const Departure &departure) -> void {
 
         // Check if the other trip is the first trip in the current schedule
         bool other_is_first_in_current_schedule = check_if_other_is_first(
@@ -244,12 +242,6 @@ namespace cpp_module {
                                     other_departure_time);
         }
 
-        // If the current trip conflicts with the other trip, increment the flow
-        if (current_conflicts_with_other) {
-            flow_increment += 1.0;
-        }
-
-        return flow_increment;
     }
 
 

@@ -123,7 +123,7 @@ def get_epoch_solution(
         epoch_warm_start,
         solver_params
     )
-    optimization_measures = run_model(
+    optimization_measures, solution_start_times = run_model(
         model,
         simplified_instance,
         epoch_warm_start,
@@ -140,6 +140,7 @@ def get_epoch_solution(
         epoch_warm_start,
         solver_params,
         cpp_simplified_epoch_instance,
+        solution_start_times
     )
 
     # Map the solution back to the full system.

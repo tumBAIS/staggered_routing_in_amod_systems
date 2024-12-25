@@ -347,13 +347,6 @@ namespace cpp_module {
 
         void update_total_delay_solution(Solution &current_solution, Solution &new_solution);
 
-        double
-        handle_active_vehicle(Solution &initial_solution, Solution &new_solution, TripID other_trip_id,
-                              long other_position,
-                              double other_departure_time, bool current_conflicts_with_other,
-                              const Departure &departure);
-
-
         static double compute_vehicles_on_arc(MinQueueArrivals &arrivals_on_arc, const double &departure_time);
 
         void apply_staggering_to_solve_conflict(Solution &complete_solution, TripID trip_id, TripID other_trip_id,
@@ -377,9 +370,9 @@ namespace cpp_module {
                                         bool current_conflicts_with_other, const Departure &departure,
                                         const TripInfo &trip_info);
 
-        double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
-                                       bool current_conflicts_with_other, const Departure &departure,
-                                       const TripInfo &trip_info);
+        auto handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
+                                     bool current_conflicts_with_other, const Departure &departure,
+                                     const TripInfo &trip_info) -> void;
 
         [[nodiscard]] bool check_if_travel_departure_should_be_skipped(const Departure &departure) const;
 
@@ -388,6 +381,11 @@ namespace cpp_module {
                       TimeStamp arg_timestamp);
 
         bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution, double num);
+
+        void
+        handle_active_vehicle(Solution &initial_solution, Solution &new_solution, TripID other_trip_id,
+                              long other_position,
+                              double other_departure_time, const Departure &departure);
     };
 
 }
