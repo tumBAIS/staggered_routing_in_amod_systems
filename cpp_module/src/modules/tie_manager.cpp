@@ -1,15 +1,16 @@
 #include <iostream>
 #include <cmath>
 #include "scheduler.h"
+#include "random"
 
 namespace cpp_module {
 
 
 // Check if a vehicle has enough slack to solve a tie
-    auto Scheduler::enough_slack_to_solve_tie(TripID trip_id, const Solution &solution) -> bool {
+    auto Scheduler::enough_slack_to_solve_tie(TripID trip_id, const Solution &solution, double num) -> bool {
         auto trip_start_time = solution.get_trip_start_time(trip_id);
         auto slack_trip = get_trip_remaining_time_slack(trip_id, trip_start_time);
-        return slack_trip > CONSTR_TOLERANCE;
+        return slack_trip > num;
     }
 
 
@@ -66,14 +67,14 @@ namespace cpp_module {
                 while (check_tie(working_solution, tie)) {
                     working_solution.set_ties_flag(true);
 
-                    if (enough_slack_to_solve_tie(vehicle_one, working_solution)) {
+                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, CONSTR_TOLERANCE + TOLERANCE)) {
                         Solution new_solution = update_existing_congested_schedule(working_solution,
                                                                                    tie.vehicle_one,
                                                                                    tie.vehicle_two,
                                                                                    CONSTR_TOLERANCE + TOLERANCE);
 
                         // Validate the new solution
-                        if (!new_solution.is_feasible() or check_tie(new_solution, tie)) {
+                        if (!new_solution.is_feasible()) {
                             break;  // Restore the previous solution
                         }
 
@@ -81,6 +82,8 @@ namespace cpp_module {
                         print_tie_solved(tie);
                         working_solution = new_solution;
                         set_tie_solved_flag(true);
+                    } else {
+                        break;
                     }
                 }
             }

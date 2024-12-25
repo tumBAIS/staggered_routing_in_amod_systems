@@ -305,7 +305,6 @@ namespace cpp_module {
 
         void solve_solution_ties(Solution &complete_solution);
 
-        bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution);
 
         [[nodiscard]] auto check_if_solution_is_feasible(const Departure &departure) const;
 
@@ -373,9 +372,9 @@ namespace cpp_module {
                                         TripID other_trip_id, Position other_position, const TripInfo &trip_info);
 
         static MarkInstruction
-        check_if_other_should_be_marked(const Solution &initial_solution, const long other_trip_id,
-                                        const long other_position,
-                                        const bool current_conflicts_with_other, const Departure &departure,
+        check_if_other_should_be_marked(const Solution &initial_solution, long other_trip_id,
+                                        long other_position,
+                                        bool current_conflicts_with_other, const Departure &departure,
                                         const TripInfo &trip_info);
 
         double handle_inactive_vehicle(Solution &initial_solution, TripID other_trip_id, long other_position,
@@ -387,6 +386,8 @@ namespace cpp_module {
         Departure
         get_departure(double arg_time, TripID trip_id, Position arg_position, DepartureType arg_type,
                       TimeStamp arg_timestamp);
+
+        bool enough_slack_to_solve_tie(TripID trip_id, const Solution &solution, double num);
     };
 
 }
