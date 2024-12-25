@@ -37,22 +37,19 @@ namespace cpp_module {
                                                     const long other_trip_id,
                                                     const long other_position,
                                                     const bool current_conflicts_with_other,
-                                                    const Departure &departure) -> MarkInstruction {
+                                                    const Departure &departure,
+                                                    const TripInfo &trip_info) -> MarkInstruction {
 
         // Fetch original schedule information
         auto other_original_departure = initial_solution.get_trip_arc_departure(other_trip_id, other_position);
-        auto current_original_departure = initial_solution.get_trip_arc_departure(departure.trip_id,
-                                                                                  departure.position);
-        auto current_original_arrival = initial_solution.get_trip_arc_departure(departure.trip_id,
-                                                                                departure.position + 1);
 
         // Determine original and current order relationships
         auto other_was_originally_first = check_if_other_was_first(
-                other_trip_id, other_original_departure, current_original_departure, departure);
+                other_trip_id, other_original_departure, trip_info.original_departure, departure);
 
         auto other_overlapped_with_current = check_if_other_had_conflict_with_current(
-                other_trip_id, other_original_departure, current_original_departure, current_original_arrival,
-                departure);
+                other_trip_id, other_original_departure, trip_info.original_departure,
+                trip_info.original_arrival, departure);
 
         bool other_is_first_now = check_if_other_is_first(other_trip_id, other_original_departure,
                                                           departure);

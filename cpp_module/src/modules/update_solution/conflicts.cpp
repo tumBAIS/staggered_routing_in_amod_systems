@@ -28,16 +28,9 @@ namespace cpp_module {
     auto Scheduler::check_if_trips_within_conflicting_set_can_conflict(
             const long other_trip_id,
             const long other_position,
-            const Departure &departure
+            const Departure &departure,
+            const TripInfo &trip_info
     ) -> bool {
-
-        // Fetch the earliest departure and latest arrival times for the current trip
-        double current_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
-                departure.trip_id, departure.position
-        );
-        double current_latest_arrival_time = instance.get_trip_arc_latest_departure_time(
-                departure.trip_id, departure.position + 1
-        );
 
         // Fetch the earliest departure and latest arrival times for the other trip
         double other_earliest_departure_time = instance.get_trip_arc_earliest_departure_time(
@@ -50,30 +43,30 @@ namespace cpp_module {
         // Determine overlap conditions
         bool other_comes_before_and_does_not_overlap = comes_before(
                 other_latest_arrival_time,
-                current_earliest_departure_time,
+                trip_info.earliest_departure,
                 other_trip_id,
                 departure.trip_id
         );
 
         bool other_comes_before_and_overlaps =
                 comes_before(
-                        other_earliest_departure_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                        other_earliest_departure_time, trip_info.earliest_departure, other_trip_id, departure.trip_id
                 ) &&
                 !comes_before(
-                        other_latest_arrival_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                        other_latest_arrival_time, trip_info.earliest_departure, other_trip_id, departure.trip_id
                 );
 
         bool other_comes_after_and_overlaps =
                 comes_after(
-                        other_earliest_departure_time, current_earliest_departure_time, other_trip_id, departure.trip_id
+                        other_earliest_departure_time, trip_info.earliest_departure, other_trip_id, departure.trip_id
                 ) &&
                 comes_before(
-                        current_earliest_departure_time, other_latest_arrival_time, departure.trip_id, other_trip_id
+                        trip_info.earliest_departure, other_latest_arrival_time, departure.trip_id, other_trip_id
                 );
 
         bool other_comes_after_and_does_not_overlap = comes_after(
                 other_earliest_departure_time,
-                current_latest_arrival_time,
+                trip_info.latest_arrival,
                 other_trip_id,
                 departure.trip_id
         );
@@ -91,6 +84,16 @@ namespace cpp_module {
         }
     }
 
+    auto Scheduler::get_trip_info(const Solution &solution, const Departure &departure) -> TripInfo {
+        return TripInfo{
+                .earliest_departure=instance.get_trip_arc_earliest_departure_time(departure.trip_id,
+                                                                                  departure.position),
+                .latest_arrival=instance.get_trip_arc_latest_departure_time(departure.trip_id, departure.position + 1),
+                .original_departure= solution.get_trip_arc_departure(departure.trip_id, departure.position),
+                .original_arrival=solution.get_trip_arc_departure(departure.trip_id, departure.position + 1)
+        };
+    }
+
 
     auto Scheduler::get_flow_on_arc(Solution &initial_solution,
                                     Solution &new_solution,
@@ -99,6 +102,8 @@ namespace cpp_module {
 
         // Avoid copying the conflicting set
         const auto &conflicting_set = instance.get_conflicting_set(departure.arc_id);
+        // Fetch the earliest departure and latest arrival times for the current trip
+        const TripInfo trip_info = get_trip_info(initial_solution, departure);
 
         for (const auto &other_trip_id: conflicting_set) {
             if (other_trip_id == departure.trip_id) {
@@ -129,7 +134,8 @@ namespace cpp_module {
                     new_solution,
                     departure,
                     other_trip_id,
-                    other_position
+                    other_position,
+                    trip_info
             );
 
             // Break computation if the flag is set
@@ -147,8 +153,9 @@ namespace cpp_module {
                                                Solution &new_solution,
                                                const Departure &departure,
                                                TripID other_trip_id,
-                                               Position other_position) {
-        if (!check_if_trips_within_conflicting_set_can_conflict(other_trip_id, other_position, departure)) {
+                                               Position other_position,
+                                               const TripInfo &trip_info) {
+        if (!check_if_trips_within_conflicting_set_can_conflict(other_trip_id, other_position, departure, trip_info)) {
             return 0.0;
         }
 
@@ -162,7 +169,7 @@ namespace cpp_module {
         if (!other_vehicle_is_active) {
             return handle_inactive_vehicle(
                     initial_solution, other_trip_id, other_position,
-                    current_conflicts_with_other, departure
+                    current_conflicts_with_other, departure, trip_info
             );
         } else {
             return handle_active_vehicle(
@@ -177,7 +184,8 @@ namespace cpp_module {
                                               TripID other_trip_id,
                                               long other_position,
                                               bool current_conflicts_with_other,
-                                              const Departure &departure) {
+                                              const Departure &departure,
+                                              const TripInfo &trip_info) {
         double flow_increment = 0.0;
 
         if (current_conflicts_with_other) {
@@ -185,7 +193,7 @@ namespace cpp_module {
         }
 
         MarkInstruction mark_instruction = check_if_other_should_be_marked(
-                initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure);
+                initial_solution, other_trip_id, other_position, current_conflicts_with_other, departure, trip_info);
 
         if (mark_instruction == MARK) {
             mark_trip(other_trip_id, initial_solution.get_trip_arc_departure(other_trip_id, other_position),
