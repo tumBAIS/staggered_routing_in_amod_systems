@@ -30,8 +30,6 @@ namespace cpp_module {
                 .other_position = other_trip_info.position,
                 .delay = delay,
                 .distance_to_cover = (other_trip_info.arrival_time - trip_info.departure_time) + 2 * CONSTR_TOLERANCE,
-                .staggering_current_vehicle = 0.0,
-                .destaggering_other_vehicle = 0.0
         };
     }
 

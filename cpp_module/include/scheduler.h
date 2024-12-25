@@ -33,12 +33,8 @@ namespace cpp_module {
         Position other_position;
         double delay;
         double distance_to_cover;
-        double staggering_current_vehicle;
-        double destaggering_other_vehicle;
 
         void update(Solution &solution, const Instance &instance) {
-            staggering_current_vehicle = 0.0;
-            destaggering_other_vehicle = 0.0;
             auto current_departure = solution.get_trip_arc_departure(trip_id, current_position);
             auto current_arrival = solution.get_trip_arc_departure(trip_id, current_position + 1);
             auto other_arrival = solution.get_trip_arc_departure(other_trip_id, other_position + 1);
