@@ -122,7 +122,6 @@ PRESETS = {
         "staggering_cap_list": [25],
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "epoch_time_limit": 100,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -139,7 +138,6 @@ PRESETS = {
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
-        "epoch_time_limit": 100,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -155,7 +153,6 @@ PRESETS = {
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
         "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "epoch_time_limit": 7200,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -171,7 +168,6 @@ PRESETS = {
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
-        "epoch_time_limit": 360,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -282,7 +278,6 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     deadline_factor = PRESETS[preset_name]["deadline_factor"]
 
     # Solver parameters
-    epoch_time_limit = PRESETS[preset_name]["epoch_time_limit"]
     algo_mode_list = PRESETS[preset_name]["algo_mode_list"]
     epoch_size_list = [60 if x == "OFFLINE" else 6 for x in algo_mode_list]
     optimize = PRESETS[preset_name]["optimize"]
@@ -355,7 +350,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     solver_params_list = []
     for epoch_size in epoch_size_list:
         solver_params_dict = {
-            "epoch_time_limit": epoch_time_limit,
+            "epoch_time_limit": 7200 if epoch_size == 60 else 360,
             "epoch_size": epoch_size,
             "optimize": optimize,
             "warm_start": warm_start,
