@@ -123,7 +123,7 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
 PRESETS = {
     "var_pwl": {
         "network_name": "manhattan_10",
-        "number_of_trips": 100,
+        "number_of_trips": 10,
         "day_list": list(range(1, 6)),  # start instance params
         "max_flow_allowed_list": [30, 60],
         "seed_list": [0],
@@ -136,6 +136,7 @@ PRESETS = {
         "warm_start": True,
         "improve_warm_start": True,
         "simplify": True,
+        "verbose_model": True,
         "local_search_callback": True  # end solver params
     },
     "algo_performance_paper": {
@@ -153,6 +154,7 @@ PRESETS = {
         "warm_start": True,
         "improve_warm_start": True,
         "simplify": True,
+        "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
     "staggering_analysis_paper": {
@@ -170,6 +172,7 @@ PRESETS = {
         "warm_start": True,
         "improve_warm_start": True,
         "simplify": True,
+        "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
 }
@@ -293,7 +296,7 @@ def main(preset_name: str, add_shortcuts: bool):
     improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
     local_search_callback = PRESETS[preset_name]["local_search_callback"]
     simplify = PRESETS[preset_name]["simplify"]
-    verbose_model = False
+    verbose_model = PRESETS[preset_name]["verbose_model"]
 
     pretty_print_experiment_parameters(PRESETS[preset_name], network_name, number_of_trips,
                                        add_shortcuts)
