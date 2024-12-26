@@ -314,7 +314,7 @@ def main(preset_name: str, add_shortcuts: bool):
         memory_per_cpu = "2G"
     elif network_name == "manhattan_10":
         minutes_per_run = 15
-        memory_per_cpu = "500MB"
+        memory_per_cpu = "1G"
     else:
         # LARGE EXPERIMENTS
         minutes_per_run = 150
