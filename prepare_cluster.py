@@ -122,8 +122,8 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
 
 PRESETS = {
     "var_pwl": {
-        "network_name": "manhattan_5",
-        "number_of_trips": 50,
+        "network_name": "manhattan_10",
+        "number_of_trips": 500,
         "day_list": list(range(1, 6)),  # start instance params
         "max_flow_allowed_list": [30, 60],
         "seed_list": [0],
@@ -361,8 +361,13 @@ def main(preset_name: str, add_shortcuts: bool):
     # Define solver parameters for the simulation
     solver_params_list = []
     for epoch_size in epoch_size_list:
+
+        if preset_name == "var_pwl":
+            epoch_time_limit = 60
+        else:
+            epoch_time_limit = 7200 if epoch_size == 60 else 360
         solver_params_dict = {
-            "epoch_time_limit": 7200 if epoch_size == 60 else 360,
+            "epoch_time_limit": epoch_time_limit,
             "epoch_size": epoch_size,
             "optimize": optimize,
             "warm_start": warm_start,
