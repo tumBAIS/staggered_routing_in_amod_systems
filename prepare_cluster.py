@@ -122,8 +122,8 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
 
 PRESETS = {
     "var_pwl": {
-        "network_name": "manhattan_10",
-        "number_of_trips": 10,
+        "network_name": "manhattan_5",
+        "number_of_trips": 50,
         "day_list": list(range(1, 6)),  # start instance params
         "max_flow_allowed_list": [30, 60],
         "seed_list": [0],
