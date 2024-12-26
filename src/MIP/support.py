@@ -14,13 +14,10 @@ path_to_results = os.path.join(os.path.dirname(__file__), "../../results")
 def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
                           solver_params: SolverParameters) -> None:
     """Set Gurobi solver parameters based on time and optimization settings."""
-    total_time_remaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
-    )
     epoch_time_remaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
     )
-    time_remaining = max(0.0, round(min(total_time_remaining, epoch_time_remaining), 2))
+    time_remaining = max(0.0, round(epoch_time_remaining, 2))
     # Suppress Gurobi logging
     log_val = 1 if solver_params.verbose_model else 0
     with SuppressOutput():

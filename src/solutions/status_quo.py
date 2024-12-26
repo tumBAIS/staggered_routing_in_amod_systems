@@ -34,7 +34,7 @@ def assert_trips_are_not_duplicated(epoch_instance: EpochInstance, vehicles_util
                     f"Duplicate values in vehicles utilizing arcs for arc {arc}."
 
 
-def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp.cpp_instance:
+def get_cpp_instance(instance: Instance, time_limit: int) -> cpp.cpp_instance:
     """Create a CPP instance for the given epoch."""
     return cpp.cpp_instance(
         set_of_vehicle_paths=instance.trip_routes,
@@ -43,7 +43,7 @@ def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp
         capacities_arcs=instance.capacities_arcs,
         list_of_slopes=instance.instance_params.list_of_slopes,
         list_of_thresholds=instance.instance_params.list_of_thresholds,
-        parameters=[solver_params.algorithm_time_limit],
+        parameters=[time_limit],
         release_times=instance.release_times,
         deadlines=instance.deadlines,
         lb_travel_time=instance.get_lb_travel_time(),
@@ -56,7 +56,7 @@ def get_cpp_instance(instance: Instance, solver_params: SolverParameters) -> cpp
 def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverParameters) -> \
         (Solution, cpp.cpp_instance):
     """Compute the status quo solution for the current epoch."""
-    cpp_epoch_instance = get_cpp_instance(epoch_instance, solver_params)
+    cpp_epoch_instance = get_cpp_instance(epoch_instance, solver_params.epoch_time_limit)
     cpp_scheduler = cpp.cpp_scheduler(cpp_epoch_instance)
     cpp_status_quo = cpp_scheduler.construct_solution(epoch_instance.release_times)
     cpp_epoch_instance.set_release_times(cpp_status_quo.get_start_times())

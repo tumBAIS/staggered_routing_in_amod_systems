@@ -14,13 +14,10 @@ def _compute_remaining_time(instance: EpochInstance, solver_params: SolverParame
     """
     Calculates the remaining time for optimization based on algorithm and epoch limits.
     """
-    algorithm_time_remaining = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
-    )
     epoch_time_remaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
     )
-    return max(0.0, min(algorithm_time_remaining, epoch_time_remaining))
+    return max(0.0, epoch_time_remaining)
 
 
 def _is_time_left_for_optimization(instance: EpochInstance, solver_params: SolverParameters) -> bool:
@@ -78,7 +75,10 @@ def get_epoch_warm_start(
     )
 
     # Print final metrics
-    delay_percentage = total_delay / total_travel_time * 100
+    if total_travel_time > TOLERANCE:
+        delay_percentage = total_delay / total_travel_time * 100
+    else:
+        delay_percentage = 0
     print(f"Warm start solution computed successfully.")
     print(f" - Total Delay: {total_delay:.2f}")
     print(f" - Delay as % of Travel Time: {delay_percentage:.2f}%")

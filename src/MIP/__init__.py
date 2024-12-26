@@ -176,9 +176,9 @@ class StaggeredRoutingModel(grb.Model):
         self._cb_total_delay = arg_value
 
     def set_remaining_time_for_optimization(self, solver_params: SolverParameters) -> None:
-        total_optimization_time = solver_params.algorithm_time_limit
+        epoch_time_limit = solver_params.epoch_time_limit
         elapsed_time = datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
-        self._remaining_time_for_optimization = total_optimization_time - elapsed_time
+        self._remaining_time_for_optimization = epoch_time_limit - elapsed_time
 
     def get_remaining_time_for_optimization(self) -> float:
         return self._remaining_time_for_optimization

@@ -104,7 +104,7 @@ def get_epoch_solution(
         return epoch_status_quo, None
 
     # Prepare the simplified instance for optimization.
-    cpp_simplified_epoch_instance = get_cpp_instance(simplified_instance, solver_params)
+    cpp_simplified_epoch_instance = get_cpp_instance(simplified_instance, solver_params.epoch_time_limit)
     cpp_local_search = cpp.LocalSearch(cpp_simplified_epoch_instance, solver_params.verbose_model)
 
     # Generate warm start for optimization.

@@ -17,7 +17,7 @@ def run_procedure(source: str) -> None:
     # Load initial data and setup instances
     instance_params, solver_params = get_input_data(source)
     instance = get_instance(instance_params)
-    cpp_instance = get_cpp_instance(instance, solver_params)
+    cpp_instance = get_cpp_instance(instance, solver_params.epoch_time_limit)
     complete_status_quo = get_offline_solution(instance, cpp_instance)
 
     # Initialize a list to store solutions for each epoch

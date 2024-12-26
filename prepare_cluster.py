@@ -122,7 +122,7 @@ PRESETS = {
         "staggering_cap_list": [25],
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "algorithm_time_limit": 100,  # start solver params
+        "epoch_time_limit": 100,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -139,7 +139,7 @@ PRESETS = {
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
-        "algorithm_time_limit": 100,  # start solver params
+        "epoch_time_limit": 100,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -155,7 +155,7 @@ PRESETS = {
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
         "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "algorithm_time_limit": 7200,  # start solver params
+        "epoch_time_limit": 7200,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -171,7 +171,7 @@ PRESETS = {
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
-        "algorithm_time_limit": 7200,  # start solver params
+        "epoch_time_limit": 360,  # start solver params
         "optimize": True,
         "warm_start": True,
         "improve_warm_start": True,
@@ -220,8 +220,7 @@ def get_set_of_experiments_name(
         preset_name: str, network_name: str, algo_mode_list: list[str],
         number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed_list: list[int],
         seed_list: list[int], list_of_slopes: list[float], list_of_thresholds: list[float],
-        staggering_cap: list[int], deadline_factor: int, algorithm_time_limit: int,
-        optimize: bool, warm_start: bool,
+        staggering_cap: list[int], deadline_factor: int, optimize: bool, warm_start: bool,
         improve_warm_start: bool, local_search_callback: bool, simplify: bool) -> str:
     # Format the string based on the arguments and convert to uppercase
 
@@ -250,7 +249,7 @@ def get_set_of_experiments_name(
         f"{date_prefix}_{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
         f"_{format_algo_mode_list(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{(list_of_slopes)}{(list_of_thresholds)}_"
-        f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_ATL{algorithm_time_limit}_"
+        f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_"
         f"OPT{'YES' if optimize else 'NO'}_"
         f"WARM{'YES' if warm_start else 'NO'}_IWARM{'YES' if improve_warm_start else 'NO'}_"
         f"CBLS{'YES' if local_search_callback else 'NO'}_SMPLFY{'YES' if simplify else 'NO'}"
@@ -283,7 +282,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     deadline_factor = PRESETS[preset_name]["deadline_factor"]
 
     # Solver parameters
-    algorithm_time_limit = PRESETS[preset_name]["algorithm_time_limit"]
+    epoch_time_limit = PRESETS[preset_name]["epoch_time_limit"]
     algo_mode_list = PRESETS[preset_name]["algo_mode_list"]
     epoch_size_list = [60 if x == "OFFLINE" else 6 for x in algo_mode_list]
     optimize = PRESETS[preset_name]["optimize"]
@@ -299,7 +298,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     set_of_experiments = get_set_of_experiments_name(preset_name, network_name, algo_mode_list,
                                                      number_of_trips, add_shortcuts, day_list, max_flow_allowed_list,
                                                      seed_list, list_of_slopes, list_of_thresholds, staggering_cap_list,
-                                                     deadline_factor, algorithm_time_limit, optimize, warm_start,
+                                                     deadline_factor, optimize, warm_start,
                                                      improve_warm_start, local_search_callback, simplify)
 
     # Cluster parameters
@@ -355,9 +354,7 @@ def main(preset_name: str, network_name: str, number_of_trips: int, add_shortcut
     # Define solver parameters for the simulation
     solver_params_list = []
     for epoch_size in epoch_size_list:
-        epoch_time_limit = algorithm_time_limit if epoch_size == 60 else epoch_size * 60
         solver_params_dict = {
-            "algorithm_time_limit": algorithm_time_limit,
             "epoch_time_limit": epoch_time_limit,
             "epoch_size": epoch_size,
             "optimize": optimize,

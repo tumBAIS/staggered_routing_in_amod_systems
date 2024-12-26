@@ -105,13 +105,10 @@ def _continue_solving(model: StaggeredRoutingModel, instance: EpochInstance, sol
 
 def is_there_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> bool:
     """Checks if there is enough remaining time to continue optimization."""
-    total_remaining_time = solver_params.algorithm_time_limit - (
-            datetime.datetime.now().timestamp() - solver_params.start_algorithm_clock
-    )
     epoch_remaining_time = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
     )
-    return min(total_remaining_time, epoch_remaining_time) > 0
+    return epoch_remaining_time > 0
 
 
 def run_model(model: StaggeredRoutingModel,
