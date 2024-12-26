@@ -134,7 +134,7 @@ PRESETS = {
         "algo_mode_list": ["OFFLINE"],
         "optimize": True,
         "warm_start": True,
-        "improve_warm_start": True,
+        "improve_warm_start_list": [True],
         "simplify": True,
         "verbose_model": True,
         "local_search_callback": True  # end solver params
@@ -152,9 +152,27 @@ PRESETS = {
         "algo_mode_list": ["OFFLINE"],
         "optimize": True,
         "warm_start": True,
-        "improve_warm_start": True,
+        "improve_warm_start_list": [True],
         "simplify": True,
         "verbose_model": True,
+        "local_search_callback": True  # end solver params
+    },
+    "no_ls_comparison_paper": {
+        "network_name": "manhattan_100",
+        "number_of_trips": 5000,
+        "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [20, 40],
+        "seed_list": [0],
+        "list_of_slopes_list": [[.5]],
+        "list_of_thresholds_list": [[1]],
+        "staggering_cap_list": [10],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start_list": [True, False],
+        "simplify": True,
+        "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
     "algo_performance_paper": {
@@ -170,7 +188,8 @@ PRESETS = {
         "algo_mode_list": ["OFFLINE", "ONLINE"],
         "optimize": True,
         "warm_start": True,
-        "improve_warm_start": True,
+        "improve_warm_start_list": [True],
+
         "simplify": True,
         "verbose_model": False,
         "local_search_callback": True  # end solver params
@@ -188,7 +207,7 @@ PRESETS = {
         "algo_mode_list": ["OFFLINE"],
         "optimize": True,
         "warm_start": True,
-        "improve_warm_start": True,
+        "improve_warm_start_list": [True],
         "simplify": True,
         "verbose_model": False,
         "local_search_callback": True  # end solver params
@@ -241,7 +260,7 @@ def get_set_of_experiments_name(
         number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed_list: list[int],
         seed_list: list[int], list_of_slopes_list: list[list[float]], list_of_thresholds_list: list[list[float]],
         staggering_cap: list[int], deadline_factor: int, optimize: bool, warm_start: bool,
-        improve_warm_start: bool, local_search_callback: bool, simplify: bool) -> str:
+        improve_warm_start_list: list[bool], simplify: bool) -> str:
     # Format the string based on the arguments and convert to uppercase
 
     def format_stag_cap(stag_cap):
@@ -250,13 +269,19 @@ def get_set_of_experiments_name(
         else:
             return f"VARSTAG"
 
-    def format_algo_mode_list(algo_mode_list: list[str]):
+    def format_list_of_strings(algo_mode_list: list[str]):
         if len(algo_mode_list) == 1:
             return algo_mode_list[0]
         else:
             return "_".join(algo_mode_list)
 
     def format_list_int(algo_mode_list: list[int]):
+        if len(algo_mode_list) == 1:
+            return str(algo_mode_list[0])
+        else:
+            return str(algo_mode_list).replace(" ", "")
+
+    def format_list_bool(algo_mode_list: list[bool]):
         if len(algo_mode_list) == 1:
             return str(algo_mode_list[0])
         else:
@@ -270,12 +295,12 @@ def get_set_of_experiments_name(
 
     name = (
         f"{date_prefix}_{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
-        f"_{format_algo_mode_list(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
+        f"_{format_list_of_strings(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
         f"S{len(seed_list)}_{format_nested_list(list_of_slopes_list)}_{format_nested_list(list_of_thresholds_list)}_"
         f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_"
         f"OPT{'YES' if optimize else 'NO'}_"
-        f"WARM{'YES' if warm_start else 'NO'}_IWARM{'YES' if improve_warm_start else 'NO'}_"
-        f"CBLS{'YES' if local_search_callback else 'NO'}_SMPLFY{'YES' if simplify else 'NO'}"
+        f"WARM{'YES' if warm_start else 'NO'}_LS{format_list_bool(improve_warm_start_list)}_"
+        f"SMPLFY{'YES' if simplify else 'NO'}"
     )
 
     # CUSTOM RULES
@@ -311,8 +336,7 @@ def main(preset_name: str, add_shortcuts: bool):
     epoch_size_list = [60 if x == "OFFLINE" else 6 for x in algo_mode_list]
     optimize = PRESETS[preset_name]["optimize"]
     warm_start = PRESETS[preset_name]["warm_start"]
-    improve_warm_start = PRESETS[preset_name]["improve_warm_start"]
-    local_search_callback = PRESETS[preset_name]["local_search_callback"]
+    improve_warm_start_list = PRESETS[preset_name]["improve_warm_start_list"]
     simplify = PRESETS[preset_name]["simplify"]
     verbose_model = PRESETS[preset_name]["verbose_model"]
 
@@ -323,7 +347,7 @@ def main(preset_name: str, add_shortcuts: bool):
                                                      number_of_trips, add_shortcuts, day_list, max_flow_allowed_list,
                                                      seed_list, list_of_slopes_list, list_of_thresholds_list,
                                                      staggering_cap_list, deadline_factor, optimize, warm_start,
-                                                     improve_warm_start, local_search_callback, simplify)
+                                                     improve_warm_start_list, simplify)
 
     # Cluster parameters
     job_title = set_of_experiments
@@ -379,26 +403,26 @@ def main(preset_name: str, add_shortcuts: bool):
     # Define solver parameters for the simulation
     solver_params_list = []
     for epoch_size in epoch_size_list:
+        for improve_warm_start in improve_warm_start_list:
+            if preset_name == "var_pwl":
+                epoch_time_limit = 60
+            else:
+                epoch_time_limit = 7200 if epoch_size == 60 else 360
+            solver_params_dict = {
+                "epoch_time_limit": epoch_time_limit,
+                "epoch_size": epoch_size,
+                "optimize": optimize,
+                "warm_start": warm_start,
+                "improve_warm_start": improve_warm_start,
+                "local_search_callback": improve_warm_start,  # on purpose, same as improve warm start
+                "simplify": simplify,
+                "verbose_model": verbose_model
+            }
 
-        if preset_name == "var_pwl":
-            epoch_time_limit = 60
-        else:
-            epoch_time_limit = 7200 if epoch_size == 60 else 360
-        solver_params_dict = {
-            "epoch_time_limit": epoch_time_limit,
-            "epoch_size": epoch_size,
-            "optimize": optimize,
-            "warm_start": warm_start,
-            "improve_warm_start": improve_warm_start,
-            "local_search_callback": local_search_callback,
-            "simplify": simplify,
-            "verbose_model": verbose_model
-        }
-
-        # Generate the solver parameters filename
-        solver_params_name = get_csv_data_name(solver_params_dict)
-        write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
-        solver_params_list.append(solver_params_name)
+            # Generate the solver parameters filename
+            solver_params_name = get_csv_data_name(solver_params_dict)
+            write_instance_parameters_csv(solver_params_dict, solver_params_name, mode="solver")
+            solver_params_list.append(solver_params_name)
 
     # Execution
     write_run_list(instance_params_names_list, solver_params_list, set_of_experiments, cluster_setup.job_title)
@@ -406,9 +430,10 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="var_pwl_paper_mini", add_shortcuts=True)
+    main(preset_name="no_ls_comparison_paper", add_shortcuts=True)
 
 # PRESETS NAMES
 # var_pwl
+# no_ls_comparison_paper
 # algo_performance_paper
 # staggering_analysis_paper
