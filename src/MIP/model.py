@@ -158,8 +158,8 @@ def run_model(model: StaggeredRoutingModel,
     print("Optimization completed successfully.")
     print("=" * 50)
 
-    if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED, grb.GRB.Status.INTERRUPTED]:
+    if model.status not in [grb.GRB.Status.INFEASIBLE, grb.GRB.Status.UNBOUNDED]:
         start_times = solutions.model_solution.get_model_start_times(model, instance.trip_routes)
         return model.get_final_optimization_metrics(solver_params.start_algorithm_clock), start_times
     else:
-        raise RuntimeError("Unexpected status.")
+        raise RuntimeError(f"Unexpected status : {model.status}")
