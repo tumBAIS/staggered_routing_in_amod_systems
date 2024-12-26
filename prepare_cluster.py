@@ -139,6 +139,24 @@ PRESETS = {
         "verbose_model": True,
         "local_search_callback": True  # end solver params
     },
+    "var_pwl_paper_mini": {
+        "network_name": "manhattan_100",
+        "number_of_trips": 5000,
+        "day_list": list(range(1, 6)),  # start instance params
+        "max_flow_allowed_list": [20, 40],
+        "seed_list": [0],
+        "list_of_slopes_list": [[0.5], [0.5, 0.7], [0.5, 0.7, 0.9]],
+        "list_of_thresholds_list": [[1], [1, 1.5], [1, 1.5, 2]],
+        "staggering_cap_list": [25],
+        "deadline_factor": 100,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start": True,
+        "simplify": True,
+        "verbose_model": True,
+        "local_search_callback": True  # end solver params
+    },
     "algo_performance_paper": {
         "network_name": "manhattan_100",
         "number_of_trips": 5000,
@@ -388,7 +406,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="var_pwl", add_shortcuts=True)
+    main(preset_name="var_pwl_paper_mini", add_shortcuts=True)
 
 # PRESETS NAMES
 # var_pwl

@@ -144,10 +144,7 @@ def get_earliest_departures_list_and_pq(
     # Populate the arc-based earliest departures and priority queue
     for vehicle, earliest_departure_times in enumerate(instance.earliest_departure_times):
         for position, earliest_departure in enumerate(earliest_departure_times):
-            try:
-                arc = instance.trip_routes[vehicle][position]
-            except IndexError:
-                raise IndexError()
+            arc = instance.trip_routes[vehicle][position]
             latest_arrival = known_latest_arrival_times[vehicle][position]
             earliest_arrival = earliest_departure + instance.travel_times_arcs[arc]
             latest_departure = (
