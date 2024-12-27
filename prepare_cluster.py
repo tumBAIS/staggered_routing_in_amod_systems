@@ -139,6 +139,24 @@ PRESETS = {
         "verbose_model": True,
         "local_search_callback": True  # end solver params
     },
+    "no_ls_comparison_mini": {
+        "network_name": "manhattan_10",
+        "number_of_trips": 500,
+        "day_list": list(range(1, 11)),  # start instance params
+        "max_flow_allowed_list": [20, 40],
+        "seed_list": [0],
+        "list_of_slopes_list": [[.5]],
+        "list_of_thresholds_list": [[1]],
+        "staggering_cap_list": [10],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start_list": [True, False],
+        "simplify": True,
+        "verbose_model": False,
+        "local_search_callback": True  # end solver params
+    },
     "no_ls_comparison_paper": {
         "network_name": "manhattan_100",
         "number_of_trips": 5000,
@@ -381,7 +399,7 @@ def main(preset_name: str, add_shortcuts: bool):
     solver_params_list = []
     for epoch_size in epoch_size_list:
         for improve_warm_start in improve_warm_start_list:
-            if preset_name == "var_pwl":
+            if preset_name == "no_ls_comparison_mini":
                 epoch_time_limit = 60
             else:
                 epoch_time_limit = 7200 if epoch_size == 60 else 360
@@ -407,7 +425,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="var_pwl_paper", add_shortcuts=True)
+    main(preset_name="no_ls_comparison_mini", add_shortcuts=True)
 
 # PRESETS NAMES
 # var_pwl_paper
