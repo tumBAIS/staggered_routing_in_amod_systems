@@ -425,10 +425,10 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_paper", add_shortcuts=True)
+    main(preset_name="staggering_analysis_paper", add_shortcuts=True)
 
 # PRESETS NAMES
-# var_pwl_paper
-# no_ls_comparison_paper
 # algo_performance_paper
 # staggering_analysis_paper
+# var_pwl_paper
+# no_ls_comparison_paper
