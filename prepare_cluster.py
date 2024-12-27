@@ -139,10 +139,10 @@ PRESETS = {
         "verbose_model": True,
         "local_search_callback": True  # end solver params
     },
-    "var_pwl_paper_mini": {
+    "var_pwl_paper": {
         "network_name": "manhattan_100",
         "number_of_trips": 5000,
-        "day_list": list(range(1, 6)),  # start instance params
+        "day_list": list(range(1, 31)),  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
         "list_of_slopes_list": [[0.5], [0.5, 0.7], [0.5, 0.7, 0.9]],
@@ -248,11 +248,6 @@ def pretty_print_experiment_parameters(
 
     # Print the table using tabulate
     print(tabulate(parameters, headers=["Parameter", "Value"], tablefmt="simple"))
-
-
-import datetime
-
-import datetime
 
 
 def get_set_of_experiments_name(
@@ -430,10 +425,10 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="no_ls_comparison_paper", add_shortcuts=True)
+    main(preset_name="var_pwl_paper", add_shortcuts=True)
 
 # PRESETS NAMES
-# var_pwl
+# var_pwl_paper
 # no_ls_comparison_paper
 # algo_performance_paper
 # staggering_analysis_paper
