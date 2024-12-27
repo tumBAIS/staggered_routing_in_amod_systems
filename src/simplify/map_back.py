@@ -35,6 +35,5 @@ def map_simplified_epoch_solution(
         congested_schedule=cpp_solution.get_schedule(),
         delays_on_arcs=cpp_solution.get_delays_on_arcs(cpp_epoch_instance),
         start_times=cpp_solution.get_start_times(),
-        free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(cpp_solution.get_start_times()),
         total_travel_time=cpp_solution.get_total_travel_time(),
     )

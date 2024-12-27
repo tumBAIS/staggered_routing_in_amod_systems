@@ -7,7 +7,6 @@ from pathlib import Path
 from input_data import SolverParameters
 from problem.instance import Instance
 from problem.solution import Solution
-from utils.aliases import *
 
 
 def transform_path_to_string(path: Path) -> str:
@@ -117,10 +116,8 @@ def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
 
     for j in range(len(status_quo.congested_schedule[i])):
         status_quo.congested_schedule[i][j] = round(status_quo.congested_schedule[i][j], 2)
-        status_quo.free_flow_schedule[i][j] = round(status_quo.free_flow_schedule[i][j], 2)
         status_quo.delays_on_arcs[i][j] = round(status_quo.delays_on_arcs[i][j], 2)
         solution.congested_schedule[i][j] = round(solution.congested_schedule[i][j], 2)
-        solution.free_flow_schedule[i][j] = round(solution.free_flow_schedule[i][j], 2)
         solution.delays_on_arcs[i][j] = round(solution.delays_on_arcs[i][j], 2)
 
 
@@ -143,6 +140,8 @@ def _remove_unnecessary_input_paths(output_data):
     columns_to_remove = ["path_to_G", "path_to_routes", "path_to_instance"]
     for col in columns_to_remove:
         output_data["instance_parameters"].pop(col, None)
+
+    output_data["instance"].pop("arc_position_in_routes_map", None)
 
 
 def _save_to_set_of_experiments(output_data, solver_params, path_to_results):

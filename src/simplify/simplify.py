@@ -25,7 +25,6 @@ def adjust_release_times_and_deadlines(instance: Instance, status_quo: Solution)
 
         for arc_id in range(len(status_quo.congested_schedule[vehicle])):
             status_quo.congested_schedule[vehicle][arc_id] -= min_release_time
-            status_quo.free_flow_schedule[vehicle][arc_id] -= min_release_time
             instance.latest_departure_times[vehicle][arc_id] -= min_release_time
             instance.earliest_departure_times[vehicle][arc_id] -= min_release_time
 

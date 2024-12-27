@@ -91,12 +91,10 @@ def reconstruct_solution(
 
     cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
     cpp_solution = cpp_scheduler.construct_solution(reconstructed_start_times)
-    free_flow_schedule = cpp_instance.get_free_flow_schedule(reconstructed_start_times)
 
     # Return the reconstructed solution
     return Solution(
         delays_on_arcs=cpp_solution.get_delays_on_arcs(cpp_instance),
-        free_flow_schedule=free_flow_schedule,
         start_times=cpp_solution.get_start_times(),
         total_delay=cpp_solution.get_total_delay(),
         congested_schedule=cpp_solution.get_schedule(),

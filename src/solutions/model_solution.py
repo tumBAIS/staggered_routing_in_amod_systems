@@ -68,7 +68,6 @@ def get_epoch_model_solution(
     # Construct and return the model solution
     return Solution(
         delays_on_arcs=solution.get_delays_on_arcs(cpp_epoch_instance),
-        free_flow_schedule=cpp_epoch_instance.get_free_flow_schedule(solution.get_start_times()),
         start_times=solution.get_start_times(),
         total_delay=solution.get_total_delay(),
         congested_schedule=solution.get_schedule(),

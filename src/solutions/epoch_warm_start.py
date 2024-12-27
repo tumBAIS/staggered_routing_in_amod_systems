@@ -70,7 +70,6 @@ def get_epoch_warm_start(
         delays_on_arcs=delays_on_arcs,
         start_times=start_times,
         binaries=binaries,
-        free_flow_schedule=cpp_instance.get_free_flow_schedule(start_times),
         total_travel_time=total_travel_time,
     )
 

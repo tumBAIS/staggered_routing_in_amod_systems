@@ -43,7 +43,6 @@ def get_offline_solution(
 
     offline_solution = Solution(
         delays_on_arcs=delays_on_arcs,
-        free_flow_schedule=free_flow_schedule,
         start_times=start_times,
         total_delay=cpp_status_quo.get_total_delay(),
         congested_schedule=cpp_status_quo.get_schedule(),
@@ -55,7 +54,6 @@ def get_offline_solution(
 
     utils.prints.print_trips_info(instance,
                                   offline_solution.congested_schedule,
-                                  offline_solution.free_flow_schedule,
                                   offline_solution.delays_on_arcs)
 
     return offline_solution

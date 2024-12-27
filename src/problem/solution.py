@@ -20,7 +20,6 @@ class Binaries:
 @dataclass
 class Solution:
     delays_on_arcs: list[list[float]]
-    free_flow_schedule: list[list[float]]
     congested_schedule: list[list[float]]
     start_times: list[float]
     total_delay: float
@@ -32,12 +31,10 @@ class Solution:
         self.congested_schedule.pop(trip)
         assert sum(self.delays_on_arcs[trip]) < TOLERANCE, "Vehicle has non-zero delays on arcs."
         self.delays_on_arcs.pop(trip)
-        self.free_flow_schedule.pop(trip)
 
     def remove_trip_at_position_entry_from_solution(self, trip, position):
         """ Used during simplification: removes entries where delay cannot occur """
         self.congested_schedule[trip].pop(position)
-        self.free_flow_schedule[trip].pop(position)
         assert self.delays_on_arcs[trip][position] < TOLERANCE, "Vehicle has delay on the first arc."
         self.delays_on_arcs[trip].pop(position)
         if self.congested_schedule[trip]:
@@ -45,7 +42,6 @@ class Solution:
 
     def remove_trip_arcs_between_indices(self, vehicle, start_idx, end_idx):
         del self.congested_schedule[vehicle][start_idx + 1:end_idx + 1]
-        del self.free_flow_schedule[vehicle][start_idx + 1:end_idx + 1]
         del self.delays_on_arcs[vehicle][start_idx + 1:end_idx + 1]
 
     def print_congestion_info(self) -> None:

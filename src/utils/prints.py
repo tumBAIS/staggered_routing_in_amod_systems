@@ -64,13 +64,19 @@ def _calculate_trip_lengths_in_minutes(schedule):
     return [(schedule[vehicle][-1] - schedule[vehicle][0]) / 60 for vehicle in range(len(schedule))]
 
 
+def _calculate_trip_delays_minutes(delays_on_arcs: list[list[float]]):
+    return [sum(trip_delays) / 60 for trip_delays in delays_on_arcs]
+
+
 def _calculate_time_differences(length_congested, length_free_flow):
     return [length_congested[i] - length_free_flow[i] for i in range(len(length_free_flow))]
 
 
-def _create_length_trips_dataframe(congested_schedule, free_flow_schedule):
+def _create_length_trips_dataframe(congested_schedule, delays_on_arcs):
     length_congested = _calculate_trip_lengths_in_minutes(congested_schedule)
-    length_free_flow = _calculate_trip_lengths_in_minutes(free_flow_schedule)
+    trip_delays = _calculate_trip_delays_minutes(delays_on_arcs)
+    length_free_flow = [trip_length_congested - trip_delay for trip_length_congested, trip_delay in
+                        zip(length_congested, trip_delays)]
     time_difference = _calculate_time_differences(length_congested, length_free_flow)
 
     return pd.DataFrame({
@@ -99,14 +105,13 @@ def _get_delays_on_arcs_in_minutes_series(instance, delays_on_arcs):
     return pd.DataFrame(data)
 
 
-def print_trips_info(instance, congested_schedule, free_flow_schedule, delays_on_arcs):
+def print_trips_info(instance, congested_schedule, delays_on_arcs):
     """
     Prints combined information about trip lengths and delays on arcs side-by-side.
 
     Args:
         instance: The problem instance containing trip and arc data.
         congested_schedule: The congested trip schedule.
-        free_flow_schedule: The free-flow trip schedule.
         delays_on_arcs: Delay data for arcs.
     """
     print("=" * 100)
@@ -114,7 +119,7 @@ def print_trips_info(instance, congested_schedule, free_flow_schedule, delays_on
     print("=" * 100)
 
     # Trip Length Info
-    length_trips_df = _create_length_trips_dataframe(congested_schedule, free_flow_schedule)
+    length_trips_df = _create_length_trips_dataframe(congested_schedule, delays_on_arcs)
     length_congested_trips_df = length_trips_df[length_trips_df['Time Difference [min]'] > TOLERANCE]
     trip_length_summary = length_trips_df.describe().round(2).T
     congested_trip_length_summary = length_congested_trips_df.describe().round(2).T

@@ -75,7 +75,6 @@ def get_epoch_status_quo(epoch_instance: EpochInstance, solver_params: SolverPar
 
     status_quo = Solution(
         delays_on_arcs=delays_on_arcs,
-        free_flow_schedule=free_flow_schedule,
         start_times=cpp_status_quo.get_start_times(),
         total_delay=cpp_status_quo.get_total_delay(),
         congested_schedule=cpp_status_quo.get_schedule(),
