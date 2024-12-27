@@ -46,7 +46,7 @@ def get_no_ls_comparison_boxplot(results_df: pd.DataFrame, path_to_figures: Path
     hc_data = results_df[results_df['congestion_level'] == "HC"]
 
     # Helper function to create and save boxplots
-    def plot_no_ls_boxplot(data, x_col, ylabel, xlabel, folder_name, file_name):
+    def plot_no_ls_boxplot(data, x_col, xlabel, folder_name, file_name):
         print(f"Creating boxplot for {file_name}...")
 
         # Create a new figure with a fixed size
@@ -68,7 +68,7 @@ def get_no_ls_comparison_boxplot(results_df: pd.DataFrame, path_to_figures: Path
 
         # Customize labels
         plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
+        plt.ylabel(" ")
 
         # Add gridlines
         plt.grid(axis='x', linestyle='--', color='gray', alpha=0.7)
@@ -95,21 +95,20 @@ def get_no_ls_comparison_boxplot(results_df: pd.DataFrame, path_to_figures: Path
 
     # Define boxplots for each metric
     metrics = [
-        ("solution_total_delay_minutes", "Warm Start (\texttt{MILP} vs \texttt{MATH})", "Solution Total Delay [min]",
+        ("solution_total_delay_minutes", "Solution Total Delay [min]",
          "solution_delay"),
-        ("absolute_improvement_minutes", "Warm Start (\texttt{MILP} vs \texttt{MATH})", "Absolute Improvement [min]",
+        ("absolute_improvement_minutes", r"\$\DelayReduction\$[min]",
          "absolute_improvement"),
-        ("percentage_improvement", "Warm Start (\texttt{MILP} vs \texttt{MATH})", "Percentage Improvement [%]",
+        ("percentage_improvement", r"\$\DelayReduction\$[%]",
          "percentage_improvement")
     ]
 
     # Generate boxplots for each congestion level and metric
-    for x_col, ylabel, xlabel, metric_name in metrics:
+    for x_col, xlabel, metric_name in metrics:
         print(f"Generating plots for LC data ({metric_name})...")
         plot_no_ls_boxplot(
             data=lc_data,
             x_col=x_col,
-            ylabel=ylabel,
             xlabel=xlabel,
             folder_name=f"no_ls_boxplots/{metric_name}_LC",
             file_name=f"no_ls_boxplot_{metric_name}_LC"
@@ -119,7 +118,6 @@ def get_no_ls_comparison_boxplot(results_df: pd.DataFrame, path_to_figures: Path
         plot_no_ls_boxplot(
             data=hc_data,
             x_col=x_col,
-            ylabel=ylabel,
             xlabel=xlabel,
             folder_name=f"no_ls_boxplots/{metric_name}_HC",
             file_name=f"no_ls_boxplot_{metric_name}_HC"

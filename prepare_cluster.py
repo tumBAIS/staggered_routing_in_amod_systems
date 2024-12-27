@@ -402,7 +402,7 @@ def main(preset_name: str, add_shortcuts: bool):
             if preset_name == "no_ls_comparison_mini":
                 epoch_time_limit = 60
             else:
-                epoch_time_limit = 7200 if epoch_size == 60 else 360
+                epoch_time_limit = 3600 if epoch_size == 60 else 360
             solver_params_dict = {
                 "epoch_time_limit": epoch_time_limit,
                 "epoch_size": epoch_size,
@@ -425,7 +425,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="no_ls_comparison_mini", add_shortcuts=True)
+    main(preset_name="algo_performance_paper", add_shortcuts=True)
 
 # PRESETS NAMES
 # var_pwl_paper

@@ -68,44 +68,6 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         off_freq, _ = np.histogram(off_values, bins=bins)
         on_freq, _ = np.histogram(on_values, bins=bins)
 
-        if verbose:
-            # Print detailed information about the barplots
-            print(f"\n{label} Barplot Information:")
-            for i in range(len(bins) - 1):
-                # Filter values falling into the current bin
-                unc_in_bin = [val for val in unc_values if bins[i] <= val < bins[i + 1]]
-                off_in_bin = [val for val in off_values if bins[i] <= val < bins[i + 1]]
-                on_in_bin = [val for val in on_values if bins[i] <= val < bins[i + 1]]
-
-                # Calculate min and max for the current bin
-                unc_min, unc_max = (min(unc_in_bin), max(unc_in_bin)) if unc_in_bin else (None, None)
-                off_min, off_max = (min(off_in_bin), max(off_in_bin)) if off_in_bin else (None, None)
-                on_min, on_max = (min(on_in_bin), max(on_in_bin)) if on_in_bin else (None, None)
-
-                # Format values (round to 4 decimals for clarity)
-                def format_value(val):
-                    return f"{val:.2f}" if val is not None else "None"
-
-                unc_in_bin = [format_value(v) for v in unc_in_bin]
-                off_in_bin = [format_value(v) for v in off_in_bin]
-                on_in_bin = [format_value(v) for v in on_in_bin]
-
-                unc_min, unc_max = format_value(unc_min), format_value(unc_max)
-                off_min, off_max = format_value(off_min), format_value(off_max)
-                on_min, on_max = format_value(on_min), format_value(on_max)
-
-                # Print bin details
-                print(f"  Bin [{bins[i]}, {bins[i + 1]}):")
-                print(f"    UNC: {unc_freq[i]} observations")
-                print(f"      Sample data: {unc_in_bin[:5]}")  # Print up to 5 sample points
-                print(f"      Min: {unc_min}, Max: {unc_max}")
-                print(f"    OFF: {off_freq[i]} observations")
-                print(f"      Sample data: {off_in_bin[:5]}")
-                print(f"      Min: {off_min}, Max: {off_max}")
-                print(f"    ON: {on_freq[i]} observations")
-                print(f"      Sample data: {on_in_bin[:5]}")
-                print(f"      Min: {on_min}, Max: {on_max}")
-
         # Create barplot
         bar_width = 0.3
         x = np.arange(len(bins) - 1)  # X positions for the bars
@@ -114,21 +76,25 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         plt.grid(axis="y", linestyle="--", color="gray", alpha=0.7, which="major", zorder=0)
         plt.grid(axis="y", linestyle="--", color="lightgray", alpha=0.4, which="minor", zorder=0)
 
-        plt.bar(x - bar_width, unc_freq, width=bar_width, color="gray", edgecolor="black", label="UNC", hatch="/",
-                zorder=2)
-        plt.bar(x, off_freq, width=bar_width, color="white", edgecolor="black", label="OFF", hatch=".", zorder=2)
-        plt.bar(x + bar_width, on_freq, width=bar_width, color="lightgray", edgecolor="black", label="ON", hatch="\\",
-                zorder=2)
+        # Define minimalistic and professional colors
+        unc_color = "#1f77b4"  # Blue
+        off_color = "#ff7f0e"  # Orange
+        on_color = "#2ca02c"  # Green
+
+        plt.bar(x - bar_width, unc_freq, width=bar_width, color=unc_color, edgecolor="black", label="UNC", zorder=2)
+        plt.bar(x, off_freq, width=bar_width, color=off_color, edgecolor="black", label="OFF", zorder=2)
+        plt.bar(x + bar_width, on_freq, width=bar_width, color=on_color, edgecolor="black", label="ON", zorder=2)
 
         plt.yscale("log")
-        plt.ylim(top=4000)  # Set y-axis maximum to 3000
+        plt.ylim(bottom=1e1, top=4000)  # Ensure bars start at bottom of y-axis
         plt.xlabel(r"$\mathcal{E}_a$ [min]")  # Updated to minutes
         plt.ylabel("Observations")
 
         # Update xticks to include labels
         plt.xticks(x, bin_labels, rotation=0)
 
-        plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black")
+        plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black",
+                   handlelength=2, handleheight=1.5, fontsize=10)  # Ensure proper legend size and rectangles
         plt.tight_layout()
 
         # Save plot
@@ -136,7 +102,18 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         os.makedirs(output_dir, exist_ok=True)
         file_name = f"arc_congestion_distribution_barplot_{label.lower()}"
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
-        tikzplotlib.save(output_dir / f"{file_name}.tex")
+
+        with open(output_dir / f"{file_name}.tex", "w") as tex_file:
+            tex_content = tikzplotlib.get_tikz_code()
+            tex_content = tex_content.replace("log basis y={10},", "")  # Remove log basis y
+            tex_content = tex_content.replace("ybar,ybar legend",
+                                              "rectangle,fill=legendfill")  # Proper legend rectangles
+            tex_content = tex_content.replace("ycomb", "")  # Correct bar heights to start from zero
+            tex_content = tex_content.replace(
+                "\\begin{axis}[",
+                "\\begin{axis}[width=\\columnwidth, height=4.5cm,"  # Explicitly set axis dimensions
+            )
+            tex_file.write(tex_content)
 
         plt.close()
         print(f"{label} barplot saved.".center(50))
