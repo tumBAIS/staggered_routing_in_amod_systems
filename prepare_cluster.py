@@ -121,28 +121,10 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
 
 
 PRESETS = {
-    "var_pwl": {
-        "network_name": "manhattan_10",
-        "number_of_trips": 500,
-        "day_list": list(range(1, 6)),  # start instance params
-        "max_flow_allowed_list": [30, 60],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.15], [0.15, 0.3], [0.15, 0.3, 0.5]],
-        "list_of_thresholds_list": [[1], [1, 1.5], [1, 1.5, 2]],
-        "staggering_cap_list": [25],
-        "deadline_factor": 100,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-        "simplify": True,
-        "verbose_model": True,
-        "local_search_callback": True  # end solver params
-    },
     "var_pwl_paper": {
         "network_name": "manhattan_100",
         "number_of_trips": 5000,
-        "day_list": list(range(1, 31)),  # start instance params
+        "day_list": list(range(1, 32)),  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
         "list_of_slopes_list": [[0.5], [0.5, 0.7], [0.5, 0.7, 0.9]],
