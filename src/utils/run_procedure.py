@@ -27,7 +27,6 @@ def run_procedure(source: str) -> None:
     # Process each epoch instance
     number_of_epochs = 60 // solver_params.epoch_size
     previous_epoch_trips = None
-    solver_params.set_start_algorithm_clock()
     for epoch_id in range(number_of_epochs):
         # Start processing instance
         epoch_instance = get_epoch_instance(instance, epoch_id, solver_params, previous_epoch_trips)

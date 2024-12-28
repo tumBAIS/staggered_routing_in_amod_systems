@@ -17,18 +17,18 @@ def set_gurobi_parameters(model: StaggeredRoutingModel, instance: EpochInstance,
     epoch_time_remaining = solver_params.epoch_time_limit - (
             datetime.datetime.now().timestamp() - instance.clock_start_epoch
     )
+    print(f"EPOCH TIME REMAINING: {round(epoch_time_remaining, 2)} [sec]")
     time_remaining = max(0.0, round(epoch_time_remaining, 2))
     # Suppress Gurobi logging
     log_val = 1 if solver_params.verbose_model else 0
-    with SuppressOutput():
-        model.setParam('OutputFlag', log_val)
-        model.setParam("timeLimit", time_remaining)
-        model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
-        model.setParam("NodeFileStart", 0.5)
-        model.setParam("Threads", 1)
-        model.setParam("MIPFocus", 2)
-        model.setParam("Disconnected", 0)
-        model.setParam("NumericFocus", 2)
+    model.setParam('OutputFlag', log_val)
+    model.setParam("timeLimit", time_remaining)
+    model.setParam("MIPGap", GUROBI_OPTIMALITY_GAP * 0.01)
+    model.setParam("NodeFileStart", 0.5)
+    model.setParam("Threads", 1)
+    model.setParam("MIPFocus", 2)
+    model.setParam("Disconnected", 0)
+    model.setParam("NumericFocus", 2)
 
 
 def compute_iis_if_not_solved(model: StaggeredRoutingModel) -> None:

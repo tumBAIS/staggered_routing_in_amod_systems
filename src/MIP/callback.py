@@ -26,10 +26,11 @@ def get_current_bounds(model: StaggeredRoutingModel, start_solution_time: float)
         model.store_optimality_gap(optimality_gap)
 
 
-def update_remaining_time_for_optimization(model: StaggeredRoutingModel, solver_params: SolverParameters) -> None:
+def update_remaining_time_for_optimization(model: StaggeredRoutingModel, epoch_time_limit: float,
+                                           clock_start_epoch: float) -> None:
     """Update the remaining time for optimization in the callback."""
 
-    model.set_remaining_time_for_optimization(solver_params)
+    model.set_remaining_time_for_optimization(epoch_time_limit, clock_start_epoch)
     if model.get_remaining_time_for_optimization() < 0:
         print("Terminating model from callback - Time limit reached.")
         model.terminate()
@@ -120,8 +121,8 @@ def callback(instance: EpochInstance, solver_params: SolverParameters,
 
     def call_local_search(model: StaggeredRoutingModel, where: int) -> None:
         if where == grb.GRB.Callback.MIP:
-            get_current_bounds(model, solver_params.start_algorithm_clock)
-            update_remaining_time_for_optimization(model, solver_params)
+            get_current_bounds(model, instance.clock_start_epoch)
+            update_remaining_time_for_optimization(model, solver_params.epoch_time_limit, instance.clock_start_epoch)
 
         if where == grb.GRB.Callback.MIPSOL:
             get_callback_solution(model, instance)
