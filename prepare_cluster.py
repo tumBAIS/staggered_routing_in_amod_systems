@@ -175,6 +175,25 @@ PRESETS = {
         "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
+    "online_algo_performance_paper": {
+        "network_name": "manhattan_100",
+        "number_of_trips": 5000,
+        "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [20, 40],
+        "seed_list": [0],
+        "list_of_slopes_list": [[.5]],
+        "list_of_thresholds_list": [[1]],
+        "staggering_cap_list": [10],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["ONLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start_list": [True],
+
+        "simplify": True,
+        "verbose_model": False,
+        "local_search_callback": True  # end solver params
+    },
     "algo_performance_paper": {
         "network_name": "manhattan_100",
         "number_of_trips": 5000,
@@ -425,7 +444,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_paper", add_shortcuts=True)
+    main(preset_name="online_algo_performance_paper", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
