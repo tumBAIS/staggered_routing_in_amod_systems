@@ -10,6 +10,7 @@ def append_arc_copy_to_instance(instance: Instance, arc_to_copy: int, conflictin
     instance.travel_times_arcs.append(arc_travel_time)
     instance.capacities_arcs.append(arc_nominal_capacity)
     instance.conflicting_sets.append(conflicting_set)
+    instance.conflicting_sets_processing_arc_map.append(arc_to_copy)
 
 
 def update_vehicle_paths_in_conflicting_set(instance: Instance, arc: int) -> None:
