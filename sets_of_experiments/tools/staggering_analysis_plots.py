@@ -22,6 +22,12 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
     print("Starting get_staggering_analysis_plots".center(50))
     print("=" * 50 + "\n")
 
+    # Calculate the staggering applied column
+    results_df['solution_staggering_applied'] = results_df.apply(
+        lambda row: [sol - sq for sol, sq in zip(row['solution_start_times'], row['status_quo_start_times'])],
+        axis=1
+    )
+
     # Step 1: Split the data into LC and HC
     print("Splitting data into LC and HC...".center(50))
     lc_data = results_df[results_df["congestion_level"] == "LC"].copy()

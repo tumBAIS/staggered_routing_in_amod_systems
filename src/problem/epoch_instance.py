@@ -9,33 +9,57 @@ from input_data import SolverParameters, CONSTR_TOLERANCE, TOLERANCE
 
 
 class EpochInstance(Instance):
-
     def __init__(
             self,
             epoch_id: int,
             instance: Instance,
             trip_original_ids: list[int],
-            trip_ids_from_previous_epoch: Optional[list[int]],
+            map_previous_epoch_trips_to_start_time: Optional[dict[int, float]] = None,
     ) -> None:
+        # Retrieve trip IDs from the previous epoch if available
+        trip_ids_from_previous_epoch = (
+            list(map_previous_epoch_trips_to_start_time.keys())
+            if map_previous_epoch_trips_to_start_time
+            else None
+        )
 
+        # Initialize instance attributes
         self.epoch_id = epoch_id
         self.trip_original_ids = trip_original_ids
         self.clock_start_epoch = datetime.datetime.now().timestamp()
         self.clock_end_epoch = None
         self.removed_vehicles = []
         self.removed_arcs = []
+
+        # Derive deadlines, trip routes, and release times for the trips
         deadlines = [instance.deadlines[i] for i in trip_original_ids]
         trip_routes = [instance.trip_routes[i] for i in trip_original_ids]
-        release_times = [instance.release_times[i] for i in trip_original_ids]
-        max_staggering_applicable = [
-            100 * CONSTR_TOLERANCE if trip_ids_from_previous_epoch and trip_id in trip_ids_from_previous_epoch else
-            instance.max_staggering_applicable[trip_id]
+
+        release_times = [
+            map_previous_epoch_trips_to_start_time[trip_id]
+            if trip_ids_from_previous_epoch and trip_id in trip_ids_from_previous_epoch
+            else instance.release_times[trip_id]
             for trip_id in trip_original_ids
         ]
-        super().__init__(instance_params=instance.instance_params, deadlines=deadlines,
-                         trip_routes=trip_routes, travel_times_arcs=instance.travel_times_arcs,
-                         capacities_arcs=instance.capacities_arcs, node_based_trip_routes=None,
-                         release_times=release_times, max_staggering_applicable=max_staggering_applicable)
+
+        max_staggering_applicable = [
+            100 * CONSTR_TOLERANCE
+            if trip_ids_from_previous_epoch and trip_id in trip_ids_from_previous_epoch
+            else instance.max_staggering_applicable[trip_id]
+            for trip_id in trip_original_ids
+        ]
+
+        # Call superclass initializer
+        super().__init__(
+            instance_params=instance.instance_params,
+            deadlines=deadlines,
+            trip_routes=trip_routes,
+            travel_times_arcs=instance.travel_times_arcs,
+            capacities_arcs=instance.capacities_arcs,
+            node_based_trip_routes=None,
+            release_times=release_times,
+            max_staggering_applicable=max_staggering_applicable,
+        )
 
     def set_clock_end_epoch(self):
         self.clock_end_epoch = datetime.datetime.now().timestamp()
@@ -200,52 +224,11 @@ def get_last_vehicle_for_each_epoch(epoch_size: int, release_times_dataset: list
     return last_vehicle_epochs
 
 
-#
-# def get_epoch_instance(instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch) -> EpochInstance:
-#     arc_based_shortest_paths = copy.deepcopy(instance.trip_routes[first_vehicle_in_epoch:last_vehicle_in_epoch + 1])
-#
-#     return EpochInstance(
-#         epoch_id=epoch_id,
-#         instance_params=instance.instance_params,
-#         vehicles_original_ids=list(range(first_vehicle_in_epoch, last_vehicle_in_epoch + 1)),
-#         release_times=instance.release_times[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
-#         trip_routes=arc_based_shortest_paths,
-#         deadlines=instance.deadlines[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
-#         max_staggering_applicable=instance.max_staggering_applicable[first_vehicle_in_epoch:last_vehicle_in_epoch + 1],
-#         capacities_arcs=instance.capacities_arcs[:],
-#         travel_times_arcs=instance.travel_times_arcs[:],
-#         last_position_for_reconstruction=[None for _ in range(last_vehicle_in_epoch + 1 - first_vehicle_in_epoch)])
-
-
-# def get_epoch_instances(global_instance: Instance, solver_params: SolverParameters) -> EpochInstances:
-#     """
-#     Create epoch instances from the global instance based on solver parameters.
-#     """
-#     last_vehicle_epochs = get_last_vehicle_for_each_epoch(
-#         solver_params.epoch_size, global_instance.release_times
-#     )
-#     epoch_instances = []
-#
-#     first_vehicle_in_epoch = 0
-#
-#     for epoch_id, last_vehicle_in_epoch in enumerate(last_vehicle_epochs):
-#         # Generate an epoch instance for the current epoch
-#         epoch_instance = get_epoch_instance(
-#             global_instance, epoch_id, first_vehicle_in_epoch, last_vehicle_in_epoch
-#         )
-#         epoch_instances.append(epoch_instance)
-#
-#         # Update the first vehicle for the next epoch
-#         first_vehicle_in_epoch = last_vehicle_in_epoch + 1
-#
-#     return epoch_instances
-
-
 def get_epoch_instance(
         instance: Instance,
         epoch_id: int,
         solver_params: SolverParameters,
-        trips_from_previous_epoch: Optional[list[int]] = None
+        map_previous_epoch_trips_to_start_time: Optional[dict[int, float]] = None
 ) -> EpochInstance:
     """Creates an EpochInstance for the specified epoch_id."""
     first_time_epoch = epoch_id * solver_params.epoch_size * 60
@@ -262,17 +245,17 @@ def get_epoch_instance(
     )
 
     # Combine trip IDs from the previous epoch and current epoch
-    trip_ids_in_epoch = sorted(
-        (trips_from_previous_epoch or []) +
-        list(range(first_trip_in_epoch, last_trip_in_epoch + 1))
-    )
+    trip_ids_from_previous_epoch = list(
+        map_previous_epoch_trips_to_start_time.keys()) if map_previous_epoch_trips_to_start_time else []
+    trip_ids_in_epoch = sorted(trip_ids_from_previous_epoch + list(range(first_trip_in_epoch, last_trip_in_epoch + 1))
+                               )
 
     # Generate the EpochInstance
     epoch_instance = EpochInstance(
         epoch_id=epoch_id,
         instance=instance,
         trip_original_ids=trip_ids_in_epoch,
-        trip_ids_from_previous_epoch=trips_from_previous_epoch,
+        map_previous_epoch_trips_to_start_time=map_previous_epoch_trips_to_start_time,
     )
     conflicting_sets.schedule_utilities.add_conflicting_sets_to_instance(epoch_instance)
     return epoch_instance

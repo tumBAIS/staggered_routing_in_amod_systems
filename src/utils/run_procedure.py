@@ -26,10 +26,10 @@ def run_procedure(source: str) -> None:
     optimization_measures_list = []
     # Process each epoch instance
     number_of_epochs = 60 // solver_params.epoch_size
-    previous_epoch_trips = None
+    map_previous_epoch_trips_to_start_time = None
     for epoch_id in range(number_of_epochs):
         # Start processing instance
-        epoch_instance = get_epoch_instance(instance, epoch_id, solver_params, previous_epoch_trips)
+        epoch_instance = get_epoch_instance(instance, epoch_id, solver_params, map_previous_epoch_trips_to_start_time)
 
         epoch_instance.print_start(solver_params.epoch_size)
 
@@ -44,7 +44,10 @@ def run_procedure(source: str) -> None:
                                                                    epoch_instance, epoch_status_quo, solver_params,
                                                                    cpp_epoch_instance)
 
-        previous_epoch_trips = epoch_solution.get_previous_epoch_trips(epoch_instance, solver_params, epoch_id)
+        map_previous_epoch_trips_to_start_time = epoch_solution.get_map_previous_epoch_trips_to_start_time(
+            epoch_instance,
+            solver_params,
+            epoch_id)
 
         # Store epoch info
         epoch_solutions.append(epoch_solution)

@@ -60,13 +60,14 @@ class Solution:
         print(f"TomTom Congestion Index:   {tomtom_congestion_index:.2f}%")
         print("--------------------------------------")
 
-    def get_previous_epoch_trips(self, instance: EpochInstance, solver_params: SolverParameters, epoch_id) -> (
-            list)[int]:
+    def get_map_previous_epoch_trips_to_start_time(self, instance: EpochInstance, solver_params: SolverParameters,
+                                                   epoch_id) -> (
+            dict[int:float]):
         """Look at the congested schedule and everyone whose schedule goes into new epoch, you return it"""
         start_time_next_epoch = solver_params.epoch_size * 60 * (epoch_id + 1)
-        trips_from_previous_epoch = []
+        map_previous_epoch_trips_to_start_time = dict()
         for trip, schedule in enumerate(self.congested_schedule):
             if schedule[-1] > start_time_next_epoch:
-                trips_from_previous_epoch.append(instance.get_trip_original_id(trip))  # Original IDs
+                map_previous_epoch_trips_to_start_time[instance.get_trip_original_id(trip)] = schedule[0]
 
-        return trips_from_previous_epoch
+        return map_previous_epoch_trips_to_start_time
