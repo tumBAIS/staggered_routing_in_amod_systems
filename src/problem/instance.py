@@ -176,6 +176,23 @@ class Instance:
     def update_arc_position_in_routes_map(self) -> None:
         self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
 
+    def remove_arc_copies(self):
+        # Restore original arc IDs in trip routes
+        for trip_index, route in enumerate(self.trip_routes):
+            for position, arc in enumerate(route):
+                original_arc = self.conflicting_sets_processing_arc_map[arc]
+                if original_arc is not None:
+                    self.trip_routes[trip_index][position] = original_arc
+
+        # Determine the number of original arcs
+        number_of_original_arcs = sum(1 for arc in self.conflicting_sets_processing_arc_map if arc is not None)
+
+        # Trim travel times and capacities to the original number of arcs
+        self.travel_times_arcs = self.travel_times_arcs[:number_of_original_arcs]
+        self.capacities_arcs = self.capacities_arcs[:number_of_original_arcs]
+
+        del self.conflicting_sets_processing_arc_map  # not necessary anymore
+
 
 def get_instance(instance_params: InstanceParameters) -> Instance:
     """Constructs an instance from input data without simplification."""

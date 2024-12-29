@@ -76,8 +76,7 @@ def _print_not_matching_schedules(
 def reconstruct_solution(
         epoch_instances: list[EpochInstance],
         epoch_solutions: list[Solution],
-        cpp_instance: cpp.cpp_instance,
-        instance: Instance) -> Solution:
+        cpp_instance: cpp.cpp_instance) -> Solution:
     """Reconstruct the global solution from epoch solutions."""
     # Reconstruct the global schedule
     utils.prints.print_unified_solution_construction_start()

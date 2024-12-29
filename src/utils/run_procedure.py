@@ -55,10 +55,10 @@ def run_procedure(source: str) -> None:
         optimization_measures_list.append(optimization_measures)
 
     # Reconstruct the complete solution from all epochs
-
-    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, cpp_instance, instance)
+    reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, cpp_instance)
 
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
+    instance.remove_arc_copies()
     save_experiment(instance, complete_status_quo, reconstructed_solution, solver_params,
                     optimization_measures_list)
