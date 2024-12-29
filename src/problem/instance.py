@@ -175,10 +175,20 @@ class Instance:
         self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
 
     def remove_arc_copies(self):
+        assert len(self.travel_times_arcs) == len(self.conflicting_sets_processing_arc_map), (
+            f"Length mismatch: travel_times_arcs has {len(self.travel_times_arcs)} elements, "
+            f"but conflicting_sets_processing_arc_map has {len(self.conflicting_sets_processing_arc_map)} elements. "
+            f"travel_times_arcs: {self.travel_times_arcs}, "
+            f"conflicting_sets_processing_arc_map: {self.conflicting_sets_processing_arc_map}"
+        )
+
         # Restore original arc IDs in trip routes
         for trip_index, route in enumerate(self.trip_routes):
             for position, arc in enumerate(route):
-                original_arc = self.conflicting_sets_processing_arc_map[arc]
+                try:
+                    original_arc = self.conflicting_sets_processing_arc_map[arc]
+                except:
+                    raise RuntimeError
                 if original_arc is not None:
                     self.trip_routes[trip_index][position] = original_arc
 

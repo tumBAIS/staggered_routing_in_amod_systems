@@ -33,7 +33,7 @@ class EpochInstance(Instance):
 
         # Derive deadlines, trip routes, and release times for the trips
         deadlines = [instance.deadlines[i] for i in trip_original_ids]
-        trip_routes = [instance.trip_routes[i] for i in trip_original_ids]
+        trip_routes = [instance.trip_routes[i][:] for i in trip_original_ids]
 
         release_times = [
             map_previous_epoch_trips_to_start_time[trip_id]
