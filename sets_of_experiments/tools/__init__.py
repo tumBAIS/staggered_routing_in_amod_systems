@@ -156,7 +156,7 @@ def get_results_df(path_to_results: Path) -> pd.DataFrame:
     # Step 3: Assign instance parameter IDs
     print("\nStep 3: Creating arc to node mapping...")
     results_df = set_arc_to_node_mapping(results_df)
-    print_arc_delays_distribution(results_df)
+    # print_arc_delays_distribution(results_df)
     print(f"Arc mapping assigned. DataFrame shape: {results_df.shape}")
 
     print("\n" + "=" * 50)

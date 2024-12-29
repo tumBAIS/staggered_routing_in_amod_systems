@@ -7,6 +7,26 @@ from collections import defaultdict
 import numpy as np
 
 
+# Compute conflicting_sets_before_processing
+def compute_conflicting_sets(trip_routes, capacities):
+    conflicting_sets = [[] for _ in capacities]
+    for trip_id, arcs in enumerate(trip_routes):
+        for arc in arcs:
+            if arc != 0:  # Ignore the dummy arc (0)
+                try:
+                    conflicting_sets[arc].append(trip_id)
+                except:
+                    raise RuntimeError
+    # Remove conflicting sets that fit within capacity
+    for arc, trips in enumerate(conflicting_sets):
+        try:
+            if len(trips) <= capacities[arc]:
+                conflicting_sets[arc] = []
+        except:
+            raise RuntimeError
+    return [trips for trips in conflicting_sets.values() if trips]  # Filter out empty lists
+
+
 def get_barplot_conflicting_sets(results_df: pd.DataFrame, path_to_figures: Path, verbose: bool = False):
     print("=" * 50)
     print("Step 1: Filtering DataFrame for offline experiments".center(50))
@@ -25,19 +45,6 @@ def get_barplot_conflicting_sets(results_df: pd.DataFrame, path_to_figures: Path
                      row['instance_travel_times_arcs']],
         axis=1
     )
-
-    # Compute conflicting_sets_before_processing
-    def compute_conflicting_sets(trip_routes, capacities):
-        conflicting_sets = defaultdict(list)
-        for trip_id, arcs in enumerate(trip_routes):
-            for arc in arcs:
-                if arc != 0:  # Ignore the dummy arc (0)
-                    conflicting_sets[arc].append(trip_id)
-        # Remove conflicting sets that fit within capacity
-        for arc, trips in conflicting_sets.items():
-            if len(trips) <= capacities[arc]:
-                conflicting_sets[arc] = []
-        return [trips for trips in conflicting_sets.values() if trips]  # Filter out empty lists
 
     offline_df['conflicting_sets_before_processing'] = offline_df.apply(
         lambda row: compute_conflicting_sets(row['instance_trip_routes'], row['capacities']), axis=1
