@@ -193,7 +193,7 @@ class Instance:
                     self.trip_routes[trip_index][position] = original_arc
 
         # Determine the number of original arcs
-        number_of_original_arcs = sum(1 for arc in self.conflicting_sets_processing_arc_map if arc is not None)
+        number_of_original_arcs = sum(1 for arc in self.conflicting_sets_processing_arc_map if arc is None)
 
         # Trim travel times and capacities to the original number of arcs
         self.travel_times_arcs = self.travel_times_arcs[:number_of_original_arcs]
