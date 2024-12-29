@@ -175,17 +175,17 @@ PRESETS = {
         "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
-    "online_algo_performance_paper": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
+    "algo_performance_mini": {
+        "network_name": "manhattan_10",
+        "number_of_trips": 500,
+        "day_list": list(range(1, 12)),  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
         "list_of_slopes_list": [[.5]],
         "list_of_thresholds_list": [[1]],
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["ONLINE"],
+        "algo_mode_list": ["OFFLINE", "ONLINE"],
         "optimize": True,
         "warm_start": True,
         "improve_warm_start_list": [True],
@@ -418,7 +418,7 @@ def main(preset_name: str, add_shortcuts: bool):
     solver_params_list = []
     for epoch_size in epoch_size_list:
         for improve_warm_start in improve_warm_start_list:
-            if preset_name == "no_ls_comparison_mini":
+            if "mini" in preset_name:
                 epoch_time_limit = 60
             else:
                 epoch_time_limit = 3600 if epoch_size == 60 else 360
@@ -444,7 +444,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="online_algo_performance_paper", add_shortcuts=True)
+    main(preset_name="algo_performance_mini", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
