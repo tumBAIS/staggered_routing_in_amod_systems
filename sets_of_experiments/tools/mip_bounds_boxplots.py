@@ -50,29 +50,29 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     print("=" * 50 + "\n")
 
     nan_rows = filtered_df[
-        filtered_df[['optimization_measures_upper_bound_final',
-                     'optimization_measures_lower_bound_final',
-                     'optimization_measures_optimality_gap_final']].isna().any(axis=1)
+        filtered_df[['optimization_measures_upper_bounds_final',
+                     'optimization_measures_lower_bounds_final',
+                     'optimization_measures_optimality_gaps_final']].isna().any(axis=1)
     ]
 
     if not nan_rows.empty:
         print(f"Found {len(nan_rows)} rows with NaN values. Replacing with default values...")
         filtered_df = filtered_df.copy()  # Ensure a deep copy to avoid chained assignment warnings
-        filtered_df['optimization_measures_upper_bound_final'] = filtered_df[
-            'optimization_measures_upper_bound_final'].fillna(
+        filtered_df['optimization_measures_upper_bounds_final'] = filtered_df[
+            'optimization_measures_upper_bounds_final'].fillna(
             filtered_df['solution_total_delay']
         )
-        filtered_df['optimization_measures_lower_bound_final'] = filtered_df[
-            'optimization_measures_lower_bound_final'].fillna(0)
-        filtered_df['optimization_measures_optimality_gap_final'] = filtered_df[
-            'optimization_measures_optimality_gap_final'].fillna(100)
+        filtered_df['optimization_measures_lower_bounds_final'] = filtered_df[
+            'optimization_measures_lower_bounds_final'].fillna(0)
+        filtered_df['optimization_measures_optimality_gaps_final'] = filtered_df[
+            'optimization_measures_optimality_gaps_final'].fillna(100)
         print("NaN values replaced.\n")
 
     filtered_df['optimization_measures_bounds_difference_final'] = (
-            filtered_df['optimization_measures_upper_bound_final'] -
-            filtered_df['optimization_measures_lower_bound_final']
+            filtered_df['optimization_measures_upper_bounds_final'] -
+            filtered_df['optimization_measures_lower_bounds_final']
     )
-    filtered_df['optimization_measures_lower_bound_final'] /= 60  # Convert to minutes
+    filtered_df['optimization_measures_lower_bounds_final'] /= 60  # Convert to minutes
     filtered_df['optimization_measures_bounds_difference_final'] /= 60  # Convert to minutes
 
     print("Bounds difference calculated and time values converted to minutes.\n")
@@ -147,7 +147,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     print("\nGenerating boxplots for LC experiments...")
     plot_horizontal_boxplot(
         data=lc_data,
-        x_col='optimization_measures_optimality_gap_final',
+        x_col='optimization_measures_optimality_gaps_final',
         xlabel=r"$\Delta$ [\%] (LC)",
         file_name="optimality_gap_LC",
         label="LC",
@@ -156,7 +156,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     )
     plot_horizontal_boxplot(
         data=lc_data,
-        x_col='optimization_measures_lower_bound_final',
+        x_col='optimization_measures_lower_bounds_final',
         xlabel="LB [min] (LC)",  # Adjusted to minutes
         file_name="lower_bound_LC",
         label="LC",
@@ -175,7 +175,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     print("\nGenerating boxplots for HC experiments...")
     plot_horizontal_boxplot(
         data=hc_data,
-        x_col='optimization_measures_optimality_gap_final',
+        x_col='optimization_measures_optimality_gaps_final',
         xlabel=r"$\Delta$ [\%] (HC)",
         file_name="optimality_gap_HC",
         label="HC",
@@ -184,7 +184,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     )
     plot_horizontal_boxplot(
         data=hc_data,
-        x_col='optimization_measures_lower_bound_final',
+        x_col='optimization_measures_lower_bounds_final',
         xlabel="LB [min] (HC)",  # Adjusted to minutes
         file_name="lower_bound_HC",
         label="HC",
