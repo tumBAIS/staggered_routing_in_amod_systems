@@ -48,6 +48,7 @@ class Instance:
         self.min_delay_on_arcs = self.initialize_min_delay_on_arcs()
         self.max_delay_on_arcs = self.initialize_max_delay_on_arcs()
         self.arc_position_in_routes_map = self.get_arc_position_in_routes_map()
+        self.conflicting_sets_processing_arc_map = [None for _ in self.travel_times_arcs]
 
     def save_json_for_cpp(self, file_name: str) -> None:
         path_to_cpp_dir = pathlib.Path(__file__).parent.parent.parent / "cpp_module/catch2_tests/files_for_testing"
