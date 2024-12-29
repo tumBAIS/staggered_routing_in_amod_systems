@@ -199,7 +199,7 @@ class Instance:
         self.travel_times_arcs = self.travel_times_arcs[:number_of_original_arcs]
         self.capacities_arcs = self.capacities_arcs[:number_of_original_arcs]
 
-        # del self.conflicting_sets_processing_arc_map  # not necessary anymore
+        del self.conflicting_sets_processing_arc_map  # not necessary anymore
 
 
 def get_instance(instance_params: InstanceParameters) -> Instance:

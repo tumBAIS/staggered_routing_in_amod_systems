@@ -9,19 +9,17 @@ import numpy as np
 
 # Compute conflicting_sets_before_processing
 def compute_conflicting_sets(trip_routes, capacities):
-    conflicting_sets = [[] for _ in capacities]
+    conflicting_sets = defaultdict(list)
     for trip_id, arcs in enumerate(trip_routes):
         for arc in arcs:
             if arc != 0:  # Ignore the dummy arc (0)
-                try:
-                    conflicting_sets[arc].append(trip_id)
-                except:
-                    raise RuntimeError
+                conflicting_sets[arc].append(trip_id)
     # Remove conflicting sets that fit within capacity
-    for arc, trips in enumerate(conflicting_sets):
+    for arc, trips in conflicting_sets.items():
         try:
             if len(trips) <= capacities[arc]:
                 conflicting_sets[arc] = []
+
         except:
             raise RuntimeError
     return [trips for trips in conflicting_sets.values() if trips]  # Filter out empty lists
