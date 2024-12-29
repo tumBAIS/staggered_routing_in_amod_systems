@@ -419,7 +419,7 @@ def main(preset_name: str, add_shortcuts: bool):
     for epoch_size in epoch_size_list:
         for improve_warm_start in improve_warm_start_list:
             if "mini" in preset_name:
-                epoch_time_limit = 60
+                epoch_time_limit = 60 if epoch_size == 60 else 10
             else:
                 epoch_time_limit = 3600 if epoch_size == 60 else 360
             solver_params_dict = {
