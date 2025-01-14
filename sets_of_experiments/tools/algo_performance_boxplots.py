@@ -129,10 +129,9 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         x_col='absolute_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [min] (LC)",  # Updated unit to minutes
+        xlabel=r"$\Theta$ [min]",  # Updated unit to minutes
         file_name="absolute_delay_reduction_LC",
         label="LC",
-        x_limits=x_limits_absolute  # Use global x-axis limits
     )
 
     plot_boxplot(
@@ -140,7 +139,7 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         x_col='relative_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [\%] (LC)",
+        xlabel=r"$\Theta$ [\%]",
         file_name="relative_delay_reduction_LC",
         label="LC",
         is_percentage=True
@@ -154,17 +153,16 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
         x_col='absolute_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [min] (HC)",  # Updated unit to minutes
+        xlabel=r"$\Theta$ [min]",  # Updated unit to minutes
         file_name="absolute_delay_reduction_HC",
         label="HC",
-        x_limits=x_limits_absolute  # Use global x-axis limits
     )
     plot_boxplot(
         data=hc_data,
         x_col='relative_delay_reduction',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [\%] (HC)",
+        xlabel=r"$\Theta$ [\%]",
         file_name="relative_delay_reduction_HC",
         label="HC",
         is_percentage=True

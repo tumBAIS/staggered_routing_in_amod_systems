@@ -1,13 +1,9 @@
 import utils.prints
-from input_data import ACTIVATE_ASSERTIONS, TOLERANCE
+from input_data import TOLERANCE
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
 from problem.instance import Instance
 from utils.aliases import *
-from congestion_model.core import (
-    get_congested_schedule,
-)
-from input_data import SolverParameters
 import cpp_module as cpp
 
 
@@ -41,20 +37,6 @@ def _reconstruct_schedule(
                                                                          new_schedule)
 
     return reconstructed_schedule
-
-
-def _assert_congested_schedule_is_correct(global_instance: Instance, reconstructed_schedule: Schedules,
-                                          solver_params: SolverParameters) -> None:
-    """Ensure the reconstructed schedule matches the expected congested schedule."""
-    if ACTIVATE_ASSERTIONS:
-        release_times = [schedule[0] for schedule in reconstructed_schedule]
-        cpp_schedule = get_congested_schedule(global_instance, release_times, solver_params)
-
-        for vehicle, schedule in enumerate(reconstructed_schedule):
-            if not all(abs(reconstructed - cpp) < TOLERANCE for reconstructed, cpp in
-                       zip(schedule, cpp_schedule[vehicle])):
-                _print_not_matching_schedules(reconstructed_schedule, cpp_schedule, vehicle)
-                raise AssertionError(f"Schedules do not match for vehicle {vehicle}")
 
 
 def _print_not_matching_schedules(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import copy
 
-from congestion_model.conflict_binaries import get_conflict_binaries
+from conflicting_sets.conflict_binaries import get_conflict_binaries
 from problem.epoch_instance import EpochInstance
 from simplify.merge_arcs_without_conflicts import merge_arcs_on_paths_where_no_conflicts_can_happen
 from simplify.remove_not_utilized_arcs import remove_not_utilized_arcs

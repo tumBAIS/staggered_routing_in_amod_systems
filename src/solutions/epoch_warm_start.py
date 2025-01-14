@@ -1,13 +1,10 @@
 import datetime
-import os
-import json
 from input_data import SolverParameters
 from input_data import TOLERANCE, SAVE_CPP
 from problem.epoch_instance import EpochInstance
 from problem.solution import Solution
-from congestion_model.conflict_binaries import get_conflict_binaries
+from conflicting_sets.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
-from pathlib import Path
 
 
 def _compute_remaining_time(instance: EpochInstance, solver_params: SolverParameters) -> float:

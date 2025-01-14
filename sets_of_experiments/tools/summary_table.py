@@ -18,28 +18,38 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
     # Helper function to calculate statistics
     def calculate_statistics(df):
         total_delays = df["status_quo_total_delay"] / 60
+        total_number_of_arcs_after_splitting = df["instance_conflicting_sets"].apply(
+            lambda x: sum(1 for sublist in x) - 1
+        )
         num_conflicting_sets = df["instance_conflicting_sets"].apply(
-            lambda x: sum(len(sublist) > 0 for sublist in x)
+            lambda x: sum(1 for sublist in x if len(sublist) > 0)
         )
         longest_conflicting_set = df["instance_conflicting_sets"].apply(
             lambda x: max((len(sublist) for sublist in x), default=0)
         )
 
+        # New metrics: number_of_nodes and number_of_node_pairs
+        number_of_nodes = df["number_of_nodes"]
+        number_of_node_pairs = df["number_of_node_pairs"]
+
         return {
             "Min": [
-                int(total_delays.min()),
-                int(num_conflicting_sets.min()),
-                int(longest_conflicting_set.min())
+                int(number_of_nodes.min()),
+                int(number_of_node_pairs.min()),
+                int(total_number_of_arcs_after_splitting.min()),
+                int(num_conflicting_sets.min())
             ],
             "Max": [
-                int(total_delays.max()),
-                int(num_conflicting_sets.max()),
-                int(longest_conflicting_set.max())
+                int(number_of_nodes.max()),
+                int(number_of_node_pairs.max()),
+                int(total_number_of_arcs_after_splitting.max()),
+                int(num_conflicting_sets.max())
             ],
             "Avg": [
-                int(total_delays.mean()),
-                int(num_conflicting_sets.mean()),
-                int(longest_conflicting_set.mean())
+                int(number_of_nodes.mean()),
+                int(number_of_node_pairs.mean()),
+                int(total_number_of_arcs_after_splitting.mean()),
+                int(num_conflicting_sets.mean())
             ],
         }
 
@@ -48,39 +58,43 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
     lc_summary_data = calculate_statistics(lc_df)
     hc_summary_data = calculate_statistics(hc_df)
 
-    # Metrics with LaTeX formatting
+    # Metrics labels for LaTeX formatting
     metrics = [
-        r"$\bar{Z} \, \mathrm{[min]}$",  # Bar over Z with units
-        r"$\vert \hat{A} \vert$",  # Absolute value with a hat over A
-        r"$\vert R_a \vert^{\text{MAX}}$"  # Superscript MAX for R_a
+        r"$|{\SetArcs}|$",
+        r"$|{\SetNodes}|$",
+        r"$|{\SetArcs}|^{\text{m}}$",
+        r"$|\hat{\mathcal{A}}|^{\text{m}}$",
     ]
 
-    # Step 4: Combine LC and HC into a single table
+    # Step 4: Combine LC and HC into a single table for LaTeX formatting
     print("Combining LC and HC data into a single table...")
     lc_summary_table = pd.DataFrame(lc_summary_data, index=metrics)
     hc_summary_table = pd.DataFrame(hc_summary_data, index=metrics)
 
-    combined_table = pd.concat(
-        [lc_summary_table, hc_summary_table],
-        keys=["LC", "HC"],
-        axis=1
-    )
+    # Step 5: Generate LaTeX code for the table
+    print("Generating LaTeX table...")
+    latex_table = """\\begin{tabularx}{\\textwidth}{l|XXX|XXX}
+                    \\toprule
+                     & \\multicolumn{3}{c}{LC} & \\multicolumn{3}{c}{HC} \\
+                    \\cmidrule(lr){2-4} \\cmidrule(lr){5-7}
+                     & Min & Max & Avg & Min & Max & Avg \\
+                    \\midrule
+                    """
 
-    # Step 5: Save the table as HTML and LaTeX
+    for metric, lc_values, hc_values in zip(metrics, lc_summary_table.values, hc_summary_table.values):
+        latex_table += (
+            f"{metric} & {' & '.join(map(str, lc_values))} & {' & '.join(map(str, hc_values))} \\\\ \n"
+        )
+
+    latex_table += "\\bottomrule\n\\end{tabularx}"
+
+    # Step 6: Save the table to files
     print("Saving table to files...")
     output_dir = Path(path_to_tables)
     os.makedirs(output_dir, exist_ok=True)
 
-    html_path = output_dir / "summary_table.html"
     latex_path = output_dir / "summary_table.tex"
-
-    # Save as HTML
-    combined_table.to_html(html_path, border=0)
-
-    # Save as LaTeX
     with open(latex_path, "w", encoding="utf-8") as latex_file:
-        latex_file.write(
-            combined_table.to_latex(escape=False, column_format="lcccccc")
-        )
+        latex_file.write(latex_table)
 
     print("Summary table generation complete.")

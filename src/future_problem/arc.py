@@ -66,39 +66,5 @@ class Arc:
             raise RuntimeError("Removing non-existing trip.")
         self.trips_currently_using_arc.remove(trip)
 
-    def get_delay(self, vehicles_on_arc):
-        """Compute delay on arc according to an n-pieces latency function"""
-        if self.is_dummy:
-            return 0
-        if vehicles_on_arc in self.precomputed_delays:
-            return self.precomputed_delays[vehicles_on_arc]
-
-        delay_at_pieces = [0]
-        height_prev_piece = 0
-        num_pieces = len(self.arc_slopes)
-
-        for piece_id in range(num_pieces):
-            slope = self.arc_slopes[piece_id]
-            th_capacity = self.arc_thresholds[piece_id]
-
-            if vehicles_on_arc > th_capacity:
-                delay_current_piece = height_prev_piece + slope * (vehicles_on_arc - th_capacity)
-                delay_at_pieces.append(delay_current_piece)
-
-            if piece_id < num_pieces - 1:
-                next_th_cap = self.arc_thresholds[piece_id + 1]
-                height_prev_piece += slope * (next_th_cap - th_capacity)
-
-        max_delay = max(delay_at_pieces)
-        self.precomputed_delays[vehicles_on_arc] = max_delay
-        return max_delay
-
-    def initialize_arc_slopes_and_thresholds(self, instance_params: InstanceParameters):
-        """Initialize arc slopes and thresholds."""
-        self.arc_slopes = [self.nominal_travel_time * slope / self.nominal_capacity
-                           for slope in instance_params.list_of_slopes]
-        self.arc_thresholds = [threshold * self.nominal_capacity
-                               for threshold in instance_params.list_of_thresholds]
-
     def get_nominal_capacity(self, max_flow_allowed: float) -> int:
         return int(np.ceil(self.nominal_travel_time / max_flow_allowed))

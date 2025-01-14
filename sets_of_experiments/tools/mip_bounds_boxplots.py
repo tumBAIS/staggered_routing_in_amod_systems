@@ -9,7 +9,7 @@ import numpy as np
 
 def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, verbose: bool = False) -> None:
     """
-    Generate and save horizontal boxplots for MIP bounds metrics, separately for LC and HC experiments.
+    Generate and save horizontal boxplots for MIP bounds metrics and status quo total delay, separately for LC and HC experiments.
     If verbose is True, print the values of the points being plotted for each experiment on the same line.
     """
     print("\n" + "=" * 50)
@@ -75,6 +75,8 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     filtered_df['optimization_measures_lower_bounds_final'] /= 60  # Convert to minutes
     filtered_df['optimization_measures_bounds_difference_final'] /= 60  # Convert to minutes
 
+    filtered_df['status_quo_total_delay_minutes'] = filtered_df['status_quo_total_delay'] / 60  # Convert to minutes
+
     print("Bounds difference calculated and time values converted to minutes.\n")
 
     # Split the data into LC and HC
@@ -126,7 +128,6 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
             plt.xticks(ticks=np.arange(0, 101, 20), labels=np.arange(0, 101, 20))
         elif xlimits:
             plt.xlim(xlimits[0], xlimits[1])  # Set custom x-axis limits for time values
-            # plt.xticks(ticks=np.arange(xlimits[0] + 1, xlimits[1]))
 
         plt.tight_layout()
 
@@ -136,8 +137,12 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
 
         tikzplotlib.save(
             str(output_dir / f"{file_name}.tex"),
-            axis_width=r"\MipBoundsWidth",
-            axis_height=r"\MipBoundsHeight"
+            axis_width=r"\textwidth",
+            axis_height=r"\GapPlotsHeight",
+            extra_axis_parameters={
+                "ytick={0,1,2}",
+                "yticklabels={ , , }"
+            }
         )
 
         plt.close()
@@ -170,6 +175,14 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         label="LC",
         xlimits=(-.99, None)  # Adjust xlimits for time values if needed
     )
+    plot_horizontal_boxplot(
+        data=lc_data,
+        x_col='status_quo_total_delay_minutes',
+        xlabel="[min]",
+        file_name="status_quo_delay_LC",
+        label="LC",
+        xlimits=(0, None)
+    )
 
     # Generate boxplots for HC experiments
     print("\nGenerating boxplots for HC experiments...")
@@ -197,6 +210,14 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
         file_name="bounds_difference_HC",
         label="HC",
         xlimits=(-1, None)  # Adjust xlimits for time values if needed
+    )
+    plot_horizontal_boxplot(
+        data=hc_data,
+        x_col='status_quo_total_delay_minutes',
+        xlabel="[min]",
+        file_name="status_quo_delay_HC",
+        label="HC",
+        xlimits=(0, None)
     )
 
     print("\n" + "=" * 50)

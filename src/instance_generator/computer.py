@@ -32,58 +32,19 @@ class InstanceComputer:
         self._compute_routes_file(network)
         trips = Trips(self.instance_params, network, instance_available=False)
         network.add_arcs(trips)
-        trips.set_trips_network_paths(network)
+        trips.set_network_paths(network)
         self.plot_paths(network, trips, plot_flag)
         # Construct status quo
-        status_quo = sq.Scheduler(trips, network).py_construct_solution(trips.get_current_start_times())
+        status_quo = sq.Scheduler(trips, network).py_construct_solution(trips.get_release_times())
         self._set_deadlines(trips, status_quo)
-        self._postprocess_routes(trips)
         self._save_instance_file(trips, status_quo)
-
-    @staticmethod
-    def _postprocess_routes(trips: Trips):
-        """
-        Check if the nominal travel time of the paths is within each trip deadline.
-        WARNING: we do not update the parameters of TripRoutes after the route removal as we don't need the updated
-        info. Keep this in mind for future development.
-        """
-        original_routes_cnt = 0
-        removed_routes_cnt = 0
-
-        print("\n" + "=" * 60)
-        print("Starting postprocessing of routes...")
-        print("=" * 60 + "\n")
-
-        for trip in trips.R:
-            max_travel_time_trip = trip.deadline - trip.release_time
-            for route in trip.routes.P[:]:  # Iterate over a copy of the list
-                original_routes_cnt += 1
-                route_travel_time = route.path_travel_time
-
-                if route_travel_time > max_travel_time_trip:
-                    assert route.latest_departure <= trip.release_time, \
-                        f"route.latest_departure: {route.latest_departure}, trip.release_time: {trip.release_time}"
-                    trip.routes.P.remove(route)  # Remove route if it exceeds the max travel time
-                    removed_routes_cnt += 1
-                else:
-                    assert route.latest_departure >= trip.release_time
-
-        # Calculate percentage of routes removed
-        removal_percentage = (removed_routes_cnt / original_routes_cnt * 100) if original_routes_cnt > 0 else 0
-
-        # Print the summary of postprocessing
-        print(f"Original Number of Paths: {original_routes_cnt}")
-        print(f"Number of Removed Paths: {removed_routes_cnt}")
-        print(f"Percentage of Paths Removed: {removal_percentage:.2f}%")
-        print("=" * 60 + "\n")
-        print("Postprocessing complete.\n")
 
     def _set_deadlines(self, trips: Trips, status_quo: cpp.cpp_solution):
         """Set deadlines to trips once computed status quo"""
         for trip in trips.R:
             trip.set_deadline(self._get_trip_deadline(trip, status_quo))
-            for route in trip.routes.P:
-                route.latest_departure = route.get_route_latest_departure(trip, self.instance_params.staggering_cap)
+            trip.route.latest_departure = trip.route.get_route_latest_departure(trip,
+                                                                                self.instance_params.staggering_cap)
 
     def _get_G(self, replace: bool = False) -> nx.DiGraph:
         """Import OSM graph. If replace is False, loads pre-serialized network, if it exists."""
@@ -218,10 +179,10 @@ class InstanceComputer:
 
             # Add path information for each trip
             path_info = {
-                "latest_departure": round(trip.routes.P[0].latest_departure, 2),
-                "travel_time_sec": round(trip.routes.P[0].path_travel_time, 2),
-                "length_meters": round(trip.routes.P[0].path_length_meters, 2),
-                "num_arcs": trip.routes.P[0].num_path_arcs
+                "latest_departure": round(trip.route.latest_departure, 2),
+                "travel_time_sec": round(trip.route.path_travel_time, 2),
+                "length_meters": round(trip.route.path_length_meters, 2),
+                "num_arcs": trip.route.num_path_arcs
             }
             trip_info.update(path_info)
 
@@ -249,7 +210,7 @@ class InstanceComputer:
     def _get_trip_deadline(self, trip, status_quo):
         """Get trip deadline based on the arrival in the status quo"""
         arrival = status_quo.get_trip_schedule(trip.id)[-1]
-        congested_travel_time = arrival - trip.current_departure
+        congested_travel_time = arrival - trip.release_time
         extended_time = congested_travel_time * (1 + self.instance_params.deadline_factor / 100)
         return int(np.ceil(trip.release_time + extended_time))
 
@@ -277,7 +238,7 @@ class InstanceComputer:
         if "manhattan" in self.instance_params.network_name:
             path_to_save = self.instance_params.path_to_instance
             trips_to_print = [0, 1]  # chosen casually
-            paths = [path.path_nodes for trip_id in trips_to_print for path in trips.R[trip_id].routes.P]
+            paths = [path.path_nodes for trip_id in trips_to_print for path in trips.R[trip_id].route.P]
             real_world_graphs.plot_real_world_G(nx.MultiDiGraph(network.G), path_to_save, paths, plot_map=False)
 
     def _save_routes_file(self, routes_file: list[dict]) -> None:

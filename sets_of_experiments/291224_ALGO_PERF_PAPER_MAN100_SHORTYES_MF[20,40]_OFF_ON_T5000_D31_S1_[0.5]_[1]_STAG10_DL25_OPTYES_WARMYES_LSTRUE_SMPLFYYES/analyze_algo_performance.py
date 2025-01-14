@@ -6,6 +6,7 @@ from sets_of_experiments.tools.arc_congestion_distribution_barplot import get_ar
 from sets_of_experiments.tools.heatmaps import get_congestion_heatmaps
 from sets_of_experiments.tools.summary_table import get_summary_table
 from sets_of_experiments.tools.barplot_conflicting_sets import get_barplot_conflicting_sets
+from sets_of_experiments.tools import print_info_on_network_utilized
 from pathlib import Path
 
 PATH_TO_RESULTS = Path(__file__).parent / "results"
@@ -16,6 +17,7 @@ os.makedirs(PATH_TO_FIGURES, exist_ok=True)
 os.makedirs(PATH_TO_TABLES, exist_ok=True)
 
 if __name__ == "__main__":
+    print_info_on_network_utilized(PATH_TO_NETWORKS)
     results_df = get_results_df(PATH_TO_RESULTS)
     results_df = filter_non_comparable_experiments(results_df, n_experiments_required=2)
     get_summary_table(results_df, PATH_TO_TABLES)

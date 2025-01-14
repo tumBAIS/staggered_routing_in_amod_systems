@@ -6,9 +6,31 @@ from pathlib import Path
 import warnings
 from matplotlib import MatplotlibDeprecationWarning
 import tikzplotlib
+from matplotlib.ticker import FuncFormatter
+import re
 
 # Suppress specific MatplotlibDeprecationWarning
 warnings.filterwarnings("ignore", category=MatplotlibDeprecationWarning)
+
+
+def remove_trailing_zeros(x, _):
+    """Remove trailing zeros from tick labels."""
+    return "%g" % x
+
+
+def fix_tex_file(file_path):
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+    # Remove trailing .0 from tick labels (e.g., "10.0" -> "10")
+    content = re.sub(r'(\d+)\.0\b', r'\1', content)
+
+    # Replace escaped superscript symbols with proper LaTeX math symbols
+    content = content.replace(r"\^", "^")  # Handle escaped superscripts
+    content = content.replace(r"\$", "$")  # Handle escaped dollar
+
+    with open(file_path, 'w') as file:
+        file.write(content)
 
 
 def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Path) -> None:
@@ -28,33 +50,22 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         axis=1
     )
 
-    # Step 1: Split the data into LC and HC
-    print("Splitting data into LC and HC...".center(50))
+    # Split the data into LC and HC
     lc_data = results_df[results_df["congestion_level"] == "LC"].copy()
     hc_data = results_df[results_df["congestion_level"] == "HC"].copy()
-    print(f"LC data contains {len(lc_data)} rows.".center(50))
-    print(f"HC data contains {len(hc_data)} rows.".center(50))
 
-    # Convert solution_total_delay and solution_staggering_applied to minutes
     for data in [lc_data, hc_data]:
         data.loc[:, "solution_total_delay"] = data["solution_total_delay"] / 60  # Convert to minutes
         data.loc[:, "solution_staggering_applied"] = data["solution_staggering_applied"].apply(
-            lambda x: [v / 60 for v in x] if isinstance(x, list) else x  # Convert lists to minutes
+            lambda x: [v / 60 for v in x] if isinstance(x, list) else x
         )
 
-        # # Process solution_total_delay to ensure non-decreasing order
-        # data.sort_values("instance_parameters_staggering_cap", inplace=True)
-        # for i in range(1, len(data)):
-        #     if data.iloc[i]["solution_total_delay"] > data.iloc[i - 1]["solution_total_delay"]:
-        #         data.iloc[i, data.columns.get_loc("solution_total_delay")] = data.iloc[i - 1]["solution_total_delay"]
-
-    # Step 2: Define a helper function for generating the plots
     def generate_plots(data, label):
-        print(f"\nGenerating plots for {label}...".center(50))
+        output_dir = path_to_figures / "staggering_analysis_plots"
+        os.makedirs(output_dir, exist_ok=True)
 
         # Bar plot
-        print(f"Creating bar plot for {label}...".center(50))
-        plt.figure(figsize=(6.5, 4.0))
+        plt.figure(figsize=(1.9685, 1.9685))  # 5 cm height in inches
         sns.barplot(
             x="instance_parameters_staggering_cap",
             y="solution_total_delay",
@@ -62,31 +73,27 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             color="gray",
             edgecolor="black"
         )
-        plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
-        plt.ylabel(r"$Z(\pi)$ [min]")
+        plt.gca().yaxis.set_major_formatter(FuncFormatter(remove_trailing_zeros))
+        plt.xlabel(r"\$\zeta^{\mathrm{MAX}}\$ [%]")
+        plt.ylabel(r"\$Z(\pi)\$ [min]")
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
-
-        # Save bar plot
-        output_dir = path_to_figures / "staggering_analysis_plots"
-        os.makedirs(output_dir, exist_ok=True)
         file_name = f"staggering_total_delay_barplot_{label.lower()}"
+        tex_file_path = output_dir / f"{file_name}.tex"
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
-        tikzplotlib.save(output_dir / f"{file_name}.tex")
+        tikzplotlib.save(tex_file_path, axis_width="\\TotalDelayBarplotWidth", axis_height="5cm")
+        fix_tex_file(tex_file_path)  # Fix LaTeX issues
         plt.close()
-        print(f"Bar plot for {label} saved.".center(50))
 
         # Boxplot
-        print(f"Creating boxplot for {label}...".center(50))
-        plt.figure(figsize=(6.5, 4.0))
-        # Explode the lists in `solution_staggering_applied` for boxplot generation
+        plt.figure(figsize=(1.9685, 1.9685))  # 5 cm height in inches
         exploded_data = data.explode("solution_staggering_applied").dropna(subset=["solution_staggering_applied"])
         exploded_data = exploded_data[exploded_data["solution_staggering_applied"] > 1e-4]
-        null_pont = pd.DataFrame({
+        null_point = pd.DataFrame({
             "instance_parameters_staggering_cap": [0],
             "solution_staggering_applied": [0]
         })
-        exploded_data = pd.concat([exploded_data, null_pont])
+        exploded_data = pd.concat([exploded_data, null_point])
         sns.boxplot(
             x="instance_parameters_staggering_cap",
             y="solution_staggering_applied",
@@ -98,22 +105,19 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             whiskerprops=dict(color='black'),
             capprops=dict(color='black')
         )
-        plt.xlabel(r"$\zeta^{\mathrm{MAX}}$ [%]")
-        plt.ylabel(r"$\sigma^\pi$ [min]")
+        plt.gca().yaxis.set_major_formatter(FuncFormatter(remove_trailing_zeros))
+        plt.xlabel(r"\$\zeta^{\mathrm{MAX}}\$ [%]")
+        plt.ylabel(r"\$\sigma^r\$ [min]")
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
         plt.tight_layout()
-
-        # Save boxplot
         file_name = f"staggering_applied_boxplot_{label.lower()}"
+        tex_file_path = output_dir / f"{file_name}.tex"
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
-        tikzplotlib.save(output_dir / f"{file_name}.tex")
+        tikzplotlib.save(tex_file_path, axis_width="\\TotalDelayBarplotWidth", axis_height="5cm")
+        fix_tex_file(tex_file_path)  # Fix LaTeX issues
         plt.close()
-        print(f"Boxplot for {label} saved.".center(50))
 
-    # Generate plots for LC
     generate_plots(lc_data, "LC")
-
-    # Generate plots for HC
     generate_plots(hc_data, "HC")
 
     print("\n" + "=" * 50)

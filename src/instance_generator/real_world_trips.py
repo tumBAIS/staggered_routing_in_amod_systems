@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime
 import osmnx as osm
 from shapely.geometry import Point
 

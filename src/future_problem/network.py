@@ -36,39 +36,6 @@ class Network:
     def __repr__(self):
         return f"{self.instance_params.network_name}_{len(self.G.nodes)}_nodes_{len(self.G.edges)}_edges"
 
-    def set_map_arc_trip_path_position(self, trips) -> None:
-        """Maps each arc to its trips and the positions of the arcs in the trip routes."""
-        # Initialize a list of lists to store positions for each arc
-        self.map_arc_trip_path_position = [[] for _ in self.arcs]
-
-        # Iterate through each arc
-        for arc in self.arcs:
-            if arc.is_dummy:
-                continue
-            # Initialize a list for each arc to store positions for each trip route
-            self.map_arc_trip_path_position[arc.id] = [[] for _ in trips.R]
-
-            # Iterate through each trip that potentially uses this arc
-            for trip in arc.trips_potentially_using_arc:
-                # Initialize positions as -1 for each route in the trip
-                positions_in_paths = [-1 for _ in trip.routes.P]
-
-                # Iterate through each route in the trip
-                for route in trip.routes.P:
-                    try:
-                        # Find the position of the current arc in the route's network path
-                        position = route.network_path_ids.index(arc.id)
-                        # Update the position for this route
-                        positions_in_paths[route.id] = position
-                    except ValueError:
-                        # If the arc is not found in the network path, skip
-                        continue
-
-                # Store the positions for this trip in the arc's list
-                self.map_arc_trip_path_position[arc.id][trip.id] = positions_in_paths
-
-        return
-
     @property
     def polygon(self) -> Polygon:
         return self.gdf_nodes.unary_union.convex_hull
@@ -79,16 +46,6 @@ class Network:
         with open(file_path, 'r+') as _file:
             call_graph = json_graph.adjacency_graph(jsonpickle.decode(_file.read()), directed=True)
         return nx.DiGraph(call_graph)
-
-    def _serialize(self, file_path: str) -> None:
-        '''Function to serialize a NetworkX DiGraph to a JSON file.'''
-        if not isinstance(self.G, nx.DiGraph):
-            raise Exception('call_graph has be an instanceModule of networkx.DiGraph')
-
-        with open(file_path, 'w+') as _file:
-            _file.write(jsonpickle.encode(
-                json_graph.adjacency_data(self.G))
-            )
 
     def _relabel_nodes_to_integers(self) -> None:
         """
@@ -179,9 +136,6 @@ class Network:
         for pos, arc in enumerate(self.arcs):
             if arc.hash == id:
                 return arc
-
-    def is_arc_id_dummy(self, arc_id: int) -> bool:
-        return self.arcs[arc_id].is_dummy
 
     def compute_path_length(self, path, weight='length'):
         """

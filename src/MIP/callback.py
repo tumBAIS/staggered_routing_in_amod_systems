@@ -5,7 +5,7 @@ from input_data import SolverParameters, TOLERANCE, ACTIVATE_ASSERTIONS
 from utils.aliases import Schedules
 from problem.epoch_instance import EpochInstance
 from problem.solution import Binaries
-from congestion_model.conflict_binaries import get_conflict_binaries
+from conflicting_sets.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 from MIP import StaggeredRoutingModel
 

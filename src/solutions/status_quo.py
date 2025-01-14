@@ -1,7 +1,6 @@
-import dataclasses
 from typing import List
 from input_data import SolverParameters, ACTIVATE_ASSERTIONS
-from congestion_model.conflict_binaries import get_conflict_binaries
+from conflicting_sets.conflict_binaries import get_conflict_binaries
 import cpp_module as cpp
 from problem.solution import Solution
 from problem.epoch_instance import EpochInstance

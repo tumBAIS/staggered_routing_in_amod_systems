@@ -4,6 +4,7 @@ from pathlib import Path
 from pandas import DataFrame
 import warnings
 
+import utils.tools
 from sets_of_experiments.tools.print_congestion_stats import print_arc_delays_distribution
 
 # Suppress the specific FutureWarning about applymap
@@ -12,6 +13,40 @@ warnings.filterwarnings(
     message="DataFrame.applymap has been deprecated.*",
     category=FutureWarning
 )
+
+from pathlib import Path
+import utils.tools
+
+
+def print_info_on_network_utilized(path_to_networks: Path):
+    """
+    Reads network files from the given path, deserializes them, and prints information
+    about the number of arcs and nodes for each network.
+
+    Args:
+        path_to_networks (Path): Path to the directory containing the network files.
+    """
+    # Ensure the path exists and contains exactly two files
+    network_files = list(path_to_networks.glob("*.json"))
+    if len(network_files) != 2:
+        raise ValueError("The provided path should contain exactly two network files.")
+
+    for network_file in network_files:
+        # Deserialize the network
+        network = utils.tools.deserialize(network_file)
+
+        # Check if the network is a MultiDiGraph (from networkx)
+        try:
+            # Extract and print number of arcs and nodes
+            num_arcs = network.number_of_edges()
+            num_nodes = network.number_of_nodes()
+
+            print(f"Network Information for {network_file.name}:")
+            print(f"Number of arcs: {num_arcs}")
+            print(f"Number of nodes: {num_nodes}")
+        except AttributeError:
+            raise TypeError(
+                f"The deserialized network {network_file.name} is not a valid MultiDiGraph or does not support expected methods.")
 
 
 def import_results_df_from_files(path_to_results: Path):
@@ -84,7 +119,8 @@ def set_instance_parameters_id(results_df: pd.DataFrame) -> pd.DataFrame:
 def set_arc_to_node_mapping(results_df: pd.DataFrame) -> pd.DataFrame:
     """
     Create a mapping of arc IDs to corresponding node pairs and add it as a new column in the DataFrame.
-     """
+    Also add columns for the number of unique nodes and unique node pairs in each row.
+    """
 
     def create_mapping(arc_routes, node_routes):
         """
@@ -98,9 +134,29 @@ def set_arc_to_node_mapping(results_df: pd.DataFrame) -> pd.DataFrame:
                 arc_to_node[arc] = node_pair
         return arc_to_node
 
+    def count_unique_nodes_and_pairs(node_routes):
+        """
+        Count the number of unique nodes and unique node pairs from node-based routes.
+        """
+        unique_nodes = set()
+        unique_node_pairs = set()
+
+        for route in node_routes:
+            unique_nodes.update(route)  # Add all nodes in the route to the set of unique nodes
+            for i in range(len(route) - 1):
+                unique_node_pairs.add((route[i], route[i + 1]))  # Add consecutive node pairs
+
+        return len(unique_nodes), len(unique_node_pairs)
+
     # Apply the mapping creation for each row
     results_df['arc_to_node_mapping'] = results_df.apply(
         lambda row: create_mapping(row['instance_trip_routes'], row['instance_node_based_trip_routes']),
+        axis=1
+    )
+
+    # Apply the unique node and node pair count for each row
+    results_df[['number_of_nodes', 'number_of_node_pairs']] = results_df.apply(
+        lambda row: pd.Series(count_unique_nodes_and_pairs(row['instance_node_based_trip_routes'])),
         axis=1
     )
 
