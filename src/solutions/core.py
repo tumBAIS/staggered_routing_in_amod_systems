@@ -39,7 +39,6 @@ def get_offline_solution(
     instance.set_release_times(cpp_status_quo.get_start_times())
     delays_on_arcs = cpp_status_quo.get_delays_on_arcs(cpp_instance)
     start_times = cpp_status_quo.get_start_times()
-    free_flow_schedule = cpp_instance.get_free_flow_schedule(cpp_status_quo.get_start_times())
 
     offline_solution = Solution(
         delays_on_arcs=delays_on_arcs,

@@ -15,8 +15,6 @@ class Arc:
         self.id = id
         self.is_dummy = is_dummy
         self.precomputed_delays = {}
-        self.trips_potentially_using_arc = []  # Doesn't change
-        self.trips_currently_using_arc = []  # Depends on the solution
 
         if not is_dummy:
             if osm_info is None:
@@ -50,21 +48,6 @@ class Arc:
 
     def __repr__(self):
         return f"arc_{self.id}"
-
-    def add_trip_currently_using_arc(self, trip):
-        """Add trip to trips using arc"""
-        if trip not in self.trips_currently_using_arc:
-            self.trips_currently_using_arc.append(trip)
-
-    def add_trip_potentially_using_arc(self, trip):
-        """Add trip to trips using arc"""
-        self.trips_potentially_using_arc.append(trip)
-
-    def remove_trip_currently_using_arc(self, trip):
-        """Remove trip from trips using arc"""
-        if trip not in self.trips_currently_using_arc:
-            raise RuntimeError("Removing non-existing trip.")
-        self.trips_currently_using_arc.remove(trip)
 
     def get_nominal_capacity(self, max_flow_allowed: float) -> int:
         return int(np.ceil(self.nominal_travel_time / max_flow_allowed))

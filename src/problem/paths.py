@@ -5,46 +5,6 @@ from pandas import DataFrame
 from typing import Any
 
 
-def remove_unreachable_paths(taxi_rides_with_pudo: DataFrame, indices_paths_to_remove: list[int]) -> None:
-    """
-    Removes unreachable paths from the DataFrame based on given indices.
- 
-    """
-    for index in indices_paths_to_remove:
-        taxi_rides_with_pudo.drop(index, inplace=True)
-    taxi_rides_with_pudo.reset_index(inplace=True, drop=True)
-    print(
-        f"Removed {len(indices_paths_to_remove)} unreachable/too short path(s) - "
-        f"Current number of trips: {len(taxi_rides_with_pudo)}"
-    )
-
-
-def get_node_based_shortest_paths(taxi_rides_with_pudo: DataFrame, manhattan_graph: DiGraph) -> list[list[int]]:
-    """
-    Computes node-based shortest paths for given taxi ride data.
-
-
-    """
-    print("Computing the shortest paths ... ", end="")
-    node_based_shortest_paths = []
-    indices_paths_to_remove = []
-
-    for idx_record, row in taxi_rides_with_pudo.iterrows():
-        try:
-            path = nx.shortest_path(
-                manhattan_graph, source=row["origin"], target=row["destination"], weight="length"
-            )
-            node_based_shortest_paths.append(path)
-        except nx.NetworkXNoPath:
-            indices_paths_to_remove.append(int(idx_record))
-
-    print("done!")
-    if indices_paths_to_remove:
-        remove_unreachable_paths(taxi_rides_with_pudo, indices_paths_to_remove)
-    print("Total nodes in shortest paths: ", sum(len(path) for path in node_based_shortest_paths))
-    return node_based_shortest_paths
-
-
 def pairwise(iterable):
     """
     Generates a pairwise iterator from the given iterable.
@@ -117,16 +77,6 @@ def get_nominal_capacity_arcs_utilized(manhattan_graph: DiGraph, arcs_utilized_i
     capacities = [manhattan_graph[origin][destination]["nominal_capacity"] for origin, destination in arcs_utilized_ids]
     capacities.insert(0, 0)
     return capacities
-
-
-def get_osm_info_arcs(manhattan_graph: DiGraph, arcs_utilized_ids: list[tuple[int, int]]) -> list[dict[str, Any]]:
-    """
-    Extracts OpenStreetMap info for utilized arcs, adding an empty dictionary at the start for the dummy node.
-
-    """
-    osm_info = [{**manhattan_graph[origin][destination]} for origin, destination in arcs_utilized_ids]
-    osm_info.insert(0, {})
-    return osm_info
 
 
 def get_arc_based_paths_with_features(

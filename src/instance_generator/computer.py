@@ -10,9 +10,8 @@ import instance_generator.real_world_graphs
 import instance_generator.shortcuts
 import utils.tools
 from instance_generator import real_world_graphs as real_world_graphs, real_world_trips as real_world_trips
-from methods import scheduler as sq
-from future_problem.network import Network
-from future_problem.trip import Trips
+from instance_generator.network import Network
+from instance_generator.trip import Trips
 from input_data import InstanceParameters
 
 
@@ -35,9 +34,61 @@ class InstanceComputer:
         trips.set_network_paths(network)
         self.plot_paths(network, trips, plot_flag)
         # Construct status quo
-        status_quo = sq.Scheduler(trips, network).py_construct_solution(trips.get_release_times())
-        self._set_deadlines(trips, status_quo)
-        self._save_instance_file(trips, status_quo)
+        cpp_instance = self.get_cpp_instance(trips, network)
+        cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
+        cpp_status_quo = cpp_scheduler.construct_solution(trips.get_release_times())
+
+        self._set_deadlines(trips, cpp_status_quo)
+        self._save_instance_file(trips, cpp_status_quo)
+
+    def get_cpp_instance(self, trips: Trips, network: Network) -> cpp.cpp_instance:
+        """Create a CPP instance for the given epoch."""
+        routes = trips.get_routes()
+        travel_time_arcs = network.travel_time_arcs
+        return cpp.cpp_instance(
+            set_of_vehicle_paths=routes,
+            arc_position_in_routes_map=self.get_arc_position_in_routes_map(travel_time_arcs, routes),
+            travel_times_arcs=travel_time_arcs,
+            capacities_arcs=network.nominal_capacities_arcs,
+            list_of_slopes=self.instance_params.list_of_slopes,
+            list_of_thresholds=self.instance_params.list_of_thresholds,
+            parameters=[float("inf")],
+            release_times=trips.get_release_times(),
+            deadlines=trips.get_deadlines(),
+            lb_travel_time=self.get_lb_travel_time(travel_time_arcs, routes),
+            conflicting_sets=self.initialize_conflicting_sets(travel_time_arcs),
+            earliest_departures=self.initialize_earliest_departures(routes),
+            latest_departures=self.initialize_latest_departures(routes)
+        )
+
+    def get_lb_travel_time(self, travel_times, trip_routes) -> float:
+        return sum(travel_times[arc] for path in trip_routes for arc in path)
+
+    @staticmethod
+    def initialize_conflicting_sets(travel_times):
+        return [[] for _ in travel_times]
+
+    @staticmethod
+    def initialize_earliest_departures(trip_routes):
+        return [[0 for _ in route] for route in trip_routes]
+
+    @staticmethod
+    def initialize_latest_departures(trip_routes):
+        return [[float("inf") for _ in route] for route in trip_routes]
+
+    @staticmethod
+    def get_arc_position_in_routes_map(travel_times_arcs, trip_routes) -> list[list[int]]:
+        """Maps the arc to the position in the trip routes. Used for efficient operations of local search"""
+        arc_to_pos_map = [[-1 for _ in range(len(trip_routes))] for _ in
+                          range(len(travel_times_arcs))]  # size of arcs
+
+        for trip, route in enumerate(trip_routes):
+            for position, arc in enumerate(route):
+                if arc == 0:
+                    continue
+                arc_to_pos_map[arc][trip] = position
+
+        return arc_to_pos_map
 
     def _set_deadlines(self, trips: Trips, status_quo: cpp.cpp_solution):
         """Set deadlines to trips once computed status quo"""

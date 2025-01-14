@@ -1,9 +1,7 @@
-from input_data import InstanceParameters
 from utils.aliases import *
 from utils.tools import pairwise
-from future_problem.network import Network
-from future_problem.arc import Arc
-import random
+from instance_generator.network import Network
+from instance_generator.arc import Arc
 from typing import TypeVar, Optional
 from input_data import SPEED_KPH, InstanceParameters
 

@@ -2,8 +2,8 @@ import json
 import os.path
 import shapely as shp
 from input_data import InstanceParameters
-from future_problem.network import Network
-from future_problem.route import TripRoute
+from instance_generator.network import Network
+from instance_generator.route import TripRoute
 from utils.aliases import *
 import time
 
@@ -49,11 +49,6 @@ class Trip:
     @property
     def deadline(self):
         return self._deadline
-
-    def initialize_current_path_and_departure(self):
-        """Use as initial path simply the shortest path"""
-        for arc in self.route.path_with_arcs:
-            arc.add_trip_currently_using_arc(self)
 
     def set_deadline(self, deadline):
         self._deadline = deadline
@@ -109,7 +104,7 @@ class Trips:
             lb_travel_time += trip.route.path_travel_time
         return lb_travel_time
 
-    def get_vehicle_routes(self) -> list[list[int]]:
+    def get_routes(self) -> list[list[int]]:
         """Returns complete collection of vehicle paths as list of list of ints."""
         return [trip.route.network_path_ids for trip in self.R]
 
@@ -179,6 +174,9 @@ class Trips:
 
     def get_release_times(self) -> list[float]:
         return [trip.release_time for trip in self.R]
+
+    def get_deadlines(self) -> list[float]:
+        return [trip.deadline for trip in self.R]
 
     @staticmethod
     def _set_deadlines_to_inf(routes_info_list):

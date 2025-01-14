@@ -7,7 +7,7 @@ from networkx.readwrite import json_graph
 from shapely import Polygon
 
 from input_data import InstanceParameters
-from future_problem.arc import Arc
+from instance_generator.arc import Arc
 from typing import Optional
 
 
