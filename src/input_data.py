@@ -50,6 +50,8 @@ class InstanceParameters:
             return "NO_"
 
     def validate_inputs(self):
+        if "manhattan_" not in self.network_name:
+            raise ValueError("Network name must be manhattan_X, with X being percentage of nodes to retain.")
         if self.day not in range(1, 32):
             raise ValueError("Day must be between 1 and 31.")
         if self.deadline_factor < 0 or self.deadline_factor > 100:
@@ -59,7 +61,7 @@ class InstanceParameters:
         return f"T{self.number_of_trips}"
 
     def get_day_string(self) -> str:
-        return f"DAY{self.day}_" if "manhattan" in self.network_name else ""
+        return f"DAY{self.day}_"
 
 
 @dataclasses.dataclass
