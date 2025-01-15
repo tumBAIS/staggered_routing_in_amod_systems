@@ -126,9 +126,7 @@ The results are stored in the subdirectory of `data` associated with the paramet
 
 Solutions and figures utilized in the paper are hosted on
 Zenodo: [download link](https://zenodo.org/records/14650799/files/sets_of_experiments.zip?download=1&preview=1). Each
-analysis has its own folder in
-
-`sets_of_experiments`:
+analysis has its own folder in `sets_of_experiments`:
 
 - `ALGO_PERF`: Contains experiments, figures, and tables regarding instance descriptions, delay reductions achieved,
   optimality gaps, arc delay distributions, and congestion heatmaps.
