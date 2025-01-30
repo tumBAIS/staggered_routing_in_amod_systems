@@ -163,8 +163,8 @@ PRESETS = {
         "day_list": list(range(1, 32)),  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
-        "list_of_slopes_list": [[.5]],
-        "list_of_thresholds_list": [[1]],
+        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
+        "list_of_thresholds_list": [[1, 1.8, 2]],
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
         "algo_mode_list": ["OFFLINE"],
@@ -200,8 +200,8 @@ PRESETS = {
         "day_list": list(range(1, 32)),  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
-        "list_of_slopes_list": [[.5]],
-        "list_of_thresholds_list": [[1]],
+        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
+        "list_of_thresholds_list": [[1, 1.8, 2]],
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
         "algo_mode_list": ["OFFLINE", "ONLINE"],
@@ -219,8 +219,8 @@ PRESETS = {
         "day_list": [3],  # start instance params
         "max_flow_allowed_list": [20, 40],
         "seed_list": [0],
-        "list_of_slopes_list": [[.5]],
-        "list_of_thresholds_list": [[1]],
+        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
+        "list_of_thresholds_list": [[1, 1.8, 2]],
         "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
         "deadline_factor": 100,  # end instance params
         "algo_mode_list": ["OFFLINE"],
