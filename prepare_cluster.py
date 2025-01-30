@@ -444,7 +444,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="no_ls_comparison_paper", add_shortcuts=True)
+    main(preset_name="staggering_analysis_paper", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
