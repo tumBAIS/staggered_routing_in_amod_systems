@@ -26,7 +26,10 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
     print("Step 1: Calculating delay reductions...")
     results_df['absolute_delay_reduction_seconds'] = results_df['status_quo_total_delay'] - results_df[
         'solution_total_delay']
-    results_df['absolute_delay_reduction'] = results_df['absolute_delay_reduction_seconds'] / 60  # Convert to minutes
+    results_df['absolute_delay_reduction_minutes'] = results_df[
+                                                         'absolute_delay_reduction_seconds'] / 60  # Convert to minutes
+    results_df['absolute_delay_reduction_hrs'] = results_df[
+                                                     'absolute_delay_reduction_minutes'] / 60  # Convert to minutes
     results_df['relative_delay_reduction'] = (
             results_df['absolute_delay_reduction_seconds'] / results_df['status_quo_total_delay'] * 100
     )
@@ -119,17 +122,19 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
 
     # Generate plots for LC experiments
     # Determine global x-axis limits for absolute delay reduction
-    global_min = min(lc_data['absolute_delay_reduction'].min(), hc_data['absolute_delay_reduction'].min())
-    global_max = max(lc_data['absolute_delay_reduction'].max(), hc_data['absolute_delay_reduction'].max())
+    global_min = min(lc_data['absolute_delay_reduction_hrs'].min(),
+                     hc_data['absolute_delay_reduction_hrs'].min())
+    global_max = max(lc_data['absolute_delay_reduction_hrs'].max(),
+                     hc_data['absolute_delay_reduction_hrs'].max())
     x_limits_absolute = (global_min - 1, global_max + 1)
     print("\nStep 4: Generating plots for LC experiments...")
     # Generate plots for LC experiments with fixed x-axis
     plot_boxplot(
         data=lc_data,
-        x_col='absolute_delay_reduction',
+        x_col='absolute_delay_reduction_hrs',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [min]",  # Updated unit to minutes
+        xlabel=r"$\Theta$ [hrs]",  # Updated unit to minutes
         file_name="absolute_delay_reduction_LC",
         label="LC",
     )
@@ -150,10 +155,10 @@ def get_algo_performance_boxplots(results_df: pd.DataFrame, path_to_figures: Pat
     # Generate plots for HC experiments with fixed x-axis
     plot_boxplot(
         data=hc_data,
-        x_col='absolute_delay_reduction',
+        x_col='absolute_delay_reduction_hrs',
         y_col='epoch_label',
         ylabel="",
-        xlabel=r"$\Theta$ [min]",  # Updated unit to minutes
+        xlabel=r"$\Theta$ [hrs]",  # Updated unit to minutes
         file_name="absolute_delay_reduction_HC",
         label="HC",
     )

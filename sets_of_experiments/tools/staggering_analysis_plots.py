@@ -81,7 +81,8 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
         file_name = f"staggering_total_delay_barplot_{label.lower()}"
         tex_file_path = output_dir / f"{file_name}.tex"
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
-        tikzplotlib.save(tex_file_path, axis_width="\\TotalDelayBarplotWidth", axis_height="5cm")
+        tikzplotlib.save(tex_file_path, axis_width="\\StaggeringAnalysisWidth",
+                         axis_height="\\StaggeringAnalysisHeight")
         fix_tex_file(tex_file_path)  # Fix LaTeX issues
         plt.close()
 
@@ -94,6 +95,7 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             "solution_staggering_applied": [0]
         })
         exploded_data = pd.concat([exploded_data, null_point])
+        # Assuming remove_trailing_zeros and other functions are already defined
         sns.boxplot(
             x="instance_parameters_staggering_cap",
             y="solution_staggering_applied",
@@ -105,16 +107,35 @@ def get_staggering_analysis_plots(results_df: pd.DataFrame, path_to_figures: Pat
             whiskerprops=dict(color='black'),
             capprops=dict(color='black')
         )
+
+        # Set y-axis limits and ticks
+        plt.gca().set_ylim(0, 11)  # Set the y-axis range from 0 to 11
+        plt.gca().set_yticks([0, 5, 10])  # Set y-ticks to 0, 5, and 10
         plt.gca().yaxis.set_major_formatter(FuncFormatter(remove_trailing_zeros))
+
+        # Axis labels
         plt.xlabel(r"\$\zeta^{\mathrm{MAX}}\$ [%]")
         plt.ylabel(r"\$\sigma^r\$ [min]")
+
+        # Grid settings
         plt.grid(axis='y', linestyle='--', color='gray', alpha=0.7)
+
+        # Adjust layout
         plt.tight_layout()
+
+        # Save figures
         file_name = f"staggering_applied_boxplot_{label.lower()}"
         tex_file_path = output_dir / f"{file_name}.tex"
         plt.savefig(output_dir / f"{file_name}.jpeg", format="jpeg", dpi=300)
-        tikzplotlib.save(tex_file_path, axis_width="\\TotalDelayBarplotWidth", axis_height="5cm")
-        fix_tex_file(tex_file_path)  # Fix LaTeX issues
+
+        # Save as TikZ for LaTeX
+        tikzplotlib.save(tex_file_path, axis_width="\\StaggeringAnalysisWidth",
+                         axis_height="\\StaggeringAnalysisHeight")
+
+        # Fix LaTeX issues in the TikZ file
+        fix_tex_file(tex_file_path)
+
+        # Close the plot
         plt.close()
 
     generate_plots(lc_data, "LC")

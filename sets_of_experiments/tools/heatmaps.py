@@ -128,7 +128,7 @@ def get_congestion_heatmaps(results_df: pd.DataFrame, path_to_figures: Path, pat
         mapping_column="arc_to_node_mapping"
     )
     lc_all_counts = list(lc_offline_status_quo_counts.values())
-    lc_max_count = np.percentile(lc_all_counts, 90) if lc_all_counts else 1
+    lc_max_count = np.percentile(lc_all_counts, 97) if lc_all_counts else 1
 
     print(f"Shared max count: {lc_max_count:.2f}")
 

@@ -17,15 +17,11 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
 
     # Helper function to calculate statistics
     def calculate_statistics(df):
-        total_delays = df["status_quo_total_delay"] / 60
         total_number_of_arcs_after_splitting = df["instance_conflicting_sets"].apply(
-            lambda x: sum(1 for sublist in x) - 1
+            lambda x: sum(1 for _ in x) - 1
         )
         num_conflicting_sets = df["instance_conflicting_sets"].apply(
             lambda x: sum(1 for sublist in x if len(sublist) > 0)
-        )
-        longest_conflicting_set = df["instance_conflicting_sets"].apply(
-            lambda x: max((len(sublist) for sublist in x), default=0)
         )
 
         # New metrics: number_of_nodes and number_of_node_pairs
@@ -34,20 +30,20 @@ def get_summary_table(results_df: pd.DataFrame, path_to_tables: Path) -> None:
 
         return {
             "Min": [
-                int(number_of_nodes.min()),
                 int(number_of_node_pairs.min()),
+                int(number_of_nodes.min()),
                 int(total_number_of_arcs_after_splitting.min()),
                 int(num_conflicting_sets.min())
             ],
             "Max": [
-                int(number_of_nodes.max()),
                 int(number_of_node_pairs.max()),
+                int(number_of_nodes.max()),
                 int(total_number_of_arcs_after_splitting.max()),
                 int(num_conflicting_sets.max())
             ],
             "Avg": [
-                int(number_of_nodes.mean()),
                 int(number_of_node_pairs.mean()),
+                int(number_of_nodes.mean()),
                 int(total_number_of_arcs_after_splitting.mean()),
                 int(num_conflicting_sets.mean())
             ],

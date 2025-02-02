@@ -73,9 +73,13 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
             filtered_df['optimization_measures_lower_bounds_final']
     )
     filtered_df['optimization_measures_lower_bounds_final'] /= 60  # Convert to minutes
-    filtered_df['optimization_measures_bounds_difference_final'] /= 60  # Convert to minutes
+    filtered_df['optimization_measures_bounds_difference_final_min'] = filtered_df[
+                                                                           'optimization_measures_bounds_difference_final'] / 60  # Convert to minutes
+    filtered_df['optimization_measures_bounds_difference_final_hrs'] = filtered_df[
+                                                                           'optimization_measures_bounds_difference_final'] / 3600  # Convert to minutes
 
     filtered_df['status_quo_total_delay_minutes'] = filtered_df['status_quo_total_delay'] / 60  # Convert to minutes
+    filtered_df['status_quo_total_delay_hrs'] = filtered_df['status_quo_total_delay_minutes'] / 60  # Convert to minutes
 
     print("Bounds difference calculated and time values converted to minutes.\n")
 
@@ -153,7 +157,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     plot_horizontal_boxplot(
         data=lc_data,
         x_col='optimization_measures_optimality_gaps_final',
-        xlabel=r"$\Delta$ [\%] (LC)",
+        xlabel=r"$\Delta$ [\%]",
         file_name="optimality_gap_LC",
         label="LC",
         is_percentage=True,
@@ -162,23 +166,23 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     plot_horizontal_boxplot(
         data=lc_data,
         x_col='optimization_measures_lower_bounds_final',
-        xlabel="LB [min] (LC)",  # Adjusted to minutes
+        xlabel="LB [min]",  # Adjusted to minutes
         file_name="lower_bound_LC",
         label="LC",
         xlimits=(-1, 11)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=lc_data,
-        x_col='optimization_measures_bounds_difference_final',
-        xlabel=r"$\Delta$ [min] (LC)",  # Adjusted to minutes
+        x_col='optimization_measures_bounds_difference_final_min',
+        xlabel=r"$\Delta$ [min]",  # Adjusted to minutes
         file_name="bounds_difference_LC",
         label="LC",
         xlimits=(-.99, None)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=lc_data,
-        x_col='status_quo_total_delay_minutes',
-        xlabel="[min]",
+        x_col='status_quo_total_delay_hrs',
+        xlabel="[hrs]",
         file_name="status_quo_delay_LC",
         label="LC",
         xlimits=(0, None)
@@ -189,7 +193,7 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     plot_horizontal_boxplot(
         data=hc_data,
         x_col='optimization_measures_optimality_gaps_final',
-        xlabel=r"$\Delta$ [\%] (HC)",
+        xlabel=r"$\Delta$ [\%]",
         file_name="optimality_gap_HC",
         label="HC",
         is_percentage=True,
@@ -198,23 +202,23 @@ def get_mip_bounds_boxplots(results_df: pd.DataFrame, path_to_figures: Path, ver
     plot_horizontal_boxplot(
         data=hc_data,
         x_col='optimization_measures_lower_bounds_final',
-        xlabel="LB [min] (HC)",  # Adjusted to minutes
+        xlabel="LB [min]",  # Adjusted to minutes
         file_name="lower_bound_HC",
         label="HC",
         xlimits=(-1, None)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=hc_data,
-        x_col='optimization_measures_bounds_difference_final',
-        xlabel=r"$\Delta$ [min] (HC)",  # Adjusted to minutes
+        x_col='optimization_measures_bounds_difference_final_hrs',
+        xlabel=r"$\Delta$ [hrs]",  # Adjusted to hrs
         file_name="bounds_difference_HC",
         label="HC",
         xlimits=(-1, None)  # Adjust xlimits for time values if needed
     )
     plot_horizontal_boxplot(
         data=hc_data,
-        x_col='status_quo_total_delay_minutes',
-        xlabel="[min]",
+        x_col='status_quo_total_delay_hrs',
+        xlabel="[hrs]",
         file_name="status_quo_delay_HC",
         label="HC",
         xlimits=(0, None)

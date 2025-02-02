@@ -4,6 +4,50 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 import tikzplotlib
+from pprint import pprint
+
+
+def print_dict_info(name, d):
+    if d:
+        values = np.array(list(d.values()))
+        values.sort()
+
+        def percentile(p):
+            return values[int(len(values) * p / 100)]
+
+        stats = {
+            "Count": len(values),
+            "Min": values[0],
+            "Max": values[-1],
+            "Mean": values.mean(),
+            "Median (50%)": percentile(50),
+            "70th Percentile": percentile(70),
+            "90th Percentile": percentile(90),
+            "95th Percentile": percentile(95),
+            "98th Percentile": percentile(98),
+            "99th Percentile": percentile(99),
+        }
+
+        print(f"\n{name} Statistics:")
+        pprint(stats, sort_dicts=False)
+
+
+def print_congestion_statistics(unc_delays, off_delays, on_delays):
+    # Identify arcs based on congestion changes
+    unc_but_not_off = {arc for arc in unc_delays if unc_delays[arc] > 0 and off_delays.get(arc, 0) == 0}
+    unc_but_not_on = {arc for arc in unc_delays if unc_delays[arc] > 0 and on_delays.get(arc, 0) == 0}
+    off_but_not_unc = {arc for arc in off_delays if off_delays[arc] > 0 and unc_delays.get(arc, 0) == 0}
+    on_but_not_unc = {arc for arc in on_delays if on_delays[arc] > 0 and unc_delays.get(arc, 0) == 0}
+
+    # Print results clearly
+    print("\nCongestion Analysis Results".center(50, "="))
+    print(f"Number of arcs congested in UNC but not in OFF: {len(unc_but_not_off)}")
+    print(f"Number of arcs congested in UNC but not in ON: {len(unc_but_not_on)}")
+    print(f"Number of arcs congested in OFF but not in UNC: {len(off_but_not_unc)}")
+    print(f"Number of arcs congested in ON but not in UNC: {len(on_but_not_unc)}")
+    print(f"Decrease in number of congested arcs from UNC to OFF: {len(unc_but_not_off) - len(off_but_not_unc)}")
+    print(f"Decrease in number of congested arcs from UNC to ON: {len(unc_but_not_on) - len(on_but_not_unc)}")
+    print("=" * 50)
 
 
 def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_figures: Path,
@@ -47,6 +91,9 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         off_delays = calculate_arc_delays(offline_df, "solution_delays_on_arcs", "arc_to_node_mapping")
         on_delays = calculate_arc_delays(online_df, "solution_delays_on_arcs", "arc_to_node_mapping")
 
+        # Print how congestion is shifted among different algo versions
+        print_congestion_statistics(unc_delays, off_delays, on_delays)
+
         # Filter out arcs with a maximum delay of at most 1e-1 in all barplots
         all_arcs = set(unc_delays.keys()) | set(off_delays.keys()) | set(on_delays.keys())
         filtered_arcs = {arc for arc in all_arcs if max(unc_delays.get(arc, 0), off_delays.get(arc, 0),
@@ -56,9 +103,14 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
         off_delays = {arc: delay for arc, delay in off_delays.items() if arc in filtered_arcs}
         on_delays = {arc: delay for arc, delay in on_delays.items() if arc in filtered_arcs}
 
+        # Print info
+        print_dict_info("unc_delays", unc_delays)
+        print_dict_info("off_delays", off_delays)
+        print_dict_info("on_delays", on_delays)
+
         # Adjust bins: include the 0-1e-1 bin explicitly
-        bins = np.concatenate(([0, 1e-1], np.arange(2, 34, 2)))  # Include 0 to 1e-1 bin
-        bin_labels = ["0"] + [f"{int(bins[i])}" for i in range(2, len(bins))]
+        bins = np.concatenate(([0, 1e-1], np.arange(1, 101, 10)))  # Include 0 to 1e-1 bin
+        bin_labels = ["0"] + [f"{int(bins[i]) + 9}" for i in range(2, len(bins))]
 
         unc_values = list(unc_delays.values())
         off_values = list(off_delays.values())
@@ -92,9 +144,9 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
 
         # Update xticks to include labels
         plt.xticks(x, bin_labels, rotation=0)
-
-        plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black",
-                   handlelength=2, handleheight=1.5, fontsize=10)  # Ensure proper legend size and rectangles
+        #
+        # plt.legend(loc="upper right", frameon=True, framealpha=1, facecolor="white", edgecolor="black",
+        #            handlelength=2, handleheight=1.5, fontsize=10)  # Ensure proper legend size and rectangles
         plt.tight_layout()
 
         # Save plot
@@ -105,14 +157,26 @@ def get_arc_congestion_distribution_barplot(results_df: pd.DataFrame, path_to_fi
 
         with open(output_dir / f"{file_name}.tex", "w") as tex_file:
             tex_content = tikzplotlib.get_tikz_code()
-            tex_content = tex_content.replace("log basis y={10},", "")  # Remove log basis y
-            tex_content = tex_content.replace("ybar,ybar legend",
-                                              "rectangle,fill=legendfill")  # Proper legend rectangles
-            tex_content = tex_content.replace("ycomb", "")  # Correct bar heights to start from zero
+
+            # Remove log basis y
+            tex_content = tex_content.replace("log basis y={10},", "")
+
+            # Correct bar heights to start from zero
+            tex_content = tex_content.replace("ycomb", "")
+
+            # Explicitly set axis dimensions
             tex_content = tex_content.replace(
                 "\\begin{axis}[",
-                "\\begin{axis}[width=\\columnwidth, height=4.5cm,"  # Explicitly set axis dimensions
+                "\\begin{axis}[width=\\columnwidth, height=\\TotalDelayBarplotsHeight,"
             )
+
+            # Remove all lines related to legends
+            lines = tex_content.split("\n")
+            tex_content = "\n".join(
+                line for line in lines if not ("\\addlegendentry" in line or "\\addlegendimage" in line)
+            )
+
+            # Write the modified TikZ code to the file
             tex_file.write(tex_content)
 
         plt.close()
