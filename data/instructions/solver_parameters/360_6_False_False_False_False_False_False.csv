@@ -1,0 +1,2 @@
+epoch_time_limit,epoch_size,optimize,warm_start,improve_warm_start,local_search_callback,simplify,verbose_model
+360,6,False,False,False,False,False,False
