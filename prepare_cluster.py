@@ -212,6 +212,24 @@ PRESETS = {
         "verbose_model": False,
         "local_search_callback": True  # end solver params
     },
+    "algo_performance_comparison_integ_bal_stag": {
+        "network_name": "manhattan_100",
+        "number_of_trips": 5000,
+        "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [20, 40],
+        "seed_list": [0],
+        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
+        "list_of_thresholds_list": [[1, 1.8, 2]],
+        "staggering_cap_list": [20],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start_list": [True],
+        "simplify": True,
+        "verbose_model": False,
+        "local_search_callback": True  # end solver params
+    },
 
     "check_instances": {
         "network_name": "manhattan_100",
@@ -223,7 +241,7 @@ PRESETS = {
         "list_of_thresholds_list": [[1, 1.8, 2]],
         "staggering_cap_list": [10],
         "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE", "ONLINE"],
+        "algo_mode_list": ["OFFLINE"],
         "optimize": False,
         "warm_start": False,
         "improve_warm_start_list": [False],
@@ -395,9 +413,9 @@ def main(preset_name: str, add_shortcuts: bool):
         memory_per_cpu = "1G"
     else:
         # LARGE EXPERIMENTS
-        minutes_per_run = 10
-        memory_per_cpu = "2G"
-        cpu_per_run = 1
+        minutes_per_run = 60 * 2
+        memory_per_cpu = "15G"
+        cpu_per_run = 2
         node_type = "CPU_ONLY"
 
     # cluster_setup
@@ -463,7 +481,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="check_instances", add_shortcuts=True)
+    main(preset_name="algo_performance_comparison_integ_bal_stag", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
