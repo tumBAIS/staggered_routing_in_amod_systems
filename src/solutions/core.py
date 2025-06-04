@@ -37,17 +37,8 @@ def get_offline_solution(
     cpp_status_quo = cpp_scheduler.construct_solution(instance.release_times)
     cpp_instance.set_release_times(cpp_status_quo.get_start_times())
     instance.set_release_times(cpp_status_quo.get_start_times())
-    delays_on_arcs = cpp_status_quo.get_delays_on_arcs(cpp_instance)
-    start_times = cpp_status_quo.get_start_times()
 
-    offline_solution = Solution(
-        delays_on_arcs=delays_on_arcs,
-        start_times=start_times,
-        total_delay=cpp_status_quo.get_total_delay(),
-        congested_schedule=cpp_status_quo.get_schedule(),
-        total_travel_time=cpp_status_quo.get_total_travel_time(),
-        binaries=None,
-    )
+    offline_solution = Solution.from_cpp_solution(cpp_status_quo, cpp_instance)
 
     offline_solution.print_congestion_info()
 

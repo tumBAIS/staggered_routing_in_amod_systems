@@ -147,21 +147,38 @@ class Network:
         return length
 
     def print_info_arcs(self):
+        # Travel times and estimated lengths for used arcs (excluding dummies)
         travel_times_arcs = [arc.nominal_travel_time for arc in self.arcs if not arc.is_dummy]
+        length_arcs_used = [t * (50 / 9) for t in travel_times_arcs]  # assuming 20 km/h
 
-        # Header
-        print("\n" + "=" * 60)
-        print(f"{'ARCS NOMINAL TRAVEL TIMES STATISTICS':^60}")
-        print(f"{'(Values in seconds)':^60}")
-        print("=" * 60 + "\n")
+        # Real lengths from all arcs in the network
+        arc_lengths_all = [data["length"] for _, _, data in self.G.edges(data=True) if "length" in data]
 
-        # Statistics
-        print(f"{'Count:':<30} {len(travel_times_arcs)}")
-        print(f"{'Mean:':<30} {mean(travel_times_arcs):.2f}")
-        print(f"{'Median:':<30} {median(travel_times_arcs):.2f}")
-        print(f"{'Standard Deviation:':<30} {stdev(travel_times_arcs):.2f}")
-        print(f"{'Min:':<30} {min(travel_times_arcs):.2f}")
-        print(f"{'Max:':<30} {max(travel_times_arcs):.2f}")
+        # Stats preparation
+        def safe_stats(values):
+            return (
+                len(values),
+                mean(values),
+                median(values),
+                stdev(values) if len(values) > 1 else 0.0,
+                min(values),
+                max(values),
+            )
 
-        # Footer
-        print("\n" + "=" * 60 + "\n")
+        stats_used = safe_stats(length_arcs_used)
+        stats_all = safe_stats(arc_lengths_all)
+
+        # Table header
+        print("\n" + "=" * 80)
+        print(f"{'ARC LENGTH STATISTICS':^80}")
+        print(f"{'(Used arcs at 20 km/h vs All arcs from graph)':^80}")
+        print("=" * 80)
+        print(f"{'Metric':<30} {'Used [m]':>20} {'All Arcs [m]':>20}")
+        print("-" * 80)
+
+        # Labels
+        labels = ["Count", "Mean", "Median", "Standard Deviation", "Min", "Max"]
+        for label, val_used, val_all in zip(labels, stats_used, stats_all):
+            print(f"{label:<30} {val_used:>20.2f} {val_all:>20.2f}")
+
+        print("=" * 80 + "\n")

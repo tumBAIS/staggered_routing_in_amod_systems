@@ -26,6 +26,7 @@ os.environ['USE_PYGEOS'] = '0'  # Suppress warning from Shapely library
 class InstanceParameters:
     network_name: str
     add_shortcuts: bool
+    max_length_shortcut: int  # [meters]
     day: int
     number_of_trips: int
     seed: int
@@ -45,7 +46,7 @@ class InstanceParameters:
 
     def get_shortcuts_string(self):
         if self.add_shortcuts:
-            return "WITH_"
+            return f"WITH_{self.max_length_shortcut}M_"
         else:
             return "NO_"
 
@@ -187,7 +188,8 @@ def get_input_from_dicts(instance_params_dict: dict, solver_params_dict: dict) -
         seed=int(instance_params_dict["seed"]),
         max_flow_allowed=float(instance_params_dict["max_flow_allowed"]),
         number_of_trips=int(instance_params_dict["number_of_trips"]),
-        add_shortcuts=format_bool(instance_params_dict["add_shortcuts"])
+        add_shortcuts=format_bool(instance_params_dict["add_shortcuts"]),
+        max_length_shortcut=int(instance_params_dict["max_length_shortcut"])
     )
 
     solver_params = SolverParameters(

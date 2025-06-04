@@ -28,7 +28,7 @@ class InstanceComputer:
         self._print_instance_generation()
         G = self._get_G(replace=False)
         network = Network(self.instance_params, G)
-        self._compute_routes_file(network)
+        self._compute_routes_file(network, replace=False)
         trips = Trips(self.instance_params, network, instance_available=False)
         network.add_arcs(trips)
         trips.set_network_paths(network)
@@ -37,6 +37,11 @@ class InstanceComputer:
         cpp_instance = self.get_cpp_instance(trips, network)
         cpp_scheduler = cpp.cpp_scheduler(cpp_instance)
         cpp_status_quo = cpp_scheduler.construct_solution(trips.get_release_times())
+
+        from problem.solution import Solution
+        py_status_quo = Solution.from_cpp_solution(cpp_status_quo, cpp_instance)
+        py_status_quo.print_congestion_info()
+        py_status_quo.print_delay_distributions()
 
         self._set_deadlines(trips, cpp_status_quo)
         self._save_instance_file(trips, cpp_status_quo)
@@ -149,6 +154,14 @@ class InstanceComputer:
         G_percentage = real_world_graphs.get_southern_percentage_of_network(G_manhattan, percentage, path_to_G)
         if self.instance_params.add_shortcuts:
             instance_generator.shortcuts.add_shortcuts_to_graph(G_percentage)
+            # Remove all arcs longer than 1 km
+            edges_to_remove = [
+                (u, v) for u, v, data in G_percentage.edges(data=True)
+                if data.get("type_of_arc") == "shortcut" and data.get("length",
+                                                                      0) > self.instance_params.max_length_shortcut
+            ]
+            G_percentage.remove_edges_from(edges_to_remove)
+
         G_percentage = nx.MultiDiGraph(G_percentage)
         instance_generator.real_world_graphs.plot_real_world_G(G_percentage,
                                                                path_to_G)  # Make sure this function can handle the relabeled graph

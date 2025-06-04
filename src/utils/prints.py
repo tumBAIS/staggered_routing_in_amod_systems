@@ -2,9 +2,7 @@ import datetime
 import pandas as pd
 
 from input_data import TOLERANCE
-from problem.epoch_instance import EpochInstances
 from problem.instance import Instance
-from problem.solution import Solution
 
 
 def print_conflicting_sets_info(instance: Instance):
@@ -153,8 +151,9 @@ def print_unified_solution_construction_start() -> None:
     print("=" * 50)
 
 
-def print_insights_algorithm(complete_status_quo: Solution, reconstructed_solution: Solution,
-                             epoch_instances: EpochInstances):
+def print_insights_algorithm(complete_status_quo,
+                             reconstructed_solution,
+                             epoch_instances):
     print("=" * 50)
     print("Final Algorithm Insights".center(50))
     print("=" * 50)

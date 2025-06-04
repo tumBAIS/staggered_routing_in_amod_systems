@@ -14,7 +14,7 @@ os.chdir(path_to_repo.as_posix())
 # ===========================
 # C++ Build Configuration
 # ===========================
-build = "release"  # Options: release, debug, relwithdebinfo
+build = "relwithdebinfo"  # Options: release, debug, relwithdebinfo
 path_to_build = path_to_repo / f"cpp_module/cmake-build-{build}"
 sys.path.append(path_to_build.as_posix())
 sys.path.append(path_to_src.as_posix())
@@ -39,14 +39,15 @@ if __name__ == "__main__":
     # ===========================
     instance_params = InstanceParameters(
         day=1,
-        number_of_trips=100,
+        number_of_trips=5000,
         seed=0,
-        network_name="manhattan_10",
-        max_flow_allowed=100,
-        add_shortcuts=False,
-        list_of_slopes=[0.05],
-        list_of_thresholds=[1],
-        deadline_factor=100,
+        network_name="manhattan_100",
+        max_flow_allowed=15,
+        add_shortcuts=True,
+        max_length_shortcut=500,
+        list_of_slopes=[0.5, 0.9, 1.1],
+        list_of_thresholds=[1, 1.8, 2],
+        deadline_factor=25,
         staggering_cap=10,
     )
 

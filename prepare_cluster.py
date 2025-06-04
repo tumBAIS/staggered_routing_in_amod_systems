@@ -7,6 +7,7 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from tabulate import tabulate
 import datetime
+from PRESETS import PRESETS
 
 # Define paths relative to the current script location
 path_to_data = Path(__file__).parent / "data"
@@ -120,157 +121,6 @@ def write_instance_parameters_csv(input_data_dict, input_data_name, mode: str):
         writer.writerow(input_data_dict)  # Write the data row
 
 
-PRESETS = {
-    "var_pwl_paper": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5], [0.5, 0.7], [0.5, 0.7, 0.9]],
-        "list_of_thresholds_list": [[1], [1, 1.5], [1, 1.5, 2]],
-        "staggering_cap_list": [25],
-        "deadline_factor": 100,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-        "simplify": True,
-        "verbose_model": True,
-        "local_search_callback": True  # end solver params
-    },
-    "no_ls_comparison_mini": {
-        "network_name": "manhattan_10",
-        "number_of_trips": 500,
-        "day_list": list(range(1, 11)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[.5]],
-        "list_of_thresholds_list": [[1]],
-        "staggering_cap_list": [10],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True, False],
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-    "no_ls_comparison_paper": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
-        "staggering_cap_list": [10],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True, False],
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-    "algo_performance_mini": {
-        "network_name": "manhattan_10",
-        "number_of_trips": 500,
-        "day_list": list(range(1, 12)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[.5]],
-        "list_of_thresholds_list": [[1]],
-        "staggering_cap_list": [10],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-    "algo_performance_paper": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
-        "staggering_cap_list": [10],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE", "ONLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-    "algo_performance_comparison_integ_bal_stag": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
-        "staggering_cap_list": [20],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-
-    "check_instances": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
-        "staggering_cap_list": [10],
-        "deadline_factor": 25,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": False,
-        "warm_start": False,
-        "improve_warm_start_list": [False],
-        "simplify": False,
-        "verbose_model": False,
-        "local_search_callback": False  # end solver params
-    },
-
-    "staggering_analysis_paper": {
-        "network_name": "manhattan_100",
-        "number_of_trips": 5000,
-        "day_list": [3],  # start instance params
-        "max_flow_allowed_list": [20, 40],
-        "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
-        "staggering_cap_list": [x * 2.5 for x in range(11)],  # Generates [0.0, 2.5, 5.0, ..., 25.0]
-        "deadline_factor": 100,  # end instance params
-        "algo_mode_list": ["OFFLINE"],
-        "optimize": True,
-        "warm_start": True,
-        "improve_warm_start_list": [True],
-        "simplify": True,
-        "verbose_model": False,
-        "local_search_callback": True  # end solver params
-    },
-}
-
-
 def format_list_as_range(lst):
     """Formats a list of integers into a compact range format."""
     if not lst:
@@ -306,61 +156,18 @@ def pretty_print_experiment_parameters(
     print(tabulate(parameters, headers=["Parameter", "Value"], tablefmt="simple"))
 
 
-def get_set_of_experiments_name(
-        preset_name: str, network_name: str, algo_mode_list: list[str],
-        number_of_trips: int, add_shortcuts: bool, day_list: list[int], max_flow_allowed_list: list[int],
-        seed_list: list[int], list_of_slopes_list: list[list[float]], list_of_thresholds_list: list[list[float]],
-        staggering_cap: list[int], deadline_factor: int, optimize: bool, warm_start: bool,
-        improve_warm_start_list: list[bool], simplify: bool) -> str:
-    # Format the string based on the arguments and convert to uppercase
+def get_set_of_experiments_name(preset_name: str, custom_note: str = "") -> str:
+    """
+    Generate a simple experiment name with timestamp and preset name.
+    Format: DAYMONTH_HOURMIN_PRESETNAME_{OPTIONAL_NOTE}
+    """
+    timestamp = datetime.datetime.now().strftime("%d%m_%H%M")
+    parts = [timestamp, preset_name.upper()]
 
-    def format_stag_cap(stag_cap):
-        if len(stag_cap) == 1:
-            return f"STAG{stag_cap[0]}"
-        else:
-            return f"VARSTAG"
+    if custom_note:
+        parts.append(custom_note.upper())
 
-    def format_list_of_strings(algo_mode_list: list[str]):
-        if len(algo_mode_list) == 1:
-            return algo_mode_list[0]
-        else:
-            return "_".join(algo_mode_list)
-
-    def format_list_int(algo_mode_list: list[int]):
-        if len(algo_mode_list) == 1:
-            return str(algo_mode_list[0])
-        else:
-            return str(algo_mode_list).replace(" ", "")
-
-    def format_list_bool(algo_mode_list: list[bool]):
-        if len(algo_mode_list) == 1:
-            return str(algo_mode_list[0])
-        else:
-            return str(algo_mode_list).replace(" ", "")
-
-    def format_nested_list(nested_list: list[list[float]]):
-        return "".join(["[" + "_".join(map(str, inner_list)) + "]" for inner_list in nested_list])
-
-    # Get current date in DDMMYY format
-    date_prefix = datetime.datetime.now().strftime("%d%m%y")
-
-    name = (
-        f"{date_prefix}_{preset_name}_{network_name}_SHORT{'YES' if add_shortcuts else 'NO'}_MF{format_list_int(max_flow_allowed_list)}"
-        f"_{format_list_of_strings(algo_mode_list)}_T{number_of_trips}_D{len(day_list)}_"
-        f"S{len(seed_list)}_{format_nested_list(list_of_slopes_list)}_{format_nested_list(list_of_thresholds_list)}_"
-        f"{format_stag_cap(staggering_cap)}_DL{deadline_factor}_"
-        f"OPT{'YES' if optimize else 'NO'}_"
-        f"WARM{'YES' if warm_start else 'NO'}_LS{format_list_bool(improve_warm_start_list)}_"
-        f"SMPLFY{'YES' if simplify else 'NO'}"
-    )
-
-    # CUSTOM RULES
-    name = name.replace("manhattan_", "MAN")
-    name = name.replace("performance", "perf")
-    name = name.replace("OFFLINE", "OFF")
-    name = name.replace("ONLINE", "ON")
-
-    return name.upper()
+    return "_".join(parts)
 
 
 def main(preset_name: str, add_shortcuts: bool):
@@ -381,6 +188,7 @@ def main(preset_name: str, add_shortcuts: bool):
     list_of_thresholds_list = PRESETS[preset_name]["list_of_thresholds_list"]
     staggering_cap_list = PRESETS[preset_name]["staggering_cap_list"]
     deadline_factor = PRESETS[preset_name]["deadline_factor"]
+    max_length_shortcut = PRESETS[preset_name]["max_length_shortcut"]
 
     # Solver parameters
     algo_mode_list = PRESETS[preset_name]["algo_mode_list"]
@@ -391,32 +199,18 @@ def main(preset_name: str, add_shortcuts: bool):
     simplify = PRESETS[preset_name]["simplify"]
     verbose_model = PRESETS[preset_name]["verbose_model"]
 
+    # Cluster parameters
+    set_of_experiments = get_set_of_experiments_name(preset_name, "TESTING_SMALL_SHORTCUTS")
+
+    job_title = set_of_experiments
+    job_priority = PRESETS[preset_name]["job_priority"]  # NORMAL, URGENT
+    cpu_per_run = PRESETS[preset_name]["cpu_per_run"]
+    node_type = PRESETS[preset_name]["node_type"]
+    minutes_per_run = PRESETS[preset_name]["minutes_per_run"]
+    memory_per_cpu = PRESETS[preset_name]["memory_per_cpu"]
+
     pretty_print_experiment_parameters(PRESETS[preset_name], network_name, number_of_trips,
                                        add_shortcuts)
-
-    set_of_experiments = get_set_of_experiments_name(preset_name, network_name, algo_mode_list,
-                                                     number_of_trips, add_shortcuts, day_list, max_flow_allowed_list,
-                                                     seed_list, list_of_slopes_list, list_of_thresholds_list,
-                                                     staggering_cap_list, deadline_factor, optimize, warm_start,
-                                                     improve_warm_start_list, simplify)
-
-    # Cluster parameters
-    job_title = set_of_experiments
-    job_priority = "NORMAL"  # NORMAL, URGENT
-    cpu_per_run = 1
-    node_type = "ANY"
-    if network_name == "manhattan_5":
-        minutes_per_run = 5
-        memory_per_cpu = "2G"
-    elif network_name == "manhattan_10":
-        minutes_per_run = 15
-        memory_per_cpu = "1G"
-    else:
-        # LARGE EXPERIMENTS
-        minutes_per_run = 60 * 2
-        memory_per_cpu = "15G"
-        cpu_per_run = 2
-        node_type = "CPU_ONLY"
 
     # cluster_setup
     cluster_setup = ClusterSetup(
@@ -442,6 +236,7 @@ def main(preset_name: str, add_shortcuts: bool):
                             "seed": seed,
                             "max_flow_allowed": max_flow_allowed,
                             "add_shortcuts": add_shortcuts,
+                            "max_length_shortcut": max_length_shortcut,
                             "list_of_slopes": list_of_slopes_list[pwl_id],
                             "list_of_thresholds": list_of_thresholds_list[pwl_id],
                             "staggering_cap": staggering_cap,
@@ -481,7 +276,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_comparison_integ_bal_stag", add_shortcuts=True)
+    main(preset_name="check_instances", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
