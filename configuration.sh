@@ -1,30 +1,46 @@
 #!/bin/bash
 
-# General Job-related configuration
+# ----------------------------------------
+# Load General Job Configuration
+# ----------------------------------------
+
 source my_cluster_configuration.sh
+
+# Set job-related environment variables
 export JOB_NAME=$MY_JOB_NAME
 export MEMORY_PER_CPU=$MY_MEMORY_PER_CPU
 export MINUTES_PER_RUN=$MY_MINUTES_PER_RUN
 export EMAIL="antonio.coppola@tum.de"
-# Command to execute. Will be run with arguments from the
-# run list file.
+
+# Command to execute; will run with arguments from the run list file
 export EXECUTABLE="./executable"
-# Resources
-# How many CPUs each run requires
+
+# ----------------------------------------
+# Resource Allocation
+# ----------------------------------------
+
+# Number of CPUs required per run
 export CPUS_PER_RUN=$MY_CPU_PER_RUN
-# Specify the memory required *per cpu*. The memory requested
-# per run is MEMORY_PER_CPU*CPUS_PER_RUN. Suffixes can be [K|M|G|T]
-#export MEMORY_PER_CPU=$MY_MEMORY_PER_CPU
-# Maximum time limit is 5h
-#export MINUTES_PER_RUN=$MY_MINUTES_PER_RUN
-# Can be 1 or 0
+
+# Specify memory required per CPU (total: MEMORY_PER_CPU * CPUS_PER_RUN)
+export MEMORY_PER_CPU=$MY_MEMORY_PER_CPU  # This was duplicated in the original script
+
+# Maximum time limit per run
+export MINUTES_PER_RUN=$MY_MINUTES_PER_RUN
+
+# Number of GPUs required per run (0 = no GPUs)
 export GPUS_PER_RUN=0
-# Possible choices: urgent > normal
+
+# Job Priority (QoS) - Possible choices: urgent > normal
 export QOS=$MY_PRIORITY
-# On which nodes to run, possible values: CPU_ONLY, GPU_ONLY, ANY
+
+# Node type: CPU_ONLY, GPU_ONLY, ANY
 export NODE_TYPE=$MY_NODE_TYPE
 
-# Set up your environment here, e.g., load modules, activate virtual environments
+# ----------------------------------------
+# Load Required Modules & Set Up Environment
+# ----------------------------------------
+
 module unload python
 module unload gurobi
 module load cmake/
@@ -38,21 +54,24 @@ rm joblog.csv
 
 # build cpp_module library
 echo "Did you remember to build the cpp libraries? If no, run ./build_cpp_module.sh"
-#rm -r cpp_module/cmake-build-release
-#cmake -S cpp_module/ -B cpp_module/cmake-build-release -DCMAKE_BUILD_TYPE=Release
-#cmake --build cpp_module/cmake-build-release --target cpp_module
+ 
 
+# ----------------------------------------
+# Print Job Info
+# ----------------------------------------
 
-#Print out some info
 echo "JOB_NAME: ${MY_JOB_NAME}"
 
-# Defaults for other run-related variables.
-# These can be ignored in most cases: they are utilized by dispatch_instance.sh
+# ----------------------------------------
+# Set Up Directory Paths
+# ----------------------------------------
+
 export BASE_DIR=$(pwd)
-RUN_LIST="run_list.csv"
+export RUN_LIST="run_list.csv"
 export RESULTS_DIRECTORY="results"
 export LOGS_DIRECTORY="logs"
 export ERROR_LOGS_DIRECTORY="error-logs"
+export SETS_OF_EXPERIMENTS_DIRECTORY="sets_of_experiments"
 export SCRIPTS_DIRECTORY="scripts"
 export CONSOLE_LOG_NAME="console.log"
 export ERROR_CONSOLE_LOG_NAME="console-error.log"
