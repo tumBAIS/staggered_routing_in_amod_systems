@@ -1,7 +1,5 @@
 # Import necessary modules and functions
-from solutions.reconstruct_solution import reconstruct_solution
 from input_data import get_input_data
-from problem.instance import get_instance
 from solutions.status_quo import get_epoch_status_quo, get_cpp_instance
 from solutions.core import get_offline_solution, get_epoch_solution
 from simplify.simplify import simplify_system
@@ -14,6 +12,8 @@ def run_procedure(source: str) -> None:
     """
     Main procedure to run the entire simulation.
     """
+    from problem.instance import get_instance
+
     # Load initial data and setup instances
     instance_params, solver_params = get_input_data(source)
     instance = get_instance(instance_params)
@@ -55,6 +55,8 @@ def run_procedure(source: str) -> None:
         optimization_measures_list.append(optimization_measures)
 
     # Reconstruct the complete solution from all epochs
+    from solutions.reconstruct_solution import reconstruct_solution
+
     reconstructed_solution = reconstruct_solution(epoch_instances, epoch_solutions, cpp_instance)
 
     # Print insights and save the results
