@@ -129,7 +129,7 @@ PRESETS = {
         "local_search_callback": False,  # end solver params
         "job_priority": "NORMAL",
         "cpu_per_run": 1,
-        "node_type": 1,
+        "node_type": "CPU_ONLY",
         "minutes_per_run": 10,
         "memory_per_cpu": "5000MB",
     },
