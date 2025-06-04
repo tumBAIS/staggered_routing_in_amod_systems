@@ -7,6 +7,7 @@ from pathlib import Path
 from input_data import SolverParameters
 from problem.instance import Instance
 from problem.solution import Solution
+from typing import Optional
 
 
 def transform_path_to_string(path: Path) -> str:
@@ -24,9 +25,11 @@ def transform_path_to_string(path: Path) -> str:
         raise ValueError(f"'data{os.path.sep}' not found in path {path_str}.")
 
 
-def save_experiment(instance: Instance, status_quo: Solution,
-                    solution: Solution, solver_params: SolverParameters,
-                    optimization_measures_list: list[dict]):
+def save_experiment(instance: Instance,
+                    status_quo: Solution,
+                    solver_params: SolverParameters,
+                    optimization_measures_list: Optional[list[dict]] = None,
+                    solution: Optional[Solution] = None):
     """
     Save experiment results to JSON files.
 
@@ -63,15 +66,17 @@ def save_experiment(instance: Instance, status_quo: Solution,
     solver_parameters_to_save = solver_params.__dict__.copy()
     solver_parameters_to_save.pop("instance_parameters", None)
     solver_parameters_to_save.pop("path_to_results", None)
-
+    solution_to_save = solution.__dict__ if solution is not None else None
+    opt_measures_to_save = [getattr(x, '__dict__', x) for x in
+                            optimization_measures_list] if optimization_measures_list is not None else None
     # Construct output data dictionary
     output_data = {
         "instance_parameters": instance_parameters_to_save,
         "solver_parameters": solver_parameters_to_save,
         "instance": instance_data_to_save,
         "status_quo": status_quo.__dict__,
-        "solution": solution.__dict__,
-        "optimization_measures_list": [getattr(x, '__dict__', x) for x in optimization_measures_list]
+        "solution": solution_to_save,
+        "optimization_measures_list": opt_measures_to_save
     }
 
     # Remove paths from input data
@@ -112,13 +117,15 @@ def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
     instance.max_staggering_applicable[i] = round(instance.max_staggering_applicable[i], 2)
     instance.deadlines[i] = round(instance.deadlines[i], 2)
     status_quo.start_times[i] = round(status_quo.start_times[i], 2)
-    solution.start_times[i] = round(solution.start_times[i], 2)
+    if solution:
+        solution.start_times[i] = round(solution.start_times[i], 2)
 
     for j in range(len(status_quo.congested_schedule[i])):
         status_quo.congested_schedule[i][j] = round(status_quo.congested_schedule[i][j], 2)
         status_quo.delays_on_arcs[i][j] = round(status_quo.delays_on_arcs[i][j], 2)
-        solution.congested_schedule[i][j] = round(solution.congested_schedule[i][j], 2)
-        solution.delays_on_arcs[i][j] = round(solution.delays_on_arcs[i][j], 2)
+        if solution:
+            solution.congested_schedule[i][j] = round(solution.congested_schedule[i][j], 2)
+            solution.delays_on_arcs[i][j] = round(solution.delays_on_arcs[i][j], 2)
 
 
 def _remove_unnecessary_instance_columns(instance_data_to_save):

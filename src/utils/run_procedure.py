@@ -19,6 +19,8 @@ def run_procedure(source: str) -> None:
     instance = get_instance(instance_params)
     cpp_instance = get_cpp_instance(instance, solver_params.epoch_time_limit)
     complete_status_quo = get_offline_solution(instance, cpp_instance)
+    if not solver_params.optimize:
+        return save_experiment(instance, complete_status_quo, solver_params)
 
     # Initialize a list to store solutions for each epoch
     epoch_solutions = []
@@ -62,5 +64,5 @@ def run_procedure(source: str) -> None:
     # Print insights and save the results
     print_insights_algorithm(complete_status_quo, reconstructed_solution, epoch_instances)
     instance.remove_arc_copies()
-    save_experiment(instance, complete_status_quo, reconstructed_solution, solver_params,
-                    optimization_measures_list)
+    save_experiment(instance, complete_status_quo, solver_params,
+                    optimization_measures_list, reconstructed_solution)

@@ -215,7 +215,7 @@ def get_instance(instance_params: InstanceParameters) -> Instance:
                         node_based_trip_routes=trips_data.routes, release_times=trips_data.release_time,
                         max_staggering_applicable=max_staggering_applicable)
     instance.print_info_arcs_utilized()
-    conflicting_sets.schedule_utilities.add_conflicting_sets_to_instance(instance)
+    # conflicting_sets.schedule_utilities.add_conflicting_sets_to_instance(instance)
     return instance
 
 
