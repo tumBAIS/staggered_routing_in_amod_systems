@@ -133,6 +133,30 @@ PRESETS = {
         "minutes_per_run": 10,
         "memory_per_cpu": "5000MB",
     },
+    "algo_performance_future_paper": {
+        "network_name": "manhattan_100",
+        "max_length_shortcut": 500,
+        "number_of_trips": 5000,
+        "day_list": list(range(1, 32)),  # start instance params
+        "max_flow_allowed_list": [10, 15],
+        "seed_list": [0],
+        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
+        "list_of_thresholds_list": [[1, 1.8, 2]],
+        "staggering_cap_list": [10],
+        "deadline_factor": 25,  # end instance params
+        "algo_mode_list": ["OFFLINE"],
+        "optimize": True,
+        "warm_start": True,
+        "improve_warm_start_list": [True],
+        "simplify": True,
+        "verbose_model": False,
+        "local_search_callback": True,  # end solver params
+        "job_priority": "NORMAL",
+        "cpu_per_run": 1,
+        "node_type": "CPU_ONLY",
+        "minutes_per_run": 60 * 2,
+        "memory_per_cpu": "30000MB",
+    },
 
     "staggering_analysis_paper": {
         "network_name": "manhattan_100",
