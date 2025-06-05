@@ -112,7 +112,7 @@ PRESETS = {
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
         "minutes_per_run": 10,
-        "memory_per_cpu": "5000MB",
+        "memory_per_cpu": "2000MB",
     },
     "algo_performance_future_paper": {
         "network_name": "manhattan_100",

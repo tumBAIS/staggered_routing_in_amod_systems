@@ -90,11 +90,13 @@ def save_experiment(instance: Instance,
         # Save additional files if part of a set of experiments
         if solver_params.set_of_experiments:
             path_to_instance = instance.instance_params.path_to_instance
+            path_to_routes = instance.instance_params.path_to_routes
             sets_of_experiments_name = solver_params.set_of_experiments
             save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_name,
                                                                    path_to_results,
                                                                    path_to_G,
                                                                    path_to_instance,
+                                                                   path_to_routes,
                                                                    output_data)
 
 
@@ -103,6 +105,7 @@ def save_results_and_instance_in_set_of_experiments_folder(
         path_to_results: Path,
         path_to_G: Optional[Path],
         path_to_instance: Optional[Path],
+        path_to_routes: Optional[Path],
         output_data: dict
 ):
     """
@@ -129,22 +132,24 @@ def save_results_and_instance_in_set_of_experiments_folder(
     use_shortcuts = output_data["instance_parameters"].get("add_shortcuts", False)
     network_filename = f"{network_name}_{'with' if use_shortcuts else 'no'}_shortcuts.json"
 
-    # Copy the network file
-    if path_to_G and path_to_G.exists():
-        shutil.copy(path_to_G, network_folder / network_filename)
-    else:
-        print("⚠️ Warning: path_to_G is missing or does not exist. Network file was not copied.")
+    def safe_copy_file(src: Path, dst: Path, label: str):
+        """Helper"""
+        if src and src.exists():
+            shutil.copy(src, dst)
+            print(f"✅ Copied {label} file to {dst}")
+        else:
+            print(f"⚠️ Warning: {label} file is missing or does not exist. File was not copied.")
 
-    # Save results.json
-    results_path = result_folder / "results.json"
-    with open(results_path, "w", encoding="utf-8") as f:
-        json.dump(output_data, f, ensure_ascii=False, indent=3)
+    # Copy files in set_of_experiment_directory
+    safe_copy_file(path_to_G, network_folder / network_filename, "network")
+    safe_copy_file(path_to_instance, result_folder / "instance.json", "instance")
+    safe_copy_file(path_to_routes, result_folder / "routes.json", "routes")
 
-    # Copy the original instance.json
-    if path_to_instance and path_to_instance.exists():
-        shutil.copy(path_to_instance, result_folder / "instance.json")
+    # Copy the original routes.json
+    if path_to_routes and path_to_routes.exists():
+        shutil.copy(path_to_routes, result_folder / "routes.json")
     else:
-        print("⚠️ Warning: path_to_instance is missing or does not exist. instance.json was not copied.")
+        print("⚠️ Warning: path_to_routes is missing or does not exist. routes.json was not copied.")
 
 
 def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
