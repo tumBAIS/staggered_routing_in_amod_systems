@@ -87,29 +87,64 @@ def save_experiment(instance: Instance,
     with open(path_to_results / "results.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, ensure_ascii=False, indent=3)
 
-    # Save additional files if part of a set of experiments
-    if solver_params.set_of_experiments:
-        set_of_experiments_path = Path(
-            __file__).parent.parent.parent / f"sets_of_experiments/{solver_params.set_of_experiments}"
-        experiment_name = transform_path_to_string(path_to_results)
-        os.makedirs(set_of_experiments_path / "results" / experiment_name, exist_ok=True)
-        os.makedirs(set_of_experiments_path / "networks", exist_ok=True)
+        # Save additional files if part of a set of experiments
+        if solver_params.set_of_experiments:
+            path_to_instance = instance.instance_params.path_to_instance
+            sets_of_experiments_name = solver_params.set_of_experiments
+            save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_name,
+                                                                   path_to_results,
+                                                                   path_to_G,
+                                                                   path_to_instance,
+                                                                   output_data)
 
-        # Copy the file to the target location
-        file_name = (
-            output_data["instance_parameters"]["network_name"] + "_with_shortcuts.json"
-            if output_data["instance_parameters"]["add_shortcuts"]
-            else output_data["instance_parameters"]["network_name"] + "_no_shortcuts.json"
-        )
 
-        if path_to_G:  # Ensure path_to_G is not None
-            shutil.copy(path_to_G, set_of_experiments_path / "networks" / file_name)
-        else:
-            print("Warning: path_to_G is missing. Network file was not copied.")
+def save_results_and_instance_in_set_of_experiments_folder(
+        sets_of_experiments_name: str,
+        path_to_results: Path,
+        path_to_G: Optional[Path],
+        path_to_instance: Optional[Path],
+        output_data: dict
+):
+    """
+    Save results.json and instance.json in the appropriate set_of_experiments folder,
+    and copy the network file if available.
 
-        with open(set_of_experiments_path / "results" / experiment_name / "results.json", "w",
-                  encoding="utf-8") as f:
-            json.dump(output_data, f, ensure_ascii=False, indent=3)
+    Args:
+        sets_of_experiments_name: Name of the experiment set.
+        path_to_results: Path to the individual experiment results.
+        path_to_G: Path to the network file (optional).
+        path_to_instance: Path to the instance.json file (optional).
+        output_data: Dictionary containing the experiment data to save.
+    """
+    base_path = Path(__file__).resolve().parents[2] / "sets_of_experiments" / sets_of_experiments_name
+    experiment_name = transform_path_to_string(path_to_results)
+    result_folder = base_path / "results" / experiment_name
+    network_folder = base_path / "networks"
+
+    os.makedirs(result_folder, exist_ok=True)
+    os.makedirs(network_folder, exist_ok=True)
+
+    # Determine the filename of the network file
+    network_name = output_data["instance_parameters"]["network_name"]
+    use_shortcuts = output_data["instance_parameters"].get("add_shortcuts", False)
+    network_filename = f"{network_name}_{'with' if use_shortcuts else 'no'}_shortcuts.json"
+
+    # Copy the network file
+    if path_to_G and path_to_G.exists():
+        shutil.copy(path_to_G, network_folder / network_filename)
+    else:
+        print("⚠️ Warning: path_to_G is missing or does not exist. Network file was not copied.")
+
+    # Save results.json
+    results_path = result_folder / "results.json"
+    with open(results_path, "w", encoding="utf-8") as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=3)
+
+    # Copy the original instance.json
+    if path_to_instance and path_to_instance.exists():
+        shutil.copy(path_to_instance, result_folder / "instance.json")
+    else:
+        print("⚠️ Warning: path_to_instance is missing or does not exist. instance.json was not copied.")
 
 
 def _round_instance_data(instance, status_quo: Solution, solution: Solution, i):
