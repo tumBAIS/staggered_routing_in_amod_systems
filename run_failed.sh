@@ -5,7 +5,6 @@ source $(which env_parallel.bash)
 
 # Load config
 source configuration.sh
-rm joblog.csv
 
 CMD="${SCRIPTS_DIRECTORY}/queue_job.sh"
 # Set the maximum number of concurrently scheduled jobs. Note that
