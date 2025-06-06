@@ -1,0 +1,2 @@
+network_name,day,number_of_trips,seed,max_flow_allowed,add_shortcuts,max_length_shortcut,list_of_slopes,list_of_thresholds,staggering_cap,deadline_factor
+manhattan_100,8,5000,0,25,True,1500,"[0.5, 0.9, 1.1]","[1, 1.8, 2]",20,25

@@ -38,15 +38,15 @@ if __name__ == "__main__":
     # Instance Parameters
     # ===========================
     instance_params = InstanceParameters(
-        day=2,
+        day=1,
         number_of_trips=5000,
         seed=0,
         network_name="manhattan_100",
-        max_flow_allowed=18,
+        max_flow_allowed=15,
         add_shortcuts=True,
-        max_length_shortcut=300,
-        list_of_slopes=[0.5, 0.9, 1.1],
-        list_of_thresholds=[1, 1.8, 2],
+        max_length_shortcut=1500,
+        list_of_slopes=[0.5, 0.9, 1.2],
+        list_of_thresholds=[1, 2, 3],
         deadline_factor=25,
         staggering_cap=10,
     )
