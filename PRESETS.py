@@ -92,7 +92,7 @@ PRESETS = {
     },
     "check_instances": {
         "network_name": "manhattan_100",
-        "max_length_shortcut": 500,
+        "max_length_shortcut": 300,
         "number_of_trips": 5000,
         "day_list": list(range(1, 32)),  # start instance params
         "max_flow_allowed_list": [10, 15],
@@ -108,7 +108,7 @@ PRESETS = {
         "simplify": False,
         "verbose_model": False,
         "local_search_callback": False,  # end solver params
-        "job_priority": "NORMAL",
+        "job_priority": "URGENT",
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
         "minutes_per_run": 10,

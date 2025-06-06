@@ -100,25 +100,18 @@ def save_experiment(instance: Instance,
                                                                    output_data)
 
 
-def save_results_and_instance_in_set_of_experiments_folder(
-        sets_of_experiments_name: str,
-        path_to_results: Path,
-        path_to_G: Optional[Path],
-        path_to_instance: Optional[Path],
-        path_to_routes: Optional[Path],
-        output_data: dict
-):
+def save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_name: str,
+                                                           path_to_results: Path,
+                                                           path_to_G: Optional[Path],
+                                                           path_to_instance: Optional[Path],
+                                                           path_to_routes: Optional[Path],
+                                                           output_data: dict
+                                                           ):
     """
     Save results.json and instance.json in the appropriate set_of_experiments folder,
     and copy the network file if available.
-
-    Args:
-        sets_of_experiments_name: Name of the experiment set.
-        path_to_results: Path to the individual experiment results.
-        path_to_G: Path to the network file (optional).
-        path_to_instance: Path to the instance.json file (optional).
-        output_data: Dictionary containing the experiment data to save.
     """
+
     base_path = Path(__file__).resolve().parents[2] / "sets_of_experiments" / sets_of_experiments_name
     experiment_name = transform_path_to_string(path_to_results)
     result_folder = base_path / "results" / experiment_name
