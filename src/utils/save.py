@@ -120,6 +120,10 @@ def save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_n
     os.makedirs(result_folder, exist_ok=True)
     os.makedirs(network_folder, exist_ok=True)
 
+    # Save results
+    with open(path_to_results / "results.json", "w", encoding="utf-8") as f:
+        json.dump(output_data, f, ensure_ascii=False, indent=3)
+
     # Determine the filename of the network file
     network_name = output_data["instance_parameters"]["network_name"]
     use_shortcuts = output_data["instance_parameters"].get("add_shortcuts", False)
