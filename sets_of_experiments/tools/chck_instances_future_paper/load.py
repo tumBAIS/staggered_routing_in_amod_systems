@@ -87,3 +87,22 @@ def get_boxplot_status_quo_total_delay_hours(instances_df: pd.DataFrame, path_to
     plt.tight_layout()
     plt.savefig(path_to_figures / "status_quo_delay_boxplot.png", bbox_inches="tight")
     plt.close()
+
+
+def save_status_quo_table_as_html(instances_df: pd.DataFrame, path_to_tables: Path) -> None:
+    """
+    Saves an HTML table with day, max flow allowed, and status quo total delay (in hours).
+
+    Args:
+        instances_df (pd.DataFrame): Must contain 'day', 'input_data_max_flow_allowed', and 'status_quo_total_delay_hours'.
+        path_to_tables (Path): Directory where the HTML file will be saved.
+    """
+    selected = instances_df[["day", "max_flow_allowed", "status_quo_total_delay_hours"]].copy()
+    selected = selected.rename(columns={
+        "day": "Day",
+        "max_flow_allowed": "Max Flow Allowed",
+        "status_quo_total_delay_hours": "Status Quo Delay (hours)"
+    })
+
+    output_path = path_to_tables / "status_quo_delay_table.html"
+    selected.to_html(output_path, index=False)

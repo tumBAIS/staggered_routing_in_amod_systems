@@ -200,7 +200,7 @@ def main(preset_name: str, add_shortcuts: bool):
     verbose_model = PRESETS[preset_name]["verbose_model"]
 
     # Cluster parameters
-    set_of_experiments = get_set_of_experiments_name(preset_name, "COLLECTING_INSTANCES")
+    set_of_experiments = get_set_of_experiments_name(preset_name, "INCREASED_DELAY_18MFA")
 
     job_title = set_of_experiments
     job_priority = PRESETS[preset_name]["job_priority"]  # NORMAL, URGENT
@@ -276,7 +276,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="check_instances", add_shortcuts=True)
+    main(preset_name="algo_performance_future_paper", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper
