@@ -15,6 +15,10 @@ desktop.ini
 /error-logs/
 *.log
 venv/
+grbnodes*
+NUL
+aliases
+cpp_module/lib/pybind11*
 
 # Data files and directories
 /data/manhattan*
