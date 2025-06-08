@@ -121,8 +121,8 @@ def save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_n
     os.makedirs(network_folder, exist_ok=True)
 
     # Save results
-    with open(path_to_results / "results.json", "w", encoding="utf-8") as f:
-        print(f"saved results.json in {path_to_results}")
+    with open(result_folder / "results.json", "w", encoding="utf-8") as f:
+        print(f"✅ Copied results.json in {result_folder}")
         json.dump(output_data, f, ensure_ascii=False, indent=3)
 
     # Determine the filename of the network file
