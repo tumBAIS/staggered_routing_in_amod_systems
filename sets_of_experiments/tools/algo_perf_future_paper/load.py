@@ -106,22 +106,31 @@ def check_if_all_solutions_are_feasible(solutions_df: pd.DataFrame, tolerance: f
         print("✅ All solutions are feasible within the allowed tolerance.")
 
 
-def add_additional_columns_to_df(solutions_df: pd.DataFrame) -> pd.DataFrame:
+def add_additional_columns_to_df(solutions_df: pd.DataFrame,
+                                 solutions_computed: bool = True) -> pd.DataFrame:
     """
     Adds derived columns to the DataFrame for total delays in hours and delay reductions.
     Assumes delays are in seconds.
     """
+    # Status quo metrics
     solutions_df["status_quo_total_delay_hours"] = solutions_df["status_quo_total_delay"] / 3600
-    solutions_df["solution_total_delay_hours"] = solutions_df["solution_total_delay"] / 3600
-
-    solutions_df["absolute_delay_reduction_hours"] = (
-            solutions_df["status_quo_total_delay_hours"] - solutions_df["solution_total_delay_hours"]
+    solutions_df["status_quo_delays_on_arcs_minutes"] = solutions_df["status_quo_delays_on_arcs"].apply(
+        lambda nested: [[val / 60.0 for val in sublist] for sublist in nested]
+    )
+    solutions_df["status_quo_total_delay_trips_minutes"] = solutions_df["status_quo_delays_on_arcs_minutes"].apply(
+        lambda nested: [sum(sublist) for sublist in nested]
     )
 
-    solutions_df["relative_delay_reduction"] = (
-                                                       solutions_df["absolute_delay_reduction_hours"] / solutions_df[
-                                                   "status_quo_total_delay_hours"]
-                                               ) * 100
+    if solutions_computed:
+        # Solution metrics
+        solutions_df["solution_total_delay_hours"] = solutions_df["solution_total_delay"] / 3600
+
+        # Compute reductions
+        solutions_df["absolute_delay_reduction_hours"] = (
+                solutions_df["status_quo_total_delay_hours"] - solutions_df["solution_total_delay_hours"]
+        )
+        solutions_df["relative_delay_reduction"] = (solutions_df["absolute_delay_reduction_hours"] /
+                                                    solutions_df["status_quo_total_delay_hours"]) * 100
 
     return solutions_df
 

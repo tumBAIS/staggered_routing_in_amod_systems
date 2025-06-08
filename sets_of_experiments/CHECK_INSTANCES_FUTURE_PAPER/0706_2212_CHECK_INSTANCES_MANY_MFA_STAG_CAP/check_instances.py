@@ -25,7 +25,7 @@ if __name__ == "__main__":
         smallest_staggering_cap = solutions_df["instance_parameters_staggering_cap"].unique()[0]
         solutions_df = solutions_df[solutions_df["instance_parameters_staggering_cap"] == smallest_staggering_cap]
 
-    solutions_df = add_additional_columns_to_df(solutions_df)
+    solutions_df = add_additional_columns_to_df(solutions_df, solutions_computed=False)
     plot_status_quo_arc_delays_per_flow(solutions_df, PATH_TO_FIGURES / "boxplots_arc_delays")
-    get_boxplot_status_quo_total_delay_hours(solutions_df, PATH_TO_FIGURES)
+    get_boxplot_status_quo_total_delay_hours(solutions_df, PATH_TO_FIGURES / "aggregated_boxplots")
     save_status_quo_tables_by_flow(solutions_df, PATH_TO_TABLES)
