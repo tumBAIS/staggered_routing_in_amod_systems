@@ -122,6 +122,7 @@ def save_results_and_instance_in_set_of_experiments_folder(sets_of_experiments_n
 
     # Save results
     with open(path_to_results / "results.json", "w", encoding="utf-8") as f:
+        print(f"saved results.json in {path_to_results}")
         json.dump(output_data, f, ensure_ascii=False, indent=3)
 
     # Determine the filename of the network file
