@@ -92,13 +92,13 @@ PRESETS = {
     },
     "check_instances": {
         "network_name": "manhattan_100",
-        "max_length_shortcut": 1500,
+        "max_length_shortcut": 0,
         "number_of_trips": 5000,
         "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [10, 15, 20, 25, 30, 35],
+        "max_flow_allowed_list": [5, 10, 15, 20],
         "seed_list": [0],
-        "list_of_slopes_list": [[0.5, 0.9, 1.1]],
-        "list_of_thresholds_list": [[1, 1.8, 2]],
+        "list_of_slopes_list": [[0.5, 1, 1.5]],
+        "list_of_thresholds_list": [[1, 2, 3]],
         "staggering_cap_list": [10, 20],
         "deadline_factor": 25,  # end instance params
         "algo_mode_list": ["OFFLINE"],
