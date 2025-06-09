@@ -170,7 +170,7 @@ def get_set_of_experiments_name(preset_name: str, custom_note: str = "") -> str:
     return "_".join(parts)
 
 
-def main(preset_name: str, add_shortcuts: bool):
+def main(preset_name: str, comment: str, add_shortcuts: bool):
     """
     Main function to execute the setup and configuration for cluster jobs.
     """
@@ -200,7 +200,7 @@ def main(preset_name: str, add_shortcuts: bool):
     verbose_model = PRESETS[preset_name]["verbose_model"]
 
     # Cluster parameters
-    set_of_experiments = get_set_of_experiments_name(preset_name, "MANY_MFA_STAG_CAP")
+    set_of_experiments = get_set_of_experiments_name(preset_name, comment)
 
     job_title = set_of_experiments
     job_priority = PRESETS[preset_name]["job_priority"]  # NORMAL, URGENT
@@ -276,7 +276,7 @@ def main(preset_name: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_future_paper", add_shortcuts=True)
+    main(preset_name="algo_performance_future_paper", comment="SECOND_PART_VARY_STAG_MFA", add_shortcuts=True)
 
 # PRESETS NAMES
 # algo_performance_paper

@@ -118,7 +118,7 @@ PRESETS = {
         "network_name": "manhattan_100",
         "max_length_shortcut": 1500,
         "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
+        "day_list": list(range(16, 32)),  # start instance params
         "max_flow_allowed_list": [35, 30, 25, 20],
         "seed_list": [0],
         "list_of_slopes_list": [[0.5, 0.9, 1.1]],
@@ -136,7 +136,7 @@ PRESETS = {
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
         "minutes_per_run": 60 * 2,
-        "memory_per_cpu": "40000MB",
+        "memory_per_cpu": "16000MB",
     },
 
     "staggering_analysis_paper": {

@@ -137,16 +137,18 @@ def add_additional_columns_to_df(solutions_df: pd.DataFrame,
 
 def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
     """
-    Plots absolute and relative delay reductions grouped by flow constraints.
+    Plots absolute and relative delay reductions grouped by flow constraints and staggering cap.
 
     Args:
         solutions_df (pd.DataFrame): DataFrame containing computed delay reductions.
         path_to_figures (Path): Path to save the figures.
     """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+
     sns.set(style="whitegrid", font_scale=1.2)
     path_to_figures.mkdir(parents=True, exist_ok=True)
 
-    # Label flow levels for readability
     min_flow = solutions_df["instance_parameters_max_flow_allowed"].min()
     max_flow = solutions_df["instance_parameters_max_flow_allowed"].max()
 
@@ -159,38 +161,43 @@ def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
 
     solutions_df["Flow Level"] = solutions_df["instance_parameters_max_flow_allowed"].apply(label_flow)
 
-    # --- Absolute delay reduction plot ---
-    plt.figure(figsize=(8, 5))
-    sns.boxplot(
-        data=solutions_df,
-        x="absolute_delay_reduction_hours",
-        hue="Flow Level",
-        legend=False,
-        palette="Blues",
-        orient="h",
-    )
-    plt.xlabel("Absolute Delay Reduction (hours)")
-    plt.ylabel("Max Flow Constraint")
-    plt.title("Absolute Delay Reduction by Flow Level")
-    plt.tight_layout()
-    plt.savefig(path_to_figures / "absolute_delay_reduction_hours.png")
-    plt.close()
+    for stag_cap in sorted(solutions_df["instance_parameters_staggering_cap"].unique()):
+        subset_df = solutions_df[solutions_df["instance_parameters_staggering_cap"] == stag_cap]
+        stag_dir = path_to_figures / f"staggering_cap_{stag_cap}"
+        stag_dir.mkdir(parents=True, exist_ok=True)
 
-    # --- Relative delay reduction plot ---
-    plt.figure(figsize=(8, 5))
-    sns.boxplot(
-        data=solutions_df,
-        x="relative_delay_reduction",
-        hue="Flow Level",
-        legend=False,
-        palette="Greens",
-        orient="h",
-    )
-    plt.xlabel("Relative Delay Reduction")
-    plt.ylabel("Max Flow Constraint")
-    plt.title("Relative Delay Reduction by Flow Level")
-    plt.tight_layout()
-    plt.savefig(path_to_figures / "relative_delay_reduction_percentage.png")
-    plt.close()
+        # --- Absolute delay reduction plot ---
+        plt.figure(figsize=(8, 5))
+        sns.boxplot(
+            data=subset_df,
+            x="absolute_delay_reduction_hours",
+            hue="Flow Level",
+            legend=False,
+            palette="Blues",
+            orient="h",
+        )
+        plt.xlabel("Absolute Delay Reduction (hours)")
+        plt.ylabel("Max Flow Constraint")
+        plt.title(f"Absolute Delay Reduction (Staggering Cap: {stag_cap})")
+        plt.tight_layout()
+        plt.savefig(stag_dir / "absolute_delay_reduction_hours.png")
+        plt.close()
 
-    print(f"✅ Figures saved to {path_to_figures}")
+        # --- Relative delay reduction plot ---
+        plt.figure(figsize=(8, 5))
+        sns.boxplot(
+            data=subset_df,
+            x="relative_delay_reduction",
+            hue="Flow Level",
+            legend=False,
+            palette="Greens",
+            orient="h",
+        )
+        plt.xlabel("Relative Delay Reduction")
+        plt.ylabel("Max Flow Constraint")
+        plt.title(f"Relative Delay Reduction (Staggering Cap: {stag_cap})")
+        plt.tight_layout()
+        plt.savefig(stag_dir / "relative_delay_reduction_percentage.png")
+        plt.close()
+
+    print(f"✅ Figures saved under {path_to_figures}")
