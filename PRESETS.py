@@ -118,7 +118,8 @@ PRESETS = {
         "network_name": "manhattan_100",
         "max_length_shortcut": 0,
         "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),  # start instance params
+        "day_list": [1, 2, 3, 4, 8, 10, 11, 12, 14, 16, 17, 18, 19, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+        # start instance params
         "max_flow_allowed_list": [10, 15],
         "seed_list": [0],
         "list_of_slopes_list": [[0.5, 1, 1.5]],
@@ -135,7 +136,7 @@ PRESETS = {
         "job_priority": "NORMAL",
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
-        "minutes_per_run": 60 * 2,
+        "minutes_per_run": 60 * 3,
         "memory_per_cpu": "16000MB",
     },
 

@@ -175,6 +175,7 @@ def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
             legend=False,
             palette="Blues",
             orient="h",
+            showfliers=True
         )
         plt.xlabel("Absolute Delay Reduction (hours)")
         plt.ylabel("Max Flow Constraint")
@@ -192,7 +193,9 @@ def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
             legend=False,
             palette="Greens",
             orient="h",
+            showfliers=True
         )
+        plt.xlim(0, 100)
         plt.xlabel("Relative Delay Reduction")
         plt.ylabel("Max Flow Constraint")
         plt.title(f"Relative Delay Reduction (Staggering Cap: {stag_cap})")
@@ -201,3 +204,41 @@ def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
         plt.close()
 
     print(f"✅ Figures saved under {path_to_figures}")
+
+
+import pandas as pd
+
+
+def filter_comparable_experiments(stag_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Filters out days that don't have all combinations of max_flow_allowed and staggering_cap.
+    Prints which days are removed and which are retained.
+    """
+    required_combinations = stag_df.groupby(
+        ['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']).ngroups
+
+    # Count actual combinations per day
+    group_counts = stag_df.groupby('instance_parameters_day')[
+        ['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']
+    ].nunique()
+
+    # Compute number of unique combinations per day
+    day_combinations = stag_df.groupby('instance_parameters_day').apply(
+        lambda df: df.groupby(['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']).ngroups
+    )
+
+    # Find valid days that contain all combinations
+    valid_days = day_combinations[day_combinations == required_combinations].index.tolist()
+    removed_days = sorted(set(stag_df["instance_parameters_day"]) - set(valid_days))
+
+    print("✅ Keeping days with all required combinations:")
+    for day in sorted(valid_days):
+        print(f" - {day}")
+
+    print("\n❌ Removing days missing some combinations:")
+    for day in removed_days:
+        print(f" - {day}")
+
+    # Filter dataframe
+    filtered_df = stag_df[stag_df["instance_parameters_day"].isin(valid_days)].copy()
+    return filtered_df
