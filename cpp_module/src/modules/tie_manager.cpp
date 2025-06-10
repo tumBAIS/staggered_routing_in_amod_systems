@@ -109,15 +109,24 @@ namespace cpp_module {
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
+        int max_iterations = 100;
+        int iteration_count = 0;
+
         while (complete_solution.has_ties()) {
+            if (++iteration_count > max_iterations) {
+                throw std::runtime_error("[ERROR] Maximum number of tie resolution iterations (100) exceeded.");
+            }
+
             complete_solution.set_ties_flag(false);
             set_tie_solved_flag(false);
+
             for (long arc_id = 1; arc_id < instance.get_number_of_arcs(); ++arc_id) {
                 if (instance.get_conflicting_set(arc_id).empty()) {
                     continue;
                 }
                 solve_arc_ties(arc_id, complete_solution);
             }
+
             if (!get_tie_solved_flag()) {
                 break;
             }

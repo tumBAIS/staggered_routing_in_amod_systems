@@ -16,7 +16,7 @@ os.makedirs(PATH_TO_FIGURES, exist_ok=True)
 os.makedirs(PATH_TO_TABLES, exist_ok=True)
 
 if __name__ == "__main__":
-    solutions_df = collect_results_json(PATH_TO_RESULTS, PATH_TO_DFS)
+    solutions_df = collect_results_json(PATH_TO_RESULTS, PATH_TO_DFS, replace=False)
     solutions_df = add_additional_columns_to_df(solutions_df)
     solutions_df = filter_comparable_experiments(solutions_df)
     check_if_all_solutions_are_feasible(solutions_df)
