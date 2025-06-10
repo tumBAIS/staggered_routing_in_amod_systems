@@ -63,15 +63,22 @@ namespace cpp_module {
                 long position_two = instance.get_arc_position_in_trip_route(arc_id, vehicle_two);
                 Tie tie = {vehicle_one, vehicle_two, position_one, position_two, arc_id};
 
+                int attempts = 0;
+                const int MAX_ATTEMPTS = 10;
+
                 // Resolve ties as long as conditions hold
-                while (check_tie(working_solution, tie)) {
+                while (check_tie(working_solution, tie) && attempts < MAX_ATTEMPTS) {
+                    ++attempts;
                     working_solution.set_ties_flag(true);
                     auto random_number = generate_random_number();
+
                     if (enough_slack_to_solve_tie(vehicle_one, working_solution, random_number)) {
-                        Solution new_solution = update_existing_congested_schedule(working_solution,
-                                                                                   tie.vehicle_one,
-                                                                                   tie.vehicle_two,
-                                                                                   random_number);
+                        Solution new_solution = update_existing_congested_schedule(
+                                working_solution,
+                                tie.vehicle_one,
+                                tie.vehicle_two,
+                                random_number
+                        );
 
                         // Validate the new solution
                         if (!new_solution.is_feasible()) {
@@ -109,12 +116,12 @@ namespace cpp_module {
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
-        int max_iterations = 100;
+        int max_iterations = 10;
         int iteration_count = 0;
 
         while (complete_solution.has_ties()) {
             if (++iteration_count > max_iterations) {
-                throw std::runtime_error("[ERROR] Maximum number of tie resolution iterations (100) exceeded.");
+                throw std::runtime_error("[ERROR] Maximum number of tie resolution iterations (10) exceeded.");
             }
 
             complete_solution.set_ties_flag(false);
