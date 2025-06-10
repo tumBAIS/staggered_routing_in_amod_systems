@@ -34,17 +34,26 @@ namespace cpp_module {
                                                        double distance_to_cover) -> Solution {
         initialize_scheduler_for_update_solution();
 
-
         Solution new_solution(initial_solution);
 
         apply_staggering_to_solve_conflict(new_solution, trip_id, other_trip_id, distance_to_cover);
 
+        size_t iteration_count = 0;
+        const size_t MAX_ITERATIONS = 100000;
+
         while (!is_pq_empty()) {
+            // 🚨 Guard against runaway iteration count
+            if (++iteration_count > MAX_ITERATIONS) {
+                log_schedule("[WARNING] Exceeded maximum iteration count. Aborting update.");
+                return initial_solution;
+            }
+
             // 🚨 Guard against runaway PQ size
-            if (get_pq_size() > instance.get_number_of_trips() * instance.get_number_of_arcs() * 10) {
+            if (get_pq_size() > 100000) {
                 log_schedule("[WARNING] Priority queue exceeded safe size limit. Aborting update.");
                 return initial_solution;
             }
+
             auto departure = get_and_pop_departure_from_pq();
 
             if (check_if_departure_should_be_skipped(departure)) continue;
@@ -60,15 +69,14 @@ namespace cpp_module {
             auto trip_arrival_time = process_vehicle(initial_solution, new_solution, departure);
 
             if (get_lazy_update_pq_flag()) {
-
                 insert_departure_in_pq(departure);
-
                 continue;
             }
 
             // Move the vehicle forward in the priority queue
             move_vehicle_forward(new_solution, trip_arrival_time, departure);
         }
+
         update_total_delay_solution(initial_solution, new_solution);
         return new_solution;
     }
