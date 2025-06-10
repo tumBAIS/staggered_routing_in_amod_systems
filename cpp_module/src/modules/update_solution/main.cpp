@@ -41,7 +41,7 @@ namespace cpp_module {
 
         while (!is_pq_empty()) {
             // 🚨 Guard against runaway PQ size
-            if (get_pq_size() > 1000) {
+            if (get_pq_size() > 100000) {
                 log_schedule("[WARNING] Priority queue exceeded safe size limit (1000). Aborting update.");
                 return initial_solution;
             }
