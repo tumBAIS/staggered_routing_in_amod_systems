@@ -40,7 +40,11 @@ namespace cpp_module {
         apply_staggering_to_solve_conflict(new_solution, trip_id, other_trip_id, distance_to_cover);
 
         while (!is_pq_empty()) {
-
+            // 🚨 Guard against runaway PQ size
+            if (get_pq_size() > 1000) {
+                log_schedule("[WARNING] Priority queue exceeded safe size limit (1000). Aborting update.");
+                return initial_solution;
+            }
             auto departure = get_and_pop_departure_from_pq();
 
             if (check_if_departure_should_be_skipped(departure)) continue;

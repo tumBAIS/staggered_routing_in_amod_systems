@@ -8,6 +8,9 @@
 #include <stdexcept>  // Include for std::out_of_range
 #include "solution.h"
 #include "tie_manager.h"
+#include <iostream>
+
+#pragma once
 
 namespace cpp_module {
 
@@ -35,13 +38,14 @@ namespace cpp_module {
 
 
     struct Conflict {
-        long arc;
-        long trip_id;
-        Position current_position;
-        long other_trip_id;
-        Position other_position;
-        double delay;
-        double distance_to_cover;
+        int repush_count = 0;
+        long arc{};
+        long trip_id{};
+        Position current_position{};
+        long other_trip_id{};
+        Position other_position{};
+        double delay{};
+        double distance_to_cover{};
 
         void update(Solution &solution, const Instance &instance) {
             auto current_departure = solution.get_trip_arc_departure(trip_id, current_position);
@@ -176,6 +180,14 @@ namespace cpp_module {
 
         bool is_pq_empty() {
             return pq_departures.empty();
+        }
+
+        size_t get_pq_size() {
+            return pq_departures.size();
+        }
+
+        static void log_schedule(std::string message) {
+            std::cout << message << std::endl;
         }
 
         // Helper function to clear and reserve a vector

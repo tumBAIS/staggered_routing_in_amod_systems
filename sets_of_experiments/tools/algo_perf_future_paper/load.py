@@ -1,14 +1,12 @@
 import os
 import json
-import seaborn as sns
-import matplotlib.pyplot as plt
 from pathlib import Path
 import numpy as np
 
 import pandas as pd
 
 
-def collect_results_json(results_folder: Path, path_to_dfs: Path) -> pd.DataFrame:
+def collect_results_json(results_folder: Path, path_to_dfs: Path, replace: bool = False) -> pd.DataFrame:
     """
     Walks through all subfolders of the given directory and collects data from `results.json` files,
     flattening nested dictionaries into individual columns. Uses cache from `solutions_df.parquet` if available.
@@ -16,6 +14,7 @@ def collect_results_json(results_folder: Path, path_to_dfs: Path) -> pd.DataFram
     Args:
         results_folder (Path): Root folder containing result subfolders.
         path_to_dfs (Path): Folder where the cached Parquet file should be stored/loaded.
+        replace (bool): Replaces existing saved df.
 
     Returns:
         pd.DataFrame: The loaded or newly created DataFrame.
@@ -23,7 +22,7 @@ def collect_results_json(results_folder: Path, path_to_dfs: Path) -> pd.DataFram
     path_to_dfs.mkdir(parents=True, exist_ok=True)
     parquet_path = path_to_dfs / "solutions_df.parquet"
 
-    if parquet_path.exists():
+    if parquet_path.exists() and not replace:
         print(f"📦 Cached file found. Loading from: {parquet_path}")
         return pd.read_parquet(parquet_path)
 
@@ -206,21 +205,27 @@ def plot_delay_reductions(solutions_df: pd.DataFrame, path_to_figures: Path):
     print(f"✅ Figures saved under {path_to_figures}")
 
 
-import pandas as pd
-
-
 def filter_comparable_experiments(stag_df: pd.DataFrame) -> pd.DataFrame:
     """
     Filters out days that don't have all combinations of max_flow_allowed and staggering_cap.
     Prints which days are removed and which are retained.
+    Also prints the number of points available vs expected per combination.
     """
-    required_combinations = stag_df.groupby(
-        ['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']).ngroups
-
-    # Count actual combinations per day
-    group_counts = stag_df.groupby('instance_parameters_day')[
+    # Identify all required combinations
+    combination_groups = stag_df.groupby(
         ['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']
-    ].nunique()
+    )
+    required_combinations = combination_groups.ngroups
+    unique_days = stag_df["instance_parameters_day"].nunique()
+
+    # Count unique days per (flow, cap) combination
+    combo_day_counts = stag_df.groupby(
+        ['instance_parameters_max_flow_allowed', 'instance_parameters_staggering_cap']
+    )['instance_parameters_day'].nunique()
+
+    print("📊 Combination coverage (days with this combination / total days):")
+    for (flow, stag), count in combo_day_counts.items():
+        print(f" - Flow={flow}, Cap={stag}: {count}/{unique_days}")
 
     # Compute number of unique combinations per day
     day_combinations = stag_df.groupby('instance_parameters_day').apply(
@@ -231,7 +236,7 @@ def filter_comparable_experiments(stag_df: pd.DataFrame) -> pd.DataFrame:
     valid_days = day_combinations[day_combinations == required_combinations].index.tolist()
     removed_days = sorted(set(stag_df["instance_parameters_day"]) - set(valid_days))
 
-    print("✅ Keeping days with all required combinations:")
+    print("\n✅ Keeping days with all required combinations:")
     for day in sorted(valid_days):
         print(f" - {day}")
 

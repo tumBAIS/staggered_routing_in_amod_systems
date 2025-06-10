@@ -333,21 +333,30 @@ namespace cpp_module {
             conflict.update(best_known_solution, instance);
 
             if (conflict.has_delay()) {
-                //Check if it is still most urgent conflict
-                if (!conflicts_queue.empty() && conflicts_queue.top().delay > conflict.delay + TOLERANCE) {
-                    conflicts_queue.push(conflict);
+                // Check if it is still the most urgent conflict
+                if (!conflicts_queue.empty() &&
+                    conflicts_queue.top().delay > conflict.delay + TOLERANCE) {
+
+                    if (conflict.repush_count < 2) {
+                        conflict.repush_count++;
+                        conflicts_queue.push(conflict);
+                    }
                     continue;
                 }
             } else {
                 continue;
             }
+
             increase_counter(ITERATION);
             auto new_solution = solve_conflict(conflict, best_known_solution);
+
             if (new_solution.get_total_delay() < best_known_solution.get_total_delay() - TOLERANCE) {
                 print_move(best_known_solution, new_solution, conflict);
                 best_known_solution = new_solution;
                 conflict.update(best_known_solution, instance);
+
                 if (conflict.has_delay()) {
+                    conflict.repush_count = 0;  // reset if solution improved
                     conflicts_queue.push(conflict);
                 }
             }
