@@ -41,7 +41,7 @@ namespace cpp_module {
 
         while (!is_pq_empty()) {
             // 🚨 Guard against runaway PQ size
-            if (get_pq_size() > instance.get_number_of_trips() * instance.get_number_of_arcs() * 10) {
+            if (get_pq_size() > 100000) {
                 log_schedule("[WARNING] Priority queue exceeded safe size limit. Aborting update.");
                 return initial_solution;
             }
