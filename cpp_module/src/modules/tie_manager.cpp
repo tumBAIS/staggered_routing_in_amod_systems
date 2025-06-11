@@ -84,12 +84,12 @@ namespace cpp_module {
                     ++attempts;
                     working_solution.set_ties_flag(true);
 
-                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, CONSTR_TOLERANCE)) {
+                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, 10 * CONSTR_TOLERANCE)) {
                         Solution new_solution = update_existing_congested_schedule(
                                 working_solution,
                                 tie.vehicle_one,
                                 tie.vehicle_two,
-                                CONSTR_TOLERANCE
+                                10 * CONSTR_TOLERANCE
                         );
 
                         // Validate the new solution
@@ -119,12 +119,15 @@ namespace cpp_module {
 
             if (check_arc_ties(arc_id, complete_solution)) {
                 complete_solution.set_ties_flag(true);
+                std::cout << "X Ties found in solution.\n";
                 return true;
             }
         }
         complete_solution.set_ties_flag(false);
+        std::cout << "✅ No ties in solution.\n";
         return false;
     }
+
 
 // Solve all ties in the solution
     auto Scheduler::solve_solution_ties(Solution &complete_solution) -> void {
