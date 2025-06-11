@@ -247,3 +247,29 @@ def filter_comparable_experiments(stag_df: pd.DataFrame) -> pd.DataFrame:
     # Filter dataframe
     filtered_df = stag_df[stag_df["instance_parameters_day"].isin(valid_days)].copy()
     return filtered_df
+
+
+def filter_non_improving_experiments(stag_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Prints non-improving experiments and returns only the improving ones.
+
+    Args:
+        stag_df (pd.DataFrame): DataFrame with results including `relative_delay_reduction`.
+
+    Returns:
+        pd.DataFrame: Filtered DataFrame with only improving experiments.
+    """
+    threshold = 1e-4
+    non_improving_mask = stag_df["relative_delay_reduction"] < threshold
+    non_improving_df = stag_df[non_improving_mask]
+    improving_df = stag_df[~non_improving_mask]
+
+    print("⚠️ Non-improving experiments (relative_delay_reduction < 1e-4):")
+    with pd.option_context('display.max_columns', None, 'display.width', 1000):
+        print(non_improving_df[[
+            "instance_parameters_day",
+            "instance_parameters_staggering_cap",
+            "instance_parameters_max_flow_allowed"
+        ]])
+
+    return improving_df

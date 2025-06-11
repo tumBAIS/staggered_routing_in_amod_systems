@@ -92,6 +92,17 @@ namespace cpp_module {
                                 10 * CONSTR_TOLERANCE
                         );
 
+                        // Check if departure was not changed
+                        if (std::abs(new_solution.get_trip_start_time(tie.vehicle_one) -
+                                     working_solution.get_trip_start_time(tie.vehicle_one)
+                        ) < TOLERANCE) {
+                            // Force staggering
+                            auto new_start_times = new_solution.get_start_times();
+                            new_start_times[tie.vehicle_one] += 10 * CONSTR_TOLERANCE;
+                            new_solution = construct_solution(new_start_times);
+                        }
+
+
                         // Validate the new solution
                         if (!new_solution.is_feasible()) {
                             break;  // Restore the previous solution

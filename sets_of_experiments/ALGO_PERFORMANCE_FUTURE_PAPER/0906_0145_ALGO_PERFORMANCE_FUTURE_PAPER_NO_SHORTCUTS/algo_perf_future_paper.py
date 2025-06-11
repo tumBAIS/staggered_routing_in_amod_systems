@@ -4,6 +4,7 @@ from sets_of_experiments.tools.algo_perf_future_paper.load import (collect_resul
                                                                    add_additional_columns_to_df,
                                                                    plot_delay_reductions,
                                                                    check_if_all_solutions_are_feasible,
+                                                                   filter_non_improving_experiments,
                                                                    filter_comparable_experiments)
 from pathlib import Path
 
@@ -19,5 +20,6 @@ if __name__ == "__main__":
     solutions_df = collect_results_json(PATH_TO_RESULTS, PATH_TO_DFS, replace=False)
     solutions_df = add_additional_columns_to_df(solutions_df)
     solutions_df = filter_comparable_experiments(solutions_df)
+    solutions_df = filter_non_improving_experiments(solutions_df)
     check_if_all_solutions_are_feasible(solutions_df)
     solutions_df = plot_delay_reductions(solutions_df, PATH_TO_FIGURES)

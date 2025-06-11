@@ -198,6 +198,7 @@ def main(preset_name: str, comment: str, add_shortcuts: bool):
     improve_warm_start_list = PRESETS[preset_name]["improve_warm_start_list"]
     simplify = PRESETS[preset_name]["simplify"]
     verbose_model = PRESETS[preset_name]["verbose_model"]
+    time_limit_factor = PRESETS[preset_name]["time_limit_factor"]
 
     # Cluster parameters
     set_of_experiments = get_set_of_experiments_name(preset_name, comment)
@@ -250,12 +251,9 @@ def main(preset_name: str, comment: str, add_shortcuts: bool):
     solver_params_list = []
     for epoch_size in epoch_size_list:
         for improve_warm_start in improve_warm_start_list:
-            if "mini" in preset_name:
-                epoch_time_limit = 60 if epoch_size == 60 else 10
-            else:
-                epoch_time_limit = 3600 if epoch_size == 60 else 360
+            epoch_time_limit = 3600 if epoch_size == 60 else 360
             solver_params_dict = {
-                "epoch_time_limit": epoch_time_limit,
+                "epoch_time_limit": epoch_time_limit * time_limit_factor,
                 "epoch_size": epoch_size,
                 "optimize": optimize,
                 "warm_start": warm_start,
@@ -276,7 +274,7 @@ def main(preset_name: str, comment: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_future_paper", comment="NO_SHORTCUTS_SECOND_PART", add_shortcuts=False)
+    main(preset_name="algo_performance_future_paper", comment="RERUN_DOUBLE_TIME", add_shortcuts=False)
 
 # PRESETS NAMES
 # algo_performance_paper

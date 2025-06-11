@@ -126,24 +126,24 @@ def print_parameters(instance_parameters, solver_parameters):
 
 def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParameters]:
     instance_params = InstanceParameters(
-        day=5,
-        number_of_trips=500,
+        day=2,
+        number_of_trips=5000,
         seed=0,
-        network_name="manhattan_7",
-        max_flow_allowed=20,
+        network_name="manhattan_100",
+        max_flow_allowed=10,
         add_shortcuts=True,
         max_length_shortcut=500,
-        list_of_slopes=[0.15],
-        list_of_thresholds=[1],
-        deadline_factor=100,
-        staggering_cap=25)
+        list_of_slopes=[0.5, 1, 1.5],
+        list_of_thresholds=[1, 2, 3],
+        deadline_factor=25,
+        staggering_cap=10)
 
     solver_params = SolverParameters(epoch_size=60,
                                      epoch_time_limit=60,
                                      optimize=True,
                                      warm_start=True,
-                                     improve_warm_start=False,
-                                     local_search_callback=False,
+                                     improve_warm_start=True,
+                                     local_search_callback=True,
                                      simplify=True,
                                      instance_parameters=instance_params,
                                      set_of_experiments="local",

@@ -16,6 +16,9 @@ namespace cpp_module {
 
     using TimeStamp = std::chrono::system_clock::time_point;
     const double UNUSED_VALUE = -1;
+    const size_t MAX_ITERATIONS = 10000;
+    const size_t MAX_PQ_SIZE = 10000;
+
     enum DepartureType {
         TRAVEL, ACTIVATION
     };
