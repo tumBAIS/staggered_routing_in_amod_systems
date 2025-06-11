@@ -14,16 +14,13 @@ namespace cpp_module {
     class RandomNumberGenerator {
     public:
         static double generate_random_number() {
-            // Define the range [CONSTR_TOLERANCE, 10 * CONSTR_TOLERANCE]
-            static double lower_bound = CONSTR_TOLERANCE;
-            static double upper_bound = 10 * CONSTR_TOLERANCE;
-
-            // Static random number generator and distribution
+            // Static random number generator
             static std::mt19937 rng(0); // Mersenne Twister seeded with a fixed value
-            static std::uniform_real_distribution<double> dist(lower_bound, upper_bound);
 
-            // Generate a random number
-            return dist(rng);
+            // 50% chance for true (positive), 50% for false (negative)
+            static std::bernoulli_distribution coin_flip(0.5);
+
+            return coin_flip(rng) ? CONSTR_TOLERANCE : -CONSTR_TOLERANCE;
         }
     };
 

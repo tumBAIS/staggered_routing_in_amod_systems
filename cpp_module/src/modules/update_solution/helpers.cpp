@@ -68,7 +68,7 @@ namespace cpp_module {
                                              double other_original_departure,
                                              double current_original_departure,
                                              const Departure &departure) -> bool {
-        bool other_is_first_in_original_schedule = (other_original_departure + TOLERANCE) <= current_original_departure;
+        bool other_is_first_in_original_schedule = other_original_departure < current_original_departure;
         if (std::abs(other_original_departure - current_original_departure) <= TOLERANCE) {
             if (departure.trip_id < other_vehicle) {
                 // Current vehicle would pass first - break tie
@@ -81,7 +81,7 @@ namespace cpp_module {
     auto Scheduler::check_if_other_is_first(long other_vehicle,
                                             double other_original_departure,
                                             const Departure &departure) -> bool {
-        bool other_is_first_now = (other_original_departure + TOLERANCE) <= departure.time;
+        bool other_is_first_now = other_original_departure < departure.time; // EPSILON CHECK DONE AFTER ANYWAY
         if (std::abs(departure.time - other_original_departure) <= TOLERANCE) {
             if (departure.trip_id < other_vehicle) {
                 // Current vehicle would pass first - break tie
@@ -99,7 +99,7 @@ namespace cpp_module {
                                                              const Departure &departure) {
 
         bool current_overlapped_with_other =
-                (other_original_departure <= current_original_departure + TOLERANCE) &&
+                (other_original_departure < current_original_departure) &&
                 (current_original_departure < other_original_arrival - TOLERANCE);
 
         if (std::abs(current_original_departure - other_original_departure) < TOLERANCE) {
@@ -118,8 +118,8 @@ namespace cpp_module {
                                                              double current_original_arrival,
                                                              const Departure &departure) -> bool {
         bool other_overlapped_with_current =
-                (current_original_departure - TOLERANCE) <= other_original_departure &&
-                other_original_departure < (current_original_arrival + TOLERANCE);
+                current_original_departure < other_original_departure &&
+                other_original_departure < (current_original_arrival - TOLERANCE);
         if (std::abs(current_original_departure - other_original_departure) <= TOLERANCE) {
             if (other_vehicle < departure.trip_id) {
                 other_overlapped_with_current = false;

@@ -260,8 +260,8 @@ namespace cpp_module {
                                                       const Departure &departure) -> bool {
         // Check if there is a conflict using TOLERANCE
         bool current_conflicts_with_other =
-                other_departure - TOLERANCE <= departure.time &&
-                departure.time < other_arrival + TOLERANCE;
+                other_departure < departure.time &&
+                departure.time < other_arrival - TOLERANCE;
 
         // Handle tie-breaking when departure times are within TOLERANCE
         if (std::abs(other_departure - departure.time) <= TOLERANCE) {

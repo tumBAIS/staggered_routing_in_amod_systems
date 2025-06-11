@@ -70,14 +70,13 @@ namespace cpp_module {
                 while (check_tie(working_solution, tie) && attempts < MAX_ATTEMPTS) {
                     ++attempts;
                     working_solution.set_ties_flag(true);
-                    auto random_number = generate_random_number();
 
-                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, random_number)) {
+                    if (enough_slack_to_solve_tie(vehicle_one, working_solution, CONSTR_TOLERANCE)) {
                         Solution new_solution = update_existing_congested_schedule(
                                 working_solution,
                                 tie.vehicle_one,
                                 tie.vehicle_two,
-                                random_number
+                                CONSTR_TOLERANCE
                         );
 
                         // Validate the new solution
