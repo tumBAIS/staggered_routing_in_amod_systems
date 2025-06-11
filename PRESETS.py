@@ -120,7 +120,7 @@ PRESETS = {
         "node_type": "CPU_ONLY",
         "minutes_per_run": 60 * 3,
         "memory_per_cpu": "30000MB",
-        "time_limit_factor": 1
+        "time_limit_factor": 2
     },
 
     "staggering_analysis_paper": {

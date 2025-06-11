@@ -127,9 +127,9 @@ def print_parameters(instance_parameters, solver_parameters):
 def generate_input_data_from_script() -> tuple[InstanceParameters, SolverParameters]:
     instance_params = InstanceParameters(
         day=2,
-        number_of_trips=5000,
+        number_of_trips=500,
         seed=0,
-        network_name="manhattan_100",
+        network_name="manhattan_7",
         max_flow_allowed=10,
         add_shortcuts=True,
         max_length_shortcut=500,
