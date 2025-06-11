@@ -39,7 +39,7 @@ namespace cpp_module {
         apply_staggering_to_solve_conflict(new_solution, trip_id, other_trip_id, distance_to_cover);
 
         size_t iteration_count = 0;
-        const size_t MAX_ITERATIONS = 100000;
+        const size_t MAX_ITERATIONS = 1000000;
 
         while (!is_pq_empty()) {
             // 🚨 Guard against runaway iteration count
@@ -49,7 +49,7 @@ namespace cpp_module {
             }
 
             // 🚨 Guard against runaway PQ size
-            if (get_pq_size() > 100000) {
+            if (get_pq_size() > 1000000) {
                 log_schedule("[WARNING] Priority queue exceeded safe size limit. Aborting update.");
                 return initial_solution;
             }
