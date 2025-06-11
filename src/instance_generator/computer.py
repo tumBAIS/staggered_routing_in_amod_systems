@@ -61,7 +61,7 @@ class InstanceComputer:
             release_times=trips.get_release_times(),
             deadlines=trips.get_deadlines(),
             lb_travel_time=self.get_lb_travel_time(travel_time_arcs, routes),
-            conflicting_sets=self.initialize_conflicting_sets(travel_time_arcs),
+            conflicting_sets=self.initialize_conflicting_sets(travel_time_arcs, routes),
             earliest_departures=self.initialize_earliest_departures(routes),
             latest_departures=self.initialize_latest_departures(routes)
         )
@@ -70,8 +70,12 @@ class InstanceComputer:
         return sum(travel_times[arc] for path in trip_routes for arc in path)
 
     @staticmethod
-    def initialize_conflicting_sets(travel_times):
-        return [[] for _ in travel_times]
+    def initialize_conflicting_sets(travel_times, routes):
+        initial_conflicting_sets = [[] for _ in travel_times]
+        for trip_id, route in enumerate(routes):
+            for arc in route[:-1]:
+                initial_conflicting_sets[arc].append(trip_id)
+        return initial_conflicting_sets
 
     @staticmethod
     def initialize_earliest_departures(trip_routes):
