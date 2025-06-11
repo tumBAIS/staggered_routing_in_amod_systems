@@ -14,12 +14,25 @@ namespace cpp_module {
     }
 
 
-// Print a message when a tie is solved
-    auto TieManager::print_tie_solved(const Tie &tie) -> void {
-        std::cout << "Tie solved: Trip " << tie.vehicle_one
-                  << " - Trip " << tie.vehicle_two
-                  << " - Arc " << tie.arc << '\n';
+    auto
+    TieManager::print_tie_solved(const Tie &tie, const Solution &old_solution, const Solution &new_solution) -> void {
+        const auto d1_old = old_solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one);
+        const auto d2_old = old_solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two);
+        const auto d1_new = new_solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one);
+        const auto d2_new = new_solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two);
+
+        const auto a1_old = old_solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one + 1);
+        const auto a2_old = old_solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two + 1);
+        const auto a1_new = new_solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one + 1);
+        const auto a2_new = new_solution.get_trip_arc_departure(tie.vehicle_two, tie.position_two + 1);
+
+        std::cout << "Tie on Arc " << tie.arc << " solved: "
+                  << "Trip " << tie.vehicle_one << " [D: " << d1_old << "→" << d1_new
+                  << ", A: " << a1_old << "→" << a1_new << "], "
+                  << "Trip " << tie.vehicle_two << " [D: " << d2_old << "→" << d2_new
+                  << ", A: " << a2_old << "→" << a2_new << "]\n";
     }
+
 
     auto TieManager::check_tie(const Solution &solution, const Tie &tie) -> bool {
         auto dep_v1_pos1 = solution.get_trip_arc_departure(tie.vehicle_one, tie.position_one);
@@ -85,7 +98,7 @@ namespace cpp_module {
                         }
 
                         // Indicate the tie has been resolved
-                        print_tie_solved(tie);
+                        print_tie_solved(tie, working_solution, new_solution);
                         working_solution = new_solution;
                         set_tie_solved_flag(true);
                     } else {

@@ -47,8 +47,6 @@ namespace cpp_module {
 
         auto check_if_solution_has_ties(Solution &complete_solution) -> bool;
 
-        static void print_tie_solved(const Tie &tie);
-
         static bool check_tie(const Solution &solution, const Tie &tie);
 
         [[nodiscard]] bool get_tie_solved_flag() const {
@@ -59,5 +57,6 @@ namespace cpp_module {
             tie_solved_flag = arg_flag;
         }
 
+        static void print_tie_solved(const Tie &tie, const Solution &old_solution, const Solution &new_solution);
     };
 }

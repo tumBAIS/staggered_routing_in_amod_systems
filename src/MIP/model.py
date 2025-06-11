@@ -123,18 +123,22 @@ def run_model(model: StaggeredRoutingModel,
     print("Starting Model Optimization".center(50))
     print("=" * 50)
 
-    # Check if model should be optimized
-    not_solve_model_flag = not model.get_optimize_flag() or \
-                           not is_there_remaining_time(instance, solver_params) or \
-                           instance.instance_params.staggering_cap == 0
-    if (not_solve_model_flag):
-        print("Optimization skipped due to one of the following reasons:")
-        print(" - Optimization flag is disabled.")
-        print(" - No remaining time for optimization.")
-        print(" - Staggering capacity is zero.")
+    optimize_flag = model.get_optimize_flag()
+    has_time = is_there_remaining_time(instance, solver_params)
+    positive_staggering = instance.instance_params.staggering_cap > 0
+
+    if not (optimize_flag and has_time and positive_staggering):
+        print("Optimization skipped due to the following reason(s):")
+        if not optimize_flag:
+            print(" - Optimization flag is disabled.")
+        if not has_time:
+            print(" - No remaining time for optimization.")
+        if not positive_staggering:
+            print(" - Staggering capacity is zero.")
         print("=" * 50)
         return None, warm_start.start_times
 
+    # (Proceed with model optimization here if all checks pass)
     set_gurobi_parameters(model, instance, solver_params)
 
     if solver_params.warm_start:
