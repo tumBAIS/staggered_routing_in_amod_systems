@@ -98,9 +98,9 @@ PRESETS = {
     },
     "algo_performance_future_paper": {
         "network_name": "manhattan_100",
-        "max_length_shortcut": 0,
+        "max_length_shortcut": 500,
         "number_of_trips": 5000,
-        "day_list": list(range(1, 32)),
+        "day_list": list(range(1, 2)),
         # start instance params
         "max_flow_allowed_list": [10, 15],
         "seed_list": [0],
