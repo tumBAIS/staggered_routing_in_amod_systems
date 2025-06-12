@@ -74,10 +74,10 @@ PRESETS = {
     },
     "check_instances": {
         "network_name": "manhattan_100",
-        "max_length_shortcut": 0,
+        "max_length_shortcut": 500,
         "number_of_trips": 5000,
         "day_list": list(range(1, 32)),  # start instance params
-        "max_flow_allowed_list": [5, 10, 15, 20],
+        "max_flow_allowed_list": [10, 15, 20, 25],
         "seed_list": [0],
         "list_of_slopes_list": [[0.5, 1, 1.5]],
         "list_of_thresholds_list": [[1, 2, 3]],
@@ -95,6 +95,7 @@ PRESETS = {
         "node_type": "CPU_ONLY",
         "minutes_per_run": 10,
         "memory_per_cpu": "3000MB",
+        "time_limit_factor": 1
     },
     "algo_performance_future_paper": {
         "network_name": "manhattan_100",
