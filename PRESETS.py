@@ -98,7 +98,7 @@ PRESETS = {
     },
     "algo_performance_future_paper": {
         "network_name": "manhattan_100",
-        "max_length_shortcut": 150,
+        "max_length_shortcut": 0,
         "number_of_trips": 5000,
         "day_list": list(range(1, 32)),
         # start instance params
@@ -118,8 +118,8 @@ PRESETS = {
         "job_priority": "NORMAL",
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
-        "minutes_per_run": 60 * 3,
-        "memory_per_cpu": "30000MB",
+        "minutes_per_run": 60 * 4,
+        "memory_per_cpu": "60000MB",
         "time_limit_factor": 2
     },
 
