@@ -129,7 +129,6 @@ namespace cpp_module {
         size_t total_size = instance.get_number_of_trips() * instance.get_number_of_arcs();
         conflicts_queue.reserve(total_size); // Preallocate memory for the expected number of elements
 
-
         for (auto trip_id = 0; trip_id < instance.get_number_of_trips(); ++trip_id) {
             if (!check_vehicle_has_delay(solution, trip_id)) {
                 continue; // Skip vehicles without delay
@@ -146,12 +145,14 @@ namespace cpp_module {
                     continue; // Skip if delay is within tolerance
                 }
 
-                // Gather trip information and find conflicts for the current arc
                 auto trip_info = get_trip_info_struct(trip_id, solution, position);
                 auto conflicting_set = instance.get_conflicting_set(arc);
 
                 auto arc_conflicts = find_conflicts_on_arc(arc, arc_delay, solution, trip_info, conflicting_set);
-                for (auto arc_conflict: arc_conflicts) {
+                for (auto &arc_conflict: arc_conflicts) {
+                    if (conflicts_queue.size() >= MAX_PQ_SIZE) {
+                        return conflicts_queue;
+                    }
                     conflicts_queue.push(arc_conflict);
                 }
             }

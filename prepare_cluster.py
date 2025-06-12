@@ -274,7 +274,7 @@ def main(preset_name: str, comment: str, add_shortcuts: bool):
 
 
 if __name__ == "__main__":
-    main(preset_name="algo_performance_future_paper", comment="NO_SHORTCUTS_MORE_MEMO", add_shortcuts=False)
+    main(preset_name="algo_performance_future_paper", comment="NO_LS", add_shortcuts=False)
 
 # PRESETS NAMES
 # algo_performance_paper

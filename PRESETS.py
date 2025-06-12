@@ -111,10 +111,10 @@ PRESETS = {
         "algo_mode_list": ["OFFLINE"],
         "optimize": True,
         "warm_start": True,
-        "improve_warm_start_list": [True],
+        "improve_warm_start_list": [False],
         "simplify": True,
         "verbose_model": False,
-        "local_search_callback": True,  # end solver params
+        "local_search_callback": False,  # end solver params
         "job_priority": "NORMAL",
         "cpu_per_run": 1,
         "node_type": "CPU_ONLY",
